@@ -86,7 +86,7 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - Test shared organization workflows with separate real user accounts on a deployed environment.
 - Review and repair or replace stale/garbled historical handoff documentation, especially `docs/CURRENT_TASK.md`, in a dedicated documentation task.
 - Manually refresh the portal and retry the same SEO/EIS upload once. If the backend returns an error, record the user-visible Korean message and the new server-log trace before making another change.
-- Confirm the GitHub account that owns the portal and copy its repository HTTPS URL from the GitHub `Code` button. Local GitHub OAuth succeeded, but push to `https://github.com/JONGHOO1/battery-data-portal.git` returned `Repository not found`; update `origin` only after the correct URL is confirmed, then push the existing `main` branch. Do not upload local runtime data or the ZIP itself as source files.
+- Push the existing local `main` branch to the corrected GitHub remote `https://github.com/JONGHO01/battery-data-portal.git`. The account login is `JONGHO01` (with zero before the final `1`), not `JONGHOO1`. Do not upload local runtime data or the ZIP itself as source files.
 
 ## Do Not Repeat
 
@@ -102,7 +102,7 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - Which production provider should be used for the application, PostgreSQL, and object storage: Render, Railway, Fly.io, Supabase, S3-compatible storage, or another approved service?
 - Should the next deployment package replace the existing clean upload copy or be created as a new versioned package?
 - Which real user roles and organization membership workflow should be tested first after deployment?
-- Which GitHub account and repository URL currently own the Battery Data Portal? Authentication succeeded, but the configured `JONGHOO1/battery-data-portal` URL was unavailable to that account.
+- After the corrected remote is pushed, does GitHub report a non-fast-forward conflict with the existing remote `main` history? Do not force-push without an explicit user decision.
 
 ## Verification
 
@@ -116,8 +116,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - Refresh the browser once before manually retrying EIS dataset/figure creation.
 - Current session setup must verify the three required files, skill frontmatter, Memory Gate wording, absence of hooks/raw-prompt logs, and that the personal versioning skill was not modified.
 - 2026-07-14: Git for Windows was installed for the current user. The project was initialized locally on the `main` branch with the commit message `Add Battery Portal session memory skill`. `.gitignore` excludes local secrets, runtime databases, logs, uploads, Harvester state, and `data/storage/` artifacts.
-- 2026-07-14: The local Git remote `origin` was set to `https://github.com/JONGHOO1/battery-data-portal.git`. Push was not completed because GitHub OAuth has not yet been approved for local Git; do not record or request a password or token.
-- 2026-07-14: Local GitHub OAuth was approved through Git Credential Manager. The subsequent push returned `Repository not found` for the configured `origin`; no remote files were changed. Confirm the correct repository HTTPS URL before retrying.
+- 2026-07-14: GitHub Desktop login diagnostics confirmed the account is `JONGHO01`, not `JONGHOO1`. The previous remote contained a letter `O` where the account has the digit `0`, causing `Repository not found` for the private repository.
+- 2026-07-14: The local Git remote `origin` was corrected to `https://github.com/JONGHO01/battery-data-portal.git`. Local `main` is clean at `813b344 Add Battery Portal session memory skill`; push is the next action. No remote files have been changed yet.
 
 ## Next Session Prompt
 
