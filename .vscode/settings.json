@@ -1,0 +1,14 @@
+{
+  "files.encoding": "utf8",
+  "editor.formatOnSave": false,
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "search.exclude": {
+    "**/server.out.log": true,
+    "**/server.err.log": true
+  },
+  "files.watcherExclude": {
+    "**/data/uploads/**": true,
+    "**/server.out.log": true,
+    "**/server.err.log": true
+  }
+}

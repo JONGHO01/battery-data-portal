@@ -1,0 +1,16 @@
+{
+  "serverUrl": "https://your-battery-portal.example.com",
+  "watchPaths": ["D:\\cycler-export"],
+  "recursive": true,
+  "pollSeconds": 20,
+  "stableSeconds": 10,
+  "maxFileSizeMb": 200,
+  "dataset": {
+    "dataType": "cyc",
+    "cell": {
+      "cellId": "AUTO-01",
+      "sampleName": "Cycler PC import",
+      "condition": "Imported by Harvester"
+    }
+  }
+}

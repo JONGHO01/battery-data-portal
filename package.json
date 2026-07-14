@@ -1,0 +1,17 @@
+{
+  "name": "battery-data-portal",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Battery EIS/CYC/CV data portal",
+  "main": "python_backend.py",
+  "scripts": {
+    "start": "python python_backend.py",
+    "dev": "python python_backend.py",
+    "check": "node --check public/app.js",
+    "py": "python python_backend.py",
+    "py:check": "python -m py_compile python_backend.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

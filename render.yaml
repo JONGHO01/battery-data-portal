@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: battery-data-portal
+    runtime: docker
+    plan: free
+    autoDeployTrigger: commit
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: APP_ENV
+        value: "production"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: battery-data-portal-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOW_LEGACY_USER_HEADER
+        value: "false"
+      - key: BOOTSTRAP_ADMIN_ID
+        value: "qq035786"
+      - key: BOOTSTRAP_ADMIN_NAME
+        value: "원종호"
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: STORAGE_BACKEND
+        value: "local"
+      - key: DATA_DIR
+        value: "/tmp/battery-data"
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_BASE_URL
+        sync: false
+      - key: OPENAI_MODEL
+        value: "gpt-5.5"
+      - key: OPENAI_REASONING_EFFORT
+        value: "low"
+      - key: OPENAI_API_KEY
+        sync: false
+
+databases:
+  - name: battery-data-portal-db
+    plan: free
+    postgresMajorVersion: "18"
+    databaseName: battery_data_portal
+    user: battery_user
+    ipAllowList: []

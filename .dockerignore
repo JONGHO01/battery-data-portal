@@ -1,0 +1,17 @@
+.git
+.vscode
+.env
+.env.local
+*.log
+__pycache__/
+**/__pycache__/
+*.pyc
+data/uploads/
+data/*.sqlite3
+data/*.json
+data/*.bak-*
+tmp-fastapi-test-*/
+pydeps/
+wheeldeps/
+wheels/
+xlsbdeps/

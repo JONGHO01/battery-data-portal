@@ -1,0 +1,31 @@
+# Runtime logs created when the local server is started.
+*.log
+
+# Local secrets. Put OPENAI_API_KEY here, but never upload it to GitHub.
+.env
+.env.local
+
+# Python and editor cache files.
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local SQLite database. The source code creates this file again on first run.
+data/*.sqlite3
+data/*.json
+
+# Uploaded raw experiment files can be large and may contain private lab data.
+data/uploads/
+
+# Runtime artifact storage can contain raw instrument files and parsed results.
+data/storage/
+
+# Local backup files generated during manual data recovery.
+data/*.bak-*
+
+# Temporary smoke-test folders created while checking the FastAPI migration.
+tmp-fastapi-test-*/
+
+# Harvester credentials and duplicate-upload state belong only on the lab PC.
+harvester/config.json
+harvester/.harvester-state.json

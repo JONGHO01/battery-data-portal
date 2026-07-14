@@ -1,0 +1,10 @@
+openpyxl
+pandas
+xlrd
+pyxlsb
+Pillow
+python-pptx
+fastapi
+uvicorn[standard]
+psycopg[binary]
+boto3

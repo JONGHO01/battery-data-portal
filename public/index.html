@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Battery Data Portal</title>
+    <link rel="stylesheet" href="/style.css?portal=0.18" />
+  </head>
+  <body>
+    <div class="busyOverlay hidden" id="busyOverlay">
+      <div class="busyBox">
+        <div class="spinner"></div>
+        <strong id="busyTitle">잠시만 기다려주세요</strong>
+        <span id="busyMessage">데이터를 처리하고 있습니다.</span>
+      </div>
+    </div>
+
+    <section class="loginScreen" id="loginScreen">
+      <div class="loginBox">
+        <h1>Battery Data Portal</h1>
+        <span class="appVersion" id="appVersion">Battery Portal v0.01</span>
+        <p>아이디로 로그인하면 각자 데이터가 분리됩니다. 관리자는 전체 데이터를 볼 수 있습니다.</p>
+        <form id="loginForm">
+          <label>아이디 <input id="loginId" name="id" autocomplete="username" required /></label>
+          <label>비밀번호 <input id="loginPassword" name="password" type="password" autocomplete="current-password" required /></label>
+          <button id="loginButton" type="button">로그인</button>
+        </form>
+        <form id="registerForm" class="registerBox">
+          <h2>새 사용자 만들기</h2>
+          <label>고유 아이디 <input id="registerId" name="id" placeholder="jongho_01" autocomplete="username" required /></label>
+          <label>이름 <input id="registerName" name="name" placeholder="종호" /></label>
+          <label>비밀번호 <input id="registerPassword" name="password" type="password" autocomplete="new-password" required /></label>
+          <button id="registerButton" type="button">아이디 생성</button>
+        </form>
+        <p class="loginHint">관리자 계정: qq035786</p>
+        <p class="loginSuccess" id="loginSuccess"></p>
+        <p class="loginError" id="loginError"></p>
+      </div>
+    </section>
+
+    <header class="topbar">
+      <div class="brandHome" id="brandHome" role="button" tabindex="0" aria-label="홈으로 이동">
+        <h1>Battery Data Portal</h1>
+        <p>배터리 실험 데이터를 읽고, 검토하고, 논문용 피겨와 전극 계산표로 정리합니다.</p>
+      </div>
+      <nav class="globalMenu" aria-label="주요 메뉴">
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-view="upload">업로드</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="upload">파일 업로드 · 정규화</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="all">Dataset Explorer</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-module="cyc">CYC</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-module="cyc">CYC 피겨 만들기</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="cyc">CYC 검색으로 보기</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장된 CYC 비교</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-module="cv">CV</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-module="cv">CV 피겨 만들기</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="cv">CV 검색으로 보기</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 보기</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-module="eis">EIS</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-module="eis">EIS 피겨 만들기</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="eis">EIS 검색으로 보기</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 보기</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-view="aiSummary">AI 요약</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="aiSummary">현재 데이터 요약</button>
+            <button type="button" class="menuItem" data-view="aiSummary" data-ai-section="degrade">성능 저하 구간</button>
+            <button type="button" class="menuItem" data-view="aiSummary" data-ai-section="compare">비교 결과 설명</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-view="analysisLab">분석</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="analysisLab">Analysis Lab</button>
+            <button type="button" class="menuItem" data-view="analysisLab" data-analysis-name="dqdv">dQ/dV · DVA</button>
+            <button type="button" class="menuItem" data-view="analysisLab" data-analysis-name="eis">EIS 요약</button>
+          </div>
+        </div>
+        <div class="menuGroup electrodeMenu">
+          <button type="button" class="menuTrigger" data-view="electrodeCalc">전극 계산</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="electrodeCalc" data-electrode-mode="calc">전극 C-rate 계산</button>
+            <button type="button" class="menuItem" data-view="electrodeCalc" data-electrode-mode="store" data-focus-section="electrodeProfileBox">전극 C-rate 저장소</button>
+            <button type="button" class="menuItem" data-module="electrodeCalc">전극별 계산 화면</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-view="savedFigures">피겨 모음</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 목록</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="all">피겨 검색</button>
+            <button type="button" class="menuItem" data-module="cyc">새 피겨 만들기</button>
+          </div>
+        </div>
+        <div class="menuGroup">
+          <button type="button" class="menuTrigger" data-view="organization">조직</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="organization">조직 · 멤버 관리</button>
+          </div>
+        </div>
+        <div class="menuGroup adminOnly">
+          <button type="button" class="menuTrigger" data-view="feedbackAdmin">의견함</button>
+          <div class="menuPanel">
+            <button type="button" class="menuItem" data-view="feedbackAdmin">수정 요청 보기</button>
+            <button type="button" class="menuItem" data-view="users">사용자 관리</button>
+          </div>
+        </div>
+      </nav>
+      <div class="userBar">
+        <div class="userChip" id="userChip">Not signed in</div>
+        <button id="backHome" type="button">메뉴</button>
+        <button id="logoutBtn" type="button">로그아웃</button>
+        <div class="status" id="saveStatus">Ready</div>
+      </div>
+    </header>
+
+    <section class="moduleHome hidden" id="moduleHome">
+      <div class="moduleIntro">
+        <span class="eyebrow">Battery experiment workspace</span>
+        <h2>데이터를 넣으면, 피겨와 계산표까지 한 화면에서.</h2>
+        <p>WRD, SEO, XLSX, XLSB, CSV 파일을 읽고 오류 가능성을 확인한 뒤 CYC, EIS, CV 피겨를 저장할 수 있습니다.</p>
+      </div>
+      <div class="homeStats" aria-label="main features">
+        <div><strong>WRD/XLSX</strong><span>자동 분석</span></div>
+        <div><strong>CYC · CV · EIS</strong><span>피겨 생성</span></div>
+        <div><strong>Search Lab</strong><span>조건별 탐색</span></div>
+      </div>
+      <div class="moduleGrid">
+        <button class="moduleCard activeModule" data-module="cyc">
+          <span class="moduleBadge">01</span>
+          <strong>CYC 피겨</strong>
+          <span>사이클, 방전용량, C-rate 구간을 확인하고 논문용 cycling 피겨를 생성합니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-module="cv">
+          <span class="moduleBadge">02</span>
+          <strong>CV 피겨</strong>
+          <span>전압-전류 곡선과 scan rate 비교용 CV 피겨를 정리합니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-module="eis">
+          <span class="moduleBadge">03</span>
+          <strong>EIS 피겨</strong>
+          <span>Nyquist, Bode plot과 임피던스 데이터를 논문용 피겨로 만듭니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-module="electrodeCalc">
+          <span class="moduleBadge">04</span>
+          <strong>전극 계산</strong>
+          <span>전극 무게와 두께로 loading, 1C 전류, C-rate별 전류를 계산합니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-view="search" data-search-type="all">
+          <span class="moduleBadge">05</span>
+          <strong>검색 페이지</strong>
+          <span>날짜, 소재, 셀 ID, 데이터 타입을 한 화면에서 좁혀 보고 바로 피겨로 이동합니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-view="aiSummary">
+          <span class="moduleBadge">06</span>
+          <strong>AI 요약</strong>
+          <span>선택한 데이터의 핵심값을 계산하고 OpenAI API로 논문/PPT용 해석문을 생성합니다.</span>
+        </button>
+        <button class="moduleCard activeModule" data-view="analysisLab">
+          <span class="moduleBadge">07</span>
+          <strong>Analysis Lab</strong>
+          <span>정규화된 데이터에서 retention, dQ/dV, DVA, EIS, pulse, rate-capability를 재현 가능하게 계산합니다.</span>
+        </button>
+      </div>
+      <div class="homeGuide">
+        <strong>작업 흐름</strong>
+        <span>파일 선택</span>
+        <span>데이터 검토</span>
+        <span>피겨 생성</span>
+        <span>AI 요약</span>
+        <span>저장 후 수정</span>
+      </div>
+    </section>
+
+    <main class="layout hidden" id="dataWorkspace">
+      <aside class="sidebar">
+        <section class="panel hierarchyPanel">
+          <h2>실험 저장 위치</h2>
+          <p>프로젝트 → 실험 배치 → 셀 아래에 CYC, EIS, CV와 피겨를 함께 정리합니다.</p>
+          <label>프로젝트
+            <select id="projectSelect"></select>
+          </label>
+          <label>프로젝트 저장 위치
+            <select id="projectOrganizationSelect"></select>
+          </label>
+          <div class="hierarchyCreate">
+            <input id="newProjectName" placeholder="예: NCM622 수명 평가" />
+            <button id="createProject" type="button" class="secondaryAction">프로젝트 추가</button>
+          </div>
+          <label>Campaign / 실험 배치
+            <select id="campaignSelect"></select>
+          </label>
+          <div class="hierarchyCreate">
+            <input id="newCampaignName" placeholder="예: 2026-07 formation batch" />
+            <button id="createCampaign" type="button" class="secondaryAction">배치 추가</button>
+          </div>
+          <label>Cell
+            <select id="cellRecordSelect"></select>
+          </label>
+          <label>Dataset / 분석 묶음
+            <select id="datasetGroupSelect"></select>
+          </label>
+          <div class="hierarchyCreate">
+            <input id="newDatasetGroupName" placeholder="예: 1st cycle + EIS 평가" />
+            <button id="createDatasetGroup" type="button" class="secondaryAction">Dataset 추가</button>
+          </div>
+          <div class="hierarchyPath" id="hierarchyPath"></div>
+          <p class="hierarchyNote">새 셀과 Dataset 묶음은 아래의 셀 ID와 Dataset 이름을 저장할 때 자동 등록됩니다.</p>
+        </section>
+        <section class="panel">
+          <h2>데이터 등록</h2>
+          <form id="datasetForm">
+            <label>측정일 <input type="date" name="date" required /></label>
+            <label>셀 ID <input name="cellId" placeholder="CELL-001" required /></label>
+            <label>샘플명 <input name="sampleName" placeholder="LFP dry electrode" /></label>
+            <label>전극/소재 <input name="material" placeholder="LFP / NCM / Li-S" /></label>
+            <label>전해질 <input name="electrolyte" placeholder="1M LiPF6 EC:DMC" /></label>
+            <label>온도/조건 <input name="condition" placeholder="25 C, OCV" /></label>
+            <label>메모 <textarea name="notes" rows="3" placeholder="측정 조건, 이상점, 담당자"></textarea></label>
+            <button id="saveCellInfoTop" type="button" class="saveAction">셀 정보 저장</button>
+            <label>소유자 <input id="ownerPreview" disabled /></label>
+            <label class="filebox">
+              데이터 파일
+              <input id="smartFile" type="file" name="csv" accept=".csv,.txt,.xlsx,.xlsm,.xls,.xlsb,.wrd,.WRD,.seo,.SEO,application/vnd.ms-excel.sheet.binary.macroEnabled.12" />
+              <span id="selectedFileName" class="selectedFileName">선택된 파일 없음</span>
+              <span id="fileHint">CSV/XLSX/XLSB/WRD/SEO 지원. EIS, CYC, CV 데이터를 자동 판별합니다.</span>
+            </label>
+            <button id="inspectFile" type="button">파일 분석</button>
+            <div id="analysisPanel" class="analysisPanel hidden"></div>
+            <button id="createFigure" type="button" class="hidden">선택한 피겨 생성</button>
+            <button id="applyCellInfo" type="button" class="secondaryAction">입력 정보 적용</button>
+          </form>
+        </section>
+
+        <section class="panel searchShortcutPanel">
+          <h2>검색</h2>
+          <p>날짜, 소재, 셀 ID 검색은 전용 검색 페이지에서 더 넓게 볼 수 있습니다.</p>
+          <button type="button" class="secondaryAction" data-view="search" data-search-type="all">검색 페이지 열기</button>
+        </section>
+
+      </aside>
+
+      <section class="content">
+        <nav class="tabs mainTabs" aria-label="views">
+          <button class="tab" data-view="upload">업로드</button>
+          <button class="tab active" data-view="figure" data-module="cyc">CYC</button>
+          <button class="tab" data-view="figure" data-module="cv">CV</button>
+          <button class="tab" data-view="figure" data-module="eis">EIS</button>
+          <button class="tab" data-view="search">검색</button>
+          <button class="tab" data-view="savedFigures">피겨 모음</button>
+          <button class="tab" data-view="electrodeCalc">전극 계산</button>
+          <button class="tab" data-view="experimentInfo">셀 기록</button>
+          <button class="tab" data-view="aiSummary">AI 요약</button>
+          <button class="tab" data-view="analysisLab">분석</button>
+          <button class="tab" data-view="organization">조직</button>
+          <button class="tab adminOnly" data-view="feedbackAdmin">의견함</button>
+        </nav>
+
+        <section class="toolbar" id="workspaceToolbar">
+          <div class="row">
+            <button id="exportSvg" type="button">SVG</button>
+            <button id="exportPng" type="button">PNG</button>
+            <button id="exportPpt" type="button">PPT</button>
+            <button id="deleteDataset" type="button" class="danger">삭제</button>
+          </div>
+        </section>
+
+        <section id="searchView" class="view">
+          <div class="searchHero">
+            <span class="eyebrow">Search Lab</span>
+            <h2>실험 데이터를 빠르게 찾고, 바로 피겨로 연결합니다.</h2>
+            <p>날짜, 셀 ID, 소재, 샘플명, 메모를 한 곳에서 검색합니다. 메뉴에서 들어오면 CYC, CV, EIS별로 자동 필터링됩니다.</p>
+          </div>
+          <div class="searchShell">
+            <section class="searchPanel">
+              <div class="searchPanelTitle">
+                <span class="searchMark" aria-hidden="true"></span>
+                <div>
+                  <h2>검색 조건</h2>
+                  <p>저장된 실험 데이터를 좁혀보세요.</p>
+                </div>
+              </div>
+              <label>저장 날짜<select id="savedDateSelect"><option value="">전체 날짜</option></select></label>
+              <div class="searchDateGrid">
+                <label>시작일 <input type="date" id="fromDate" /></label>
+                <label>종료일 <input type="date" id="toDate" /></label>
+              </div>
+              <label>셀/소재 검색 <input id="query" placeholder="ncm, CELL-001, sample memo" /></label>
+              <div class="searchTypeTabs" aria-label="데이터 종류">
+                <button type="button" class="searchType active" data-search-type="all">전체</button>
+                <button type="button" class="searchType" data-search-type="cyc">CYC</button>
+                <button type="button" class="searchType" data-search-type="cv">CV</button>
+                <button type="button" class="searchType" data-search-type="eis">EIS</button>
+              </div>
+              <div class="row">
+                <button id="clearFilters" type="button">초기화</button>
+                <button id="reloadData" type="button">새로고침</button>
+              </div>
+            </section>
+            <section class="searchOverview">
+              <div class="searchMetric">
+                <span>검색 결과</span>
+                <strong id="searchResultCount">0개</strong>
+              </div>
+              <div class="searchMetric">
+                <span>현재 범위</span>
+                <strong id="searchScopeLabel">전체</strong>
+              </div>
+              <div class="searchMetric accentMetric">
+                <span>바로 열기</span>
+                <strong>Figure</strong>
+              </div>
+            </section>
+          </div>
+          <div class="searchResultsHeader">
+            <div>
+              <h2>검색 결과</h2>
+              <p>카드를 선택하면 해당 데이터를 피겨 화면에서 바로 확인합니다.</p>
+            </div>
+          </div>
+          <div id="searchResultList" class="searchResultList"></div>
+        </section>
+
+        <section id="figureView" class="view active">
+          <div class="annotationTools">
+            <input id="annotationText" type="text" placeholder="그래프에 넣을 글" />
+            <label class="fontSizeControl">크기 <input id="annotationSize" type="number" min="8" max="40" step="1" value="13" /></label>
+            <button id="decreaseAnnotationSize" type="button">작게</button>
+            <button id="increaseAnnotationSize" type="button">크게</button>
+            <label class="figureColorControl">색상 <input id="figureSeriesColor" type="color" value="#0f766e" /></label>
+            <label class="figureRatioControl">비율
+              <select id="figureAspectRatio">
+                <option value="journal">논문형 4:3</option>
+                <option value="wide">와이드 16:9</option>
+                <option value="square">정사각 1:1</option>
+                <option value="portrait">세로형 4:5</option>
+              </select>
+            </label>
+            <button id="addAnnotation" type="button">글 추가</button>
+            <button id="saveFigureEdits" type="button" class="saveAction">피겨 저장</button>
+            <button id="clearAnnotations" type="button">전체 삭제</button>
+          </div>
+          <div class="figureHeader">
+            <div>
+              <h2 id="figureTitle">No dataset</h2>
+              <p id="figureSubtitle">데이터를 등록하거나 선택하세요.</p>
+            </div>
+            <div class="metaGrid" id="metaGrid"></div>
+          </div>
+          <div class="figureCanvas" id="figureCanvas"></div>
+          <section class="excelPreview">
+            <div class="excelPreviewHeader">
+              <h2>엑셀 데이터</h2>
+              <span id="excelSummary">0 rows</span>
+              <em>셀 클릭, Tab 이동, 엑셀 범위 붙여넣기가 가능합니다.</em>
+              <div class="excelActions" aria-label="엑셀 데이터 편집">
+                <button id="undoExcelEdit" type="button" class="secondaryAction" disabled>되돌리기</button>
+                <button id="addExcelRow" type="button">행 추가</button>
+                <button id="deleteExcelRow" type="button">선택 행 삭제</button>
+                <button id="saveExcelRows" type="button" class="saveAction">표 저장</button>
+              </div>
+            </div>
+            <div class="excelTableWrap">
+              <table id="excelTable">
+                <thead id="excelTableHead"></thead>
+                <tbody id="dataTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="savedFiguresView" class="view">
+          <div class="savedFigureHeader">
+            <div>
+              <h2>저장된 피겨</h2>
+              <p>저장한 피겨를 선택해서 다시 열거나 삭제할 수 있습니다.</p>
+            </div>
+            <span id="savedCount">0개</span>
+          </div>
+          <div class="savedCompareBar">
+            <span id="savedCount">0개</span>
+            <button id="compareCycFigures" type="button">선택 CYC 비교</button>
+            <button id="clearCompareSelection" type="button" class="secondaryAction">선택 해제</button>
+          </div>
+          <div id="savedList" class="savedList savedListWide"></div>
+          <div id="comparisonPreview" class="comparisonPreview hidden"></div>
+        </section>
+
+        <section id="experimentInfoView" class="view">
+          <div class="savedFigureHeader">
+            <div>
+              <h2>실험 정보</h2>
+              <p>업로드한 데이터에서 C-rate, 전류, 용량, 셀 조건을 자동으로 정리합니다.</p>
+            </div>
+          </div>
+          <div class="manualUpload">
+            <label>
+              매뉴얼 엑셀
+              <input id="manualFile" type="file" accept=".xlsx,.xlsm,.xls" />
+            </label>
+            <button id="inspectManual" type="button">매뉴얼 분석</button>
+          </div>
+          <div id="experimentInfoPanel" class="experimentInfoPanel"></div>
+          <section class="cellRecordWorkspace" id="cellRecordWorkspace">
+            <div class="cellRecordHeader">
+              <div>
+                <span class="eyebrow">Cell record</span>
+                <h2 id="cellRecordTitle">셀을 선택해주세요</h2>
+                <p id="cellRecordPath">Project → Campaign → Cell → Dataset</p>
+              </div>
+              <div id="cellRecordTags" class="recordTags"></div>
+            </div>
+            <div class="cellRecordGrid">
+              <section class="recordCard">
+                <h3>Cell metadata</h3>
+                <form id="cellMetadataForm" class="recordForm">
+                  <label>양극 / Cathode <input name="cathode" placeholder="예: NCM622" /></label>
+                  <label>음극 / Anode <input name="anode" placeholder="예: Graphite" /></label>
+                  <label>분리막 / Separator <input name="separator" placeholder="예: PP/PE/PP" /></label>
+                  <label>Spacer <input name="spacer" placeholder="예: glass fiber" /></label>
+                  <label>Cell format <input name="cellFormat" placeholder="예: CR2032" /></label>
+                  <label>태그 <input name="tags" placeholder="예: dry-electrode, 25C, formation" /></label>
+                  <button id="saveCellMetadata" type="submit" class="saveAction">메타데이터 저장</button>
+                </form>
+              </section>
+              <section class="recordCard">
+                <h3>Dataset 묶음</h3>
+                <p>하나의 분석 묶음에 CYC, EIS, CV와 피겨·보고서를 함께 연결합니다.</p>
+                <div id="datasetGroupLibrary" class="recordList"></div>
+              </section>
+              <section class="recordCard recordCardWide">
+                <h3>Protocol segments</h3>
+                <p>formation, rate test, long cycling처럼 C-rate와 cycle 구간을 기록합니다.</p>
+                <form id="protocolSegmentForm" class="protocolForm">
+                  <label>구간 이름 <input name="label" placeholder="예: 0.1 C formation" /></label>
+                  <label>시작 cycle <input name="startCycle" type="number" min="1" required /></label>
+                  <label>종료 cycle <input name="endCycle" type="number" min="1" required /></label>
+                  <label>C-rate <input name="cRate" type="number" min="0" step="0.01" placeholder="0.1" /></label>
+                  <label>모드 <select name="mode"><option value="formation">formation</option><option value="rate">rate test</option><option value="cycling">long cycling</option><option value="rest">rest / other</option></select></label>
+                  <label>메모 <input name="notes" placeholder="전압 범위, 충전 조건 등" /></label>
+                  <button type="submit" class="saveAction">구간 저장</button>
+                </form>
+                <div id="protocolSegmentList" class="recordList"></div>
+              </section>
+              <section class="recordCard recordCardWide">
+                <h3>Figures & reports</h3>
+                <p>현재 선택한 Dataset에서 저장한 피겨와 AI 해석 보고서입니다.</p>
+                <div class="figureReportGrid">
+                  <div><strong>Figures</strong><div id="cellFigureLibrary" class="recordList"></div></div>
+                  <div><strong>Reports</strong><div id="cellReportLibrary" class="recordList"></div></div>
+                </div>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <!-- 전극 계산 페이지: 전극 질량/두께로 1C 전류, loading, C-rate별 전류를 계산합니다. -->
+        <section id="electrodeCalcView" class="view">
+          <div class="savedFigureHeader">
+            <div>
+              <h2>전극 질량/두께 계산</h2>
+              <p>평소에는 전극 전체 무게와 두께만 입력하고, 조성비와 기준값은 필요할 때만 작게 수정합니다.</p>
+            </div>
+          </div>
+          <div class="calcLayout">
+            <section class="calcPrimary">
+              <h3>오늘 입력</h3>
+              <label class="electrodeTypeSelect">계산할 전극
+                <select id="calcElectrodeType">
+                  <option value="ncm">양극 / NCM</option>
+                  <option value="lfp">양극 / LFP</option>
+                  <option value="graphite">음극 / Graphite</option>
+                </select>
+              </label>
+              <div class="calcMainInputs">
+                <label>전극 전체 무게 (g)<input id="calcTotalMass" type="number" step="0.000001" value="0.01861" /></label>
+                <label>전극 전체 두께 (mm)<input id="calcTotalThickness" type="number" step="0.001" value="0.076" /></label>
+              </div>
+            </section>
+            <section class="calcSettings">
+              <h3>기본값 / 조성 설정</h3>
+              <div class="calcSettingGrid">
+                <label>C-coated Al 무게 (g)<input id="calcCollectorMass" type="number" step="0.000001" value="0.00386" /></label>
+                <label>C-coated Al 두께 (mm)<input id="calcCollectorThickness" type="number" step="0.001" value="0.017" /></label>
+                <label>전극 지름 (mm)<input id="calcDiameter" type="number" step="0.1" value="11" /></label>
+                <label>이론 용량 (mAh g-1)<input id="calcCapacity" type="number" step="1" value="180" /></label>
+                <label>NCM (%)<input id="calcNcmRatio" type="number" step="0.1" value="93" /></label>
+                <label>Super P (%)<input id="calcSuperRatio" type="number" step="0.1" value="5" /></label>
+                <label>PTFE (%)<input id="calcPtfeRatio" type="number" step="0.1" value="2" /></label>
+              </div>
+            </section>
+          </div>
+          <div class="row calcActions">
+            <button id="runElectrodeCalc" type="button">계산하기</button>
+            <button id="copyElectrodeCalc" type="button" class="secondaryAction">표 복사</button>
+          </div>
+          <!-- 전극 C-rate 저장소: 계산한 값을 저장해두고 나중에 선택한 CYC 데이터에 적용합니다. -->
+          <section class="electrodeProfileBox">
+            <div class="electrodeProfileHeader">
+              <div>
+                <h3>전극 C-rate 저장소</h3>
+                <p>계산한 1C 전류와 loading 값을 저장해두고, 나중에 선택한 CYC 데이터에 바로 넣습니다.</p>
+              </div>
+              <span id="electrodeProfileCount">0개 저장됨</span>
+            </div>
+            <div class="electrodeProfileControls">
+              <label>저장 이름
+                <input id="electrodeProfileName" placeholder="예: Graphite 11pi 25mg" />
+              </label>
+              <button id="saveElectrodeProfile" type="button">현재 계산 저장</button>
+              <button id="applyElectrodeProfileToCyc" type="button" class="secondaryAction">선택 CYC에 넣기</button>
+            </div>
+            <div id="electrodeProfileList" class="electrodeProfileList"></div>
+          </section>
+          <div id="electrodeCalcResult" class="electrodeCalcResult"></div>
+          <section id="electrodeCalcSlots" class="electrodeCalcSlots"></section>
+        </section>
+
+        <!-- AI 요약 페이지: 선택한 데이터의 주요 결과, 성능 저하, 비교 설명을 자동 문장으로 정리합니다. -->
+        <section id="aiSummaryView" class="view">
+          <div class="savedFigureHeader aiSummaryHeader">
+            <div>
+              <h2>AI 요약</h2>
+              <p>Python 백엔드가 핵심값을 계산한 뒤 OpenAI API로 논문/PPT용 해석문을 생성합니다.</p>
+            </div>
+            <div class="row">
+              <button id="refreshAiSummary" type="button">요약 새로고침</button>
+              <button id="saveAiReport" type="button" class="saveAction">AI 보고서 저장</button>
+            </div>
+          </div>
+          <div class="aiSummaryGrid">
+            <section class="aiSummaryCard">
+              <div class="aiSummaryTitle">
+                <span>01</span>
+                <h3>이 데이터의 주요 결과 요약</h3>
+              </div>
+              <div id="aiMainSummary" class="aiSummaryBody"></div>
+            </section>
+            <section class="aiSummaryCard" data-ai-summary-section="degrade">
+              <div class="aiSummaryTitle">
+                <span>02</span>
+                <h3>성능 저하 구간 표시</h3>
+              </div>
+              <div id="aiDegradationSummary" class="aiSummaryBody"></div>
+            </section>
+            <section class="aiSummaryCard aiSummaryWide" data-ai-summary-section="compare">
+              <div class="aiSummaryTitle">
+                <span>03</span>
+                <h3>비교 결과 설명</h3>
+              </div>
+              <div id="aiCompareSummary" class="aiSummaryBody"></div>
+            </section>
+            <section class="aiSummaryCard">
+              <div class="aiSummaryTitle">
+                <span>04</span>
+                <h3>실험 해석 / 확인 포인트</h3>
+              </div>
+              <div id="aiInsightSummary" class="aiSummaryBody"></div>
+            </section>
+            <section class="aiSummaryCard aiSummaryWide">
+              <div class="aiSummaryTitle">
+                <span>05</span>
+                <h3>논문 · PPT용 문장</h3>
+              </div>
+              <div id="aiWritingSummary" class="aiSummaryBody"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="analysisLabView" class="view">
+          <div class="analysisLabHeader">
+            <div>
+              <span class="eyebrow">Reproducible analysis</span>
+              <h2>Analysis Lab</h2>
+              <p>원본과 정규화 데이터는 그대로 두고, 분석 종류·파라미터·결과를 별도 이력으로 저장합니다.</p>
+            </div>
+            <button id="refreshAnalysisRuns" type="button" class="secondaryAction">분석 이력 새로고침</button>
+          </div>
+          <div class="analysisLabGrid">
+            <section class="analysisControlCard">
+              <label>분석 데이터셋
+                <select id="analysisLabDatasetSelect"></select>
+              </label>
+              <label>분석 방법
+                <select id="analysisType">
+                  <option value="retention">Retention / SOH</option>
+                  <option value="dqdv">dQ/dV</option>
+                  <option value="dva">DVA (dV/dQ)</option>
+                  <option value="rate-capability">Rate capability</option>
+                  <option value="pulse-resistance">Pulse resistance</option>
+                  <option value="eis">EIS summary</option>
+                </select>
+              </label>
+              <label id="dqdvBinField">dQ/dV 전압 bin (V)
+                <input id="dqdvVoltageBin" type="number" min="0.0001" max="1" step="0.0001" value="0.005" />
+              </label>
+              <label class="analysisCheckbox"><input id="includeReviewRows" type="checkbox" /> 품질 검토 행도 분석에 포함</label>
+              <button id="runDatasetAnalysis" type="button" class="saveAction">선택 분석 실행</button>
+              <p class="analysisSafetyNote">기본값은 품질 검토가 필요한 행을 제외합니다. 원본과 표 편집 데이터는 수정되지 않습니다.</p>
+            </section>
+            <section class="analysisRunCard">
+              <div id="analysisRunStatus" class="analysisRunStatus"></div>
+              <div id="analysisRunResult" class="analysisRunResult"></div>
+              <div class="analysisRunHistory">
+                <h3>저장된 분석 이력</h3>
+                <div id="analysisRunList" class="analysisRunList"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="organizationView" class="view">
+          <div class="organizationHeader">
+            <div>
+              <span class="eyebrow">Shared research workspace</span>
+              <h2>조직 · 멤버 관리</h2>
+              <p>조직의 researcher는 프로젝트와 데이터셋을 추가·수정할 수 있고, viewer는 같은 데이터를 조회만 할 수 있습니다.</p>
+            </div>
+          </div>
+          <div class="organizationGrid">
+            <section class="organizationCard">
+              <h3>새 조직</h3>
+              <label>조직 이름
+                <input id="newOrganizationName" placeholder="예: KIMM Battery Lab" maxlength="120" />
+              </label>
+              <button id="createOrganization" type="button" class="saveAction">조직 만들기</button>
+              <label>내 조직
+                <select id="organizationSelect"></select>
+              </label>
+              <p id="organizationRoleHint" class="organizationRoleHint"></p>
+            </section>
+            <section class="organizationCard organizationMembersCard">
+              <div class="organizationMembersHeader">
+                <div>
+                  <h3>멤버</h3>
+                  <p>먼저 사용자가 회원가입한 뒤, 그 아이디를 입력하세요.</p>
+                </div>
+                <button id="refreshOrganizationMembers" type="button" class="secondaryAction">새로고침</button>
+              </div>
+              <div class="organizationMemberAdd">
+                <input id="organizationMemberId" placeholder="사용자 아이디" maxlength="80" />
+                <select id="organizationMemberRole">
+                  <option value="researcher">researcher · 업로드/수정</option>
+                  <option value="viewer">viewer · 조회만</option>
+                  <option value="admin">admin · 멤버 관리</option>
+                  <option value="owner">owner · 전체 관리</option>
+                </select>
+                <button id="addOrganizationMember" type="button" class="saveAction">멤버 저장</button>
+              </div>
+              <div id="organizationMembersList" class="organizationMembersList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="uploadView" class="view">
+          <div class="uploadWorkspaceHeader">
+            <div>
+              <span class="eyebrow">Upload and normalize</span>
+              <h2>데이터 업로드</h2>
+              <p>원본 파일은 그대로 보관하고, BDF 표준 컬럼으로 정규화한 뒤 품질 검토 결과와 함께 Dataset에 연결합니다.</p>
+            </div>
+            <button id="openUploadFilePicker" type="button" class="saveAction">파일 선택</button>
+          </div>
+          <div class="uploadStageGrid">
+            <article><strong>01 · Raw</strong><span>원본 WRD, SEO, CSV, XLSX, XLSB 파일 보관</span></article>
+            <article><strong>02 · Parsed</strong><span>Parser별 정규화 및 BDF 컬럼 매핑</span></article>
+            <article><strong>03 · Quality</strong><span>단위·범위 검토 후 분석 포함 여부 결정</span></article>
+          </div>
+          <p class="uploadWorkspaceNote">왼쪽 입력 패널에서 프로젝트, Campaign, Cell, Dataset을 선택한 다음 파일을 분석하세요.</p>
+        </section>
+
+        <section id="tableView" class="view">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Frequency</th><th>Z real</th><th>Z imag</th><th>|Z|</th><th>Phase</th></tr>
+            </thead>
+            <tbody id="legacyDataTable"></tbody>
+          </table>
+        </section>
+
+        <section id="guideView" class="view guide">
+          <h2>CSV 예시</h2>
+          <pre>frequency,zreal,zimag
+100000,0.82,-0.05
+79432,0.86,-0.07
+63100,0.91,-0.10</pre>
+          <p>컬럼명은 대소문자를 구분하지 않습니다. frequency/freq, zreal/re/real, zimag/im/imag 형태를 인식합니다.</p>
+        </section>
+
+        <section id="usersView" class="view">
+          <div class="usersHeader">
+            <div>
+              <h2>사용자 관리</h2>
+              <p>관리자는 일반 사용자를 탈퇴 처리할 수 있습니다. 삭제하면 해당 사용자의 업로드 데이터도 함께 삭제됩니다.</p>
+            </div>
+            <button id="reloadUsers" type="button">목록 새로고침</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </section>
+
+        <section id="feedbackAdminView" class="view">
+          <div class="usersHeader">
+            <div>
+              <h2>관리자 의견함</h2>
+              <p>사용자가 하단 의견 창에 남긴 수정 요청과 불편 사항을 모아 봅니다.</p>
+            </div>
+            <button id="reloadFeedback" type="button">의견 새로고침</button>
+          </div>
+          <div id="feedbackAdminSummary" class="feedbackAdminSummary"></div>
+          <div id="feedbackList" class="feedbackList">
+            <p class="emptySaved">아직 불러온 의견이 없습니다.</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="feedbackFooter" id="feedbackFooter">
+        <div class="feedbackIntro">
+          <span class="eyebrow">Feedback</span>
+          <h2>수정 요청 · 의견 남기기</h2>
+          <p>계산식 오류, EIS/CYC 판별 문제, 버튼 위치, 추가했으면 하는 기능을 자유롭게 남겨주세요. 로그인 정보가 없어도 저장됩니다.</p>
+        </div>
+        <form id="feedbackForm" class="feedbackForm">
+          <label>이름 / 소속
+            <input id="feedbackName" name="name" placeholder="예: 원종호 / KIMM" />
+          </label>
+          <label>연락처
+            <input id="feedbackEmail" name="email" placeholder="이메일 또는 연락 가능한 메모, 선택" />
+          </label>
+          <label>관련 페이지
+            <input id="feedbackPage" name="page" placeholder="예: CYC 피겨, EIS 업로드, AI 요약" />
+          </label>
+          <label class="feedbackMessage">수정 요청 내용
+            <textarea id="feedbackMessage" name="message" rows="4" placeholder="어떤 부분이 불편했는지, 어떻게 바뀌면 좋을지 적어주세요." required></textarea>
+          </label>
+          <div class="feedbackActions">
+            <button type="submit">의견 보내기</button>
+            <span id="feedbackStatus">아직 전송된 의견이 없습니다.</span>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/app.js?portal=0.18"></script>
+  </body>
+</html>

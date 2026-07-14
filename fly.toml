@@ -1,0 +1,27 @@
+app = "battery-data-portal"
+primary_region = "nrt"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  APP_ENV = "production"
+  DATA_DIR = "/tmp/battery-data"
+  STORAGE_BACKEND = "supabase"
+  S3_FORCE_PATH_STYLE = "true"
+  ALLOW_LEGACY_USER_HEADER = "false"
+  OPENAI_MODEL = "gpt-5.5"
+  OPENAI_REASONING_EFFORT = "low"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
