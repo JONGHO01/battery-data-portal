@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Record every delivered meaningful portal change here before commit, push, packaging, or deployment. Move these entries into the next version section when the version is released.
+- Synchronize GitHub `main` with the committed v0.1.9 Battery Portal source and project-local skills.
 
 ## v0.1.9 - 2026-07-15
 - Adopt semantic portal version numbering (`major.minor.patch`).

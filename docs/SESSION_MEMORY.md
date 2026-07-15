@@ -12,11 +12,12 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 
 ## Current Task
 
-Keep the Battery Portal-specific agent skills inside this repository so the project can be handed off or uploaded with its own operating guidance. The portal now uses semantic version `v0.1.9`, and every meaningful delivered change must be recorded in `CHANGELOG.md` before commit, push, packaging, or deployment. The next GitHub action is to replace the old remote `main` contents with the committed local portal after the user completes the safe force-with-lease push.
+Maintain the Battery Portal with project-local skills, semantic version `v0.1.9`, and a factual `CHANGELOG.md` record for every meaningful delivered change. The current local `main` branch is synchronized with the GitHub `main` branch.
 
 ## Current Status
 
 - The repository release state is `v0.1.9` in `VERSION` and `README.md`; the FastAPI app and `public/app.js` use version `0.1.9`.
+- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; `main` tracks `origin/main` at commit `9b13654` (`Release Battery Portal v0.1.9`).
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
 - Local runtime: SQLite and local file storage are the current defaults. PostgreSQL and S3/Supabase-compatible storage are configuration targets, not confirmed active services.
@@ -96,7 +97,7 @@ Keep the Battery Portal-specific agent skills inside this repository so the proj
 - Manually refresh the portal and retry the same SEO/EIS upload once. If the backend returns an error, record the user-visible Korean message and the new server-log trace before making another change.
 - Push the existing local `main` branch to the corrected GitHub remote `https://github.com/JONGHO01/battery-data-portal.git`. The account login is `JONGHO01` (with zero before the final `1`), not `JONGHOO1`. Do not upload local runtime data or the ZIP itself as source files.
 - Commit the project-local skill set before the next GitHub push.
-- Commit the v0.1.9 version and changelog-policy changes before the next GitHub push.
+- Continue using ordinary commits and pushes for future changes; the earlier remote-history replacement is complete.
 
 ## Do Not Repeat
 
@@ -114,7 +115,6 @@ Keep the Battery Portal-specific agent skills inside this repository so the proj
 - Which production provider should be used for the application, PostgreSQL, and object storage: Render, Railway, Fly.io, Supabase, S3-compatible storage, or another approved service?
 - Should the next deployment package replace the existing clean upload copy or be created as a new versioned package?
 - Which real user roles and organization membership workflow should be tested first after deployment?
-- After the corrected remote is pushed, does GitHub report a non-fast-forward conflict with the existing remote `main` history? Do not force-push without an explicit user decision.
 
 ## Verification
 
@@ -132,6 +132,7 @@ Keep the Battery Portal-specific agent skills inside this repository so the proj
 - 2026-07-14: The local Git remote `origin` was corrected to `https://github.com/JONGHO01/battery-data-portal.git`. Local `main` is clean at `813b344 Add Battery Portal session memory skill`; push is the next action. No remote files have been changed yet.
 - 2026-07-14: Added portal-local skills for versioning, CYC/cellpy, and EIS/impedance.py without changing or deleting the matching personal skills. Version touchpoints were synchronized to v0.19, including the browser cache query strings.
 - 2026-07-15: Changed the portal to semantic version `v0.1.9`; `CHANGELOG.md`, `AGENTS.md`, and the project-local versioning skill now require a factual change record for every meaningful delivered change.
+- 2026-07-15: Configured this repository's Git author as `JONGHO01`, committed `Release Battery Portal v0.1.9` (`9b13654`), fetched the six old remote commits, and used `git push --force-with-lease -u origin main` to replace the prior GitHub `main` history with the current portal. Local `main` and `origin/main` now match.
 
 ## Next Session Prompt
 
