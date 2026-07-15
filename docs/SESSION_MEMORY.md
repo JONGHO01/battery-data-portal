@@ -17,7 +17,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.9`
 ## Current Status
 
 - The repository release state is `v0.1.9` in `VERSION` and `README.md`; the FastAPI app and `public/app.js` use version `0.1.9`.
-- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; `main` tracks `origin/main` at commit `9b13654` (`Release Battery Portal v0.1.9`).
+- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks and is synchronized with `origin/main`.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
 - Local runtime: SQLite and local file storage are the current defaults. PostgreSQL and S3/Supabase-compatible storage are configuration targets, not confirmed active services.
@@ -132,7 +132,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.9`
 - 2026-07-14: The local Git remote `origin` was corrected to `https://github.com/JONGHO01/battery-data-portal.git`. Local `main` is clean at `813b344 Add Battery Portal session memory skill`; push is the next action. No remote files have been changed yet.
 - 2026-07-14: Added portal-local skills for versioning, CYC/cellpy, and EIS/impedance.py without changing or deleting the matching personal skills. Version touchpoints were synchronized to v0.19, including the browser cache query strings.
 - 2026-07-15: Changed the portal to semantic version `v0.1.9`; `CHANGELOG.md`, `AGENTS.md`, and the project-local versioning skill now require a factual change record for every meaningful delivered change.
-- 2026-07-15: Configured this repository's Git author as `JONGHO01`, committed `Release Battery Portal v0.1.9` (`9b13654`), fetched the six old remote commits, and used `git push --force-with-lease -u origin main` to replace the prior GitHub `main` history with the current portal. Local `main` and `origin/main` now match.
+- 2026-07-15: Configured this repository's Git author as `JONGHO01`, committed the v0.1.9 release, fetched the six old remote commits, and used `git push --force-with-lease -u origin main` to replace the prior GitHub `main` history with the current portal. The release and synchronization record were then pushed normally; local `main` and `origin/main` match.
 
 ## Next Session Prompt
 
