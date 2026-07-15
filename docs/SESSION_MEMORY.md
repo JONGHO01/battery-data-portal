@@ -12,11 +12,11 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 
 ## Current Task
 
-The organization menu is positioned immediately before the admin feedback inbox in v0.18. The next manual check is to refresh the portal and retry the same SEO/EIS file once.
+Keep the Battery Portal-specific agent skills inside this repository so the project can be handed off or uploaded with its own operating guidance. The portal now uses semantic version `v0.1.9`, and every meaningful delivered change must be recorded in `CHANGELOG.md` before commit, push, packaging, or deployment. The next GitHub action is to replace the old remote `main` contents with the committed local portal after the user completes the safe force-with-lease push.
 
 ## Current Status
 
-- The repository release state is `v0.18` in `VERSION` and `README.md`; the FastAPI app reports `0.0.18`, and `public/app.js` uses portal version `0.18`.
+- The repository release state is `v0.1.9` in `VERSION` and `README.md`; the FastAPI app and `public/app.js` use version `0.1.9`.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
 - Local runtime: SQLite and local file storage are the current defaults. PostgreSQL and S3/Supabase-compatible storage are configuration targets, not confirmed active services.
@@ -26,6 +26,7 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - The dataset-creation client now reads non-JSON server responses safely. It shows a clear Korean retry message instead of the raw `Unexpected token '<'` JSON error.
 - `docs/CURRENT_TASK.md` contains older handoff material that still states v0.14 and has encoding damage. Do not use it as the release-version source of truth; use `VERSION`, `CHANGELOG.md`, current code, and this file.
 - This file, `AGENTS.md`, and the project-local skill were added to make future handoffs durable. No hook or raw-prompt log exists.
+- The project-local skill set now covers session memory, release versioning, CYC/cellpy analysis, and EIS/impedance.py analysis. Matching personal skills remain unchanged in `C:\\Users\\user\\.codex\\skills`.
 - A clean GitHub upload package for v0.18 is available at `C:\\Users\\user\\Documents\\Codex\\2026-07-03\\gks\\outputs\\battery-data-portal-github-upload-v0.18` and as a ZIP beside it. It contains source, deployment configuration, tests, documentation, and the project-local session-memory skill, but excludes local runtime data and secrets.
 
 ## Important User Requirements
@@ -38,6 +39,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - AI summary should use a real API only when configured and otherwise return a local, calculation-based fallback instead of failing.
 - Store only durable project context in this memory. Never store every user statement, raw conversations, temporary ideas, or secrets.
 - Keep the existing personal `battery-portal-versioning` skill separate and never modify it.
+- Keep portal-specific skills inside `.agents/skills/` so a GitHub clone has the same project workflow guidance.
+- Record every meaningful delivered code, UI, analysis, deployment, documentation, or workflow change in `CHANGELOG.md`; use `Unreleased` until the user requests the next released version.
 
 ## Design Decisions
 
@@ -56,6 +59,9 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - `AGENTS.md`: repository rules, Memory Gate use, and versioning-skill boundary.
 - `docs/SESSION_MEMORY.md`: durable project state for context-reset handoff.
 - `.agents/skills/battery-portal-session-memory/SKILL.md`: project-local memory workflow.
+- `.agents/skills/battery-portal-versioning/SKILL.md`: project-local version and release workflow.
+- `.agents/skills/battery-portal-cellpy/SKILL.md`: project-local CYC analysis workflow using cellpy when appropriate.
+- `.agents/skills/battery-portal-impedance/SKILL.md`: project-local EIS workflow using impedance.py when appropriate.
 - `python_backend.py`: SQLite-row-safe user-field access for token and organization permission checks.
 - `tests/test_organizations.py`: regression coverage for authenticated SQLite rows in personal and shared projects.
 - `public/app.js`: EIS column glossary and safe parsing of dataset-save API responses.
@@ -63,6 +69,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - `tests/test_organizations.py`: EIS dataset and figure persistence regression coverage using a SQLite user row.
 - `public/index.html`: moved the Organization menu to directly before the Feedback Inbox, making it the second menu from the right.
 - `VERSION`, `README.md`, `CHANGELOG.md`, `python_backend.py`, `public/app.js`, `public/index.html`: v0.18 release and cache references.
+- `VERSION`, `README.md`, `CHANGELOG.md`, `python_backend.py`, `public/app.js`, `public/index.html`: v0.19 project-local skill release and cache references.
+- `VERSION`, `README.md`, `CHANGELOG.md`, `python_backend.py`, `public/app.js`, `public/index.html`, `AGENTS.md`, `.agents/skills/battery-portal-versioning/SKILL.md`: v0.1.9 semantic-version release and mandatory change-recording policy.
 - `C:\\Users\\user\\Documents\\Codex\\2026-07-03\\gks\\outputs\\battery-data-portal-clean-v0.01`: synced through v0.18 with the navigation move and release files. It contains no copied local data, logs, or secrets.
 - `C:\\Users\\user\\Documents\\Codex\\2026-07-03\\gks\\outputs\\battery-data-portal-github-upload-v0.18` and `.zip`: current GitHub upload package for v0.18. It intentionally includes only code, tests, settings templates, and documentation.
 - `C:\\Users\\user\\Documents\\Codex\\2026-07-03\\gks\\outputs\\battery-portal-saved-skills-guide-v0.18.pptx`: 10-slide Korean presentation explaining the eight saved portal-related skills, their current status, and the recommended operating workflow.
@@ -87,6 +95,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - Review and repair or replace stale/garbled historical handoff documentation, especially `docs/CURRENT_TASK.md`, in a dedicated documentation task.
 - Manually refresh the portal and retry the same SEO/EIS upload once. If the backend returns an error, record the user-visible Korean message and the new server-log trace before making another change.
 - Push the existing local `main` branch to the corrected GitHub remote `https://github.com/JONGHO01/battery-data-portal.git`. The account login is `JONGHO01` (with zero before the final `1`), not `JONGHOO1`. Do not upload local runtime data or the ZIP itself as source files.
+- Commit the project-local skill set before the next GitHub push.
+- Commit the v0.1.9 version and changelog-policy changes before the next GitHub push.
 
 ## Do Not Repeat
 
@@ -96,6 +106,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - Do not remove the local storage fallback just because S3/Supabase is not configured.
 - Do not claim PostgreSQL, S3/Supabase, OpenAI, a custom domain, or HTTPS is live until the related environment and deployment have been verified.
 - Do not modify the personal `battery-portal-versioning` skill. Use it only for version, changelog, release-note, or upload-packaging work.
+- Do not delete or alter the personal `cellpy`, `impedance-py`, or `battery-portal-versioning` skills while keeping project-local copies in `.agents/skills/`.
+- Do not ship a meaningful portal change without adding a short factual `CHANGELOG.md` entry.
 
 ## Open Questions
 
@@ -118,6 +130,8 @@ The organization menu is positioned immediately before the admin feedback inbox 
 - 2026-07-14: Git for Windows was installed for the current user. The project was initialized locally on the `main` branch with the commit message `Add Battery Portal session memory skill`. `.gitignore` excludes local secrets, runtime databases, logs, uploads, Harvester state, and `data/storage/` artifacts.
 - 2026-07-14: GitHub Desktop login diagnostics confirmed the account is `JONGHO01`, not `JONGHOO1`. The previous remote contained a letter `O` where the account has the digit `0`, causing `Repository not found` for the private repository.
 - 2026-07-14: The local Git remote `origin` was corrected to `https://github.com/JONGHO01/battery-data-portal.git`. Local `main` is clean at `813b344 Add Battery Portal session memory skill`; push is the next action. No remote files have been changed yet.
+- 2026-07-14: Added portal-local skills for versioning, CYC/cellpy, and EIS/impedance.py without changing or deleting the matching personal skills. Version touchpoints were synchronized to v0.19, including the browser cache query strings.
+- 2026-07-15: Changed the portal to semantic version `v0.1.9`; `CHANGELOG.md`, `AGENTS.md`, and the project-local versioning skill now require a factual change record for every meaningful delivered change.
 
 ## Next Session Prompt
 

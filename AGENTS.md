@@ -17,7 +17,14 @@ This repository is the Battery Data Portal project.
 - Do not store secrets, API keys, tokens, passwords, cookies, credentials, or unnecessary personal information.
 - Do not create hooks or automatic raw-prompt logs for session memory.
 
+## Project-Local Skills
+
+- Prefer the Battery Portal skills in `.agents/skills/` for Battery Portal work.
+- The portal-local skill set is `battery-portal-session-memory`, `battery-portal-versioning`, `battery-portal-cellpy`, and `battery-portal-impedance`.
+- The matching files in `C:\\Users\\user\\.codex\\skills\\` are personal source skills. Keep them intact; do not delete or modify them when maintaining this repository.
+
 ## Versioning And Releases
 
-- For `VERSION`, `CHANGELOG`, release notes, upload packaging, or a version bump, use the existing personal `battery-portal-versioning` skill when available.
+- For `VERSION`, `CHANGELOG`, release notes, upload packaging, or a version bump, use the project-local `battery-portal-versioning` skill.
+- Record every meaningful delivered change in the newest `CHANGELOG.md` section before commit, push, packaging, or deployment. Use `Unreleased` until a version is explicitly released.
 - Do not modify the personal `battery-portal-versioning` skill itself.

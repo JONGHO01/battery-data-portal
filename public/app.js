@@ -1,4 +1,4 @@
-const PORTAL_VERSION = "0.18";
+const PORTAL_VERSION = "0.1.9";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // 포탈 전체에서 공유하는 화면 상태입니다.

@@ -99,7 +99,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.0.18", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.9", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get("CORS_ALLOW_ORIGINS", "*").split(","),

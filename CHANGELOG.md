@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+- Record every delivered meaningful portal change here before commit, push, packaging, or deployment. Move these entries into the next version section when the version is released.
+
+## v0.1.9 - 2026-07-15
+- Adopt semantic portal version numbering (`major.minor.patch`).
+- Add the project rule that every meaningful portal change must be recorded in this changelog.
+- Include project-local skills for versioning, CYC/cellpy, EIS/impedance.py, and session memory.
+
+
 ## v0.18 - 2026-07-13
 - Move the organization menu to the second position from the right.
 
