@@ -1,16 +1,42 @@
-﻿# Battery Data Portal
+# Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.9-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.25-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 피겨와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
+배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.9**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
+현재 버전은 **v0.1.25**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
+
+---
+
+## 버전 이력
+
+전체 변경 내역은 [CHANGELOG.md](./CHANGELOG.md)에서 관리합니다. 포털 관리자 화면의 `버전 이력`에서도 아래 최신 이력을 확인할 수 있습니다.
+
+| 버전 | 날짜 | 핵심 변경 |
+|---|---|---|
+| v0.1.25 | 2026-07-16 | SQLite 동시 저장 대기와 WAL 모드로 대용량 Dataset 저장 안정화 |
+| v0.1.24 | 2026-07-16 | CYC 전압/전류 거동 Fig와 원본 프로파일의 평균 전류 표기를 추가 |
+| v0.1.23 | 2026-07-16 | CYC Fig 선택값에 따라 성능, 전압 프로파일, 통합 화면을 각각 렌더링 |
+| v0.1.22 | 2026-07-16 | 만료된 로그인 토큰을 감지하면 로그인 화면으로 안전하게 복귀 |
+| v0.1.21 | 2026-07-16 | 여러 파일을 순차 분석·저장하고 파일별 Fig 기록 생성 |
+| v0.1.20 | 2026-07-16 | CYC 파일의 명시적 C-rate 열을 읽어 Fig cycle 구간을 자동 구분 |
+| v0.1.19 | 2026-07-16 | 포털의 Fig 용어를 통일 |
+| v0.1.18 | 2026-07-16 | WBCS WRD의 불완전 조각을 제외하고 CYC Fig의 유효 cycle만 표시 |
+| v0.1.17 | 2026-07-16 | 파일 종류 목록에서 CYC·CV·EIS를 바로 선택 가능 |
+| v0.1.16 | 2026-07-16 | Analysis Lab의 일반 메뉴 진입점은 숨기고, 기존 분석 기능과 이력은 보존 |
+| v0.1.15 | 2026-07-15 | 로그인 Enter 제출과 파일 판별 선택 UI를 명확화 |
+| v0.1.14 | 2026-07-15 | WBCS WRD 기본 업로드 한도를 100 MB로 확장하고 한도 초과 오류를 명확화 |
+| v0.1.13 | 2026-07-15 | README와 관리자 전용 화면에 버전 이력 추가 |
+| v0.1.12 | 2026-07-15 | AI 요약 UI 제거, 기존 데이터 호환성 유지 |
+| v0.1.11 | 2026-07-15 | CYC 절대 용량 분석과 분석 이력 Dataset 삭제 보완 |
+| v0.1.10 | 2026-07-15 | 운영 보안, 파일 저장, 업로드·삭제 수명주기 강화 |
+| v0.1.9 | 2026-07-15 | 시맨틱 버전과 프로젝트 전용 스킬·변경 기록 규칙 도입 |
 
 ---
 
@@ -22,7 +48,6 @@
 - 엑셀처럼 표 데이터를 직접 수정
 - 전극 무게, 두께, 조성비 기반으로 1C 및 C-rate 전류 계산
 - 계산된 전극 조건을 저장하고 CYC 데이터에 바로 적용
-- 선택 데이터의 주요 결과를 OpenAI API 또는 로컬 fallback으로 요약
 - 페이지 하단에서 누구나 수정 요청과 의견을 남길 수 있음
 - 로컬 저장에서 운영 DB와 클라우드 저장소로 확장
 
@@ -53,12 +78,11 @@ Organization (선택)
 | 전극 계산 | 1C, C-rate, loading 계산 | 전극 질량, 두께, 조성비, 이론용량을 바탕으로 전류값을 계산합니다. |
 | 계산 저장소 | 전극 C-rate 저장 | 자주 쓰는 전극 계산 조건을 저장하고 다시 불러옵니다. |
 | CYC 적용 | 저장 계산값 적용 | 저장된 전극 조건을 선택한 CYC 데이터에 바로 넣습니다. |
-| AI 요약 | OpenAI 기반 결과 해석 | Python 백엔드가 핵심값을 계산한 뒤 OpenAI API로 논문/PPT용 해석문을 생성합니다. API 키가 없으면 로컬 계산 기반 요약으로 fallback됩니다. |
 | 수정 요청 | 누구나 의견 남기기 | 페이지 하단에서 오류, 추가 기능, 계산식 수정 요청을 저장할 수 있습니다. |
 | 백엔드 API | 저장, 조회, 수정, 삭제 | FastAPI 서버가 프론트 화면과 DB 사이를 연결합니다. |
 | 운영 확장 | PostgreSQL, S3/Supabase | 나중에 진짜 사이트처럼 운영할 수 있도록 확장 방향을 준비했습니다. |
 | 데이터 표준 | BDF + 품질 검토 | Parser별 입력을 표준 컬럼과 단위로 정규화하고, 이상 행은 삭제하지 않고 분석 포함 여부로 관리합니다. |
-| 분석 이력 | Analysis Lab | retention, dQ/dV, DVA, rate, pulse, EIS 결과와 파라미터를 재현 가능한 이력으로 저장합니다. |
+| 분석 이력 | Analysis Lab (UI 숨김) | retention, dQ/dV, DVA, rate, pulse, EIS 결과와 파라미터를 재현 가능한 이력으로 저장합니다. 일반 메뉴에서는 잠시 숨겼습니다. |
 | 공동 연구 | 조직/역할 | 조직 프로젝트에서 owner/admin/researcher/viewer 역할로 공유 범위를 정합니다. |
 | 장비 연동 | Harvester | 장비 PC의 안정화된 파일을 중복 없이 업로드하는 opt-in 수집기입니다. |
 
@@ -73,8 +97,7 @@ flowchart LR
     C --> D["전극 계산"]
     D --> E["전극 C-rate 저장소"]
     E --> F["선택 CYC에 적용"]
-    F --> G["AI 요약"]
-    G --> H["피겨 / 보고서 정리"]
+    F --> H["Fig / 보고서 정리"]
 ```
 
 ---
@@ -85,7 +108,7 @@ flowchart LR
 battery-data-portal/
 ├─ public/
 │  ├─ index.html      # 사용자가 보는 메인 화면입니다.
-│  ├─ app.js          # 업로드, 계산, 저장, AI 요약 등 화면 동작을 담당합니다.
+│  ├─ app.js          # 업로드, 계산, 저장, 분석 화면 동작을 담당합니다.
 │  └─ style.css       # 화면 색상, 여백, 카드, 표 디자인을 담당합니다.
 ├─ backend/
 │  ├─ parsers/        # CSV, Excel, WRD, SEO 파일별 Parser입니다.
@@ -229,8 +252,7 @@ OPENAI_REASONING_EFFORT=low
 
 - 전극 C-rate 저장소는 먼저 브라우저 `localStorage` 기반으로 동작합니다.
 - 선택한 CYC 데이터에 전극 계산값을 넣으면 데이터 객체에 계산 정보가 함께 저장됩니다.
-- AI 요약 페이지는 이제 `프론트 화면 → Python 백엔드 → 데이터 핵심값 계산 → OpenAI API → 논문/PPT용 해석문 반환` 구조를 사용합니다.
-- `OPENAI_API_KEY`가 없으면 같은 화면에서 로컬 계산 기반 요약문으로 자동 전환됩니다.
+- AI 요약 메뉴와 전용 화면은 v0.1.12에서 제거했습니다. 기존 데이터는 보존되며, 남아 있는 백엔드 호환 API는 포털 화면에서 호출하지 않습니다.
 
 ---
 

@@ -18,6 +18,22 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result["initial_capacity_mah_g"], 160.0)
         self.assertAlmostEqual(result["final_retention_pct"], 95.0)
 
+    def test_retention_converts_standard_discharge_capacity_ah_to_mah(self):
+        """CYC files with absolute discharge capacity must not become unavailable."""
+
+        result = summarize_retention(
+            [
+                {"cycle_index": 1, "discharge_capacity_ah": 0.150},
+                {"cycle_index": 2, "discharge_capacity_ah": 0.135},
+            ]
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["capacity_unit"], "mAh")
+        self.assertEqual(result["initial_capacity_mah"], 150.0)
+        self.assertEqual(result["final_capacity_mah"], 135.0)
+        self.assertAlmostEqual(result["final_retention_pct"], 90.0)
+
     def test_dqdv_returns_no_result_when_a_summary_file_has_no_voltage_curve(self):
         result = calculate_dqdv(
             [

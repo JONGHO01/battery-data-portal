@@ -24,6 +24,8 @@ Update and verify all of the following:
 - `python_backend.py` FastAPI version
 - `public/app.js` `PORTAL_VERSION`
 - `public/index.html` cache query strings for `style.css` and `app.js`
+- `README.md` concise semantic-release table when the portal exposes version history
+- `public/app.js` `RELEASE_HISTORY` summary when the administrator Version History view is present
 
 Use `rg "version|v0\\.|portal=" public README.md CHANGELOG.md python_backend.py` before finalizing.
 
@@ -32,7 +34,7 @@ Use `rg "version|v0\\.|portal=" public README.md CHANGELOG.md python_backend.py`
 1. Read `VERSION`, `CHANGELOG.md`, `AGENTS.md`, and `docs/SESSION_MEMORY.md` first.
 2. Make the requested portal or workflow change.
 3. Bump every required version touchpoint together.
-4. Update the newest `CHANGELOG.md` entry with a short factual note. Do not leave delivered changes undocumented.
+4. Update the newest `CHANGELOG.md` entry with a short factual note. When the Version History view is present, also update its matching `RELEASE_HISTORY` item and the README release table. Do not leave delivered changes undocumented.
 5. Rebuild any GitHub upload package from an explicit allow-list. Exclude `.env`, databases, raw uploads, logs, `.venv`, cache folders, and Harvester credentials.
 6. Record the release state in `docs/SESSION_MEMORY.md` without secrets.
 

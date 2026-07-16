@@ -1,10 +1,100 @@
-const PORTAL_VERSION = "0.1.9";
+const PORTAL_VERSION = "0.1.25";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
+
+// README와 CHANGELOG의 최신 의미 있는 변경을 관리자 화면에서도 빠르게 확인합니다.
+// 전체 과거 이력은 저장소의 CHANGELOG.md가 기준이며, 이 목록은 운영자가 보는 요약입니다.
+const RELEASE_HISTORY = [
+  {
+    version: "0.1.25",
+    date: "2026-07-16",
+    changes: ["Large CYC/EIS file finalization now uses SQLite WAL mode and a 30-second write wait, reducing transient Dataset-save server errors during concurrent browser activity."],
+  },
+  {
+    version: "0.1.24",
+    date: "2026-07-16",
+    changes: ["CYC 요약 데이터도 전압과 전류의 cycle별 변화를 함께 보여주고, 원본 전압 프로파일은 곡선별 평균 전류를 범례에 표시하도록 개선했습니다."],
+  },
+  {
+    version: "0.1.23",
+    date: "2026-07-16",
+    changes: ["CYC Fig 생성 시 선택한 성능, 전압 프로파일, 통합 Fig 종류가 각각 다른 화면으로 렌더링되도록 수정했습니다. 전압-용량/시간 곡선 점이 부족한 요약 파일은 잘못된 곡선을 만들지 않고 이유를 안내합니다."],
+  },
+  {
+    version: "0.1.22",
+    date: "2026-07-16",
+    changes: ["만료되었거나 서버 재시작으로 무효가 된 로그인 토큰을 감지하면, 파일 분석 오류 대신 로그인 화면으로 안전하게 돌아가도록 수정했습니다."],
+  },
+  {
+    version: "0.1.21",
+    date: "2026-07-16",
+    changes: ["여러 파일을 한 번에 선택해 최대 10개까지 순서대로 분석·저장하고, 파일별 Dataset과 Fig 기록을 만들 수 있도록 추가했습니다."],
+  },
+  {
+    version: "0.1.20",
+    date: "2026-07-16",
+    changes: ["CYC 파일의 명시적 C-rate 열을 읽어 Fig cycle 구간을 자동 구분하도록 개선했습니다."],
+  },
+  {
+    version: "0.1.19",
+    date: "2026-07-16",
+    changes: ["포털 화면의 Fig 용어를 통일했습니다."],
+  },
+  {
+    version: "0.1.18",
+    date: "2026-07-16",
+    changes: ["WBCS WRD에서 짧게 끊긴 시작·종료 조각은 제외하고, CYC Fig에는 1 이상인 유효 cycle만 그리도록 보완했습니다."],
+  },
+  {
+    version: "0.1.17",
+    date: "2026-07-16",
+    changes: ["파일 종류 선택 목록을 항상 열어 두고, CYC·CV·EIS 항목을 바로 고르면 직접 선택 모드로 전환되도록 수정했습니다."],
+  },
+  {
+    version: "0.1.16",
+    date: "2026-07-16",
+    changes: ["일상 작업 화면에서는 Analysis Lab 메뉴, 홈 카드, 작업 탭을 숨겼습니다. 기존 분석 기능과 저장 이력은 보존되어 나중에 다시 열 수 있습니다."],
+  },
+  {
+    version: "0.1.15",
+    date: "2026-07-15",
+    changes: ["로그인 입력창에서 Enter로 제출할 수 있게 하고, 파일 판별의 데이터 종류 선택과 읽기 전용 열 이름을 명확히 구분했습니다."],
+  },
+  {
+    version: "0.1.14",
+    date: "2026-07-15",
+    changes: ["60 MB대 WBCS CYC WRD 파일을 기본 업로드 한도 100 MB에서 읽고, 한도 초과 사유를 화면에 명확히 표시하도록 개선했습니다."],
+  },
+  {
+    version: "0.1.13",
+    date: "2026-07-15",
+    changes: ["README와 관리자 전용 화면에서 버전 이력을 확인할 수 있도록 추가했습니다."],
+  },
+  {
+    version: "0.1.12",
+    date: "2026-07-15",
+    changes: ["AI 요약 메뉴, 홈 카드, 작업 탭과 전용 화면을 제거하고 기존 데이터 호환성은 유지했습니다."],
+  },
+  {
+    version: "0.1.11",
+    date: "2026-07-15",
+    changes: ["CYC 절대 용량(Ah/mAh)을 Retention 분석에 반영하고, 분석 이력이 있는 Dataset 삭제를 보완했습니다."],
+  },
+  {
+    version: "0.1.10",
+    date: "2026-07-15",
+    changes: ["운영 환경 인증, CORS, 파일 저장, 업로드 크기, Dataset 삭제와 아티팩트 정리를 강화했습니다."],
+  },
+  {
+    version: "0.1.9",
+    date: "2026-07-15",
+    changes: ["시맨틱 버전 체계와 프로젝트 전용 스킬, 변경 이력 기록 규칙을 도입했습니다."],
+  },
+];
 
 // 포탈 전체에서 공유하는 화면 상태입니다.
 // 서버에 저장되는 데이터는 datasets에 들어오고, 화면 필터 결과는 filtered에 따로 둡니다.
 // 이렇게 분리하면 검색 조건을 바꿔도 원본 데이터 목록을 다시 불러오지 않아도 됩니다.
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, lastAiSummary: null, analysis: null, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -25,8 +115,9 @@ const ELECTRODE_SLOT_FIELDS = [
   { id: "calcSuperRatio", label: "도전재 (%)", step: "0.1" },
   { id: "calcPtfeRatio", label: "바인더 (%)", step: "0.1" },
 ];
-let aiSummaryRequestId = 0;
 const FILE_INSPECT_TIMEOUT_MS = 150000;
+const BATCH_FIGURE_FILE_LIMIT = 10;
+const BATCH_FIGURE_KIND_BY_TYPE = { cyc: "cycling-performance", cv: "cv-curve", eis: "eis-combined" };
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n, d = 4) => Number.isFinite(n) ? Number(n).toPrecision(d) : "";
@@ -44,7 +135,7 @@ function setStatus(text) {
   $("saveStatus").textContent = text;
 }
 
-function setBusy(on, message = "데이터를 처리하고 있습니다.") {
+function setBusy(on, message = "데이터를 처리하고 있습니다.", timeoutMs = 45000) {
   const overlay = $("busyOverlay");
   if (!overlay) return;
   if (busyUnlockTimer) {
@@ -53,7 +144,7 @@ function setBusy(on, message = "데이터를 처리하고 있습니다.") {
   }
   $("busyMessage").textContent = message;
   overlay.classList.toggle("hidden", !on);
-  if (on) {
+  if (on && timeoutMs > 0) {
     busyUnlockTimer = window.setTimeout(() => {
       overlay.classList.add("hidden");
       setStatus("분석 지연");
@@ -61,7 +152,7 @@ function setBusy(on, message = "데이터를 처리하고 있습니다.") {
         "파일 분석 응답이 오래 걸려 화면 잠금을 자동으로 풀었습니다. 새로고침하지 말고, 파일을 다시 선택한 뒤 '파일 분석'을 한 번만 눌러주세요.",
         "분석이 오래 걸립니다"
       );
-    }, 45000);
+    }, timeoutMs);
   }
 }
 
@@ -130,6 +221,7 @@ function applyUser(user) {
     state.filtered = [];
     state.users = [];
     state.feedbacks = [];
+    state.batchFigureResults = [];
     state.analysisRuns = [];
     state.selectedAnalysisRunId = null;
     state.hierarchy = [];
@@ -158,7 +250,7 @@ function showWorkspace() {
   setStatus("Data workspace");
 }
 
-// 상단 메뉴나 탭에서 "검색", "전극 계산", "AI 요약" 같은 큰 화면으로 이동할 때 사용합니다.
+// 상단 메뉴나 탭에서 "검색", "전극 계산", "분석" 같은 큰 화면으로 이동할 때 사용합니다.
 // 각 화면을 열 때 필요한 렌더링도 여기서 한 번에 실행합니다.
 function openWorkspaceView(viewName) {
   if ($("moduleHome")) $("moduleHome").classList.add("hidden");
@@ -169,7 +261,6 @@ function openWorkspaceView(viewName) {
   activateView(viewName);
   if (viewName === "search") renderSearchResults();
   if (viewName === "electrodeCalc") renderElectrodeCalc();
-  if (viewName === "aiSummary") renderAISummary();
   if (viewName === "analysisLab") {
     renderAnalysisLab();
     loadAnalysisRuns().catch((err) => setStatus(err.message));
@@ -179,23 +270,23 @@ function openWorkspaceView(viewName) {
     loadOrganizations().catch((err) => setStatus(err.message));
   }
   if (viewName === "feedbackAdmin") loadFeedbacks().catch((err) => setStatus(err.message));
+  if (viewName === "releaseHistory") renderReleaseHistory();
   if (viewName === "users") loadUsers().catch((err) => setStatus(err.message));
   renderSelect();
   renderSavedList();
   renderCurrent();
-  const label = { search: "검색", savedFigures: "피겨 모음", electrodeCalc: "전극 계산", aiSummary: "AI 요약", analysisLab: "Analysis Lab", feedbackAdmin: "의견함", users: "사용자 관리", figure: "피겨" }[viewName] || "작업 화면";
+  const label = { search: "검색", savedFigures: "Fig 모음", electrodeCalc: "전극 계산", analysisLab: "Analysis Lab", feedbackAdmin: "의견함", releaseHistory: "버전 이력", users: "사용자 관리", figure: "Fig" }[viewName] || "작업 화면";
   setStatus(label);
   if (viewName === "electrodeCalc") setElectrodeCalcMode("calc");
 }
 
 // 상단 드롭다운 메뉴의 공통 라우터입니다.
-// 버튼에 data-view, data-module, data-ai-section 같은 속성을 달아두면 이 함수가 알맞은 화면으로 보냅니다.
+// 버튼에 data-view, data-module 같은 속성을 달아두면 이 함수가 알맞은 화면으로 보냅니다.
 function navigateMenuTarget(target) {
   const module = target?.dataset?.module;
   const view = target?.dataset?.view;
   const focusSection = target?.dataset?.focusSection;
   const electrodeMode = target?.dataset?.electrodeMode;
-  const aiSection = target?.dataset?.aiSection;
   const analysisName = target?.dataset?.analysisName;
   if (view === "search") return openSearchView(target.dataset.searchType || "all");
   if (module) return showModule(module);
@@ -204,11 +295,6 @@ function navigateMenuTarget(target) {
     openWorkspaceView(view);
     if (view === "electrodeCalc") {
       setElectrodeCalcMode(electrodeMode || "calc");
-    }
-    if (view === "aiSummary" && aiSection) {
-      window.setTimeout(() => {
-        document.querySelector(`[data-ai-summary-section="${aiSection}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
     }
     if (focusSection) {
       window.setTimeout(() => {
@@ -245,11 +331,11 @@ function showModule(module) {
     $("dataWorkspace").classList.remove("hidden");
     ensureSelectedForModule(state.activeFigureModule);
     activateView("figure", state.activeFigureModule);
-    const label = { cyc: "CYC 피겨", cv: "CV 피겨", eis: "EIS 피겨" }[state.activeFigureModule] || "피겨 만들기";
+    const label = { cyc: "CYC Fig", cv: "CV Fig", eis: "EIS Fig" }[state.activeFigureModule] || "Fig 만들기";
     const hint = {
       cyc: "CYC 파일을 넣으면 사이클/방전용량/C-rate를 자동 판별합니다.",
       cv: "CV 파일을 넣으면 전압-전류 곡선을 자동 판별합니다.",
-      eis: "EIS 파일을 넣으면 Nyquist/Bode 피겨를 자동 판별합니다.",
+      eis: "EIS 파일을 넣으면 Nyquist/Bode Fig를 자동 판별합니다.",
     }[state.activeFigureModule];
     if ($("fileHint") && hint) $("fileHint").textContent = `${hint} CSV/XLSX/XLSB/WRD 지원.`;
     renderSelect();
@@ -452,6 +538,22 @@ function renderFeedbackAdmin() {
   }).join("");
 }
 
+function renderReleaseHistory() {
+  const current = $("releaseCurrentVersion");
+  const list = $("releaseHistoryList");
+  if (!list) return;
+  if (current) current.textContent = `현재 버전 v${PORTAL_VERSION}`;
+  list.innerHTML = RELEASE_HISTORY.map((release) => `
+    <article class="releaseHistoryCard">
+      <div class="releaseHistoryCardHeader">
+        <h3>v${escapeXml(release.version)}</h3>
+        <time datetime="${escapeXml(release.date)}">${escapeXml(release.date)}</time>
+      </div>
+      <ul>${release.changes.map((change) => `<li>${escapeXml(change)}</li>`).join("")}</ul>
+    </article>
+  `).join("");
+}
+
 async function deleteUser(id) {
   if (!confirm(`${id} 사용자를 탈퇴시키고 이 사용자의 데이터를 삭제할까요?`)) return;
   const res = await fetch(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
@@ -566,6 +668,22 @@ function numberValue(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+// C-rate is often written as a number, "0.33 C", or a fraction such as "C/10".
+// Convert those equivalent labels to one numeric value before plotting groups.
+function parseCRateValue(value) {
+  const direct = numberValue(value);
+  if (Number.isFinite(direct) && direct > 0 && direct <= 20) return direct;
+  const text = String(value ?? "").trim().toLowerCase().replace(/\s+/g, "");
+  const fraction = text.match(/^c\/([0-9]+(?:\.[0-9]+)?)$/);
+  if (fraction) {
+    const denominator = Number(fraction[1]);
+    return Number.isFinite(denominator) && denominator > 0 ? 1 / denominator : null;
+  }
+  const decimal = text.match(/^(?:re)?([0-9]+(?:\.[0-9]+)?)c?$/);
+  const rate = decimal ? Number(decimal[1]) : NaN;
+  return Number.isFinite(rate) && rate > 0 && rate <= 20 ? rate : null;
+}
+
 function smartManagerEisColumns(columns, rows) {
   if (!columns.includes("8") || !columns.includes("11") || !columns.includes("12")) return null;
   const sample = rows.slice(0, 80);
@@ -584,6 +702,7 @@ function canonicalRows(type, columns, rows) {
     zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "저항"]),
     zimag: findColumn(columns, ["zimag", "imag", "im", "zi", "zdoubleprime"]),
     cycle: findColumn(columns, ["cycle", "사이클"]),
+    cRate: findColumn(columns, ["crate", "cratec", "ratec", "씨레이트", "c레이트"]),
     specificCapacity: findBestCycColumn(columns, "dischargeSpecific") || findCycFallbackColumn(columns, "dischargeSpecific", ["방전용량ahg", "dischargecapacityahg", "specificcapacity", "mahg"]),
     chargeSpecificCapacity: findBestCycColumn(columns, "chargeSpecific") || findCycFallbackColumn(columns, "chargeSpecific", ["충전용량ahg", "chargecapacityahg"]),
     capacity: findBestCycColumn(columns, "dischargeCapacity") || findCycFallbackColumn(columns, "dischargeCapacity", ["dischargecapacity", "dischargecap", "dchgcap", "dchcap", "방전용량", "방전"]),
@@ -622,6 +741,7 @@ function canonicalRows(type, columns, rows) {
         voltage: numberValue(r[col.voltage]),
         current: numberValue(r[col.current]),
         time: numberValue(r[col.time]),
+        cRate: parseCRateValue(r[col.cRate]),
       };
     }).filter((r) => [r.capacity, r.chargeCapacity, r.efficiency, r.voltage].some((v) => Number.isFinite(v)));
   }
@@ -693,9 +813,178 @@ async function inspectFileUpload(file) {
   });
 }
 
+function selectedUploadFiles() {
+  return Array.from($("smartFile")?.files || []);
+}
+
+function baseNameWithoutExtension(filename) {
+  return String(filename || "").replace(/\.[^.]+$/, "").trim() || "batch-file";
+}
+
+async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
+  const rows = canonicalRows(dataType, analysis.columns, analysis.rows);
+  if (!rows.length) {
+    throw new Error("이 파일에서 Fig에 사용할 숫자 데이터를 찾지 못했습니다.");
+  }
+  const { res, body: saved } = await fetchJsonWithTimeout("/api/datasets", {
+    method: "POST",
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      cell,
+      rows,
+      columns: analysis.columns,
+      sourceName: analysis.filename,
+      dataType,
+      figureKind,
+      uploadId: analysis.uploadId || "",
+      canonicalRows: Array.isArray(analysis.canonicalRows) ? analysis.canonicalRows : [],
+      columnMapping: analysis.columnMapping || {},
+      quality: analysis.quality || {},
+      parser: analysis.parser || {},
+      ...hierarchySelectionPayload(),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(apiErrorMessage(saved, "Dataset 저장 중 서버 오류가 발생했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요."));
+  }
+  return saved;
+}
+
+async function saveFigureRecord(dataset) {
+  const res = await fetch("/api/figures", {
+    method: "POST",
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      datasetId: dataset.id,
+      name: `${sampleLabel(dataset)} Fig`,
+      figureKind: dataset.figureKind,
+      edits: dataset.figureEdits || {},
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(apiErrorMessage(body, "Fig 기록을 저장하지 못했습니다."));
+  }
+  return body;
+}
+
+function renderBatchFigureResults() {
+  const panel = $("batchFigureResults");
+  if (!panel) return;
+  const results = state.batchFigureResults || [];
+  if (!results.length) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+    return;
+  }
+  const completed = results.filter((item) => item.ok).length;
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <strong>일괄 Fig 생성 결과: ${completed}/${results.length}개 완료</strong>
+    <p>실패한 파일은 아래 사유를 확인한 뒤 단일 파일로 다시 분석할 수 있습니다.</p>
+    <ul>
+      ${results.map((item) => `
+        <li class="batchFigureResult ${item.ok ? "isOk" : "hasError"}">
+          <div>
+            <strong>${escapeXml(item.fileName)}</strong>
+            <span>${item.ok ? `${String(item.dataType || "").toUpperCase()} Dataset 및 Fig 기록 저장 완료` : escapeXml(item.message || "처리하지 못했습니다.")}</span>
+            ${item.note ? `<span>${escapeXml(item.note)}</span>` : ""}
+          </div>
+          ${item.ok ? `<button type="button" class="smallAction" data-open-batch-figure="${escapeAttr(item.datasetId)}">Fig 열기</button>` : ""}
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+async function createBatchFigures() {
+  const files = selectedUploadFiles();
+  if (files.length < 2) {
+    return setStatus("일괄 Fig 생성에는 파일을 2개 이상 선택하세요.");
+  }
+  if (files.length > BATCH_FIGURE_FILE_LIMIT) {
+    return setStatus(`한 번에 최대 ${BATCH_FIGURE_FILE_LIMIT}개 파일까지 처리할 수 있습니다.`);
+  }
+  const cell = collectCellForm();
+  if (!String(cell.cellId || "").trim()) {
+    $("datasetForm")?.elements?.cellId?.focus();
+    return setStatus("일괄 Fig 생성 전에 공통 셀 ID를 입력하세요.");
+  }
+
+  state.inspectToken += 1;
+  state.analysis = null;
+  state.batchFigureResults = [];
+  renderAnalysis();
+  renderBatchFigureResults();
+  setBusy(true, `${files.length}개 파일을 순서대로 분석하고 Fig 기록을 만들고 있습니다.`, 0);
+  try {
+    for (const file of files) {
+      try {
+        setStatus(`${file.name} 분석 중...`);
+        const { res, body } = await inspectFileUpload(file);
+        if (!res.ok) {
+          throw new Error(apiErrorMessage(body, "파일을 불러오거나 분석하지 못했습니다."));
+        }
+        const dataType = body?.detection?.type;
+        if (!BATCH_FIGURE_KIND_BY_TYPE[dataType]) {
+          throw new Error("CYC, CV, EIS로 자동 판별하지 못한 파일입니다.");
+        }
+        const fileCell = {
+          ...cell,
+          sampleName: cell.sampleName || baseNameWithoutExtension(file.name),
+        };
+        const saved = await saveDatasetFromInspection(body, dataType, fileCell, BATCH_FIGURE_KIND_BY_TYPE[dataType]);
+        state.datasets.unshift(saved);
+        let note = "";
+        try {
+          await saveFigureRecord(saved);
+        } catch (error) {
+          note = `Dataset은 저장됐지만 Fig 기록은 저장하지 못했습니다: ${error.message}`;
+        }
+        state.batchFigureResults.push({ ok: true, fileName: file.name, dataType, datasetId: saved.id, note });
+      } catch (error) {
+        state.batchFigureResults.push({ ok: false, fileName: file.name, message: error.message || "처리하지 못했습니다." });
+      }
+      renderBatchFigureResults();
+    }
+    if (state.batchFigureResults.some((item) => item.ok)) {
+      await loadHierarchy();
+      applyFilters();
+    }
+    const completed = state.batchFigureResults.filter((item) => item.ok).length;
+    setStatus(`일괄 Fig 생성 완료: ${completed}/${files.length}개`);
+  } catch (error) {
+    setStatus(`일괄 Fig 생성 중 오류: ${error.message}`);
+  } finally {
+    setBusy(false);
+  }
+}
+
+function isExpiredLoginResponse(res, body) {
+  if (Number(res?.status) !== 401 || !state.user?.token) return false;
+  const message = apiErrorMessage(body, "");
+  return !message || message.includes("토큰") || message.includes("로그인");
+}
+
+function clearExpiredLogin(res, body) {
+  if (!isExpiredLoginResponse(res, body)) return false;
+  const message = "로그인 시간이 만료되었거나 서버가 다시 시작되었습니다. 다시 로그인해 주세요.";
+  setBusy(false);
+  applyUser(null);
+  setLoginError(message);
+  setStatus(message);
+  return true;
+}
+
 async function inspectSelectedFile() {
-  const file = $("smartFile").files[0];
+  const files = selectedUploadFiles();
+  const file = files[0];
   if (!file) return setStatus("먼저 파일을 선택하세요.");
+  if (files.length > 1) {
+    setStatus("여러 파일이 선택되었습니다. '여러 파일 일괄 Fig 생성'을 사용하세요.");
+    setAnalysisMessage("여러 파일은 한 번에 하나씩 분석하지 않습니다. 공통 셀 정보를 확인한 뒤 '여러 파일 일괄 Fig 생성'을 눌러주세요.");
+    return;
+  }
   const token = ++state.inspectToken;
   const inspectButton = $("inspectFile");
   if (inspectButton) {
@@ -708,8 +997,9 @@ async function inspectSelectedFile() {
     const { res, body } = await inspectFileUpload(file);
     if (token !== state.inspectToken) return;
     if (!res.ok) {
+      if (clearExpiredLogin(res, body)) return;
       setStatus("파일 불러오기 실패");
-      setAnalysisMessage(body.error || "파일을 불러오거나 분석하지 못했습니다.", "파일 불러오기 실패");
+      setAnalysisMessage(body.detail || body.error || "파일을 불러오거나 분석하지 못했습니다.", "파일 불러오기 실패");
       return;
     }
     state.analysis = body;
@@ -739,6 +1029,7 @@ async function inspectManualFile() {
       body: JSON.stringify({ filename: file.name, contentBase64: await fileToBase64(file) }),
     });
     if (!res.ok) {
+      if (clearExpiredLogin(res, body)) return;
       setStatus(body.error || "매뉴얼 분석 실패");
       return;
     }
@@ -808,7 +1099,7 @@ function activateView(viewName, moduleName = state.activeFigureModule) {
   document.querySelectorAll(".view").forEach((x) => x.classList.remove("active"));
   const view = $(`${viewName}View`);
   if (view) view.classList.add("active");
-  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "search" || viewName === "aiSummary" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "users";
+  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users";
   $("dataWorkspace")?.classList.toggle("calcOnly", wideOnly);
   $("workspaceToolbar")?.classList.toggle("hidden", viewName !== "figure");
 }
@@ -830,6 +1121,10 @@ function renderAnalysis() {
     ? readableColumns.slice(0, 12).map((c) => `<span>${escapeXml(c)}</span>`).join("")
     : `<span>컬럼명을 명확히 읽지 못했습니다.</span>`;
   const badNotice = badCount > 0 ? `<p>읽기 어려운 컬럼명 ${badCount}개는 숨겼습니다. 데이터 종류가 틀리면 직접 선택해 주세요.</p>` : "";
+  const detectedCRates = a.detection.type === "cyc" ? explicitCRateValues(a.canonicalRows || []) : [];
+  const cRateNotice = detectedCRates.length
+    ? `<p class="columnPreviewHint"><strong>C-rate 열 감지:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. 저장 후 CYC Fig에서 이 값으로 cycle 구간을 구분합니다.</p>`
+    : "";
   const eisColumnGuide = a.detection.type === "eis" ? `
     <div class="eisColumnGuide">
       <strong>EIS 열 안내</strong>
@@ -839,7 +1134,7 @@ function renderAnalysis() {
         <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
         <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
       </ul>
-      <p>피겨 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
+      <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
     </div>` : "";
   const isUnknown = a.detection.type === "unknown" || a.detection.confidence < 0.35;
   const heading = isUnknown
@@ -847,34 +1142,45 @@ function renderAnalysis() {
     : `${typeLabel} 데이터로 보입니다. 맞나요?`;
   const confirmChoice = isUnknown
     ? ""
-    : `<label><input type="radio" name="detectedType" value="${a.detection.type}" checked /> 네, ${typeLabel} 데이터가 맞습니다.</label>`;
-  panel.classList.remove("hidden");
-  createBtn.classList.toggle("hidden", isUnknown);
-  panel.innerHTML = `
-    <h3>${heading}</h3>
-    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} · ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
-    <div class="columnPreview">${columnPreview}</div>
-    ${eisColumnGuide}
-    ${renderValidationSummary(a.validation, a.quality)}
-    ${badNotice}
-    <div class="typeSelect">
+    : `<label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="${a.detection.type}" checked /> 자동 선택됨: ${typeLabel} 데이터로 계속</label>`;
+  const typeSelectMarkup = `
+    <div class="typeSelect typeSelectProminent" role="group" aria-label="데이터 종류 선택">
+      <strong>데이터 종류 선택</strong>
       ${confirmChoice}
-      <label><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "데이터 종류를 직접 선택하겠습니다." : "아니오, 직접 선택하겠습니다."}</label>
-      <select id="manualType" ${isUnknown ? "" : "disabled"}>
+      <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "데이터 종류를 직접 선택하겠습니다." : "아니오, 직접 선택하겠습니다."}</label>
+      <select id="manualType">
         <option value="">데이터 종류 선택</option>
         <option value="eis">EIS</option>
         <option value="cyc">CYC</option>
         <option value="cv">CV</option>
         <option value="unknown">목록에 없는 데이터</option>
       </select>
-    </div>
-    <h3 id="figureQuestion">${isUnknown ? "먼저 데이터 종류를 선택해 주세요." : "어떤 피겨를 만들어 드릴까요?"}</h3>
+      <span class="typeSelectHint">목록을 바로 고르면 직접 선택으로 바뀝니다.</span>
+    </div>`;
+  panel.classList.remove("hidden");
+  createBtn.classList.toggle("hidden", isUnknown);
+  panel.innerHTML = `
+    <h3>${heading}</h3>
+    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} · ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
+    ${typeSelectMarkup}
+    <p class="columnPreviewHint">아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.</p>
+    <div class="columnPreview">${columnPreview}</div>
+    ${cRateNotice}
+    ${eisColumnGuide}
+    ${renderValidationSummary(a.validation, a.quality)}
+    ${badNotice}
+    <h3 id="figureQuestion">${isUnknown ? "먼저 데이터 종류를 선택해 주세요." : "어떤 Fig를 만들어 드릴까요?"}</h3>
     <div class="choiceGrid" id="figureChoices"></div>
   `;
   for (const radio of panel.querySelectorAll("input[name='detectedType']")) {
     radio.addEventListener("change", updateFigureChoices);
   }
-  $("manualType").addEventListener("change", updateFigureChoices);
+  const manualType = $("manualType");
+  manualType.addEventListener("change", () => {
+    const manualRadio = panel.querySelector("input[name='detectedType'][value='manual']");
+    if (manualType.value && manualRadio) manualRadio.checked = true;
+    updateFigureChoices();
+  });
   updateFigureChoices();
 }
 
@@ -906,19 +1212,36 @@ function fillCellForm(d) {
 }
 
 function updateSelectedFileName() {
-  const file = $("smartFile")?.files?.[0];
+  const files = selectedUploadFiles();
   const label = $("selectedFileName");
-  if (label) label.textContent = file?.name || "선택된 파일 없음";
+  if (!label) return;
+  if (!files.length) {
+    label.textContent = "선택된 파일 없음";
+  } else if (files.length === 1) {
+    label.textContent = files[0].name;
+  } else {
+    const visibleNames = files.slice(0, 2).map((file) => file.name).join(", ");
+    label.textContent = `${files.length}개 파일 선택됨: ${visibleNames}${files.length > 2 ? " ..." : ""}`;
+  }
+}
+
+function updateBatchFigureControl() {
+  const button = $("batchCreateFigures");
+  if (!button) return;
+  button.classList.toggle("hidden", selectedUploadFiles().length < 2);
 }
 
 function resetAnalysisForNewFile() {
   updateSelectedFileName();
+  updateBatchFigureControl();
   state.inspectToken += 1;
   state.analysis = null;
+  state.batchFigureResults = [];
   state.selectedId = null;
   state.selectedAnnotation = null;
   setBusy(false);
   renderAnalysis();
+  renderBatchFigureResults();
   renderSelect();
   renderCurrent();
   setStatus("파일 선택 완료 - 파일 분석을 눌러주세요.");
@@ -926,22 +1249,24 @@ function resetAnalysisForNewFile() {
 
 function updateFigureChoices() {
   const manual = document.querySelector("input[name='detectedType'][value='manual']")?.checked;
-  $("manualType").disabled = !manual;
+  for (const choice of document.querySelectorAll(".typeSelectProminent .detectedTypeChoice")) {
+    choice.classList.toggle("selected", Boolean(choice.querySelector("input")?.checked));
+  }
   const type = selectedType();
   const question = $("figureQuestion");
   const createBtn = $("createFigure");
   if (!type || type === "unknown") {
-    $("figureChoices").innerHTML = `<p>현재 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 피겨를 추가하겠습니다.</p>`;
+    $("figureChoices").innerHTML = `<p>현재 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 Fig를 추가하겠습니다.</p>`;
     if (question) question.textContent = type === "unknown" ? "지원 목록에 없는 데이터입니다." : "먼저 데이터 종류를 선택해 주세요.";
     if (createBtn) createBtn.classList.add("hidden");
     return;
   }
-  if (question) question.textContent = "어떤 피겨를 만들어 드릴까요?";
+  if (question) question.textContent = "어떤 Fig를 만들어 드릴까요?";
   if (createBtn) createBtn.classList.remove("hidden");
   const options = {
-    eis: [["eis-combined", "Nyquist + Bode 통합 피겨"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
-    cyc: [["cycling-performance", "셀 성능 테스트: capacity/efficiency vs cycle"], ["voltage-profile", "전압 프로파일: voltage vs capacity/time"], ["cyc-combined", "성능 + 전압 프로파일 통합 피겨"]],
-    cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate 비교 피겨"]],
+    eis: [["eis-combined", "Nyquist + Bode 통합 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
+    cyc: [["cycling-performance", "셀 성능 테스트: capacity/efficiency vs cycle"], ["voltage-profile", "전압/전류 거동: voltage-capacity/time 또는 voltage/current vs cycle"], ["cyc-combined", "성능 + 전압/전류 통합 Fig"]],
+    cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate 비교 Fig"]],
     unknown: [["table-preview", "표 형태로 미리보기"]],
   }[type] || [["table-preview", "표 형태로 미리보기"]];
   $("figureChoices").innerHTML = options.map(([id, label], idx) => `<label><input type="radio" name="figureKind" value="${id}" ${idx === 0 ? "checked" : ""}/> ${label}</label>`).join("");
@@ -949,7 +1274,7 @@ function updateFigureChoices() {
 
 async function createSmartFigure() {
   if (!state.analysis) return setStatus("먼저 파일을 분석하세요.");
-  setBusy(true, "선택한 데이터로 피겨를 만들고 있습니다.");
+  setBusy(true, "선택한 데이터로 Fig를 만들고 있습니다.");
   try {
     const dataType = selectedType();
     if (!dataType) {
@@ -959,7 +1284,7 @@ async function createSmartFigure() {
     }
     if (dataType === "unknown") {
       setStatus("없는 데이터 형식입니다.");
-      setAnalysisMessage("아직 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 피겨를 추가하겠습니다.");
+      setAnalysisMessage("아직 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 Fig를 추가하겠습니다.");
       return;
     }
     const figureKind = document.querySelector("input[name='figureKind']:checked")?.value || `${dataType}-combined`;
@@ -1000,10 +1325,10 @@ async function createSmartFigure() {
     renderAnalysis();
     showDatasetImmediately(saved);
     showModule(["cyc", "cv", "eis"].includes(dataType) ? dataType : "figure");
-    setStatus(`${dataType.toUpperCase()} 피겨 생성 완료`);
+    setStatus(`${dataType.toUpperCase()} Fig 생성 완료`);
   } catch (error) {
-    setStatus("피겨 생성 실패");
-    setAnalysisMessage(`피겨 생성 중 오류가 발생했습니다: ${error.message}`);
+    setStatus("Fig 생성 실패");
+    setAnalysisMessage(`Fig 생성 중 오류가 발생했습니다: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -1014,6 +1339,7 @@ async function loadData() {
   const res = await fetch("/api/datasets", { headers: authHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (clearExpiredLogin(res, body)) return;
     throw new Error(body.error || "데이터를 불러오지 못했습니다.");
   }
   state.datasets = await res.json();
@@ -1028,6 +1354,7 @@ async function loadHierarchy() {
   const res = await fetch("/api/hierarchy", { headers: authHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (clearExpiredLogin(res, body)) return;
     throw new Error(body.error || "실험 계층을 불러오지 못했습니다.");
   }
   state.hierarchy = await res.json();
@@ -1049,7 +1376,10 @@ async function loadOrganizations() {
   if (!state.user) return;
   const res = await fetch("/api/organizations", { headers: authHeaders() });
   const body = await res.json().catch(() => ([]));
-  if (!res.ok) throw new Error(body.error || "조직 목록을 불러오지 못했습니다.");
+  if (!res.ok) {
+    if (clearExpiredLogin(res, body)) return;
+    throw new Error(body.error || "조직 목록을 불러오지 못했습니다.");
+  }
   state.organizations = Array.isArray(body) ? body : [];
   if (!state.organizations.some((item) => item.id === state.selectedOrganizationId)) {
     state.selectedOrganizationId = state.organizations[0]?.id || "";
@@ -1400,7 +1730,7 @@ function renderSearchResults() {
           <p>${escapeXml(detail || "저장된 실험 데이터")}</p>
         </button>
         <div class="searchResultActions">
-          <button type="button" data-open-figure="${escapeAttr(d.id)}">피겨 열기</button>
+          <button type="button" data-open-figure="${escapeAttr(d.id)}">Fig 열기</button>
           <button type="button" class="secondaryAction" data-open-saved="${escapeAttr(d.id)}">모음에서 보기</button>
         </div>
       </article>`;
@@ -1417,7 +1747,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("figure", state.activeFigureModule);
-      setStatus("검색 결과를 피겨로 열었습니다.");
+      setStatus("검색 결과를 Fig로 열었습니다.");
     });
   }
   for (const btn of list.querySelectorAll("[data-open-saved]")) {
@@ -1429,7 +1759,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("savedFigures");
-      setStatus("검색 결과를 피겨 모음에서 열었습니다.");
+      setStatus("검색 결과를 Fig 모음에서 열었습니다.");
     });
   }
 }
@@ -1518,17 +1848,17 @@ function renderSavedList() {
 
 function figureLabel(d) {
   const labels = {
-    "cycling-performance": "용량 유지율 피겨",
-    "voltage-profile": "전압 프로파일",
-    "cyc-combined": "CYC 통합 피겨",
-    "nyquist": "Nyquist 피겨",
-    "bode": "Bode 피겨",
-    "eis-combined": "EIS 통합 피겨",
-    "cv-curve": "CV 피겨",
-    "cv-comparison": "CV 비교 피겨",
+    "cycling-performance": "용량 유지율 Fig",
+    "voltage-profile": "전압/전류 Fig",
+    "cyc-combined": "성능 + 전압/전류 Fig",
+    "nyquist": "Nyquist Fig",
+    "bode": "Bode Fig",
+    "eis-combined": "EIS 통합 Fig",
+    "cv-curve": "CV Fig",
+    "cv-comparison": "CV 비교 Fig",
     "table-preview": "표 미리보기",
   };
-  return labels[d.figureKind] || `${(d.dataType || "data").toUpperCase()} 피겨`;
+  return labels[d.figureKind] || `${(d.dataType || "data").toUpperCase()} Fig`;
 }
 
 function figureThumb(d) {
@@ -1584,7 +1914,7 @@ function renderSavedList() {
   if (!list) return;
   if (count) count.textContent = `${state.filtered.length}개`;
   if (!state.filtered.length) {
-    list.innerHTML = `<p class="emptySaved">저장된 피겨가 없습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">저장된 Fig가 없습니다.</p>`;
     return;
   }
   list.innerHTML = state.filtered.map((d) => {
@@ -1594,11 +1924,11 @@ function renderSavedList() {
     const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" · ");
     return `
       <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
-        <label class="compareCheck${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"}" title="${String(d.dataType || "").toLowerCase() === "cyc" ? "CYC 비교 선택" : "CYC 피겨만 비교할 수 있습니다."}">
+        <label class="compareCheck${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"}" title="${String(d.dataType || "").toLowerCase() === "cyc" ? "CYC 비교 선택" : "CYC Fig만 비교할 수 있습니다."}">
           <input type="checkbox" data-compare-id="${escapeAttr(d.id)}"${state.compareIds.includes(d.id) ? " checked" : ""}${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"} />
           <span>비교</span>
         </label>
-        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="피겨 열기">
+        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig 열기">
           ${figureThumb(d)}
           <span class="savedInfo">
             <strong>${escapeXml(title)}</strong>
@@ -1606,7 +1936,7 @@ function renderSavedList() {
             <em>${escapeXml(d.sourceName || d.id)}</em>
           </span>
         </button>
-        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="저장된 피겨 삭제">×</button>
+        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="저장된 Fig 삭제">×</button>
       </article>`;
   }).join("");
   for (const btn of list.querySelectorAll(".savedOpen")) {
@@ -1618,7 +1948,7 @@ function renderSavedList() {
       renderCurrent();
       state.activeFigureModule = state.datasets.find((d) => d.id === state.selectedId)?.dataType || state.activeFigureModule;
       activateView("figure", state.activeFigureModule);
-      setStatus("저장된 피겨를 불러왔습니다.");
+      setStatus("저장된 Fig를 불러왔습니다.");
     });
   }
   for (const btn of list.querySelectorAll(".savedDelete")) {
@@ -1634,19 +1964,17 @@ function toggleCompareSelection(id, checked) {
   if (!id) return;
   const target = state.datasets.find((d) => d.id === id);
   if (target?.dataType !== "cyc") {
-    setStatus("CYC 피겨만 비교할 수 있습니다.");
+    setStatus("CYC Fig만 비교할 수 있습니다.");
     return;
   }
   if (checked && !state.compareIds.includes(id)) state.compareIds.push(id);
   if (!checked) state.compareIds = state.compareIds.filter((x) => x !== id);
-  renderAISummary();
-  setStatus(`${state.compareIds.length}개 CYC 피겨 선택됨`);
+  setStatus(`${state.compareIds.length}개 CYC Fig 선택됨`);
 }
 
 function clearCompareSelection() {
   state.compareIds = [];
   renderSavedList();
-  renderAISummary();
   const preview = $("comparisonPreview");
   if (preview) {
     preview.classList.add("hidden");
@@ -1742,8 +2070,8 @@ function renderCycComparison() {
     .slice(0, 8);
   if (datasets.length < 2) {
     preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">비교하려면 CYC 피겨를 2개 이상 선택하세요.</p>`;
-    setStatus("CYC 피겨를 2개 이상 선택하세요.");
+    preview.innerHTML = `<p class="emptySaved">비교하려면 CYC Fig를 2개 이상 선택하세요.</p>`;
+    setStatus("CYC Fig를 2개 이상 선택하세요.");
     return;
   }
   const series = datasets.map((d) => ({
@@ -1753,7 +2081,7 @@ function renderCycComparison() {
   })).filter((s) => s.points.length);
   if (series.length < 2) {
     preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">선택한 CYC 피겨에서 비교 가능한 방전용량을 찾지 못했습니다.</p>`;
+    preview.innerHTML = `<p class="emptySaved">선택한 CYC Fig에서 비교 가능한 방전용량을 찾지 못했습니다.</p>`;
     setStatus("비교 가능한 CYC 데이터가 부족합니다.");
     return;
   }
@@ -1784,8 +2112,8 @@ function renderCycComparison() {
   preview.classList.remove("hidden");
   preview.innerHTML = `
     <div class="comparisonTitle">
-      <strong>CYC 비교 피겨</strong>
-      <span>${series.length}개 피겨 비교</span>
+      <strong>CYC 비교 Fig</strong>
+      <span>${series.length}개 Fig 비교</span>
     </div>
     <svg id="comparisonFigure" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
       <style>
@@ -1803,18 +2131,18 @@ function renderCycComparison() {
       <text transform="translate(${plot.x - 56},${plot.y + plot.h / 2}) rotate(-90)" text-anchor="middle" class="cmpLabel">Specific capacity (mAh g-1)</text>
       ${legend}
     </svg>`;
-  setStatus("CYC 비교 피겨를 만들었습니다.");
+  setStatus("CYC 비교 Fig를 만들었습니다.");
 }
 
 async function deleteSavedFigure(id, event) {
   if (event) event.stopPropagation();
   const target = state.datasets.find((d) => d.id === id);
   const name = target ? datasetDisplayName(target) : id;
-  if (!id || !confirm(`저장된 피겨 "${name}"를 삭제할까요?`)) return;
+  if (!id || !confirm(`저장된 Fig "${name}"를 삭제할까요?`)) return;
   const res = await fetch(`/api/datasets/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    setStatus(body.error || "피겨 삭제 실패");
+    setStatus(body.error || "Fig 삭제 실패");
     return;
   }
   state.datasets = state.datasets.filter((d) => d.id !== id);
@@ -1826,7 +2154,7 @@ async function deleteSavedFigure(id, event) {
   renderSelect();
   renderSavedList();
   renderCurrent();
-  setStatus("저장된 피겨를 삭제했습니다.");
+  setStatus("저장된 Fig를 삭제했습니다.");
 }
 
 function niceBounds(values) {
@@ -1982,7 +2310,7 @@ function renderFigure(d) {
   applyAnnotationsToSvg();
 }
 
-function renderCycFigure(d) {
+function renderLegacyCycFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
   const svgSize = figureSvgSize(style, "paper");
@@ -2058,9 +2386,21 @@ function median(nums) {
 }
 
 function dischargeSeries(rows) {
-  const raw = rows
-    .filter((r) => Number.isFinite(r.cycle) && Number.isFinite(r.capacity))
-    .map((r) => ({ x: r.cycle, y: r.capacity }));
+  // A CYC export can contain many point-level measurements for the same cycle.
+  // Keep the final (largest) discharge capacity once per cycle so the figure
+  // cannot turn repeated raw rows into a vertical band of overlapping markers.
+  const finalCapacityByCycle = new Map();
+  for (const row of rows || []) {
+    const cycle = Number(row?.cycle);
+    const capacity = Number(row?.capacity);
+    if (!Number.isFinite(cycle) || cycle < 1 || !Number.isFinite(capacity)) continue;
+    const wholeCycle = Math.round(cycle);
+    if (Math.abs(cycle - wholeCycle) > 1e-6) continue;
+    const point = { x: wholeCycle, y: capacity };
+    const previous = finalCapacityByCycle.get(wholeCycle);
+    if (!previous || point.y > previous.y) finalCapacityByCycle.set(wholeCycle, point);
+  }
+  const raw = [...finalCapacityByCycle.values()].sort((a, b) => a.x - b.x);
   const medRaw = median(raw.map((p) => Math.abs(p.y)).filter((v) => v > 0));
   const factor = Number.isFinite(medRaw) && medRaw < 10 ? 1000 : 1;
   const scaled = raw.map((p) => ({ x: p.x, y: p.y * factor }));
@@ -2165,11 +2505,69 @@ function hasRateStepPattern(capPts, segments) {
   return spread >= 25 || spread / baseline >= 0.18;
 }
 
+function formatExplicitCRate(value) {
+  const rate = Number(value);
+  if (!Number.isFinite(rate) || rate <= 0) return "";
+  return `${Number(rate.toFixed(4)).toString()} C`;
+}
+
+function explicitCRateValues(rows) {
+  const values = new Map();
+  for (const row of rows || []) {
+    const rate = parseCRateValue(row?.cRate ?? row?.c_rate);
+    if (!Number.isFinite(rate)) continue;
+    values.set(rate.toFixed(4), rate);
+  }
+  return [...values.values()].sort((a, b) => a - b);
+}
+
+// When the source file has a C-rate column, it is more reliable than a filename
+// convention or an inferred current ratio. Group consecutive cycles by that value.
+function explicitCRateSegments(rows, minCycle, maxCycle) {
+  const ratesByCycle = new Map();
+  for (const row of rows || []) {
+    const cycle = Number(row?.cycle);
+    const rate = parseCRateValue(row?.cRate ?? row?.c_rate);
+    if (!Number.isFinite(cycle) || !Number.isFinite(rate) || cycle < minCycle || cycle > maxCycle) continue;
+    const key = Math.round(cycle);
+    const values = ratesByCycle.get(key) || [];
+    values.push(rate);
+    ratesByCycle.set(key, values);
+  }
+  const points = [...ratesByCycle.entries()]
+    .map(([cycle, values]) => ({ cycle: Number(cycle), rate: average(values) }))
+    .filter((point) => Number.isFinite(point.rate))
+    .sort((a, b) => a.cycle - b.cycle);
+  const groups = [];
+  for (const point of points) {
+    const previous = groups[groups.length - 1];
+    const isConsecutive = previous && point.cycle <= previous.end + 1;
+    const sameRate = previous && Math.abs(point.rate - previous.rate) / Math.max(previous.rate, 1e-12) <= 0.02;
+    if (!previous || !isConsecutive || !sameRate) {
+      groups.push({ start: point.cycle, end: point.cycle, rate: point.rate, count: 1 });
+      continue;
+    }
+    previous.rate = (previous.rate * previous.count + point.rate) / (previous.count + 1);
+    previous.count += 1;
+    previous.end = point.cycle;
+  }
+  const distinctRates = new Set(groups.map((group) => group.rate.toFixed(4)));
+  if (groups.length < 2 || groups.length > 12 || distinctRates.size < 2) return [];
+  return groups.map((group) => ({
+    start: group.start,
+    end: group.end,
+    cRate: group.rate,
+    label: formatExplicitCRate(group.rate),
+  }));
+}
+
 function inferCRateSegments(d, rows, capPts) {
   const cycles = [...new Set(capPts.map((p) => p.x).filter(Number.isFinite))].sort((a, b) => a - b);
   if (!cycles.length) return [];
   const minCycle = Math.min(...cycles);
   const maxCycle = Math.max(...cycles);
+  const explicitSegments = explicitCRateSegments(rows, minCycle, maxCycle);
+  if (explicitSegments.length >= 2) return explicitSegments;
   const parsedLabels = parseCRateLabels(d);
   const parsedSegments = fiveCycleSegments(parsedLabels, minCycle, maxCycle);
   if (hasRateStepPattern(capPts, parsedSegments)) return parsedSegments;
@@ -2323,7 +2721,7 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ figureEdits }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "피겨 수정 저장 실패");
+    if (!res.ok) throw new Error(saved.error || "Fig 수정 저장 실패");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
     state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
@@ -2337,11 +2735,11 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ datasetId: saved.id, name: `${sampleLabel(saved)} figure`, figureKind: saved.figureKind, edits: saved.figureEdits }),
     });
     const figureBody = await figureRes.json().catch(() => ({}));
-    if (!figureRes.ok) throw new Error(figureBody.error || "피겨 라이브러리 저장에 실패했습니다.");
+    if (!figureRes.ok) throw new Error(figureBody.error || "Fig 라이브러리 저장에 실패했습니다.");
     if (state.cellWorkspace?.cell?.id === saved.cellRecordId) loadCellWorkspace(saved);
-    if (!silent) setStatus("피겨 수정 내용이 저장되었습니다.");
+    if (!silent) setStatus("Fig 수정 내용이 저장되었습니다.");
   } catch (error) {
-    setStatus(`피겨 수정 저장 실패: ${error.message}`);
+    setStatus(`Fig 수정 저장 실패: ${error.message}`);
   }
 }
 
@@ -2439,7 +2837,7 @@ function addOrUpdateAnnotation() {
   const input = $("annotationText");
   const text = input?.value.trim();
   const size = clampFontSize($("annotationSize")?.value);
-  if (!state.selectedId) return setStatus("먼저 파일 분석 후 피겨를 생성하거나, 기존 피겨를 선택하세요.");
+  if (!state.selectedId) return setStatus("먼저 파일 분석 후 Fig를 생성하거나, 기존 Fig를 선택하세요.");
   if (!text) return setStatus("추가할 글을 입력하세요.");
   const annotations = currentAnnotations();
   if (state.selectedAnnotation !== null && annotations[state.selectedAnnotation]) {
@@ -2482,7 +2880,7 @@ function changeAnnotationSize(delta) {
 }
 
 function changeFigureSeriesColor() {
-  if (!state.selectedId) return setStatus("먼저 파일 분석 후 피겨를 생성하거나, 기존 피겨를 선택하세요.");
+  if (!state.selectedId) return setStatus("먼저 파일 분석 후 Fig를 생성하거나, 기존 Fig를 선택하세요.");
   const input = $("figureSeriesColor");
   const style = currentFigureStyle();
   style.seriesColor = normalizeHexColor(input?.value, style.seriesColor);
@@ -2492,7 +2890,7 @@ function changeFigureSeriesColor() {
 }
 
 function changeFigureAspectRatio() {
-  if (!state.selectedId) return setStatus("먼저 피겨를 선택하세요.");
+  if (!state.selectedId) return setStatus("먼저 Fig를 선택하세요.");
   const input = $("figureAspectRatio");
   const style = currentFigureStyle();
   style.aspectRatio = normalizeFigureAspectRatio(input?.value);
@@ -2589,6 +2987,239 @@ function loadingCaption(d) {
 }
 
 function renderCycFigure(d) {
+  const kind = ["cycling-performance", "voltage-profile", "cyc-combined"].includes(d.figureKind)
+    ? d.figureKind
+    : "cycling-performance";
+  if (kind === "voltage-profile") return renderCycVoltageProfileFigure(d);
+  if (kind === "cyc-combined") return renderCycCombinedFigure(d);
+  return renderCycPerformanceFigure(d);
+}
+
+function cycVoltageProfileSeries(rows) {
+  const sourceRows = (rows || []).map((row) => ({
+    cycle: Number(row?.cycle),
+    voltage: Number(row?.voltage),
+    capacity: Number(row?.capacity),
+    time: Number(row?.time),
+    current: Number(row?.current),
+  })).filter((row) => Number.isFinite(row.cycle) && row.cycle >= 1 && Number.isFinite(row.voltage));
+  const useCapacity = sourceRows.some((row) => Number.isFinite(row.capacity));
+  const byCycle = new Map();
+  for (const row of sourceRows) {
+    const x = useCapacity ? row.capacity : row.time;
+    if (!Number.isFinite(x)) continue;
+    const cycle = Math.round(row.cycle);
+    const points = byCycle.get(cycle) || [];
+    points.push({ x, y: row.voltage, current: row.current });
+    byCycle.set(cycle, points);
+  }
+  const usable = [...byCycle.entries()].map(([cycle, points]) => {
+    const sortedPoints = points.sort((a, b) => a.x - b.x);
+    const currentValues = sortedPoints.map((point) => point.current).filter(Number.isFinite);
+    return {
+      cycle,
+      points: sortedPoints,
+      currentA: currentValues.length ? currentValues.reduce((sum, value) => sum + value, 0) / currentValues.length : null,
+    };
+  }).filter(({ points }) => {
+    const xValues = new Set(points.map((point) => point.x.toFixed(8)));
+    return points.length >= 2 && xValues.size >= 2;
+  }).sort((a, b) => a.cycle - b.cycle);
+  const indices = [...new Set([0, Math.floor((usable.length - 1) / 2), usable.length - 1])].filter((index) => index >= 0);
+  return {
+    xLabel: useCapacity ? "Capacity (reported unit)" : "Time (reported unit)",
+    series: indices.map((index) => usable[index]).filter(Boolean),
+  };
+}
+
+function formatCurrentForFigure(currentA) {
+  if (!Number.isFinite(currentA)) return "Iavg unavailable";
+  const magnitude = Math.abs(currentA);
+  if (magnitude > 0 && magnitude < 1) return `Iavg ${fmt(currentA * 1000, 4)} mA`;
+  return `Iavg ${fmt(currentA, 4)} A`;
+}
+
+// CYC 요약 파일에는 cycle마다 전압과 전류가 한 점씩만 있을 수 있습니다.
+// 이 경우 전압-용량 곡선으로 오해하지 않고, cycle별 평균 전압/전류 추세를 별도로 그립니다.
+function cycVoltageCurrentTrend(rows) {
+  const byCycle = new Map();
+  for (const row of rows || []) {
+    const rawCycle = Number(row?.cycle);
+    const cycle = Math.round(rawCycle);
+    if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6) continue;
+    const group = byCycle.get(cycle) || { voltages: [], currents: [] };
+    const voltage = Number(row?.voltage);
+    const currentA = Number(row?.current);
+    if (Number.isFinite(voltage)) group.voltages.push(voltage);
+    if (Number.isFinite(currentA)) group.currents.push(currentA);
+    byCycle.set(cycle, group);
+  }
+  const average = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const entries = [...byCycle.entries()].sort(([left], [right]) => left - right);
+  return {
+    voltage: entries.filter(([, group]) => group.voltages.length).map(([cycle, group]) => ({ x: cycle, y: average(group.voltages) })),
+    // BDF의 표준 current_a(A)를 사용자에게 읽기 쉬운 mA 축으로 변환합니다.
+    current: entries.filter(([, group]) => group.currents.length).map(([cycle, group]) => ({ x: cycle, y: average(group.currents) * 1000 })),
+  };
+}
+
+function cycProfilePanel({ x, y, w, h, profile }) {
+  if (!profile.series.length) {
+    return `
+      <g>
+        <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/>
+        <text x="${x + w / 2}" y="${y + h / 2 - 16}" class="profileEmptyTitle" text-anchor="middle">전압 프로파일용 점이 부족합니다.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">현재 파일은 cycle별 요약값이라 전압-용량/시간 곡선을 만들 수 없습니다.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 40}" class="profileEmptyText" text-anchor="middle">cycle 안에 여러 voltage와 capacity 또는 time 점이 있는 원본 데이터를 사용하세요.</text>
+      </g>`;
+  }
+  const allPoints = profile.series.flatMap((series) => series.points);
+  const xDomain = niceBounds(allPoints.map((point) => point.x));
+  const yDomain = niceBounds(allPoints.map((point) => point.y));
+  const axes = drawPaperAxes({
+    x,
+    y,
+    w,
+    h,
+    xDomain,
+    yDomain,
+    xlabel: profile.xLabel,
+    ylabel: "Voltage (V)",
+    xlabelOffset: 48,
+    ylabelOffset: 64,
+  });
+  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309"];
+  const lines = profile.series.map((series, index) => {
+    const color = colors[index % colors.length];
+    return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
+  }).join("");
+  const legend = profile.series.map((series, index) => {
+    const color = colors[index % colors.length];
+    const lx = x + 10 + index * Math.max(84, Math.floor((w - 24) / Math.max(profile.series.length, 1)));
+    return `<line x1="${lx}" x2="${lx + 16}" y1="${y + 18}" y2="${y + 18}" class="profileLegendLine" stroke="${color}"/><text x="${lx + 22}" y="${y + 22}" class="profileLegend">cycle ${series.cycle}</text><text x="${lx + 22}" y="${y + 35}" class="profileLegend">${formatCurrentForFigure(series.currentA)}</text>`;
+  }).join("");
+  return `
+    <g>
+      <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>
+      ${axes.svg}
+      ${lines}
+      ${legend}
+    </g>`;
+}
+
+function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
+  if (!trend.voltage.length) {
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Voltage/current behavior</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">Voltage 데이터가 없어 전압·전류 추세를 만들 수 없습니다.</text></g>`;
+  }
+  const allCycles = [...trend.voltage, ...trend.current].map((point) => point.x);
+  const hasCurrent = trend.current.length > 0;
+  const axes = drawPaperAxes({
+    x,
+    y,
+    w,
+    h,
+    xDomain: niceBounds(allCycles),
+    yDomain: niceBounds(trend.voltage.map((point) => point.y)),
+    y2Domain: hasCurrent ? niceBounds(trend.current.map((point) => point.y)) : null,
+    xlabel: "Cycle number",
+    ylabel: "Voltage (V)",
+    // 오른쪽 전류 축 제목은 패널 폭에 맞춰 아래에서 직접 배치합니다.
+    y2label: "",
+    integerX: true,
+    xlabelOffset: 48,
+    ylabelOffset: 64,
+  });
+  const voltageLine = `<path d="${linePath(trend.voltage, axes.sx, axes.sy)}" class="voltageTrendLine"/>${markerPoints(trend.voltage, axes.sx, axes.sy, "voltageTrendPt", 3.3)}`;
+  const currentLine = hasCurrent && axes.sy2
+    ? `<path d="${linePath(trend.current, axes.sx, axes.sy2)}" class="currentTrendLine"/>${markerPoints(trend.current, axes.sx, axes.sy2, "currentTrendPt", 3.1)}`
+    : "";
+  return `
+    <g>
+      <text x="${x}" y="${y - 32}" class="panelTitle">Voltage/current behavior</text>
+      <text x="${x}" y="${y - 17}" class="caption">Summary trend: mean voltage and current by cycle</text>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>
+      ${axes.svg}
+      ${voltageLine}
+      ${currentLine}
+      <line x1="${x + 12}" x2="${x + 28}" y1="${y + 18}" y2="${y + 18}" class="voltageTrendLine"/><text x="${x + 34}" y="${y + 22}" class="profileLegend">Voltage (V)</text>
+      ${hasCurrent ? `<line x1="${x + 122}" x2="${x + 138}" y1="${y + 18}" y2="${y + 18}" class="currentTrendLine"/><text x="${x + 144}" y="${y + 22}" class="profileLegend">Current (mA)</text><text transform="translate(${x + w + 54},${y + h / 2}) rotate(90)" class="label" text-anchor="middle">Current (mA, +charge / -discharge)</text>` : `<text x="${x + 122}" y="${y + 22}" class="profileLegend">Current column unavailable</text>`}
+    </g>`;
+}
+
+function cycPerformancePanel({ x, y, w, h, points }) {
+  if (!points.length) {
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">용량 데이터를 찾지 못했습니다.</text></g>`;
+  }
+  return panel({
+    x,
+    y,
+    w,
+    h,
+    xlabel: "Cycle number",
+    ylabel: "Specific capacity (mAh g-1)",
+    title: "Cycling performance",
+    xDomain: niceBounds(points.map((point) => point.x)),
+    yDomain: niceBounds(points.map((point) => point.y)),
+    points,
+  });
+}
+
+function renderCycAlternativeFigure(d, mode) {
+  const style = currentFigureStyle();
+  syncFigureControls(style);
+  const rows = (d.rows || []).filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle);
+  const title = `${d.cell.cellId || d.id}${d.cell.sampleName ? " - " + d.cell.sampleName : ""}`;
+  const profile = cycVoltageProfileSeries(rows);
+  const electricalTrend = cycVoltageCurrentTrend(rows);
+  const hasRawVoltageProfile = profile.series.length > 0;
+  const electricalTitle = hasRawVoltageProfile ? "Voltage profile + current" : "Voltage/current trend (cycle summary)";
+  const capPts = dischargeSeries(rows);
+  const svgSize = figureSvgSize(style, "paper");
+  const combined = mode === "combined";
+  const padX = Math.max(72, Math.round(svgSize.w * 0.08));
+  const rightAxisPad = 112;
+  const plotY = Math.max(110, Math.round(svgSize.h * 0.18));
+  const plotH = Math.max(280, Math.round(svgSize.h * 0.56));
+  const gap = combined ? Math.max(68, Math.round(svgSize.w * 0.06)) : 0;
+  const panelW = combined ? Math.max(280, Math.floor((svgSize.w - padX - rightAxisPad - gap) / 2)) : Math.max(360, svgSize.w - padX - rightAxisPad);
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", combined ? `Performance + ${electricalTitle}` : electricalTitle], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  $("figureTitle").textContent = title;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - ${combined ? `Performance + ${electricalTitle} Fig` : `${electricalTitle} Fig`}`;
+  $("metaGrid").innerHTML = metaRows.map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
+  const performance = combined ? cycPerformancePanel({ x: padX, y: plotY, w: panelW, h: plotH, points: capPts }) : "";
+  const electricalX = combined ? padX + panelW + gap : padX;
+  const profilePanel = hasRawVoltageProfile
+    ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: plotH, profile })
+    : cycVoltageCurrentTrendPanel({ x: electricalX, y: plotY, w: panelW, h: plotH, trend: electricalTrend });
+  $("figureCanvas").innerHTML = `
+    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
+      ${cycStyle(style.seriesColor)}
+      <style>
+        .seriesLine{fill:none;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:2.1}.points circle{fill:#fff;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:1.6}
+        .profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}
+        .voltageTrendLine{fill:none;stroke:#0f766e;stroke-width:2}.currentTrendLine{fill:none;stroke:#db2777;stroke-width:2;stroke-dasharray:5 3}.voltageTrendPt{fill:#fff;stroke:#0f766e;stroke-width:1.5}.currentTrendPt{fill:#fff;stroke:#db2777;stroke-width:1.4}
+        .profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}
+      </style>
+      <rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
+      <text x="${padX}" y="48" class="panelTitle">${escapeXml(title)}</text>
+      <text x="${padX}" y="72" class="caption">${combined ? `Cycling performance + ${electricalTitle}` : electricalTitle}</text>
+      ${performance}
+      ${profilePanel}
+    </svg>`;
+  applyAnnotationsToSvg();
+}
+
+function renderCycVoltageProfileFigure(d) {
+  renderCycAlternativeFigure(d, "voltage-profile");
+}
+
+function renderCycCombinedFigure(d) {
+  renderCycAlternativeFigure(d, "combined");
+}
+
+function renderCycPerformanceFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
@@ -2596,9 +3227,13 @@ function renderCycFigure(d) {
   const capPts = dischargeSeries(rows);
   const rateSegments = inferCRateSegments(d, rows, capPts);
   const isRateFigure = rateSegments.length >= 2;
+  const detectedCRates = explicitCRateValues(rows);
+  const cRateText = isRateFigure
+    ? rateSegments.map((segment) => segment.label).join(" | ")
+    : detectedCRates.map(formatExplicitCRate).join(" | ");
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - ${d.rows.length} points`;
-  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], [isRateFigure ? "C-rate" : "Mode", isRateFigure ? rateSegments.map((s) => s.label).join(" | ") : "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], [cRateText ? "C-rate" : "Mode", cRateText || "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
   $("metaGrid").innerHTML = metaRows.map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const cycleValues = capPts.length ? capPts.map((r) => r.x) : rows.map((r) => r.cycle);
   const maxRateCycle = Math.max(...rateSegments.map((s) => s.end).filter(Number.isFinite), Math.max(...cycleValues));
@@ -2795,7 +3430,7 @@ function renderExperimentInfo(d) {
   }
 
   if (!blocks.length) {
-    blocks.push(`<section class="infoBlock emptyInfo"><h3>실험 정보 없음</h3><p>CYC 피겨를 선택하거나 매뉴얼 엑셀을 넣으면 C-rate와 전류 정보가 여기에 정리됩니다.</p></section>`);
+    blocks.push(`<section class="infoBlock emptyInfo"><h3>실험 정보 없음</h3><p>CYC Fig를 선택하거나 매뉴얼 엑셀을 넣으면 C-rate와 전류 정보가 여기에 정리됩니다.</p></section>`);
   }
   panel.innerHTML = blocks.join("");
 }
@@ -2845,7 +3480,7 @@ function renderCellWorkspace(d) {
   }).join("") : `<span class="recordEmpty">등록한 프로토콜 구간이 없습니다.</span>`;
 
   const figures = workspace?.figures || [];
-  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">열기</button></div>`).join("") : `<span class="recordEmpty">저장한 피겨가 없습니다.</span>`;
+  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">열기</button></div>`).join("") : `<span class="recordEmpty">저장한 Fig가 없습니다.</span>`;
 
   const reports = workspace?.reports || [];
   reportList.innerHTML = reports.length ? reports.map((report) => {
@@ -2953,7 +3588,7 @@ async function deleteProtocolSegment(segmentId) {
 
 function openCellRecordDataset(datasetId) {
   const target = state.datasets.find((item) => item.id === datasetId);
-  if (!target) return setStatus("현재 목록에서 피겨 데이터셋을 찾을 수 없습니다.");
+  if (!target) return setStatus("현재 목록에서 Fig 데이터셋을 찾을 수 없습니다.");
   state.selectedId = target.id;
   state.activeFigureModule = target.dataType || state.activeFigureModule;
   renderSelect();
@@ -2987,6 +3622,12 @@ function analysisLabel(name) {
 function analysisMetricLabel(key) {
   return {
     cycle_count: "분석 cycle 수",
+    capacity_field: "용량 기준 필드",
+    capacity_unit: "용량 단위",
+    initial_capacity: "초기 용량",
+    final_capacity: "마지막 용량",
+    initial_capacity_mah: "초기 용량 (mAh)",
+    final_capacity_mah: "마지막 용량 (mAh)",
     initial_capacity_mah_g: "초기 용량 (mAh g-1)",
     final_capacity_mah_g: "마지막 용량 (mAh g-1)",
     final_retention_pct: "용량 유지율 (%)",
@@ -3256,13 +3897,13 @@ function aiDegradationHtml(d) {
 }
 
 // "비교 결과 설명" 카드입니다.
-// 피겨 모음에서 체크한 CYC 데이터들을 비교 대상으로 사용합니다.
+// Fig 모음에서 체크한 CYC 데이터들을 비교 대상으로 사용합니다.
 function comparisonSummaryHtml() {
   const selected = state.compareIds
     .map((id) => state.datasets.find((d) => d.id === id))
     .filter((d) => d && d.dataType === "cyc");
   if (selected.length < 2) {
-    return `<p class="aiEmpty">비교 결과 설명을 보려면 피겨 모음에서 CYC 데이터를 2개 이상 체크한 뒤 이 페이지로 돌아오세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
+    return `<p class="aiEmpty">비교 결과 설명을 보려면 Fig 모음에서 CYC 데이터를 2개 이상 체크한 뒤 이 페이지로 돌아오세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
   }
   const rows = selected.map((d) => ({ d, stats: cycStats(d) }));
   const ranked = [...rows].sort((a, b) => (b.stats.lastCap || 0) - (a.stats.lastCap || 0));
@@ -3392,7 +4033,7 @@ function aiInsightSummaryHtml(d) {
     if (stats.retention != null && stats.retention < 85) checks.push("용량 유지율이 낮으므로 전극 loading, cutoff voltage, 전류 조건을 우선 확인하세요.");
     if (drops.length) checks.push(`가장 큰 감소는 cycle ${drops[0].start}->${drops[0].end} 구간입니다. 해당 구간 전후의 전압 프로파일을 같이 확인하는 것이 좋습니다.`);
     if (stats.avgEfficiency != null && (stats.avgEfficiency < 97 || stats.avgEfficiency > 103)) checks.push("평균 coulombic efficiency가 일반적인 안정 범위를 벗어날 수 있어 원 데이터의 charge/discharge capacity 열을 확인하세요.");
-    if (stats.segments?.length) checks.push(`C-rate 구간이 ${stats.segments.length}개로 추정됩니다. rate test라면 cycle 구간별 전류 조건을 피겨 caption에 같이 적는 것이 좋습니다.`);
+    if (stats.segments?.length) checks.push(`C-rate 구간이 ${stats.segments.length}개로 추정됩니다. rate test라면 cycle 구간별 전류 조건을 Fig caption에 같이 적는 것이 좋습니다.`);
     if (d.cell?.electrodeCalc) checks.push("전극 계산 저장값이 연결되어 있으므로 loading, 1C 전류, C-rate별 전류를 함께 보고서에 넣을 수 있습니다.");
     if (!checks.length) checks.push("현재 데이터에서는 큰 이상 신호가 뚜렷하지 않습니다. 반복 셀 데이터와 비교하면 신뢰도가 올라갑니다.");
     return `<ul class="aiBulletList aiInsightList">${checks.map((text) => `<li>${escapeXml(text)}</li>`).join("")}</ul>`;
@@ -3445,7 +4086,7 @@ function comparisonSummaryV2Html() {
     .map((id) => state.datasets.find((d) => d.id === id))
     .filter((d) => d && d.dataType === "cyc");
   if (selected.length < 2) {
-    return `<p class="aiEmpty">비교 설명을 만들려면 피겨 모음에서 CYC 데이터를 2개 이상 체크하세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
+    return `<p class="aiEmpty">비교 설명을 만들려면 Fig 모음에서 CYC 데이터를 2개 이상 체크하세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
   }
   const rows = selected.map((d) => ({ d, stats: cycStats(d) }));
   const byCapacity = [...rows].sort((a, b) => (b.stats.lastCap || 0) - (a.stats.lastCap || 0));
@@ -3708,7 +4349,7 @@ async function saveRowsEdit(d) {
     if (!res.ok) throw new Error(saved.error || "표 저장 실패");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("표 수정이 피겨에 반영되고 저장됐습니다.");
+    setStatus("표 수정이 Fig에 반영되고 저장됐습니다.");
   } catch (error) {
     setStatus(`표 저장 실패: ${error.message}`);
   }
@@ -3893,7 +4534,7 @@ function coerceTableValue(text, previous) {
   return trimmed;
 }
 
-// 표의 rows가 바뀌면 화면 상태, 피겨, 실험 정보, 자동 저장 예약을 한 번에 갱신합니다.
+// 표의 rows가 바뀌면 화면 상태, Fig, 실험 정보, 자동 저장 예약을 한 번에 갱신합니다.
 function cloneTableRows(rows) {
   return JSON.parse(JSON.stringify(Array.isArray(rows) ? rows : []));
 }
@@ -3938,7 +4579,7 @@ function updateDatasetRows(d) {
 }
 
 // 셀 하나를 수정한 뒤 실제 데이터셋 rows에 반영합니다.
-// 이후 updateDatasetRows가 피겨 갱신과 서버 저장까지 이어줍니다.
+// 이후 updateDatasetRows가 Fig 갱신과 서버 저장까지 이어줍니다.
 function applyTableCellEdit(cell) {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return false;
@@ -4039,7 +4680,7 @@ async function saveRowsEdit(d) {
     if (!res.ok) throw new Error(saved.error || "표 저장 실패");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("표 수정 내용이 피겨와 DB에 저장되었습니다.");
+    setStatus("표 수정 내용이 Fig와 DB에 저장되었습니다.");
   } catch (error) {
     setStatus(`표 저장 실패: ${error.message}`);
   }
@@ -4054,7 +4695,6 @@ function renderCurrent() {
   renderExperimentInfo(d);
   renderCellWorkspace(d);
   loadCellWorkspace(d);
-  renderAISummary();
 }
 
 async function applyCellInfo() {
@@ -4081,7 +4721,7 @@ async function applyCellInfo() {
     renderSelect();
     renderSavedList();
     renderCurrent();
-    setStatus("입력 정보가 현재 피겨에 적용되었습니다.");
+    setStatus("입력 정보가 현재 Fig에 적용되었습니다.");
   } catch (error) {
     setStatus(`정보 저장 실패: ${error.message}`);
   } finally {
@@ -4166,7 +4806,7 @@ function svgToPngBlob(svg) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("피겨 이미지를 변환하지 못했습니다."));
+      reject(new Error("Fig 이미지를 변환하지 못했습니다."));
     };
     img.src = url;
   });
@@ -4191,19 +4831,19 @@ function renderCycComparison() {
   const series = selectedComparisonSeries();
   preview.classList.remove("hidden");
   if (series.length < 2) {
-    preview.innerHTML = `<p class="emptySaved">CYC 피겨를 2개 이상 선택하면 비교 그래프를 만들 수 있습니다.</p>`;
-    setStatus("CYC 피겨를 2개 이상 선택하세요.");
+    preview.innerHTML = `<p class="emptySaved">CYC Fig를 2개 이상 선택하면 비교 그래프를 만들 수 있습니다.</p>`;
+    setStatus("CYC Fig를 2개 이상 선택하세요.");
     return;
   }
   const colorMap = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   preview.innerHTML = `
     <div class="comparisonTitle">
       <div>
-        <strong>CYC 비교 피겨</strong>
-        <span>${series.length}개 피겨 비교</span>
+        <strong>CYC 비교 Fig</strong>
+        <span>${series.length}개 Fig 비교</span>
       </div>
       <div class="comparisonActions">
-        <button type="button" id="saveComparisonFigure">비교 피겨 저장</button>
+        <button type="button" id="saveComparisonFigure">비교 Fig 저장</button>
         <button type="button" id="exportComparisonSvg" class="secondaryAction">SVG</button>
         <button type="button" id="exportComparisonPng" class="secondaryAction">PNG</button>
       </div>
@@ -4226,12 +4866,12 @@ function renderCycComparison() {
   $("saveComparisonFigure")?.addEventListener("click", saveComparisonFigure);
   $("exportComparisonSvg")?.addEventListener("click", exportComparisonSvg);
   $("exportComparisonPng")?.addEventListener("click", exportComparisonPng);
-  setStatus("CYC 비교 피겨를 만들었습니다.");
+  setStatus("CYC 비교 Fig를 만들었습니다.");
 }
 
 async function saveComparisonFigure() {
   const series = selectedComparisonSeries();
-  if (series.length < 2) return setStatus("저장하려면 CYC 피겨를 2개 이상 선택하세요.");
+  if (series.length < 2) return setStatus("저장하려면 CYC Fig를 2개 이상 선택하세요.");
   const comparisonColors = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   const payload = {
     dataType: "cyc-comparison",
@@ -4256,24 +4896,24 @@ async function saveComparisonFigure() {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    return setStatus(body.error || "비교 피겨 저장 실패");
+    return setStatus(body.error || "비교 Fig 저장 실패");
   }
   const saved = await res.json();
   state.datasets.unshift(saved);
   showDatasetImmediately(saved);
   activateView("figure", "cyc");
-  setStatus("비교 C-rate 피겨를 저장했습니다.");
+  setStatus("비교 C-rate Fig를 저장했습니다.");
 }
 
 function exportComparisonSvg() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("먼저 비교 피겨를 만들어주세요.");
+  if (!svg) return setStatus("먼저 비교 Fig를 만들어주세요.");
   download("cyc-comparison.svg", new XMLSerializer().serializeToString(svg), "image/svg+xml");
 }
 
 function exportComparisonPng() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("먼저 비교 피겨를 만들어주세요.");
+  if (!svg) return setStatus("먼저 비교 Fig를 만들어주세요.");
   svgToPngBlob(svg).then((blob) => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -4294,7 +4934,7 @@ function renderSavedCycComparison(d) {
     ["Source", d.sourceName],
   ].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   if (series.length < 1) {
-    $("figureCanvas").innerHTML = `<p class="emptySaved">저장된 비교 피겨 데이터가 없습니다.</p>`;
+    $("figureCanvas").innerHTML = `<p class="emptySaved">저장된 비교 Fig 데이터가 없습니다.</p>`;
     return;
   }
   const colorMap = Object.fromEntries(series.map((s) => [s.sourceId, s.color]));
@@ -4363,7 +5003,7 @@ function bytesToBase64(bytes) {
 
 async function exportPpt() {
   const svg = $("paperFigure");
-  if (!svg) return setStatus("먼저 피겨를 생성하거나 선택하세요.");
+  if (!svg) return setStatus("먼저 Fig를 생성하거나 선택하세요.");
   let pngBytes;
   try {
     const pngBlob = await svgToPngBlob(svg);
@@ -4947,7 +5587,7 @@ function deleteElectrodeProfile(id) {
 }
 
 // 저장소 카드의 내용을 CYC 데이터 cell.electrodeCalc에 넣기 위한 형태로 정리합니다.
-// 이렇게 넣어두면 CYC 피겨와 AI 요약에서 같은 계산값을 다시 사용할 수 있습니다.
+// 이렇게 넣어두면 CYC Fig와 분석 화면에서 같은 계산값을 다시 사용할 수 있습니다.
 function electrodeProfileCellPayload(profile) {
   return {
     profileId: profile.id,
@@ -5258,7 +5898,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("appVersion")) $("appVersion").textContent = PORTAL_VERSION_LABEL;
   on("loginForm", "submit", safeLogin);
   on("registerForm", "submit", safeRegister);
-  on("loginButton", "click", safeLogin);
   on("registerButton", "click", safeRegister);
   on("logoutBtn", "click", () => applyUser(null));
   on("createOrganization", "click", () => createOrganizationFromInput().catch((err) => setStatus(err.message)));
@@ -5318,8 +5957,6 @@ document.addEventListener("DOMContentLoaded", () => {
   on("query", "input", applyFilters);
   on("clearFilters", "click", clearSearchFilters);
   on("reloadData", "click", loadData);
-  on("refreshAiSummary", "click", renderAISummary);
-  on("saveAiReport", "click", saveAiReport);
   on("cellMetadataForm", "submit", saveCellMetadata);
   on("protocolSegmentForm", "submit", saveProtocolSegment);
   for (const btn of document.querySelectorAll(".searchType")) {
@@ -5351,6 +5988,7 @@ document.addEventListener("DOMContentLoaded", () => {
   on("annotationText", "keydown", (event) => { if (event.key === "Enter") addOrUpdateAnnotation(); });
   on("smartFile", "change", () => resetAnalysisForNewFile());
   on("inspectFile", "click", () => inspectSelectedFile());
+  on("batchCreateFigures", "click", createBatchFigures);
   on("inspectManual", "click", inspectManualFile);
   on("runElectrodeCalc", "click", runElectrodeCalc);
   on("copyElectrodeCalc", "click", copyElectrodeCalc);
@@ -5371,6 +6009,14 @@ document.addEventListener("DOMContentLoaded", () => {
     on(id, "input", renderElectrodeCalc);
   }
   on("createFigure", "click", createSmartFigure);
+  $("batchFigureResults")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-open-batch-figure]");
+    if (!button) return;
+    const dataset = state.datasets.find((item) => item.id === button.dataset.openBatchFigure);
+    if (!dataset) return setStatus("저장된 Dataset을 찾지 못했습니다. 목록을 새로고침해 주세요.");
+    showDatasetImmediately(dataset);
+    showModule(["cyc", "cv", "eis"].includes(dataset.dataType) ? dataset.dataType : "figure");
+  });
   for (const tab of document.querySelectorAll(".tab")) {
     tab.addEventListener("click", () => {
       if (tab.dataset.module) {

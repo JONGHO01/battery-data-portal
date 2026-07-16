@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battery Data Portal</title>
-    <link rel="stylesheet" href="/style.css?portal=0.1.9" />
+    <link rel="stylesheet" href="/style.css?portal=0.1.25" />
   </head>
   <body>
     <div class="busyOverlay hidden" id="busyOverlay">
@@ -23,7 +23,7 @@
         <form id="loginForm">
           <label>아이디 <input id="loginId" name="id" autocomplete="username" required /></label>
           <label>비밀번호 <input id="loginPassword" name="password" type="password" autocomplete="current-password" required /></label>
-          <button id="loginButton" type="button">로그인</button>
+          <button id="loginButton" type="submit">로그인</button>
         </form>
         <form id="registerForm" class="registerBox">
           <h2>새 사용자 만들기</h2>
@@ -41,7 +41,7 @@
     <header class="topbar">
       <div class="brandHome" id="brandHome" role="button" tabindex="0" aria-label="홈으로 이동">
         <h1>Battery Data Portal</h1>
-        <p>배터리 실험 데이터를 읽고, 검토하고, 논문용 피겨와 전극 계산표로 정리합니다.</p>
+        <p>배터리 실험 데이터를 읽고, 검토하고, 논문용 Fig와 전극 계산표로 정리합니다.</p>
       </div>
       <nav class="globalMenu" aria-label="주요 메뉴">
         <div class="menuGroup">
@@ -54,7 +54,7 @@
         <div class="menuGroup">
           <button type="button" class="menuTrigger" data-module="cyc">CYC</button>
           <div class="menuPanel">
-            <button type="button" class="menuItem" data-module="cyc">CYC 피겨 만들기</button>
+            <button type="button" class="menuItem" data-module="cyc">CYC Fig 만들기</button>
             <button type="button" class="menuItem" data-view="search" data-search-type="cyc">CYC 검색으로 보기</button>
             <button type="button" class="menuItem" data-view="savedFigures">저장된 CYC 비교</button>
           </div>
@@ -62,33 +62,17 @@
         <div class="menuGroup">
           <button type="button" class="menuTrigger" data-module="cv">CV</button>
           <div class="menuPanel">
-            <button type="button" class="menuItem" data-module="cv">CV 피겨 만들기</button>
+            <button type="button" class="menuItem" data-module="cv">CV Fig 만들기</button>
             <button type="button" class="menuItem" data-view="search" data-search-type="cv">CV 검색으로 보기</button>
-            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 보기</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장 Fig 보기</button>
           </div>
         </div>
         <div class="menuGroup">
           <button type="button" class="menuTrigger" data-module="eis">EIS</button>
           <div class="menuPanel">
-            <button type="button" class="menuItem" data-module="eis">EIS 피겨 만들기</button>
+            <button type="button" class="menuItem" data-module="eis">EIS Fig 만들기</button>
             <button type="button" class="menuItem" data-view="search" data-search-type="eis">EIS 검색으로 보기</button>
-            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 보기</button>
-          </div>
-        </div>
-        <div class="menuGroup">
-          <button type="button" class="menuTrigger" data-view="aiSummary">AI 요약</button>
-          <div class="menuPanel">
-            <button type="button" class="menuItem" data-view="aiSummary">현재 데이터 요약</button>
-            <button type="button" class="menuItem" data-view="aiSummary" data-ai-section="degrade">성능 저하 구간</button>
-            <button type="button" class="menuItem" data-view="aiSummary" data-ai-section="compare">비교 결과 설명</button>
-          </div>
-        </div>
-        <div class="menuGroup">
-          <button type="button" class="menuTrigger" data-view="analysisLab">분석</button>
-          <div class="menuPanel">
-            <button type="button" class="menuItem" data-view="analysisLab">Analysis Lab</button>
-            <button type="button" class="menuItem" data-view="analysisLab" data-analysis-name="dqdv">dQ/dV · DVA</button>
-            <button type="button" class="menuItem" data-view="analysisLab" data-analysis-name="eis">EIS 요약</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장 Fig 보기</button>
           </div>
         </div>
         <div class="menuGroup electrodeMenu">
@@ -100,11 +84,11 @@
           </div>
         </div>
         <div class="menuGroup">
-          <button type="button" class="menuTrigger" data-view="savedFigures">피겨 모음</button>
+          <button type="button" class="menuTrigger" data-view="savedFigures">Fig 모음</button>
           <div class="menuPanel">
-            <button type="button" class="menuItem" data-view="savedFigures">저장 피겨 목록</button>
-            <button type="button" class="menuItem" data-view="search" data-search-type="all">피겨 검색</button>
-            <button type="button" class="menuItem" data-module="cyc">새 피겨 만들기</button>
+            <button type="button" class="menuItem" data-view="savedFigures">저장 Fig 목록</button>
+            <button type="button" class="menuItem" data-view="search" data-search-type="all">Fig 검색</button>
+            <button type="button" class="menuItem" data-module="cyc">새 Fig 만들기</button>
           </div>
         </div>
         <div class="menuGroup">
@@ -118,6 +102,7 @@
           <div class="menuPanel">
             <button type="button" class="menuItem" data-view="feedbackAdmin">수정 요청 보기</button>
             <button type="button" class="menuItem" data-view="users">사용자 관리</button>
+            <button type="button" class="menuItem" data-view="releaseHistory">버전 이력</button>
           </div>
         </div>
       </nav>
@@ -132,29 +117,29 @@
     <section class="moduleHome hidden" id="moduleHome">
       <div class="moduleIntro">
         <span class="eyebrow">Battery experiment workspace</span>
-        <h2>데이터를 넣으면, 피겨와 계산표까지 한 화면에서.</h2>
-        <p>WRD, SEO, XLSX, XLSB, CSV 파일을 읽고 오류 가능성을 확인한 뒤 CYC, EIS, CV 피겨를 저장할 수 있습니다.</p>
+        <h2>데이터를 넣으면, Fig와 계산표까지 한 화면에서.</h2>
+        <p>WRD, SEO, XLSX, XLSB, CSV 파일을 읽고 오류 가능성을 확인한 뒤 CYC, EIS, CV Fig를 저장할 수 있습니다.</p>
       </div>
       <div class="homeStats" aria-label="main features">
         <div><strong>WRD/XLSX</strong><span>자동 분석</span></div>
-        <div><strong>CYC · CV · EIS</strong><span>피겨 생성</span></div>
+        <div><strong>CYC · CV · EIS</strong><span>Fig 생성</span></div>
         <div><strong>Search Lab</strong><span>조건별 탐색</span></div>
       </div>
       <div class="moduleGrid">
         <button class="moduleCard activeModule" data-module="cyc">
           <span class="moduleBadge">01</span>
-          <strong>CYC 피겨</strong>
-          <span>사이클, 방전용량, C-rate 구간을 확인하고 논문용 cycling 피겨를 생성합니다.</span>
+          <strong>CYC Fig</strong>
+          <span>사이클, 방전용량, C-rate 구간을 확인하고 논문용 cycling Fig를 생성합니다.</span>
         </button>
         <button class="moduleCard activeModule" data-module="cv">
           <span class="moduleBadge">02</span>
-          <strong>CV 피겨</strong>
-          <span>전압-전류 곡선과 scan rate 비교용 CV 피겨를 정리합니다.</span>
+          <strong>CV Fig</strong>
+          <span>전압-전류 곡선과 scan rate 비교용 CV Fig를 정리합니다.</span>
         </button>
         <button class="moduleCard activeModule" data-module="eis">
           <span class="moduleBadge">03</span>
-          <strong>EIS 피겨</strong>
-          <span>Nyquist, Bode plot과 임피던스 데이터를 논문용 피겨로 만듭니다.</span>
+          <strong>EIS Fig</strong>
+          <span>Nyquist, Bode plot과 임피던스 데이터를 논문용 Fig로 만듭니다.</span>
         </button>
         <button class="moduleCard activeModule" data-module="electrodeCalc">
           <span class="moduleBadge">04</span>
@@ -164,25 +149,14 @@
         <button class="moduleCard activeModule" data-view="search" data-search-type="all">
           <span class="moduleBadge">05</span>
           <strong>검색 페이지</strong>
-          <span>날짜, 소재, 셀 ID, 데이터 타입을 한 화면에서 좁혀 보고 바로 피겨로 이동합니다.</span>
-        </button>
-        <button class="moduleCard activeModule" data-view="aiSummary">
-          <span class="moduleBadge">06</span>
-          <strong>AI 요약</strong>
-          <span>선택한 데이터의 핵심값을 계산하고 OpenAI API로 논문/PPT용 해석문을 생성합니다.</span>
-        </button>
-        <button class="moduleCard activeModule" data-view="analysisLab">
-          <span class="moduleBadge">07</span>
-          <strong>Analysis Lab</strong>
-          <span>정규화된 데이터에서 retention, dQ/dV, DVA, EIS, pulse, rate-capability를 재현 가능하게 계산합니다.</span>
+          <span>날짜, 소재, 셀 ID, 데이터 타입을 한 화면에서 좁혀 보고 바로 Fig로 이동합니다.</span>
         </button>
       </div>
       <div class="homeGuide">
         <strong>작업 흐름</strong>
         <span>파일 선택</span>
         <span>데이터 검토</span>
-        <span>피겨 생성</span>
-        <span>AI 요약</span>
+        <span>Fig 생성</span>
         <span>저장 후 수정</span>
       </div>
     </section>
@@ -191,7 +165,7 @@
       <aside class="sidebar">
         <section class="panel hierarchyPanel">
           <h2>실험 저장 위치</h2>
-          <p>프로젝트 → 실험 배치 → 셀 아래에 CYC, EIS, CV와 피겨를 함께 정리합니다.</p>
+          <p>프로젝트 → 실험 배치 → 셀 아래에 CYC, EIS, CV와 Fig를 함께 정리합니다.</p>
           <label>프로젝트
             <select id="projectSelect"></select>
           </label>
@@ -236,13 +210,16 @@
             <label>소유자 <input id="ownerPreview" disabled /></label>
             <label class="filebox">
               데이터 파일
-              <input id="smartFile" type="file" name="csv" accept=".csv,.txt,.xlsx,.xlsm,.xls,.xlsb,.wrd,.WRD,.seo,.SEO,application/vnd.ms-excel.sheet.binary.macroEnabled.12" />
+              <input id="smartFile" type="file" name="csv" multiple accept=".csv,.txt,.xlsx,.xlsm,.xls,.xlsb,.wrd,.WRD,.seo,.SEO,application/vnd.ms-excel.sheet.binary.macroEnabled.12" />
               <span id="selectedFileName" class="selectedFileName">선택된 파일 없음</span>
               <span id="fileHint">CSV/XLSX/XLSB/WRD/SEO 지원. EIS, CYC, CV 데이터를 자동 판별합니다.</span>
             </label>
             <button id="inspectFile" type="button">파일 분석</button>
+            <button id="batchCreateFigures" type="button" class="secondaryAction hidden">여러 파일 일괄 Fig 생성</button>
+            <p class="batchFigureHint">여러 파일을 선택하면 최대 10개까지 순서대로 분석·저장하고 각 Fig 기록을 만듭니다. 입력한 셀 정보와 저장 위치가 모든 파일에 공통 적용됩니다.</p>
+            <section id="batchFigureResults" class="batchFigureResults hidden" aria-live="polite"></section>
             <div id="analysisPanel" class="analysisPanel hidden"></div>
-            <button id="createFigure" type="button" class="hidden">선택한 피겨 생성</button>
+            <button id="createFigure" type="button" class="hidden">선택한 Fig 생성</button>
             <button id="applyCellInfo" type="button" class="secondaryAction">입력 정보 적용</button>
           </form>
         </section>
@@ -262,13 +239,12 @@
           <button class="tab" data-view="figure" data-module="cv">CV</button>
           <button class="tab" data-view="figure" data-module="eis">EIS</button>
           <button class="tab" data-view="search">검색</button>
-          <button class="tab" data-view="savedFigures">피겨 모음</button>
+          <button class="tab" data-view="savedFigures">Fig 모음</button>
           <button class="tab" data-view="electrodeCalc">전극 계산</button>
           <button class="tab" data-view="experimentInfo">셀 기록</button>
-          <button class="tab" data-view="aiSummary">AI 요약</button>
-          <button class="tab" data-view="analysisLab">분석</button>
           <button class="tab" data-view="organization">조직</button>
           <button class="tab adminOnly" data-view="feedbackAdmin">의견함</button>
+          <button class="tab adminOnly" data-view="releaseHistory">버전 이력</button>
         </nav>
 
         <section class="toolbar" id="workspaceToolbar">
@@ -283,7 +259,7 @@
         <section id="searchView" class="view">
           <div class="searchHero">
             <span class="eyebrow">Search Lab</span>
-            <h2>실험 데이터를 빠르게 찾고, 바로 피겨로 연결합니다.</h2>
+            <h2>실험 데이터를 빠르게 찾고, 바로 Fig로 연결합니다.</h2>
             <p>날짜, 셀 ID, 소재, 샘플명, 메모를 한 곳에서 검색합니다. 메뉴에서 들어오면 CYC, CV, EIS별로 자동 필터링됩니다.</p>
           </div>
           <div class="searchShell">
@@ -330,7 +306,7 @@
           <div class="searchResultsHeader">
             <div>
               <h2>검색 결과</h2>
-              <p>카드를 선택하면 해당 데이터를 피겨 화면에서 바로 확인합니다.</p>
+              <p>카드를 선택하면 해당 데이터를 Fig 화면에서 바로 확인합니다.</p>
             </div>
           </div>
           <div id="searchResultList" class="searchResultList"></div>
@@ -352,7 +328,7 @@
               </select>
             </label>
             <button id="addAnnotation" type="button">글 추가</button>
-            <button id="saveFigureEdits" type="button" class="saveAction">피겨 저장</button>
+            <button id="saveFigureEdits" type="button" class="saveAction">Fig 저장</button>
             <button id="clearAnnotations" type="button">전체 삭제</button>
           </div>
           <div class="figureHeader">
@@ -387,8 +363,8 @@
         <section id="savedFiguresView" class="view">
           <div class="savedFigureHeader">
             <div>
-              <h2>저장된 피겨</h2>
-              <p>저장한 피겨를 선택해서 다시 열거나 삭제할 수 있습니다.</p>
+              <h2>저장된 Fig</h2>
+              <p>저장한 Fig를 선택해서 다시 열거나 삭제할 수 있습니다.</p>
             </div>
             <span id="savedCount">0개</span>
           </div>
@@ -440,7 +416,7 @@
               </section>
               <section class="recordCard">
                 <h3>Dataset 묶음</h3>
-                <p>하나의 분석 묶음에 CYC, EIS, CV와 피겨·보고서를 함께 연결합니다.</p>
+                <p>하나의 분석 묶음에 CYC, EIS, CV와 Fig·보고서를 함께 연결합니다.</p>
                 <div id="datasetGroupLibrary" class="recordList"></div>
               </section>
               <section class="recordCard recordCardWide">
@@ -459,7 +435,7 @@
               </section>
               <section class="recordCard recordCardWide">
                 <h3>Figures & reports</h3>
-                <p>현재 선택한 Dataset에서 저장한 피겨와 AI 해석 보고서입니다.</p>
+                <p>현재 선택한 Dataset에서 저장한 Fig와 AI 해석 보고서입니다.</p>
                 <div class="figureReportGrid">
                   <div><strong>Figures</strong><div id="cellFigureLibrary" class="recordList"></div></div>
                   <div><strong>Reports</strong><div id="cellReportLibrary" class="recordList"></div></div>
@@ -529,57 +505,6 @@
           </section>
           <div id="electrodeCalcResult" class="electrodeCalcResult"></div>
           <section id="electrodeCalcSlots" class="electrodeCalcSlots"></section>
-        </section>
-
-        <!-- AI 요약 페이지: 선택한 데이터의 주요 결과, 성능 저하, 비교 설명을 자동 문장으로 정리합니다. -->
-        <section id="aiSummaryView" class="view">
-          <div class="savedFigureHeader aiSummaryHeader">
-            <div>
-              <h2>AI 요약</h2>
-              <p>Python 백엔드가 핵심값을 계산한 뒤 OpenAI API로 논문/PPT용 해석문을 생성합니다.</p>
-            </div>
-            <div class="row">
-              <button id="refreshAiSummary" type="button">요약 새로고침</button>
-              <button id="saveAiReport" type="button" class="saveAction">AI 보고서 저장</button>
-            </div>
-          </div>
-          <div class="aiSummaryGrid">
-            <section class="aiSummaryCard">
-              <div class="aiSummaryTitle">
-                <span>01</span>
-                <h3>이 데이터의 주요 결과 요약</h3>
-              </div>
-              <div id="aiMainSummary" class="aiSummaryBody"></div>
-            </section>
-            <section class="aiSummaryCard" data-ai-summary-section="degrade">
-              <div class="aiSummaryTitle">
-                <span>02</span>
-                <h3>성능 저하 구간 표시</h3>
-              </div>
-              <div id="aiDegradationSummary" class="aiSummaryBody"></div>
-            </section>
-            <section class="aiSummaryCard aiSummaryWide" data-ai-summary-section="compare">
-              <div class="aiSummaryTitle">
-                <span>03</span>
-                <h3>비교 결과 설명</h3>
-              </div>
-              <div id="aiCompareSummary" class="aiSummaryBody"></div>
-            </section>
-            <section class="aiSummaryCard">
-              <div class="aiSummaryTitle">
-                <span>04</span>
-                <h3>실험 해석 / 확인 포인트</h3>
-              </div>
-              <div id="aiInsightSummary" class="aiSummaryBody"></div>
-            </section>
-            <section class="aiSummaryCard aiSummaryWide">
-              <div class="aiSummaryTitle">
-                <span>05</span>
-                <h3>논문 · PPT용 문장</h3>
-              </div>
-              <div id="aiWritingSummary" class="aiSummaryBody"></div>
-            </section>
-          </div>
         </section>
 
         <section id="analysisLabView" class="view">
@@ -731,6 +656,18 @@
             <p class="emptySaved">아직 불러온 의견이 없습니다.</p>
           </div>
         </section>
+
+        <section id="releaseHistoryView" class="view">
+          <div class="usersHeader">
+            <div>
+              <span class="eyebrow">Release history</span>
+              <h2>버전 이력</h2>
+              <p>포털에 반영된 주요 변경을 버전별로 확인합니다. 전체 변경 내역은 프로젝트의 CHANGELOG.md에서 관리합니다.</p>
+            </div>
+            <span id="releaseCurrentVersion" class="releaseCurrentVersion"></span>
+          </div>
+          <div id="releaseHistoryList" class="releaseHistoryList"></div>
+        </section>
       </section>
 
       <section class="feedbackFooter" id="feedbackFooter">
@@ -747,7 +684,7 @@
             <input id="feedbackEmail" name="email" placeholder="이메일 또는 연락 가능한 메모, 선택" />
           </label>
           <label>관련 페이지
-            <input id="feedbackPage" name="page" placeholder="예: CYC 피겨, EIS 업로드, AI 요약" />
+            <input id="feedbackPage" name="page" placeholder="예: CYC Fig, EIS 업로드, 분석 페이지" />
           </label>
           <label class="feedbackMessage">수정 요청 내용
             <textarea id="feedbackMessage" name="message" rows="4" placeholder="어떤 부분이 불편했는지, 어떻게 바뀌면 좋을지 적어주세요." required></textarea>
@@ -760,6 +697,6 @@
       </section>
     </main>
 
-    <script src="/app.js?portal=0.1.9"></script>
+    <script src="/app.js?portal=0.1.25"></script>
   </body>
 </html>

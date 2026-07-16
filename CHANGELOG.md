@@ -2,7 +2,67 @@
 
 ## Unreleased
 - Record every delivered meaningful portal change here before commit, push, packaging, or deployment. Move these entries into the next version section when the version is released.
-- Synchronize GitHub `main` with the committed v0.1.9 Battery Portal source and project-local skills.
+
+## v0.1.25 - 2026-07-16
+- Use SQLite WAL mode and a 30-second busy timeout for local Dataset persistence so an artifact finalization does not immediately fail with a transient server error when the browser is reading portal data at the same time.
+
+## v0.1.24 - 2026-07-16
+- Show a cycle-summary fallback for CYC voltage/profile selections: mean voltage and signed current are plotted together by cycle instead of leaving the electrical behavior unavailable.
+- Keep true voltage-versus-capacity/time profiles for raw curve data and label each selected curve with its average current.
+
+## v0.1.23 - 2026-07-16
+- Make the saved CYC Fig choice control the renderer: cycling performance, voltage profile, and combined Fig now use distinct rendering paths.
+- Require multiple within-cycle voltage/capacity or voltage/time points for a voltage profile, and show an explicit Fig message instead of fabricating a curve from cycle-summary rows.
+
+## v0.1.22 - 2026-07-16
+- Detect expired or server-invalidated browser login tokens on protected requests and return users to the login screen with a clear retry message instead of showing a file-analysis failure.
+
+## v0.1.21 - 2026-07-16
+- Allow selecting multiple supported upload files and process up to 10 sequentially with the same Cell metadata and hierarchy destination.
+- Save a Dataset and a corresponding Fig record for every successfully detected CYC, CV, or EIS file, while retaining per-file results and retryable error messages.
+
+## v0.1.20 - 2026-07-16
+- Recognize explicit CYC C-rate columns in BDF canonical rows, accepting numeric values, `0.33 C`, and `C/10` notation.
+- Prefer the uploaded C-rate column over filename or current-based inference when labeling CYC Fig cycle segments, and show detected C-rate values during file inspection.
+
+## v0.1.19 - 2026-07-16
+- Rename the user-facing figure terminology to `Fig` across portal navigation, actions, status messages, data-type guidance, saved-comparison UI, and current README wording.
+
+## v0.1.18 - 2026-07-16
+- Filter short, low-capacity interrupted start/end fragments from WBCS WRD CYC summaries while preserving complete low-capacity cycles.
+- Ignore zero or negative cycle numbers when drawing CYC capacity figures and retain a single authoritative CYC figure renderer.
+
+## v0.1.17 - 2026-07-16
+- Keep the file-type dropdown enabled after automatic detection; choosing a value immediately switches to manual selection so CYC, CV, and EIS can be selected without a separate radio-button step.
+
+## v0.1.16 - 2026-07-16
+- Hide the Analysis Lab menu, home card, and workspace tab from normal navigation while preserving the implementation and saved analysis history for a later restore.
+
+## v0.1.15 - 2026-07-15
+- Make the login button a form submit control so Enter in the ID or password field logs in once through the existing validation path.
+- Put the automatically detected CYC/CV/EIS type choice above the read-only column-name chips, make the selected type visually clear, and explain that column names do not need to be selected.
+
+## v0.1.14 - 2026-07-15
+- Raise the bounded default upload limit from 50 MiB to 100 MiB so common WBCS CYC WRD exports can be inspected without overriding local or Render settings.
+- Return the configured upload limit in Korean when an upload is rejected, and show FastAPI `detail` messages in the browser instead of a generic load failure.
+- Add a WBCS WRD regression fixture that verifies a binary discharge record becomes a CYC summary row.
+
+## v0.1.13 - 2026-07-15
+- Add a concise version-history table to README and an administrator-only Version History view in the portal, showing the current semantic releases and their key delivered changes.
+
+## v0.1.12 - 2026-07-15
+- Remove the AI Summary menu, home entry card, workspace tab, dedicated frontend view, automatic refresh calls, and report-save controls from the portal UI. Existing datasets and the non-exposed backend compatibility endpoint remain intact.
+
+## v0.1.11 - 2026-07-15
+- Interpret BDF `discharge_capacity_ah` and displayed `discharge_capacity_mAh` CYC columns as valid absolute-capacity series, convert Ah to mAh, and preserve the capacity unit in Retention and AI CYC metrics.
+- Migrate older `analysis_runs` tables with no `artifact_json` column at startup and make Dataset deletion tolerant of legacy analysis records so linked EIS/CYC analyses do not cause a server error.
+
+## v0.1.10 - 2026-07-15
+- Disable legacy header-based authentication and wildcard CORS by default; production now refuses insecure authentication, CORS, and non-durable storage settings.
+- Require configured S3/Supabase-compatible object storage for the Render production blueprint so raw and generated research files are not silently kept in `/tmp` only.
+- Limit browser and Harvester uploads to a configurable 50 MiB default before Base64 decoding, with streamed raw-upload enforcement.
+- Remove temporary uploads after immutable raw/parsed artifacts are stored, reuse figure/report artifact paths on re-save, and delete dependent records and artifacts when a dataset is deleted.
+- Pin Python dependencies to the locally verified versions and synchronize `package.json` with the portal release version.
 
 ## v0.1.9 - 2026-07-15
 - Adopt semantic portal version numbering (`major.minor.patch`).
@@ -32,7 +92,7 @@
 
 
 ## v0.14 - 2026-07-13
-- Dataset 묶음, 셀 메타데이터, 프로토콜 구간, 피겨 및 AI 보고서 저장 구조를 추가했습니다.
+- Dataset 묶음, 셀 메타데이터, 프로토콜 구간, Fig 및 AI 보고서 저장 구조를 추가했습니다.
 
 
 ## v0.13 - 2026-07-13
@@ -44,7 +104,7 @@
 
 
 ## v0.11 - 2026-07-10
-- EIS Nyquist 피겨에 자동으로 표시되던 빨간 high f -> low f 주파수 방향 화살표를 제거했습니다.
+- EIS Nyquist Fig에 자동으로 표시되던 빨간 high f -> low f 주파수 방향 화살표를 제거했습니다.
 
 
 ## v0.10 - 2026-07-10
@@ -91,4 +151,4 @@
 ## v0.00 - 2026-07-07
 
 - 배터리 데이터 포탈 버전 표기를 시작했습니다.
-- CYC/CV/EIS 피겨, 검색, 전극 계산, AI 요약, 엑셀 표 수정 기능을 개발 버전으로 정리했습니다.
+- CYC/CV/EIS Fig, 검색, 전극 계산, AI 요약, 엑셀 표 수정 기능을 개발 버전으로 정리했습니다.

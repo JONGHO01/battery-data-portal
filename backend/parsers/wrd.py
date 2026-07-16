@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
+from statistics import median
 from pathlib import Path
 
 
@@ -42,20 +43,42 @@ def read_wrd(path: Path) -> tuple[list[list], str]:
     for point in points:
         discharge_q = point["discharge_q"]
         same_segment = current_segment and discharge_q >= previous_q - 1e-5 and point["offset"] - current_segment[-1]["offset"] < 50000
-        if discharge_q > 1e-8 and point["current"] < 0 and (not current_segment or same_segment):
+        is_discharge_point = discharge_q > 1e-8 and point["current"] < 0
+        if is_discharge_point and (not current_segment or same_segment):
             current_segment.append(point)
         else:
             if current_segment:
                 segments.append(current_segment)
-            current_segment = []
+            current_segment = [point] if is_discharge_point else []
         previous_q = discharge_q
     if current_segment:
         segments.append(current_segment)
-    rows = [["cycle", "discharge capacity (mAh g-1)", "discharge Q (Ah)", "end voltage (V)", "avg current (A)", "points", "range"]]
+
+    candidates = []
     for segment in segments:
         max_q = max(item["discharge_q"] for item in segment)
-        if max_q < 1e-4:
-            continue
+        if max_q >= 1e-4:
+            candidates.append({"segment": segment, "max_q": max_q})
+
+    if len(candidates) >= 3:
+        typical_q = median(candidate["max_q"] for candidate in candidates)
+        typical_points = median(len(candidate["segment"]) for candidate in candidates)
+        minimum_complete_points = max(3, typical_points * 0.2)
+        candidates = [
+            candidate
+            for candidate in candidates
+            # WBCS can include a brief interrupted start/end fragment. A complete
+            # low-capacity cycle is retained because it has a normal point count.
+            if not (
+                candidate["max_q"] < typical_q * 0.15
+                and len(candidate["segment"]) < minimum_complete_points
+            )
+        ]
+
+    rows = [["cycle", "discharge capacity (mAh g-1)", "discharge Q (Ah)", "end voltage (V)", "avg current (A)", "points", "range"]]
+    for candidate in candidates:
+        segment = candidate["segment"]
+        max_q = candidate["max_q"]
         end = max(segment, key=lambda item: item["discharge_q"])
         avg_current = sum(item["current"] for item in segment) / len(segment)
         rows.append([len(rows), max_q * 1000 / mass_g if mass_g else "", max_q, end["voltage"], avg_current, len(segment), end["range"]])

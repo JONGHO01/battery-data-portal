@@ -57,6 +57,7 @@ class DatasetArtifactTests(unittest.TestCase):
 
         self.assertTrue((portal.DATA_DIR / saved["rawArtifact"]["localPath"]).exists())
         self.assertTrue((portal.DATA_DIR / saved["parsedArtifact"]["localPath"]).exists())
+        self.assertFalse(source_path.exists())
         self.assertEqual(saved["parser"]["name"], "csv")
         self.assertEqual(saved["quality"]["status"], "ok")
         self.assertEqual(saved["analysisProvenance"]["sourceUploadId"], upload_id)
@@ -91,6 +92,137 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertTrue((portal.DATA_DIR / report["artifact"]["localPath"]).exists())
         self.assertIn("/figure/", figure["artifact"]["objectKey"])
         self.assertIn("/report/", report["artifact"]["objectKey"])
+
+    def test_saving_the_same_figure_and_report_reuses_their_artifact_paths(self):
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-DERIVED-REUSE-TEST"
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "figureKind": "cycling-performance",
+                    "cell": {"cellId": "CELL-REUSE"},
+                    "rows": [{"cycle": 1, "capacity": 150}],
+                    "columns": ["cycle", "capacity"],
+                },
+            )
+
+        first_figure = portal.save_figure_record({"datasetId": dataset_id, "name": "First"}, user)
+        second_figure = portal.save_figure_record({"datasetId": dataset_id, "name": "Second"}, user)
+        first_report = portal.save_report({"datasetId": dataset_id, "reportType": "analysis", "content": {"v": 1}}, user)
+        second_report = portal.save_report({"datasetId": dataset_id, "reportType": "analysis", "content": {"v": 2}}, user)
+
+        self.assertEqual(first_figure["id"], second_figure["id"])
+        self.assertEqual(first_figure["artifact"]["objectKey"], second_figure["artifact"]["objectKey"])
+        self.assertEqual(first_report["id"], second_report["id"])
+        self.assertEqual(first_report["artifact"]["objectKey"], second_report["artifact"]["objectKey"])
+
+    def test_deleting_a_dataset_removes_dependent_records_and_local_artifacts(self):
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-DELETE-CLEANUP-TEST"
+        with portal.connect() as conn:
+            raw_artifact = portal.write_dataset_artifact(b"raw", f"datasets/{dataset_id}/raw.csv", "text/csv")
+            parsed_artifact = portal.write_dataset_artifact(b"parsed", f"datasets/{dataset_id}/parsed.json", "application/json")
+            dataset = portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "figureKind": "cycling-performance",
+                    "cell": {"cellId": "CELL-DELETE"},
+                    "rows": [{"cycle": 1, "capacity": 150}],
+                    "columns": ["cycle", "capacity"],
+                    "rawArtifact": raw_artifact,
+                    "parsedArtifact": parsed_artifact,
+                },
+            )
+            analysis = portal.create_analysis_run(conn, dataset, user, "retention", {})
+
+        figure = portal.save_figure_record({"datasetId": dataset_id}, user)
+        report = portal.save_report({"datasetId": dataset_id, "reportType": "analysis"}, user)
+        artifact_paths = [
+            portal.DATA_DIR / raw_artifact["localPath"],
+            portal.DATA_DIR / parsed_artifact["localPath"],
+            portal.DATA_DIR / analysis["artifact"]["localPath"],
+            portal.DATA_DIR / figure["artifact"]["localPath"],
+            portal.DATA_DIR / report["artifact"]["localPath"],
+        ]
+
+        self.assertEqual(portal.delete_dataset(dataset_id, user), {"ok": True})
+        with portal.connect() as conn:
+            self.assertIsNone(portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone())
+            self.assertIsNone(portal.execute(conn, "SELECT * FROM analysis_runs WHERE dataset_id = ?", (dataset_id,)).fetchone())
+            self.assertIsNone(portal.execute(conn, "SELECT * FROM figures WHERE dataset_id = ?", (dataset_id,)).fetchone())
+            self.assertIsNone(portal.execute(conn, "SELECT * FROM reports WHERE dataset_id = ?", (dataset_id,)).fetchone())
+        self.assertTrue(all(not path.exists() for path in artifact_paths))
+
+    def test_legacy_analysis_table_is_migrated_before_deleting_its_dataset(self):
+        """Live databases created before analysis artifacts must delete safely."""
+
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-LEGACY-ANALYSIS-DELETE-TEST"
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "eis",
+                    "figureKind": "nyquist-bode",
+                    "cell": {"cellId": "CELL-LEGACY-ANALYSIS"},
+                    "rows": [{"frequency": 1000, "zreal": 1.5, "zimag": -0.5}],
+                    "columns": ["frequency", "zreal", "zimag"],
+                },
+            )
+            execute = portal.execute
+            execute(conn, "ALTER TABLE analysis_runs RENAME TO analysis_runs_with_artifact")
+            execute(
+                conn,
+                """
+                CREATE TABLE analysis_runs (
+                  id TEXT PRIMARY KEY,
+                  dataset_id TEXT NOT NULL,
+                  owner_id TEXT NOT NULL,
+                  analysis_name TEXT NOT NULL,
+                  analysis_version TEXT NOT NULL,
+                  parameters_json TEXT NOT NULL DEFAULT '{}',
+                  result_json TEXT NOT NULL DEFAULT '{}',
+                  provenance_json TEXT NOT NULL DEFAULT '{}',
+                  created_at TEXT NOT NULL
+                )
+                """,
+            )
+            execute(
+                conn,
+                """
+                INSERT INTO analysis_runs(
+                  id, dataset_id, owner_id, analysis_name, analysis_version,
+                  parameters_json, result_json, provenance_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                ("legacy-run", dataset_id, user["id"], "eis", "analysis-0", "{}", "{}", "{}", portal.now_iso()),
+            )
+
+        try:
+            with portal.connect() as conn:
+                portal.ensure_analysis_run_columns(conn)
+                self.assertIn("artifact_json", portal.table_columns(conn, "analysis_runs"))
+
+            self.assertEqual(portal.delete_dataset(dataset_id, user), {"ok": True})
+            with portal.connect() as conn:
+                self.assertIsNone(portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone())
+                self.assertIsNone(portal.execute(conn, "SELECT * FROM analysis_runs WHERE dataset_id = ?", (dataset_id,)).fetchone())
+        finally:
+            with portal.connect() as conn:
+                portal.execute(conn, "DROP TABLE IF EXISTS analysis_runs")
+                portal.execute(conn, "ALTER TABLE analysis_runs_with_artifact RENAME TO analysis_runs")
 
 
 if __name__ == "__main__":

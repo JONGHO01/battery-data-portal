@@ -1,0 +1,116 @@
+import asyncio
+import unittest
+from unittest.mock import patch
+
+import python_backend as portal
+
+
+class RuntimeSecurityTests(unittest.TestCase):
+    def test_safe_defaults_do_not_enable_header_impersonation_or_public_cors(self):
+        self.assertFalse(portal.ALLOW_LEGACY_USER_HEADER)
+        self.assertEqual(portal.CORS_ALLOW_ORIGINS, [])
+
+    def test_default_upload_limit_accepts_common_wbcs_wrd_exports(self):
+        # WBCS cycling exports can be larger than 50 MiB even when the parsed
+        # cycle summary is small. Keep a bounded, but practical, default.
+        self.assertGreaterEqual(portal.DEFAULT_MAX_UPLOAD_BYTES, 100 * 1024 * 1024)
+
+    def test_sqlite_connections_wait_for_transient_dataset_save_writes(self):
+        """A large artifact write must not immediately fail a concurrent save."""
+
+        if portal.USE_POSTGRES:
+            self.skipTest("SQLite-specific connection behavior")
+        with portal.connect() as conn:
+            timeout_ms = portal.scalar(portal.execute(conn, "PRAGMA busy_timeout").fetchone())
+        self.assertGreaterEqual(int(timeout_ms), 30_000)
+
+    def test_cors_parser_strips_empty_and_whitespace_entries(self):
+        self.assertEqual(
+            portal.parse_cors_allow_origins(" https://portal.example , ,https://lab.example "),
+            ["https://portal.example", "https://lab.example"],
+        )
+        self.assertEqual(portal.parse_cors_allow_origins(""), [])
+
+    def test_production_refuses_legacy_header_authentication(self):
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            ALLOW_LEGACY_USER_HEADER=True,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["https://portal.example"],
+            STORAGE_BACKEND="s3",
+            REQUIRE_DURABLE_STORAGE=True,
+        ), patch.object(portal, "storage_ready", return_value=True):
+            with self.assertRaisesRegex(RuntimeError, "ALLOW_LEGACY_USER_HEADER"):
+                portal.validate_runtime_configuration()
+
+    def test_production_refuses_wildcard_cors_and_temporary_storage(self):
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            ALLOW_LEGACY_USER_HEADER=False,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["*"],
+            STORAGE_BACKEND="local",
+            REQUIRE_DURABLE_STORAGE=True,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "CORS_ALLOW_ORIGINS"):
+                portal.validate_runtime_configuration()
+
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            ALLOW_LEGACY_USER_HEADER=False,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["https://portal.example"],
+            STORAGE_BACKEND="local",
+            REQUIRE_DURABLE_STORAGE=True,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "durable object storage"):
+                portal.validate_runtime_configuration()
+
+    def test_production_accepts_configured_object_storage(self):
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            ALLOW_LEGACY_USER_HEADER=False,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["https://portal.example"],
+            STORAGE_BACKEND="s3",
+            REQUIRE_DURABLE_STORAGE=True,
+        ), patch.object(portal, "storage_ready", return_value=True):
+            portal.validate_runtime_configuration()
+
+    def test_base64_upload_is_rejected_before_decoding_when_too_large_or_invalid(self):
+        with patch.multiple(portal, MAX_BODY=3, MAX_BASE64_CHARS=4):
+            with self.assertRaises(portal.HTTPException) as too_large:
+                portal.inspect_file_common({"filename": "test.csv", "contentBase64": "AAAAA"}, "inspect_file.py", {})
+            self.assertEqual(too_large.exception.status_code, 413)
+            self.assertIn("허용 한도", str(too_large.exception.detail))
+
+            with self.assertRaises(portal.HTTPException) as invalid:
+                portal.inspect_file_common({"filename": "test.csv", "contentBase64": "####"}, "inspect_file.py", {})
+            self.assertEqual(invalid.exception.status_code, 400)
+
+    def test_streamed_raw_upload_stops_after_the_configured_limit(self):
+        class ChunkedRequest:
+            headers = {}
+
+            async def stream(self):
+                yield b"12"
+                yield b"34"
+
+        with patch.object(portal, "MAX_BODY", 3):
+            with self.assertRaises(portal.HTTPException) as too_large:
+                asyncio.run(portal.read_request_body_limited(ChunkedRequest()))
+        self.assertEqual(too_large.exception.status_code, 413)
+
+    def test_object_cleanup_only_accepts_the_configured_storage_urls(self):
+        with patch.multiple(portal, S3_BUCKET="portal-bucket", S3_PUBLIC_BASE_URL="https://files.example/portal"):
+            self.assertEqual(portal.object_key_from_storage_url("s3://portal-bucket/raw/sample.wrd"), "raw/sample.wrd")
+            self.assertEqual(portal.object_key_from_storage_url("https://files.example/portal/raw/sample.wrd"), "raw/sample.wrd")
+            self.assertEqual(portal.object_key_from_storage_url("https://untrusted.example/raw/sample.wrd"), "")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -66,7 +66,7 @@ class ApiTokenTests(unittest.TestCase):
 
         self.assertEqual(created["dataset"]["dataType"], "cyc")
         self.assertTrue(created["dataset"]["rawArtifact"])
-        self.assertEqual(created["inspection"]["parser"]["mappingVersion"], "bdf-map-1")
+        self.assertEqual(created["inspection"]["parser"]["mappingVersion"], "bdf-map-2")
 
 
 if __name__ == "__main__":

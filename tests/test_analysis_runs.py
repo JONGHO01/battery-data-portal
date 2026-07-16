@@ -59,6 +59,64 @@ class AnalysisRunPersistenceTests(unittest.TestCase):
         self.assertTrue((portal.DATA_DIR / run["artifact"]["localPath"]).exists())
         self.assertEqual(stored[0]["provenance"]["rowSource"], "parsed-artifact")
 
+    def test_analysis_run_uses_absolute_discharge_capacity_from_parsed_cyc_rows(self):
+        """The BDF absolute-capacity field is a valid CYC retention input."""
+
+        user = {"id": "analysis-user", "name": "Analysis User", "role": "user"}
+        with portal.connect() as conn:
+            dataset = portal.save_dataset(
+                conn,
+                {
+                    "id": "DATA-ANALYSIS-ABSOLUTE-CAPACITY-TEST",
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "figureKind": "cycling-performance",
+                    "cell": {"cellId": "CELL-ABSOLUTE-CAPACITY"},
+                    "rows": [{"cycle": 1, "discharge_capacity_mAh": 150}],
+                    "columns": ["cycle", "discharge_capacity_mAh"],
+                    "parsedArtifact": portal.write_dataset_artifact(
+                        portal.json_dumps(
+                            {
+                                "canonicalRows": [
+                                    {"cycle_index": 1, "discharge_capacity_ah": 0.150},
+                                    {"cycle_index": 2, "discharge_capacity_ah": 0.135},
+                                ]
+                            }
+                        ).encode("utf-8"),
+                        "projects/unassigned/cells/cell-absolute-capacity/datasets/data-analysis-absolute-capacity-test/parsed/normalized.json",
+                        "application/json",
+                    ),
+                },
+            )
+            run = portal.create_analysis_run(conn, dataset, user, "retention", {})
+
+        self.assertEqual(run["status"], "ok")
+        self.assertEqual(run["result"]["capacity_unit"], "mAh")
+        self.assertEqual(run["result"]["initial_capacity_mah"], 150.0)
+
+    def test_ai_cyc_metrics_read_displayed_discharge_capacity_mah_values(self):
+        """The AI-summary metric path must match the CYC table's displayed capacity."""
+
+        metrics = portal.battery_metrics(
+            {
+                "id": "DATA-AI-ABSOLUTE-CAPACITY-TEST",
+                "dataType": "cyc",
+                "rows": [
+                    {"cycle": 1, "discharge_capacity_mAh": 150},
+                    {"cycle": 2, "discharge_capacity_mAh": 135},
+                ],
+                "columns": ["cycle", "discharge_capacity_mAh"],
+            }
+        )
+
+        self.assertEqual(metrics["pointCount"], 2)
+        self.assertEqual(metrics["capacityUnit"], "mAh")
+        # AI uses its existing three-point early-cycle average rule.
+        self.assertEqual(metrics["firstCapacityAvg"], 142.5)
+        self.assertEqual(metrics["lastCapacityAvg"], 142.5)
+        self.assertAlmostEqual(metrics["retentionPct"], 100.0)
+
     def test_dataset_analysis_api_creates_and_lists_only_the_dataset_runs(self):
         user = {"id": "analysis-user", "name": "Analysis User", "role": "user"}
         with portal.connect() as conn:

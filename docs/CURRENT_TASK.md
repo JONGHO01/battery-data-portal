@@ -1,4 +1,10 @@
-# Battery Data Portal 현재 작업 인수인계
+# Current Task Notice
+
+> This file preserves the historical v0.14 handoff below. It is not the current release record.
+> Use `VERSION`, `CHANGELOG.md`, `docs/SESSION_MEMORY.md`, and the current source code as the source of truth.
+> Current release at this update: `v0.1.10` (2026-07-15).
+
+# Battery Data Portal 현재 작업 인수인계 (Historical v0.14)
 
 마지막 정리일: 2026-07-13  
 현재 로컬 주소: `http://localhost:4173/`  
@@ -21,7 +27,7 @@
 → 도메인 + HTTPS
 ```
 
-포탈은 단순 파일 뷰어가 아니라, CYC/CV/EIS 데이터를 넣으면 자동 판별하고, 논문/PPT용 피겨와 전극 계산표, AI 요약, 검색, 저장, 사용자별 데이터 관리까지 되는 연구용 도구가 되어야 한다.
+포탈은 단순 파일 뷰어가 아니라, CYC/CV/EIS 데이터를 넣으면 자동 판별하고, 논문/PPT용 Fig와 전극 계산표, AI 요약, 검색, 저장, 사용자별 데이터 관리까지 되는 연구용 도구가 되어야 한다.
 
 사용자는 코딩 초보자다. 설명은 반드시 쉬운 한국어로 해야 하고, “뭔가 해보세요” 식으로 돌리지 말고 가능한 것은 직접 확인하고 수정해야 한다.
 
@@ -43,7 +49,7 @@
 - 기존 원본 데이터 테이블 `datasets`는 유지하고, 상위 묶음 테이블 `dataset_groups`를 추가했다.
 - `cell_metadata`, `protocol_segments`, `figures`, `reports` 테이블과 API를 추가했다.
 - 셀 기록 화면에서 양극/음극/분리막/Spacer/셀 형식/태그를 저장하고, formation·rate test·long cycling 같은 cycle 구간을 기록할 수 있다.
-- 피겨 저장 시 `figures` 라이브러리에 연결되고, AI 요약은 `AI 보고서 저장` 버튼으로 `reports`에 저장된다.
+- Fig 저장 시 `figures` 라이브러리에 연결되고, AI 요약은 `AI 보고서 저장` 버튼으로 `reports`에 저장된다.
 - 기존 17개 데이터는 8개 기본 Dataset 묶음으로 자동 이관됐다. 원본 데이터와 업로드 파일은 삭제하지 않았다.
 
 ### v0.13 실험 계층 구조
@@ -68,10 +74,10 @@
 - 파일 선택만으로 자동 분석하지 않게 바꾸고, 사용자가 `파일 분석` 버튼을 눌렀을 때 분석되게 했다.
 - 큰 WRD 파일에서 브라우저 base64 변환 때문에 멈추는 문제를 줄이기 위해 `/api/inspect-upload` 원본 업로드 API를 사용하도록 바꿨다.
 - CYC 표는 셀 편집, 행 추가, 선택 행 삭제, 저장, 되돌리기 흐름이 있다.
-- 피겨 비율/스타일 수정 기능이 있다.
+- Fig 비율/스타일 수정 기능이 있다.
 - 전극 C-rate 계산기를 8칸으로 확장했다.
 - 전극 C-rate 계산값 저장소를 만들었다. 저장한 값을 선택한 CYC 데이터에 넣을 수 있다.
-- 검색 페이지, 저장 피겨 모음, AI 요약 페이지, 의견 남기기/관리자 의견함을 추가했다.
+- 검색 페이지, 저장 Fig 모음, AI 요약 페이지, 의견 남기기/관리자 의견함을 추가했다.
 - AI 요약은 OpenAI API 키가 있으면 실제 API 기반 해석을 쓰고, 키가 없으면 로컬 계산 기반 fallback 요약을 보여준다.
 - 하단 피드백 영역에서 누구나 수정 요청/의견을 남길 수 있다.
 - 관리자 전용 의견함에서 의견을 볼 수 있다.
@@ -167,7 +173,7 @@ WRD cyc_063:
   - 로그인 상태, 데이터 로딩, CYC/CV/EIS 판별 결과 처리.
   - 파일 분석 버튼 흐름.
   - CYC 표 편집/되돌리기.
-  - 피겨 생성/비율/스타일 수정.
+  - Fig 생성/비율/스타일 수정.
   - 전극 C-rate 계산기 8칸.
   - 전극 C-rate 저장소.
   - AI 요약 호출/fallback.
@@ -291,7 +297,7 @@ WRD cyc_063:
 - CYC 개선:
   - C-rate 구간 추정 정확도 향상.
   - 전극 계산 저장값과 CYC 데이터 연결 UX 개선.
-  - 엑셀 표 편집 후 피겨 즉시 반영 흐름 강화.
+  - 엑셀 표 편집 후 Fig 즉시 반영 흐름 강화.
 
 - GitHub/배포 흐름:
   - 사용자가 웹 GitHub 업로드를 어려워했다. 가능하면 zip 또는 git 명령 기반으로 안내하되, 초보자용 단계로 설명할 것.
@@ -333,7 +339,7 @@ C:\Users\user\Documents\Codex\2026-07-03\gks\work\battery-data-portal-deploy
 현재 버전은 0.14이고, 로컬 주소는 http://localhost:4173/ 이야.
 
 중요한 점:
-- CYC, CV, EIS 데이터를 자동 판별하고 피겨를 만들 수 있어야 해.
+- CYC, CV, EIS 데이터를 자동 판별하고 Fig를 만들 수 있어야 해.
 - CYC 데이터가 EIS로 넘어가면 안 돼.
 - XLS/XLSX/WRD CYC 파일에서 방전 용량, 충전 용량 컬럼이 섞이면 안 돼.
 - Ah/g 단위는 그래프에서는 mAh g-1로 잘 보정되어야 해.

@@ -38,6 +38,22 @@ class BdfSchemaTests(unittest.TestCase):
         self.assertAlmostEqual(canonical[0]["current_a"], 0.0245)
         self.assertEqual(canonical[0]["_raw"]["Discharge capacity (Ah/g)"], 0.152)
 
+    def test_maps_explicit_c_rate_values_for_cyc_rate_analysis(self):
+        columns = ["Cycle", "C-rate (C)", "Discharge capacity (mAh/g)"]
+        rows = [
+            {"Cycle": 1, "C-rate (C)": "C/10", "Discharge capacity (mAh/g)": 160},
+            {"Cycle": 2, "C-rate (C)": "0.33 C", "Discharge capacity (mAh/g)": 150},
+            {"Cycle": 3, "C-rate (C)": 1, "Discharge capacity (mAh/g)": 130},
+        ]
+
+        mapping = build_column_mapping("cyc", columns)
+        canonical = canonicalize_rows("cyc", columns, rows)
+
+        self.assertEqual(mapping["c_rate"]["source"], "C-rate (C)")
+        self.assertEqual(mapping["c_rate"]["targetUnit"], "C")
+        self.assertEqual([row["c_rate"] for row in canonical], [0.1, 0.33, 1.0])
+        self.assertIn("c_rate", CANONICAL_COLUMNS)
+
     def test_marks_rows_with_impossible_values_but_keeps_them_for_review(self):
         rows = [
             {"cycle_index": 1, "voltage_v": 3.7, "current_a": 0.01},

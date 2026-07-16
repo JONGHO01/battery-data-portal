@@ -49,7 +49,7 @@ from backend.analysis.dva import calculate_dva
 from backend.analysis.eis import summarize_eis
 from backend.analysis.pulse_resistance import summarize_pulse_resistance
 from backend.analysis.rate_capability import summarize_rate_capability
-from backend.analysis.retention import summarize_retention
+from backend.analysis.retention import capacity_series, summarize_retention
 
 
 ORGANIZATION_ROLES = {"owner", "admin", "researcher", "viewer"}
@@ -67,17 +67,26 @@ DATASETS_JSON = DATA_DIR / "datasets.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 SQLITE_DB = Path(os.environ.get("SQLITE_DB", DATA_DIR / "portal.sqlite3")).resolve()
 USE_POSTGRES = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+SQLITE_BUSY_TIMEOUT_MS = 30_000
 
 PORT = int(os.environ.get("PORT", "4173"))
-MAX_BODY = 220 * 1024 * 1024
-JWT_SECRET = os.environ.get("JWT_SECRET", "dev-change-this-secret-before-deploy")
+# Keep browser uploads within a bounded process-memory budget. Larger research
+# files can still be accepted by deliberately raising this environment value.
+# Common WBCS CYC WRD exports exceed 50 MiB, so the bounded default is 100 MiB.
+DEFAULT_MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+MAX_BODY = int(os.environ.get("MAX_UPLOAD_BYTES", str(DEFAULT_MAX_UPLOAD_BYTES)))
+MAX_BASE64_CHARS = ((MAX_BODY + 2) // 3) * 4
+DEFAULT_JWT_SECRET = "dev-change-this-secret-before-deploy"
+APP_ENV = os.environ.get("APP_ENV", "local").strip().lower()
+JWT_SECRET = os.environ.get("JWT_SECRET", DEFAULT_JWT_SECRET)
 JWT_TTL_SECONDS = int(os.environ.get("JWT_TTL_SECONDS", str(60 * 60 * 24 * 7)))
-ALLOW_LEGACY_USER_HEADER = os.environ.get("ALLOW_LEGACY_USER_HEADER", "true").lower() == "true"
+ALLOW_LEGACY_USER_HEADER = os.environ.get("ALLOW_LEGACY_USER_HEADER", "false").lower() == "true"
 BOOTSTRAP_ADMIN_ID = os.environ.get("BOOTSTRAP_ADMIN_ID", "qq035786").strip()
 BOOTSTRAP_ADMIN_NAME = os.environ.get("BOOTSTRAP_ADMIN_NAME", "원종호").strip()
 BOOTSTRAP_ADMIN_PASSWORD = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "").strip()
 
 STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
+REQUIRE_DURABLE_STORAGE = os.environ.get("REQUIRE_DURABLE_STORAGE", "true" if APP_ENV == "production" else "false").lower() == "true"
 S3_BUCKET = os.environ.get("S3_BUCKET", "")
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
 S3_REGION = os.environ.get("S3_REGION", "auto")
@@ -87,30 +96,63 @@ S3_PUBLIC_BASE_URL = os.environ.get("S3_PUBLIC_BASE_URL", "").rstrip("/")
 S3_FORCE_PATH_STYLE = os.environ.get("S3_FORCE_PATH_STYLE", "true").lower() == "true"
 HARVESTER_ENABLED = os.environ.get("HARVESTER_ENABLED", "false").lower() == "true"
 
+
+def parse_cors_allow_origins(value: str) -> list[str]:
+    """Return a conservative comma-separated CORS allow-list without blanks."""
+
+    return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
+CORS_ALLOW_ORIGINS = parse_cors_allow_origins(os.environ.get("CORS_ALLOW_ORIGINS", ""))
+CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-Filename", "X-Portal-Token"]
+if ALLOW_LEGACY_USER_HEADER:
+    CORS_ALLOW_HEADERS.append("X-User-Id")
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5").strip()
 OPENAI_REASONING_EFFORT = os.environ.get("OPENAI_REASONING_EFFORT", "low").strip()
 OPENAI_API_URL = os.environ.get("OPENAI_API_URL", "https://api.openai.com/v1/responses").strip()
 
 
+def upload_size_limit_detail() -> str:
+    limit_mib = MAX_BODY / (1024 * 1024)
+    return f"업로드 파일이 현재 허용 한도({limit_mib:g} MB)를 초과했습니다. 더 작은 파일을 선택하거나 MAX_UPLOAD_BYTES 설정을 늘려주세요."
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    validate_runtime_configuration()
     init_db()
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.9", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.25", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ALLOW_ORIGINS", "*").split(","),
+    allow_origins=CORS_ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-User-Id", "X-Filename", "X-Portal-Token"],
+    allow_headers=CORS_ALLOW_HEADERS,
 )
 
 
 @app.middleware("http")
 async def no_cache_static_assets(request: Request, call_next):
+    # Reject normal browser/Harvester uploads before FastAPI parses a large JSON
+    # body. The raw upload endpoint has a second streaming limit below for
+    # requests that omit Content-Length.
+    if request.method == "POST":
+        path = request.url.path
+        raw_upload = path == "/api/inspect-upload"
+        json_upload = path in {"/api/inspect-file", "/api/inspect-manual", "/api/harvester/uploads"}
+        if raw_upload or json_upload:
+            try:
+                content_length = int(request.headers.get("content-length", "0"))
+            except ValueError:
+                content_length = 0
+            limit = MAX_BODY if raw_upload else MAX_BASE64_CHARS + 1024 * 1024
+            if content_length > limit:
+                return JSONResponse(status_code=413, content={"detail": upload_size_limit_detail()})
     response = await call_next(request)
     if request.url.path in {"/", "/index.html", "/app.js", "/style.css"}:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -239,8 +281,12 @@ def connect():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     import sqlite3
 
-    conn = sqlite3.connect(SQLITE_DB)
+    # Artifact persistence can overlap normal browser reads. Wait for a short
+    # SQLite write lock instead of turning a transient collision into a 500.
+    conn = sqlite3.connect(SQLITE_DB, timeout=SQLITE_BUSY_TIMEOUT_MS / 1000)
     conn.row_factory = sqlite3.Row
+    conn.execute(f"PRAGMA busy_timeout = {SQLITE_BUSY_TIMEOUT_MS}")
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -263,6 +309,15 @@ def json_loads(value, fallback):
         return json.loads(value)
     except Exception:
         return fallback
+
+
+def json_column(row, column_name: str, fallback):
+    """Read JSON from current and pre-migration database rows safely."""
+
+    if not row:
+        return fallback
+    keys = row.keys() if hasattr(row, "keys") else ()
+    return json_loads(row[column_name], fallback) if column_name in keys else fallback
 
 
 def json_dumps(value) -> str:
@@ -642,6 +697,14 @@ def ensure_derived_artifact_columns(conn) -> None:
             execute(conn, f"ALTER TABLE {table_name} ADD COLUMN artifact_json TEXT NOT NULL DEFAULT '{{}}'")
 
 
+def ensure_analysis_run_columns(conn) -> None:
+    """Upgrade pre-artifact analysis history so it remains readable and deletable."""
+
+    columns = table_columns(conn, "analysis_runs")
+    if "artifact_json" not in columns:
+        execute(conn, "ALTER TABLE analysis_runs ADD COLUMN artifact_json TEXT NOT NULL DEFAULT '{}'")
+
+
 def project_from_row(row) -> dict:
     return {
         "id": row["id"],
@@ -973,7 +1036,7 @@ def ensure_dataset_group(
         "cellRecordId": cell_record["id"],
         "ownerId": owner_id,
         "name": name or "기본 Dataset",
-        "description": "CYC, EIS, CV, 피겨와 보고서를 함께 묶는 분석 단위",
+        "description": "CYC, EIS, CV, Fig와 보고서를 함께 묶는 분석 단위",
         "createdAt": current,
         "updatedAt": current,
     }
@@ -1110,6 +1173,12 @@ def init_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # WAL lets inspection reads proceed while an uploaded raw/parsed artifact
+    # is being finalized into its Dataset record.
+    if not USE_POSTGRES:
+        with connect() as sqlite_conn:
+            sqlite_conn.execute("PRAGMA journal_mode = WAL")
 
     schema = [
         """
@@ -1381,6 +1450,7 @@ def init_db() -> None:
         ensure_dataset_provenance_columns(conn)
         ensure_hierarchy_organization_columns(conn)
         ensure_derived_artifact_columns(conn)
+        ensure_analysis_run_columns(conn)
 
         user_count = scalar(execute(conn, "SELECT COUNT(*) AS count FROM users").fetchone()) or 0
         if user_count == 0:
@@ -1621,18 +1691,18 @@ def detect_data_type(columns: list, rows: list, filename: str = "") -> dict:
     confidence = 0 if top_score <= 0 else min(0.95, 0.45 + top_score * 0.1)
     options = {
         "eis": [
-            {"id": "eis-combined", "label": "Nyquist + Bode 통합 피겨"},
+            {"id": "eis-combined", "label": "Nyquist + Bode 통합 Fig"},
             {"id": "nyquist", "label": "Nyquist plot"},
             {"id": "bode", "label": "Bode magnitude/phase"},
         ],
         "cyc": [
             {"id": "cycling-performance", "label": "셀 성능 테스트: capacity/efficiency vs cycle"},
             {"id": "voltage-profile", "label": "전압 프로파일: voltage vs capacity/time"},
-            {"id": "cyc-combined", "label": "성능 + 전압 프로파일 통합 피겨"},
+            {"id": "cyc-combined", "label": "성능 + 전압 프로파일 통합 Fig"},
         ],
         "cv": [
             {"id": "cv-curve", "label": "CV curve: current vs voltage"},
-            {"id": "cv-comparison", "label": "Scan rate 비교 피겨"},
+            {"id": "cv-comparison", "label": "Scan rate 비교 Fig"},
         ],
         "unknown": [{"id": "table-preview", "label": "표 형태로 미리보기"}],
     }
@@ -1643,12 +1713,16 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
     if STORAGE_BACKEND not in {"s3", "supabase"}:
         return None
     if not S3_BUCKET:
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="영구 객체 저장소 설정이 없어 파일을 저장하지 않았습니다.")
         print("Storage warning: S3_BUCKET is missing. Keeping upload only in local temporary storage.", file=sys.stderr)
         return None
     try:
         import boto3
         from botocore.config import Config
     except ImportError as exc:
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="영구 객체 저장소 모듈을 불러오지 못해 파일을 저장하지 않았습니다.") from exc
         print(f"Storage warning: boto3 is not installed, so object storage upload was skipped: {exc}", file=sys.stderr)
         return None
 
@@ -1669,6 +1743,8 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
     try:
         client.put_object(Bucket=S3_BUCKET, Key=object_name, Body=data, ContentType=content_type)
     except Exception as exc:
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="영구 객체 저장소에 파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.") from exc
         print(f"Storage warning: object storage upload failed and local analysis will continue: {exc}", file=sys.stderr)
         return None
     if S3_PUBLIC_BASE_URL:
@@ -1676,18 +1752,67 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
     return f"s3://{S3_BUCKET}/{object_name}"
 
 
+def delete_from_object_storage(object_name: str) -> None:
+    """Remove one durable artifact when object storage is configured.
+
+    A missing object is treated as already cleaned up. In durable production mode
+    a storage outage stops the database deletion so users do not lose the only
+    record that points to their experimental file.
+    """
+
+    if not object_name or STORAGE_BACKEND not in {"s3", "supabase"}:
+        return
+    if not S3_BUCKET:
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="Durable object storage is not configured; file deletion was not completed.")
+        return
+    try:
+        import boto3
+        from botocore.config import Config
+
+        client = boto3.client(
+            "s3",
+            endpoint_url=S3_ENDPOINT_URL or None,
+            region_name=S3_REGION,
+            aws_access_key_id=S3_ACCESS_KEY_ID or None,
+            aws_secret_access_key=S3_SECRET_ACCESS_KEY or None,
+            config=Config(signature_version="s3v4", s3={"addressing_style": "path" if S3_FORCE_PATH_STYLE else "auto"}),
+        )
+        client.delete_object(Bucket=S3_BUCKET, Key=object_name)
+    except Exception as exc:
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="Could not delete the file from durable object storage. Please try again.") from exc
+        print(f"Storage warning: object storage delete failed and local cleanup will continue: {exc}", file=sys.stderr)
+
+
+def object_key_from_storage_url(storage_url: str) -> str:
+    """Recover a known object key without accepting arbitrary external URLs."""
+
+    value = str(storage_url or "")
+    s3_prefix = f"s3://{S3_BUCKET}/" if S3_BUCKET else ""
+    if s3_prefix and value.startswith(s3_prefix):
+        return value[len(s3_prefix):]
+    public_prefix = f"{S3_PUBLIC_BASE_URL}/" if S3_PUBLIC_BASE_URL else ""
+    if public_prefix and value.startswith(public_prefix):
+        return value[len(public_prefix):]
+    return ""
+
+
 def save_upload_bytes(data: bytes, filename: str, prefix: str = "uploads") -> tuple[Path, str | None]:
+    """Stage an inspected upload locally until it becomes a saved dataset.
+
+    The final immutable raw artifact is written by
+    ``persist_upload_session_artifacts``. Mirroring this short-lived staging
+    copy to object storage would leave an unnecessary second copy behind.
+    """
+
     if len(data) > MAX_BODY:
-        raise HTTPException(status_code=413, detail="업로드 파일이 너무 큽니다.")
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
     safe_name = clean_name(filename)
     stamp = int(time.time() * 1000)
     local_path = UPLOAD_DIR / f"{stamp}-{safe_name}"
     local_path.write_bytes(data)
-
-    object_name = f"{prefix}/{stamp}-{safe_name}"
-    content_type = mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
-    storage_url = upload_to_object_storage(data, object_name, content_type)
-    return local_path, storage_url
+    return local_path, None
 
 
 def create_upload_session(conn, user: dict, filename: str, local_path: Path, storage_url: str | None, content: bytes, parsed: dict) -> str:
@@ -1729,10 +1854,15 @@ def write_dataset_artifact(data: bytes, object_name: str, content_type: str) -> 
         raise HTTPException(status_code=400, detail="Invalid artifact storage path.")
     local_path.parent.mkdir(parents=True, exist_ok=True)
     local_path.write_bytes(data)
+    try:
+        storage_url = upload_to_object_storage(data, object_name, content_type)
+    except Exception:
+        local_path.unlink(missing_ok=True)
+        raise
     return {
         "objectKey": object_name,
         "localPath": str(local_path.relative_to(DATA_DIR)),
-        "storageUrl": upload_to_object_storage(data, object_name, content_type),
+        "storageUrl": storage_url,
         "sha256": hashlib.sha256(data).hexdigest(),
         "sizeBytes": len(data),
         "contentType": content_type,
@@ -1745,6 +1875,43 @@ def write_derived_artifact(dataset: dict, record_id: str, kind: str, document: d
     cell_key = dataset.get("cellRecordId") or dataset.get("cell", {}).get("cellId") or "unassigned"
     object_key = artifact_key(dataset.get("projectId", ""), cell_key, dataset["id"], kind, f"{record_id}.json")
     return write_dataset_artifact(json_dumps(document).encode("utf-8"), object_key, "application/json")
+
+
+def delete_local_data_path(local_path_value: str) -> None:
+    """Delete a local runtime artifact only when it remains below DATA_DIR."""
+
+    if not local_path_value:
+        return
+    try:
+        candidate = (DATA_DIR / str(local_path_value)).resolve()
+        candidate.relative_to(DATA_DIR.resolve())
+    except (OSError, ValueError):
+        return
+    if candidate.is_file():
+        candidate.unlink(missing_ok=True)
+
+
+def delete_local_upload_path(local_path_value: str) -> None:
+    """Delete an upload staging file only when it remains below UPLOAD_DIR."""
+
+    if not local_path_value:
+        return
+    try:
+        candidate = Path(str(local_path_value)).resolve()
+        candidate.relative_to(UPLOAD_DIR.resolve())
+    except (OSError, ValueError):
+        return
+    if candidate.is_file():
+        candidate.unlink(missing_ok=True)
+
+
+def delete_artifact(artifact: dict) -> None:
+    """Delete both durable and local copies of one known artifact."""
+
+    if not isinstance(artifact, dict):
+        return
+    delete_from_object_storage(str(artifact.get("objectKey") or ""))
+    delete_local_data_path(str(artifact.get("localPath") or ""))
 
 
 def organization_from_row(row, member_role: str = "") -> dict:
@@ -1773,7 +1940,7 @@ def analysis_run_from_row(row) -> dict:
         "result": result,
         "status": str(result.get("status") or "unknown"),
         "provenance": json_loads(row["provenance_json"], {}),
-        "artifact": json_loads(row["artifact_json"], {}),
+        "artifact": json_column(row, "artifact_json", {}),
         "createdAt": row["created_at"],
     }
 
@@ -1814,9 +1981,12 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
         parsed_key,
         "application/json",
     )
+    # The immutable raw artifact is now stored. Remove the temporary inspection
+    # copy so every uploaded source exists only once after dataset creation.
+    source_path.unlink(missing_ok=True)
     execute(
         conn,
-        "UPDATE upload_sessions SET consumed_dataset_id = ?, consumed_at = ? WHERE id = ?",
+        "UPDATE upload_sessions SET local_path = '', consumed_dataset_id = ?, consumed_at = ? WHERE id = ?",
         (item["id"], now_iso(), upload_id),
     )
     return {
@@ -1959,6 +2129,21 @@ def storage_ready() -> bool:
     if STORAGE_BACKEND not in {"s3", "supabase"}:
         return False
     return bool(S3_BUCKET and S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY and (S3_ENDPOINT_URL or STORAGE_BACKEND == "s3"))
+
+
+def validate_runtime_configuration() -> None:
+    """Fail closed for production authentication and artifact persistence settings."""
+
+    if APP_ENV != "production":
+        return
+    if ALLOW_LEGACY_USER_HEADER:
+        raise RuntimeError("ALLOW_LEGACY_USER_HEADER must be false in production.")
+    if JWT_SECRET == DEFAULT_JWT_SECRET or len(JWT_SECRET) < 24:
+        raise RuntimeError("JWT_SECRET must be a non-default value of at least 24 characters in production.")
+    if "*" in CORS_ALLOW_ORIGINS:
+        raise RuntimeError("CORS_ALLOW_ORIGINS must not use '*' in production.")
+    if REQUIRE_DURABLE_STORAGE and (STORAGE_BACKEND not in {"s3", "supabase"} or not storage_ready()):
+        raise RuntimeError("Production requires configured durable object storage when REQUIRE_DURABLE_STORAGE=true.")
 
 
 @app.get("/api/health")
@@ -2405,10 +2590,13 @@ def save_figure_record(payload: dict = Body(default_factory=dict), user=Depends(
         if not dataset_row:
             raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다.")
         if not can_edit_row(conn, user, dataset_row):
-            raise HTTPException(status_code=403, detail="이 피겨를 저장할 권한이 없습니다.")
+            raise HTTPException(status_code=403, detail="이 Fig를 저장할 권한이 없습니다.")
         dataset = dataset_from_row(dataset_row)
+        existing = execute(conn, "SELECT * FROM figures WHERE dataset_id = ?", (dataset_id,)).fetchone()
         item = {
-            "id": make_id("FIG"),
+            # Keep one stable artifact path per dataset. Re-saving changes the
+            # document in place instead of leaking the previous JSON file.
+            "id": existing["id"] if existing else make_id("FIG"),
             "datasetId": dataset_id,
             "datasetGroupId": dataset["datasetGroupId"],
             "cellRecordId": dataset["cellRecordId"],
@@ -2416,7 +2604,7 @@ def save_figure_record(payload: dict = Body(default_factory=dict), user=Depends(
             "name": str(payload.get("name") or dataset_label(dataset))[:160],
             "figureKind": str(payload.get("figureKind") or dataset["figureKind"]),
             "edits": payload.get("edits") if isinstance(payload.get("edits"), dict) else dataset["figureEdits"],
-            "createdAt": current,
+            "createdAt": existing["created_at"] if existing else current,
             "updatedAt": current,
         }
         item["artifact"] = write_derived_artifact(
@@ -2471,8 +2659,14 @@ def save_report(payload: dict = Body(default_factory=dict), user=Depends(get_cur
         if not can_edit_row(conn, user, dataset_row):
             raise HTTPException(status_code=403, detail="이 보고서를 저장할 권한이 없습니다.")
         dataset = dataset_from_row(dataset_row)
+        existing = execute(
+            conn,
+            "SELECT * FROM reports WHERE dataset_id = ? AND report_type = ?",
+            (dataset_id, report_type),
+        ).fetchone()
         item = {
-            "id": make_id("RPT"),
+            # One report type per dataset uses a stable artifact path on updates.
+            "id": existing["id"] if existing else make_id("RPT"),
             "datasetId": dataset_id,
             "datasetGroupId": dataset["datasetGroupId"],
             "cellRecordId": dataset["cellRecordId"],
@@ -2480,7 +2674,7 @@ def save_report(payload: dict = Body(default_factory=dict), user=Depends(get_cur
             "title": str(payload.get("title") or f"{dataset_label(dataset)} AI 요약")[:160],
             "reportType": report_type,
             "content": payload.get("content") if isinstance(payload.get("content"), dict) else {},
-            "createdAt": current,
+            "createdAt": existing["created_at"] if existing else current,
             "updatedAt": current,
         }
         item["artifact"] = write_derived_artifact(
@@ -2617,6 +2811,32 @@ def delete_dataset(dataset_id: str, user=Depends(get_current_user)):
         row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
         if row and not can_edit_row(conn, user, row):
             raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+        if not row:
+            return {"ok": True}
+
+        dataset = dataset_from_row(row)
+        analysis_rows = execute(conn, "SELECT * FROM analysis_runs WHERE dataset_id = ?", (dataset_id,)).fetchall()
+        figure_rows = execute(conn, "SELECT * FROM figures WHERE dataset_id = ?", (dataset_id,)).fetchall()
+        report_rows = execute(conn, "SELECT * FROM reports WHERE dataset_id = ?", (dataset_id,)).fetchall()
+        upload_rows = execute(conn, "SELECT * FROM upload_sessions WHERE consumed_dataset_id = ?", (dataset_id,)).fetchall()
+
+        artifacts = [dataset.get("rawArtifact") or {}, dataset.get("parsedArtifact") or {}]
+        artifacts.extend(json_column(entry, "artifact_json", {}) for entry in analysis_rows)
+        artifacts.extend(json_column(entry, "artifact_json", {}) for entry in figure_rows)
+        artifacts.extend(json_column(entry, "artifact_json", {}) for entry in report_rows)
+
+        # Object-storage failures in durable mode raise before database rows are
+        # removed, so a dataset is never silently detached from its source data.
+        for artifact in artifacts:
+            delete_artifact(artifact)
+        for upload in upload_rows:
+            delete_from_object_storage(object_key_from_storage_url(str(upload["storage_url"] or "")))
+            delete_local_upload_path(str(upload["local_path"] or ""))
+
+        execute(conn, "DELETE FROM analysis_runs WHERE dataset_id = ?", (dataset_id,))
+        execute(conn, "DELETE FROM figures WHERE dataset_id = ?", (dataset_id,))
+        execute(conn, "DELETE FROM reports WHERE dataset_id = ?", (dataset_id,))
+        execute(conn, "DELETE FROM upload_sessions WHERE consumed_dataset_id = ?", (dataset_id,))
         execute(conn, "DELETE FROM datasets WHERE id = ?", (dataset_id,))
     return {"ok": True}
 
@@ -2737,14 +2957,12 @@ def dataset_label(dataset: dict) -> str:
 
 
 def cyc_metrics(dataset: dict) -> dict:
-    points = []
+    rows, analysis_provenance = load_analysis_rows(dataset)
+    capacity_points, capacity_info = capacity_series(rows)
+    points = [{"cycle": cycle, "capacity": capacity} for cycle, capacity in capacity_points]
     efficiencies = []
-    for row in dataset.get("rows") or []:
-        cycle = row_value(row, ["cycle", "Cycle", "cycle number", "index"])
-        capacity = row_value(row, ["capacity", "dischargeCapacity", "Discharge capacity", "discharge capacity (mAh g-1)", "discharge Q (Ah)"])
-        efficiency = row_value(row, ["efficiency", "coulombic efficiency", "Efficiency"])
-        if cycle is not None and capacity is not None:
-            points.append({"cycle": cycle, "capacity": capacity})
+    for row in rows:
+        efficiency = row_value(row, ["coulombic_efficiency_pct", "efficiency", "coulombic efficiency", "Efficiency"])
         if efficiency is not None:
             efficiencies.append(efficiency)
     points.sort(key=lambda item: item["cycle"])
@@ -2783,6 +3001,9 @@ def cyc_metrics(dataset: dict) -> dict:
         "maxCapacity": max_capacity,
         "retentionPct": retention,
         "retentionFromMaxPct": retention_from_max,
+        "capacityField": capacity_info["field"],
+        "capacityUnit": capacity_info["unit"],
+        "analysisProvenance": analysis_provenance,
         "avgEfficiency": avg(efficiencies),
         "largestDrops": drops[:6],
         "electrodeCalc": (dataset.get("cell") or {}).get("electrodeCalc") if isinstance(dataset.get("cell"), dict) else None,
@@ -2872,7 +3093,8 @@ def local_ai_sections(metrics: dict, comparisons: list[dict], reason: str = "") 
         if drops:
             top = drops[0]
             degradation = f"가장 큰 저하 구간은 cycle {top['fromCycle']}→{top['toCycle']}이며 약 {top['lossPct']:.2f}% 감소했습니다."
-        writing = f"{label} 셀은 마지막 평균 방전용량 {metrics.get('lastCapacityAvg')} mAh g-1 수준을 보였으며, 용량 유지율은 {retention} %로 계산되었다."
+        capacity_unit = metrics.get("capacityUnit") or "mAh g-1"
+        writing = f"{label} 셀은 마지막 평균 방전용량 {metrics.get('lastCapacityAvg')} {capacity_unit} 수준을 보였으며, 용량 유지율은 {retention} %로 계산되었다."
     elif kind == "eis":
         main_lead = f"{label}는 {metrics.get('pointCount')}개 포인트의 EIS 데이터입니다. Nyquist/Bode 해석에 사용할 수 있습니다."
         degradation = "EIS 데이터는 cycle별 성능 저하 대신 Rs/Rct 후보와 저주파 tail 변화를 중심으로 비교하는 것이 좋습니다."
@@ -2994,23 +3216,30 @@ def create_ai_summary(payload: dict = Body(default_factory=dict), user=Depends(g
 
 def inspect_file_common(payload: dict, script_name: str, user: dict):
     filename = clean_name(payload.get("filename"))
+    encoded = str(payload.get("contentBase64") or "")
+    if len(encoded) > MAX_BASE64_CHARS:
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
     try:
-        content = base64.b64decode(str(payload.get("contentBase64") or ""))
+        content = base64.b64decode(encoded, validate=True)
     except Exception as exc:
         raise HTTPException(status_code=400, detail="업로드 파일 내용을 읽지 못했습니다. 파일을 다시 선택해 주세요.") from exc
     target, storage_url = save_upload_bytes(content, filename, "raw")
     try:
         result = run_script(script_name, [str(target)])
     except subprocess.TimeoutExpired as exc:
+        target.unlink(missing_ok=True)
+        # Parsing did not complete, so this staged upload must not remain on disk.
         raise HTTPException(
             status_code=408,
             detail="파일 분석이 120초를 넘었습니다. 큰 XLS 파일이면 Excel에서 .xlsx로 다시 저장하거나 파일을 나눠서 넣어주세요.",
         ) from exc
     if result.returncode != 0:
+        target.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=result.stderr or "파일을 읽지 못했습니다.")
     try:
         parsed = json.loads(result.stdout)
     except Exception:
+        target.unlink(missing_ok=True)
         return result.stdout
     parsed["storageUrl"] = storage_url
     if script_name == "inspect_file.py":
@@ -3037,6 +3266,76 @@ def inspect_file_common(payload: dict, script_name: str, user: dict):
             "sizeBytes": len(content),
             "storageUrl": storage_url,
         }
+    return parsed
+
+
+async def read_request_body_limited(request: Request) -> bytes:
+    """Read a raw browser upload without allowing an unbounded request body."""
+
+    try:
+        declared_length = int(request.headers.get("content-length", "0"))
+    except ValueError:
+        declared_length = 0
+    if declared_length > MAX_BODY:
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
+
+    chunks: list[bytes] = []
+    received = 0
+    async for chunk in request.stream():
+        received += len(chunk)
+        if received > MAX_BODY:
+            raise HTTPException(status_code=413, detail=upload_size_limit_detail())
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def inspect_file_bytes(filename: str, content: bytes, script_name: str, user: dict):
+    """Inspect an already size-limited raw upload without Base64 expansion."""
+
+    if len(content) > MAX_BODY:
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
+    target, storage_url = save_upload_bytes(content, filename, "raw")
+    try:
+        result = run_script(script_name, [str(target)])
+    except subprocess.TimeoutExpired as exc:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=408, detail="File analysis exceeded 120 seconds. Please export a smaller file and try again.") from exc
+    if result.returncode != 0:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail=result.stderr or "The selected file could not be read.")
+    try:
+        parsed = json.loads(result.stdout)
+    except Exception:
+        target.unlink(missing_ok=True)
+        return result.stdout
+
+    parsed["storageUrl"] = storage_url
+    if script_name != "inspect_file.py":
+        return parsed
+
+    columns = parsed.get("columns") or []
+    rows = parsed.get("rows") or []
+    parsed["filename"] = filename
+    parsed["columns"] = columns
+    parsed["rows"] = rows
+    parsed["rowCount"] = len(rows)
+    detection = detect_data_type(columns, rows, filename)
+    canonical_rows = canonicalize_rows(detection["type"], columns, rows)
+    quality = evaluate_quality(detection["type"], canonical_rows)
+    parsed["detection"] = detection
+    parsed["columnMapping"] = build_column_mapping(detection["type"], columns)
+    parsed["canonicalRows"] = quality["rows"]
+    parsed["quality"] = quality["summary"]
+    parsed["parser"] = {**(parsed.get("parser") or {}), "mappingVersion": BDF_MAPPING_VERSION}
+    with connect() as conn:
+        upload_id = create_upload_session(conn, user, filename, target, storage_url, content, parsed)
+    parsed["uploadId"] = upload_id
+    parsed["rawArtifact"] = {
+        "filename": filename,
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "sizeBytes": len(content),
+        "storageUrl": storage_url,
+    }
     return parsed
 
 
@@ -3069,7 +3368,7 @@ def ingest_harvester_upload(payload: dict, user: dict) -> dict:
     if not filename or not encoded:
         raise HTTPException(status_code=400, detail="filename and contentBase64 are required.")
     if len(encoded) > int(MAX_BODY * 1.5) + 8:
-        raise HTTPException(status_code=413, detail="Harvester file is too large.")
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
     inspection = inspect_file_common({"filename": filename, "contentBase64": encoded}, "inspect_file.py", user)
     if not isinstance(inspection, dict):
         raise HTTPException(status_code=400, detail="The uploaded file did not return a structured inspection result.")
@@ -3121,12 +3420,8 @@ async def inspect_upload(
     user=Depends(get_current_user),
 ):
     filename = urllib.parse.unquote(x_filename or "upload")
-    content = await request.body()
-    payload = {
-        "filename": filename,
-        "contentBase64": base64.b64encode(content).decode("ascii"),
-    }
-    return inspect_file_common(payload, "inspect_file.py", user)
+    content = await read_request_body_limited(request)
+    return inspect_file_bytes(clean_name(filename), content, "inspect_file.py", user)
 
 
 @app.post("/api/inspect-manual")
@@ -3184,6 +3479,7 @@ def static_files(file_path: str):
 def main() -> None:
     import uvicorn
 
+    validate_runtime_configuration()
     init_db()
     print(f"Battery data portal FastAPI backend: http://localhost:{PORT}")
     print(f"Database: {'PostgreSQL' if USE_POSTGRES else SQLITE_DB}")

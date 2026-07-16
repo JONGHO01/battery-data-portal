@@ -147,18 +147,18 @@ function detectDataType(columns, rows, filename = "") {
   const confidence = sorted[0][1] === 0 ? 0 : Math.min(0.95, 0.45 + sorted[0][1] * 0.1);
   const options = {
     eis: [
-      { id: "eis-combined", label: "Nyquist + Bode 통합 피겨" },
+      { id: "eis-combined", label: "Nyquist + Bode 통합 Fig" },
       { id: "nyquist", label: "Nyquist plot" },
       { id: "bode", label: "Bode magnitude/phase" },
     ],
     cyc: [
       { id: "cycling-performance", label: "셀 성능 테스트: capacity/efficiency vs cycle" },
       { id: "voltage-profile", label: "전압 프로파일: voltage vs capacity/time" },
-      { id: "cyc-combined", label: "성능 + 전압 프로파일 통합 피겨" },
+      { id: "cyc-combined", label: "성능 + 전압 프로파일 통합 Fig" },
     ],
     cv: [
       { id: "cv-curve", label: "CV curve: current vs voltage" },
-      { id: "cv-comparison", label: "Scan rate 비교 피겨" },
+      { id: "cv-comparison", label: "Scan rate 비교 Fig" },
     ],
     unknown: [
       { id: "table-preview", label: "표 형태로 미리보기" },
@@ -299,7 +299,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, JSON.stringify(readJson().filter((item) => canSee(user, item))));
     }
 
-    // 새 데이터 저장: 화면에서 정리한 rows, cell 정보, 피겨 정보를 JSON에 저장합니다.
+    // 새 데이터 저장: 화면에서 정리한 rows, cell 정보, Fig 정보를 JSON에 저장합니다.
     if (url.pathname === "/api/datasets" && req.method === "POST") {
       const user = getUser(req);
       if (!user) return send(res, 401, JSON.stringify({ error: "로그인이 필요합니다." }));
@@ -375,7 +375,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, result.stdout);
     }
 
-    // PPT 내보내기: 선택한 피겨/표를 Python 스크립트로 넘겨 pptx 파일을 만듭니다.
+    // PPT 내보내기: 선택한 Fig/표를 Python 스크립트로 넘겨 pptx 파일을 만듭니다.
     if (url.pathname === "/api/export-ppt" && req.method === "POST") {
       const user = getUser(req);
       if (!user) return send(res, 401, JSON.stringify({ error: "로그인이 필요합니다." }));

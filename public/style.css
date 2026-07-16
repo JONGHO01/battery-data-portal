@@ -411,6 +411,63 @@ textarea { resize: vertical; }
   overflow-wrap: anywhere;
   word-break: break-all;
 }
+.batchFigureHint {
+  margin: -2px 0 0;
+  color: #587080;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.batchFigureResults {
+  display: grid;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid #b9e3e6;
+  border-radius: 12px;
+  background: #f2fbfb;
+  color: #23435b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.batchFigureResults > strong {
+  color: #0e6f73;
+}
+.batchFigureResults > p {
+  margin: 0;
+}
+.batchFigureResults ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.batchFigureResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #d9e8ec;
+  border-radius: 8px;
+  background: #fff;
+}
+.batchFigureResult > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.batchFigureResult span {
+  color: #587080;
+  overflow-wrap: anywhere;
+}
+.batchFigureResult.hasError {
+  border-color: #f1bbb6;
+  background: #fff8f7;
+}
+.batchFigureResult.hasError > div > strong,
+.batchFigureResult.hasError span {
+  color: #9f2f24;
+}
 .analysisPanel {
   display: grid;
   gap: 10px;
@@ -477,6 +534,39 @@ textarea { resize: vertical; }
 .choiceGrid input {
   width: auto;
   margin-top: 3px;
+}
+.typeSelectProminent {
+  margin: 10px 0 8px;
+  padding: 10px;
+  border: 1px solid #9adadd;
+  border-radius: 8px;
+  background: #f0fbfb;
+}
+.typeSelectProminent > strong {
+  color: #0f6f73;
+  font-size: 13px;
+}
+.typeSelectProminent .detectedTypeChoice {
+  padding: 8px;
+  border: 1px solid #d8e7ec;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.typeSelectProminent .detectedTypeChoice.selected {
+  border-color: #159397;
+  background: #e6f7f7;
+  color: #0b666a;
+  font-weight: 700;
+}
+.typeSelectProminent .typeSelectHint {
+  color: #587080;
+  font-size: 12px;
+}
+.columnPreviewHint {
+  margin: 8px 0 6px;
+  color: #49677a;
+  font-size: 12px;
 }
 .columnPreview {
   display: flex;
@@ -3015,6 +3105,51 @@ body.isAdmin .tab.adminOnly { display: inline-flex; }
   line-height: 1.65;
   color: #273b4d;
 }
+.releaseCurrentVersion {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #bfe7e5;
+  border-radius: 999px;
+  background: #ecfbfa;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+.releaseHistoryList {
+  display: grid;
+  gap: 12px;
+}
+.releaseHistoryCard {
+  padding: 16px;
+  border: 1px solid #d6e6ed;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(15, 35, 55, 0.06);
+}
+.releaseHistoryCardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.releaseHistoryCard h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+}
+.releaseHistoryCard time {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.releaseHistoryCard ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #273b4d;
+  line-height: 1.65;
+}
+.releaseHistoryCard li + li { margin-top: 4px; }
 .usersHeader button { min-width: 128px; }
 .smallDanger {
   background: var(--danger);

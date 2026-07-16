@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 
-PARSER_VERSION = "bdf-map-1"
+PARSER_VERSION = "bdf-map-2"
 
 CANONICAL_COLUMNS = (
     "record_index",
@@ -21,6 +21,7 @@ CANONICAL_COLUMNS = (
     "charge_capacity_ah",
     "discharge_capacity_ah",
     "specific_capacity_mah_g",
+    "c_rate",
     "coulombic_efficiency_pct",
     "frequency_hz",
     "z_real_ohm",
@@ -63,8 +64,15 @@ def _capacity_field(name: str) -> str | None:
     return None
 
 
-def _candidate_field(column: str) -> str | None:
+def _candidate_field(column: str, data_type: str = "") -> str | None:
     name = normalized_name(column)
+    # C-rate is meaningful for cycling files. Keep the header match narrow so
+    # CV scan-rate columns and unrelated generic "rate" labels stay untouched.
+    if data_type == "cyc" and (
+        name.startswith("crate")
+        or name in {"ratec", "씨레이트", "c레이트"}
+    ):
+        return "c_rate"
     capacity = _capacity_field(name)
     if capacity:
         return capacity
@@ -107,6 +115,7 @@ def _target_unit(field: str) -> str:
         "charge_capacity_ah": "Ah",
         "discharge_capacity_ah": "Ah",
         "specific_capacity_mah_g": "mAh g-1",
+        "c_rate": "C",
         "coulombic_efficiency_pct": "%",
         "frequency_hz": "Hz",
         "z_real_ohm": "ohm",
@@ -118,6 +127,8 @@ def _target_unit(field: str) -> str:
 
 def _source_unit(column: str, field: str) -> str:
     name = normalized_name(column)
+    if field == "c_rate":
+        return "C"
     if field == "specific_capacity_mah_g":
         return "Ah g-1" if "ahg" in name and "mahg" not in name else "mAh g-1"
     if field in {"charge_capacity_ah", "discharge_capacity_ah"}:
@@ -146,7 +157,7 @@ def build_column_mapping(data_type: str, columns: list[str]) -> dict[str, dict[s
 
     mapping: dict[str, dict[str, str]] = {}
     for column in columns:
-        field = _candidate_field(column)
+        field = _candidate_field(column, data_type)
         if not field or field in mapping:
             continue
         source_unit = _source_unit(column, field)
@@ -157,6 +168,29 @@ def build_column_mapping(data_type: str, columns: list[str]) -> dict[str, dict[s
             "confidence": "high" if data_type in {"cyc", "cv", "eis"} else "review",
         }
     return mapping
+
+
+def _parse_c_rate(value: Any) -> float | None:
+    """Accept numeric C-rate values plus common C/10 and 0.33 C notation."""
+
+    direct = finite_float(value)
+    if direct is not None:
+        return direct if 0 < direct <= 20 else None
+
+    text = str(value or "").strip().lower().replace(" ", "")
+    fraction = re.fullmatch(r"c/([0-9]+(?:\.[0-9]+)?)", text)
+    if fraction:
+        denominator = finite_float(fraction.group(1))
+        if denominator is None or denominator <= 0:
+            return None
+        rate = 1 / denominator
+    else:
+        decimal = re.fullmatch(r"(?:re)?([0-9]+(?:\.[0-9]+)?)c?", text)
+        if not decimal:
+            return None
+        rate = finite_float(decimal.group(1))
+
+    return rate if rate is not None and 0 < rate <= 20 else None
 
 
 def _convert(value: float, field: str, source_unit: str) -> float:
@@ -189,7 +223,8 @@ def canonicalize_rows(data_type: str, columns: list[str], rows: list[dict]) -> l
     for index, source_row in enumerate(rows):
         row: dict[str, Any] = {"record_index": index + 1, "_raw": dict(source_row)}
         for field, details in mapping.items():
-            raw_value = finite_float(source_row.get(details["source"]))
+            source_value = source_row.get(details["source"])
+            raw_value = _parse_c_rate(source_value) if field == "c_rate" else finite_float(source_value)
             if raw_value is not None:
                 row[field] = _convert(raw_value, field, details["sourceUnit"])
         result.append(row)
