@@ -17,7 +17,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.25
 ## Current Status
 
 - The repository release state is `v0.1.25` in `VERSION`, `README.md`, `package.json`, FastAPI, and `public/app.js`.
-- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`, and the working tree contains uncommitted portal changes through v0.1.25 that must be reviewed before a future commit or push.
+- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`. The v0.1.25 release commit `a22243c` was pushed to GitHub on 2026-07-16; review new changes before a future commit or push.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
 - Local runtime: SQLite and local file storage are the current defaults. PostgreSQL and S3/Supabase-compatible storage are configuration targets, not confirmed active services.
@@ -138,7 +138,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.25
 - Run a one-time object-storage inventory after production is configured. Artifact keys that were already overwritten in old database rows cannot be inferred automatically, although all currently referenced artifacts and recognized legacy temporary URLs are deleted with a dataset.
 - Manually refresh the portal and retry the same SEO/EIS upload once. If the backend returns an error, record the user-visible Korean message and the new server-log trace before making another change.
 - Existing datasets parsed before v0.1.18 keep their stored rows. Reinspect and save a source file to apply the corrected WBCS WRD summary; add a deliberate migration only if the user requests bulk repair of historical datasets.
-- Review, commit, and push the combined v0.1.10 hardening and v0.1.11 CYC/deletion changes to `https://github.com/JONGHO01/battery-data-portal.git` only when the user requests GitHub upload. Do not upload local runtime data or a ZIP itself as source files.
+- Do not upload local runtime data or a ZIP itself as source files in future GitHub updates.
 - Continue using ordinary commits and pushes for future changes; the earlier remote-history replacement is complete.
 
 ## Do Not Repeat
@@ -195,6 +195,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.25
 - 2026-07-16: v0.1.23 CYC Fig-choice verification passed: 64 automated tests passed, including distinct performance/voltage/combined render paths and the requirement for real within-cycle voltage-profile points. Python compilation, JavaScript syntax, package parsing, and `git diff --check` passed. Restarted `http://localhost:4174` reports `0.1.23`, serves the `0.1.23` cache references, and its open saved voltage-profile record now displays the explicit insufficient-within-cycle-points guidance instead of the incorrect performance chart.
 - 2026-07-16: v0.1.24 CYC electrical-behavior verification passed: 66 automated tests passed, including summary-only voltage/current trend and raw-profile current-legend coverage. Python compilation, bundled-Node JavaScript syntax, package parsing, and `git diff --check` passed. Local health reports `0.1.24`; direct root and app-script requests confirm the v0.1.24 cache references plus the voltage/current and current-legend rendering paths.
 - 2026-07-16: v0.1.25 local Dataset-save concurrency verification passed: the new SQLite wait regression and immutable raw/parsed artifact persistence test passed. A copied database reproduced the reported 63 MB WBCS WRD CYC upload with the normal browser-style summary payload and saved its Dataset/artifacts successfully without touching the user's live record. The complete 67-test suite, Python compilation, JavaScript syntax check, package parsing, and `git diff --check` passed. After restart, `http://localhost:4174/api/health` reports v0.1.25; the live SQLite database reports `journal_mode=wal` and `busy_timeout=30000`, and the root page serves v0.1.25 cache references.
+- 2026-07-16: Commit `a22243c Release Battery Portal v0.1.25` was pushed successfully to `origin/main`. The commit contains source, documentation, project-local skills, and tests; `.env`, local SQLite data, uploads, and runtime storage remain ignored.
 
 ## Next Session Prompt
 
