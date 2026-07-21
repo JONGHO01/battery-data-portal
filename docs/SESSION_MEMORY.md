@@ -18,6 +18,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.39
 
 - The repository release state is `v0.1.39` in `VERSION`, `README.md`, `CHANGELOG.md`, `package.json`, FastAPI, and `public/app.js`.
 - Render deployment diagnostics now expose only durable-storage configuration names through `/api/health` (`storageMissingVariables`) and Dataset-save errors. They never expose credential values. `docs/RENDER_STORAGE_CHECKLIST.md` contains the required Render environment setup and post-deploy check.
+- Release commit `30c9259 Release Battery Portal v0.1.39` was pushed to `origin/main` on 2026-07-21. Render auto-deploy should now build this commit; verify the deployed `/api/health` response before retrying the WRD upload.
 - GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`. The v0.1.38 release commit `1e7c54c` was pushed to GitHub on 2026-07-21. Local runtime data, uploads, and secrets remain excluded from Git.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
