@@ -24,6 +24,8 @@ Open the Render web service, then choose **Environment**. Keep values secret; do
 
 `DATA_DIR=/tmp/battery-data` is only temporary staging space. It is not the final storage location. With durable storage enabled, final raw files and parsed artifacts must be copied to the configured object store.
 
+When one or more storage variables are missing, the Render service still starts so the portal and `/api/health` can identify the missing setting. Dataset uploads remain safely refused with HTTP 503 until storage is configured; the portal never treats `/tmp` as final research-file storage.
+
 ## After Changing Variables
 
 1. Click **Save Changes** in Render.

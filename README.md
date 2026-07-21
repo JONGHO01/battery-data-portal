@@ -1,16 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.39-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.40-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.39** - Render uploads now report missing storage settings safely, log durable-storage failures, and clean partial artifacts.
+> Current release: **v0.1.40** - Render now stays online to show storage diagnostics while safely refusing uploads until durable storage is configured.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.37**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
+현재 버전은 **v0.1.40**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +22,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.40 | 2026-07-21 | Keep Render online for safe storage diagnostics while refusing uploads without durable storage |
 | v0.1.39 | 2026-07-21 | Add Render storage diagnostics, safe Dataset-save failures, and partial-artifact cleanup |
 | v0.1.38 | 2026-07-21 | Restore readable saved Fig comparison labels, reuse duplicate raw-source uploads, and exclude local SQLite WAL files from Git |
 | v0.1.37 | 2026-07-20 | Restore clear Korean upload guidance, selected-file labels, batch action text, and CYC/CV/EIS Fig choices |

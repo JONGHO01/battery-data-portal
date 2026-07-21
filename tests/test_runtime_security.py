@@ -1,5 +1,7 @@
 import asyncio
+import io
 import unittest
+from contextlib import redirect_stderr
 from unittest.mock import patch
 
 import python_backend as portal
@@ -44,7 +46,7 @@ class RuntimeSecurityTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "ALLOW_LEGACY_USER_HEADER"):
                 portal.validate_runtime_configuration()
 
-    def test_production_refuses_wildcard_cors_and_temporary_storage(self):
+    def test_production_refuses_wildcard_cors_but_starts_with_storage_diagnostics(self):
         with patch.multiple(
             portal,
             APP_ENV="production",
@@ -66,8 +68,11 @@ class RuntimeSecurityTests(unittest.TestCase):
             STORAGE_BACKEND="local",
             REQUIRE_DURABLE_STORAGE=True,
         ):
-            with self.assertRaisesRegex(RuntimeError, "durable object storage"):
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
                 portal.validate_runtime_configuration()
+            self.assertIn("Dataset uploads will be refused", stderr.getvalue())
+            self.assertIn("STORAGE_BACKEND", stderr.getvalue())
 
     def test_production_accepts_configured_object_storage(self):
         with patch.multiple(
@@ -108,7 +113,7 @@ class RuntimeSecurityTests(unittest.TestCase):
         ):
             self.assertEqual(portal.storage_configuration_issues(), ["S3_ENDPOINT_URL"])
 
-    def test_production_storage_error_names_the_missing_render_variable(self):
+    def test_production_storage_warning_names_the_missing_render_variable(self):
         with patch.multiple(
             portal,
             APP_ENV="production",
@@ -121,8 +126,22 @@ class RuntimeSecurityTests(unittest.TestCase):
             S3_ACCESS_KEY_ID="access",
             S3_SECRET_ACCESS_KEY="secret",
         ):
-            with self.assertRaisesRegex(RuntimeError, "S3_BUCKET"):
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
                 portal.validate_runtime_configuration()
+            self.assertIn("S3_BUCKET", stderr.getvalue())
+
+    def test_production_never_falls_back_to_local_artifacts_when_storage_is_missing(self):
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            STORAGE_BACKEND="local",
+            REQUIRE_DURABLE_STORAGE=True,
+        ):
+            with self.assertRaises(portal.HTTPException) as rejected:
+                portal.upload_to_object_storage(b"test", "datasets/test/raw.csv", "text/csv")
+        self.assertEqual(rejected.exception.status_code, 503)
+        self.assertIn("STORAGE_BACKEND", rejected.exception.detail)
 
     def test_health_reports_storage_state_without_exposing_credentials(self):
         with patch.multiple(

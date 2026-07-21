@@ -126,7 +126,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.39", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.40", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -1710,8 +1710,6 @@ def detect_data_type(columns: list, rows: list, filename: str = "") -> dict:
 
 
 def upload_to_object_storage(data: bytes, object_name: str, content_type: str = "application/octet-stream") -> str | None:
-    if STORAGE_BACKEND not in {"s3", "supabase"}:
-        return None
     configuration_issues = storage_configuration_issues()
     if configuration_issues:
         if REQUIRE_DURABLE_STORAGE:
@@ -1725,6 +1723,8 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
             "Keeping upload only in local temporary storage.",
             file=sys.stderr,
         )
+        return None
+    if STORAGE_BACKEND not in {"s3", "supabase"}:
         return None
     if not S3_BUCKET:
         if REQUIRE_DURABLE_STORAGE:
@@ -2240,9 +2240,10 @@ def validate_runtime_configuration() -> None:
         raise RuntimeError("CORS_ALLOW_ORIGINS must not use '*' in production.")
     if REQUIRE_DURABLE_STORAGE and not storage_ready():
         missing = ", ".join(storage_configuration_issues())
-        raise RuntimeError(
-            "Production requires configured durable object storage when REQUIRE_DURABLE_STORAGE=true. "
-            f"Missing or invalid setting: {missing}."
+        print(
+            "Startup warning: durable object storage is not configured. "
+            f"Dataset uploads will be refused until this is fixed. Missing or invalid setting: {missing}.",
+            file=sys.stderr,
         )
 
 

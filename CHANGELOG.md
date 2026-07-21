@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.40 - 2026-07-21
+- Keep the Render web service online when durable object storage is incomplete, so `/api/health` and the portal can show the missing configuration instead of Render exiting with status 3.
+- Continue refusing Dataset artifact writes with a 503 until durable object storage is configured; production never falls back to temporary local persistence.
+
 ## v0.1.39 - 2026-07-21
 - Report missing Render durable-storage variable names through `/api/health` and dataset-save errors without exposing credential values.
 - Log object-storage upload failures with a safe server-side cause and return a retryable diagnostic instead of an opaque Dataset-save 500.
