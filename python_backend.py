@@ -126,7 +126,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.38", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.39", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -1712,6 +1712,20 @@ def detect_data_type(columns: list, rows: list, filename: str = "") -> dict:
 def upload_to_object_storage(data: bytes, object_name: str, content_type: str = "application/octet-stream") -> str | None:
     if STORAGE_BACKEND not in {"s3", "supabase"}:
         return None
+    configuration_issues = storage_configuration_issues()
+    if configuration_issues:
+        if REQUIRE_DURABLE_STORAGE:
+            missing = ", ".join(configuration_issues)
+            raise HTTPException(
+                status_code=503,
+                detail=f"Object storage is not configured. Missing Render environment variables: {missing}.",
+            )
+        print(
+            f"Storage warning: object storage is not configured ({', '.join(configuration_issues)}). "
+            "Keeping upload only in local temporary storage.",
+            file=sys.stderr,
+        )
+        return None
     if not S3_BUCKET:
         if REQUIRE_DURABLE_STORAGE:
             raise HTTPException(status_code=503, detail="영구 객체 저장소 설정이 없어 파일을 저장하지 않았습니다.")
@@ -1744,7 +1758,17 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
         client.put_object(Bucket=S3_BUCKET, Key=object_name, Body=data, ContentType=content_type)
     except Exception as exc:
         if REQUIRE_DURABLE_STORAGE:
-            raise HTTPException(status_code=503, detail="영구 객체 저장소에 파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.") from exc
+            print(
+                f"Object storage upload failed for {object_name}: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Object storage rejected the upload. Check the Render logs and the bucket endpoint, "
+                    "region, and write permission."
+                ),
+            ) from exc
         print(f"Storage warning: object storage upload failed and local analysis will continue: {exc}", file=sys.stderr)
         return None
     if S3_PUBLIC_BASE_URL:
@@ -1960,27 +1984,44 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
     raw_bytes = source_path.read_bytes()
     cell_key = item["cellRecordId"] or item.get("cell", {}).get("cellId") or "unassigned"
     raw_key = artifact_key(item["projectId"], cell_key, item["id"], "raw", session["filename"])
-    raw_artifact = write_dataset_artifact(
-        raw_bytes,
-        raw_key,
-        mimetypes.guess_type(session["filename"])[0] or "application/octet-stream",
-    )
-    canonical_rows = json_loads(session["canonical_rows_json"], [])
-    parsed_document = {
-        "schemaVersion": BDF_MAPPING_VERSION,
-        "datasetId": item["id"],
-        "sourceColumns": item["columns"],
-        "columnMapping": json_loads(session["column_mapping_json"], {}),
-        "quality": json_loads(session["quality_json"], {}),
-        "parser": json_loads(session["parser_json"], {}),
-        "canonicalRows": canonical_rows,
-    }
-    parsed_key = artifact_key(item["projectId"], cell_key, item["id"], "parsed", "normalized.json")
-    parsed_artifact = write_dataset_artifact(
-        json_dumps(parsed_document).encode("utf-8"),
-        parsed_key,
-        "application/json",
-    )
+    stored_artifacts: list[dict] = []
+    try:
+        raw_artifact = write_dataset_artifact(
+            raw_bytes,
+            raw_key,
+            mimetypes.guess_type(session["filename"])[0] or "application/octet-stream",
+        )
+        stored_artifacts.append(raw_artifact)
+        canonical_rows = json_loads(session["canonical_rows_json"], [])
+        parsed_document = {
+            "schemaVersion": BDF_MAPPING_VERSION,
+            "datasetId": item["id"],
+            "sourceColumns": item["columns"],
+            "columnMapping": json_loads(session["column_mapping_json"], {}),
+            "quality": json_loads(session["quality_json"], {}),
+            "parser": json_loads(session["parser_json"], {}),
+            "canonicalRows": canonical_rows,
+        }
+        parsed_key = artifact_key(item["projectId"], cell_key, item["id"], "parsed", "normalized.json")
+        parsed_artifact = write_dataset_artifact(
+            json_dumps(parsed_document).encode("utf-8"),
+            parsed_key,
+            "application/json",
+        )
+        stored_artifacts.append(parsed_artifact)
+    except Exception:
+        # A failed finalization must not leave a raw artifact without its
+        # normalized companion. Preserve the original exception for diagnosis.
+        for artifact in stored_artifacts:
+            delete_local_data_path(str(artifact.get("localPath") or ""))
+            try:
+                delete_from_object_storage(str(artifact.get("objectKey") or ""))
+            except Exception as cleanup_error:
+                print(
+                    f"Artifact cleanup failed for {artifact.get('objectKey')}: {type(cleanup_error).__name__}: {cleanup_error}",
+                    file=sys.stderr,
+                )
+        raise
     # The immutable raw artifact is now stored. Remove the temporary inspection
     # copy so every uploaded source exists only once after dataset creation.
     source_path.unlink(missing_ok=True)
@@ -2162,12 +2203,28 @@ def run_script(script_name: str, args: list[str]) -> subprocess.CompletedProcess
     )
 
 
-def storage_ready() -> bool:
+def storage_configuration_issues() -> list[str]:
+    """Return missing durable-storage variable names without exposing values."""
+
     if STORAGE_BACKEND == "local":
-        return True
+        return ["STORAGE_BACKEND"] if APP_ENV == "production" and REQUIRE_DURABLE_STORAGE else []
     if STORAGE_BACKEND not in {"s3", "supabase"}:
-        return False
-    return bool(S3_BUCKET and S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY and (S3_ENDPOINT_URL or STORAGE_BACKEND == "s3"))
+        return ["STORAGE_BACKEND"]
+
+    missing = []
+    if not S3_BUCKET:
+        missing.append("S3_BUCKET")
+    if not S3_ACCESS_KEY_ID:
+        missing.append("S3_ACCESS_KEY_ID")
+    if not S3_SECRET_ACCESS_KEY:
+        missing.append("S3_SECRET_ACCESS_KEY")
+    if STORAGE_BACKEND == "supabase" and not S3_ENDPOINT_URL:
+        missing.append("S3_ENDPOINT_URL")
+    return missing
+
+
+def storage_ready() -> bool:
+    return not storage_configuration_issues()
 
 
 def validate_runtime_configuration() -> None:
@@ -2181,8 +2238,12 @@ def validate_runtime_configuration() -> None:
         raise RuntimeError("JWT_SECRET must be a non-default value of at least 24 characters in production.")
     if "*" in CORS_ALLOW_ORIGINS:
         raise RuntimeError("CORS_ALLOW_ORIGINS must not use '*' in production.")
-    if REQUIRE_DURABLE_STORAGE and (STORAGE_BACKEND not in {"s3", "supabase"} or not storage_ready()):
-        raise RuntimeError("Production requires configured durable object storage when REQUIRE_DURABLE_STORAGE=true.")
+    if REQUIRE_DURABLE_STORAGE and not storage_ready():
+        missing = ", ".join(storage_configuration_issues())
+        raise RuntimeError(
+            "Production requires configured durable object storage when REQUIRE_DURABLE_STORAGE=true. "
+            f"Missing or invalid setting: {missing}."
+        )
 
 
 @app.get("/api/health")
@@ -2193,6 +2254,7 @@ def health():
         "database": "postgresql" if USE_POSTGRES else "sqlite",
         "storage": STORAGE_BACKEND,
         "storageConfigured": storage_ready(),
+        "storageMissingVariables": storage_configuration_issues(),
         "openai": "configured" if OPENAI_API_KEY else "missing",
         "version": app.version,
     }
@@ -2808,38 +2870,52 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
     payload["ownerName"] = user["name"]
     payload["createdAt"] = current
     payload["updatedAt"] = current
-    with connect() as conn:
-        if upload_id:
-            session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (upload_id,)).fetchone()
-            if not session or session["owner_id"] != user["id"]:
-                raise HTTPException(status_code=404, detail="The upload session was not found for this user.")
-            if session["consumed_dataset_id"]:
-                existing = execute(
-                    conn,
-                    "SELECT * FROM datasets WHERE id = ?",
-                    (session["consumed_dataset_id"],),
-                ).fetchone()
-                if existing and can_view_row(conn, user, existing):
-                    reused = dataset_from_row(existing)
-                    reused["reusedExistingSource"] = True
-                    return reused
+    try:
+        with connect() as conn:
+            if upload_id:
+                session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (upload_id,)).fetchone()
+                if not session or session["owner_id"] != user["id"]:
+                    raise HTTPException(status_code=404, detail="The upload session was not found for this user.")
+                if session["consumed_dataset_id"]:
+                    existing = execute(
+                        conn,
+                        "SELECT * FROM datasets WHERE id = ?",
+                        (session["consumed_dataset_id"],),
+                    ).fetchone()
+                    if existing and can_view_row(conn, user, existing):
+                        reused = dataset_from_row(existing)
+                        reused["reusedExistingSource"] = True
+                        return reused
 
-            existing_source = find_dataset_by_source_hash(
-                conn,
-                user["id"],
-                str(payload.get("dataType") or "").strip().lower(),
-                str(session["sha256"] or ""),
-            )
-            # The lookup already restricts the match to this authenticated owner.
-            if existing_source:
-                consume_duplicate_upload_session(conn, session, existing_source["id"])
-                existing_source["reusedExistingSource"] = True
-                return existing_source
-        item = save_dataset(conn, payload, actor_user=user)
-        if upload_id:
-            item.update(persist_upload_session_artifacts(conn, item, upload_id, user))
-            item["updatedAt"] = now_iso()
-            save_dataset(conn, item, actor_user=user)
+                existing_source = find_dataset_by_source_hash(
+                    conn,
+                    user["id"],
+                    str(payload.get("dataType") or "").strip().lower(),
+                    str(session["sha256"] or ""),
+                )
+                # The lookup already restricts the match to this authenticated owner.
+                if existing_source:
+                    consume_duplicate_upload_session(conn, session, existing_source["id"])
+                    existing_source["reusedExistingSource"] = True
+                    return existing_source
+            item = save_dataset(conn, payload, actor_user=user)
+            if upload_id:
+                item.update(persist_upload_session_artifacts(conn, item, upload_id, user))
+                item["updatedAt"] = now_iso()
+                save_dataset(conn, item, actor_user=user)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(
+            f"Dataset finalization failed (upload={bool(upload_id)}): {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Dataset save failed. Check /api/health plus Render PostgreSQL and object-storage settings, then retry."
+            ),
+        ) from exc
     return item
 
 

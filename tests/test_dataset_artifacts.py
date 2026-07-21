@@ -2,6 +2,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 _TEMP_DIR = tempfile.mkdtemp(prefix="battery-portal-artifact-test-")
@@ -97,6 +98,48 @@ class DatasetArtifactTests(unittest.TestCase):
                 portal.execute(conn, "SELECT COUNT(*) FROM datasets WHERE id = ?", (first["id"],)).fetchone()
             )
         self.assertEqual(int(count), 1)
+
+    def test_partial_artifact_finalization_cleans_up_the_raw_artifact(self):
+        """A parsed-artifact failure must not leave an orphan raw object behind."""
+
+        source = b"cycle,discharge capacity\n1,160\n"
+        source_path, _ = portal.save_upload_bytes(source, "cleanup.csv", "raw")
+        parsed = {
+            "parser": {"name": "csv", "version": "parser-2"},
+            "columnMapping": {"cycle_index": {"source": "cycle"}},
+            "quality": {"status": "ok"},
+            "canonicalRows": [{"record_index": 1, "cycle_index": 1, "discharge_capacity_mAh": 160.0}],
+        }
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        with portal.connect() as conn:
+            upload_id = portal.create_upload_session(conn, user, "cleanup.csv", source_path, None, source, parsed)
+            item = portal.save_dataset(
+                conn,
+                {
+                    "id": "DATA-PARTIAL-CLEANUP-TEST",
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "figureKind": "cycling-performance",
+                    "cell": {"cellId": "CELL-CLEANUP"},
+                    "rows": [{"cycle": 1, "capacity": 160}],
+                    "columns": ["cycle", "capacity"],
+                },
+            )
+
+            raw_artifact = {
+                "objectKey": "datasets/DATA-PARTIAL-CLEANUP-TEST/raw/cleanup.csv",
+                "localPath": "storage/datasets/DATA-PARTIAL-CLEANUP-TEST/raw/cleanup.csv",
+            }
+            with patch.object(
+                portal,
+                "write_dataset_artifact",
+                side_effect=[raw_artifact, RuntimeError("parsed artifact failed")],
+            ), patch.object(portal, "delete_from_object_storage") as delete_remote:
+                with self.assertRaisesRegex(RuntimeError, "parsed artifact failed"):
+                    portal.persist_upload_session_artifacts(conn, item, upload_id, user)
+
+        delete_remote.assert_called_once_with(raw_artifact["objectKey"])
 
     def test_new_upload_of_the_same_source_reuses_dataset_and_figure(self):
         """A freshly inspected duplicate source must not add another Fig card."""

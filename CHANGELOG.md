@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.39 - 2026-07-21
+- Report missing Render durable-storage variable names through `/api/health` and dataset-save errors without exposing credential values.
+- Log object-storage upload failures with a safe server-side cause and return a retryable diagnostic instead of an opaque Dataset-save 500.
+- Clean a stored raw artifact when its parsed companion fails during Dataset finalization.
+
 ## v0.1.38 - 2026-07-21
 - Restore readable saved Fig comparison labels and controls through one authoritative browser renderer.
 - Reuse duplicate raw-source uploads without creating duplicate Dataset and Fig records.

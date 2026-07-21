@@ -81,6 +81,62 @@ class RuntimeSecurityTests(unittest.TestCase):
         ), patch.object(portal, "storage_ready", return_value=True):
             portal.validate_runtime_configuration()
 
+    def test_storage_configuration_reports_only_missing_variable_names(self):
+        """Render diagnostics must never expose values, only required key names."""
+
+        with patch.multiple(
+            portal,
+            STORAGE_BACKEND="s3",
+            S3_BUCKET="",
+            S3_ACCESS_KEY_ID="",
+            S3_SECRET_ACCESS_KEY="",
+            S3_ENDPOINT_URL="",
+        ):
+            self.assertEqual(
+                portal.storage_configuration_issues(),
+                ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"],
+            )
+            self.assertFalse(portal.storage_ready())
+
+        with patch.multiple(
+            portal,
+            STORAGE_BACKEND="supabase",
+            S3_BUCKET="portal-files",
+            S3_ACCESS_KEY_ID="access",
+            S3_SECRET_ACCESS_KEY="secret",
+            S3_ENDPOINT_URL="",
+        ):
+            self.assertEqual(portal.storage_configuration_issues(), ["S3_ENDPOINT_URL"])
+
+    def test_production_storage_error_names_the_missing_render_variable(self):
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            ALLOW_LEGACY_USER_HEADER=False,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["https://portal.example"],
+            STORAGE_BACKEND="s3",
+            REQUIRE_DURABLE_STORAGE=True,
+            S3_BUCKET="",
+            S3_ACCESS_KEY_ID="access",
+            S3_SECRET_ACCESS_KEY="secret",
+        ):
+            with self.assertRaisesRegex(RuntimeError, "S3_BUCKET"):
+                portal.validate_runtime_configuration()
+
+    def test_health_reports_storage_state_without_exposing_credentials(self):
+        with patch.multiple(
+            portal,
+            STORAGE_BACKEND="s3",
+            S3_BUCKET="",
+            S3_ACCESS_KEY_ID="access-value-that-must-not-appear",
+            S3_SECRET_ACCESS_KEY="secret-value-that-must-not-appear",
+        ):
+            payload = portal.health()
+        self.assertFalse(payload["storageConfigured"])
+        self.assertEqual(payload["storageMissingVariables"], ["S3_BUCKET"])
+        self.assertNotIn("secret-value-that-must-not-appear", str(payload))
+
     def test_base64_upload_is_rejected_before_decoding_when_too_large_or_invalid(self):
         with patch.multiple(portal, MAX_BODY=3, MAX_BASE64_CHARS=4):
             with self.assertRaises(portal.HTTPException) as too_large:

@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.1.38";
+const PORTAL_VERSION = "0.1.39";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // README? CHANGELOG??理쒖떊 ?섎? ?덈뒗 蹂寃쎌쓣 愿由ъ옄 ?붾㈃?먯꽌??鍮좊Ⅴ寃??뺤씤?⑸땲??
 // ?꾩껜 怨쇨굅 ?대젰? ??μ냼??CHANGELOG.md媛 湲곗??대ŉ, ??紐⑸줉? ?댁쁺?먭? 蹂대뒗 ?붿빟?낅땲??
 const RELEASE_HISTORY = [
+  {
+    version: "0.1.39",
+    date: "2026-07-21",
+    changes: ["Render storage diagnostics now identify missing environment-variable names without revealing values, preserve the original upload failure in server logs, and clean partial artifacts after a failed Dataset finalization."],
+  },
   {
     version: "0.1.38",
     date: "2026-07-21",
