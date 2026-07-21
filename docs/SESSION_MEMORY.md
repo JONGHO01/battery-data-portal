@@ -17,7 +17,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.38
 ## Current Status
 
 - The repository release state is `v0.1.38` in `VERSION`, `README.md`, `package.json`, FastAPI, and `public/app.js`.
-- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`. The v0.1.25 release commit `a22243c` was pushed to GitHub on 2026-07-16; review new changes before a future commit or push.
+- GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`. The v0.1.38 release commit `1e7c54c` was pushed to GitHub on 2026-07-21. Local runtime data, uploads, and secrets remain excluded from Git.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
 - Local runtime: SQLite and local file storage are the current defaults. PostgreSQL and S3/Supabase-compatible storage are configuration targets, not confirmed active services.
