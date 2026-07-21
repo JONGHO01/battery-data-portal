@@ -1,9 +1,16 @@
-const PORTAL_VERSION = "0.1.44";
+const PORTAL_VERSION = "0.1.45";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // README?\u0080 CHANGELOG??\uf9e4\uc496\ub58a ?\uc10e? ?\ub348\ub497 \u8e42\u0080\u5bc3\uc38c\uc4e3 \u613f\u0080\u7531\u044a\uc604 ?\ubdbe\u3203?\uba2f\uaf4c??\u936e\uc88a\u2164\u5bc3??\ubea4\uc524?\u2478\ub572??
 // ?\uafa9\uaedc \u6028\uc1e8\uad45 ?\ub300\uc830?\u0080 ?\u0080?\u03bc\ub0fc??CHANGELOG.md\u5a9b\u0080 \u6e72\uacd7??\ub300\u0149, ??\uf9cf\u2478\uc909?\u0080 ?\ub301\uc07a?\uba2d? \u8e42\ub300\ub497 ?\ubdbf\ube5f?\ub085\ub572??
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.45",
+    "date": "2026-07-21",
+    "changes": [
+      "Saved Fig colors now apply to EIS Nyquist and Bode traces as well as CYC and CV traces."
+    ]
+  },
   {
     "version": "0.1.44",
     "date": "2026-07-21",
@@ -2489,6 +2496,7 @@ function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points }) {
 function renderEisFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
+  const seriesColor = normalizeHexColor(style.seriesColor);
   const svgSize = figureSvgSize(style, "paper");
   const kind = ["eis-combined", "nyquist", "bode"].includes(d.figureKind) ? d.figureKind : "eis-combined";
   const rows = [...d.rows]
@@ -2540,8 +2548,8 @@ function renderEisFigure(d) {
     <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
       <style>
         .axis,.nyquistFrame{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.nyquistGrid{stroke:#9ca3af;stroke-width:1;stroke-dasharray:2 7}
-        .seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}
-        .nyquistLine{fill:none;stroke:#0f766e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:#0f766e;stroke-width:1.35}
+        .seriesLine{fill:none;stroke:${seriesColor};stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:${seriesColor};stroke-width:1.8}
+        .nyquistLine{fill:none;stroke:${seriesColor};stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:${seriesColor};stroke-width:1.35}
         .label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}
         .panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}
       </style>

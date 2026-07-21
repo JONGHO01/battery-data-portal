@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.45 - 2026-07-21
+- Apply the saved Fig series color to EIS Nyquist and Bode traces as well as CYC and CV traces.
+
 ## v0.1.44 - 2026-07-21
 - Label Fig cards, headers, and newly saved records from the linked Dataset type and actual source filename, so EIS data cannot be presented as CYC when both share Cell metadata.
 - Normalize legacy saved Fig record names and kinds at startup without changing raw experimental files or parsed data.

@@ -40,3 +40,10 @@ class EisUiEncodingTests(unittest.TestCase):
 
         for fragment in expected_fragments:
             self.assertIn(fragment, source)
+
+    def test_eis_fig_uses_the_saved_series_color(self):
+        source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn("const seriesColor = normalizeHexColor(style.seriesColor);", source)
+        self.assertIn(".nyquistLine{fill:none;stroke:${seriesColor}", source)
+        self.assertIn(".seriesLine{fill:none;stroke:${seriesColor}", source)
