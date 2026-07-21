@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.44 - 2026-07-21
+- Label Fig cards, headers, and newly saved records from the linked Dataset type and actual source filename, so EIS data cannot be presented as CYC when both share Cell metadata.
+- Normalize legacy saved Fig record names and kinds at startup without changing raw experimental files or parsed data.
+
+## v0.1.43 - 2026-07-21
+- Repair legacy ZIVE SmartManager `.SDE` EIS datasets where `Z'` was incorrectly stored as the frequency value, causing a flat or unreadable Nyquist Fig.
+- Reparse the preserved raw SDE artifact during startup when that exact legacy signature is detected, and refresh the normalized artifact and parser provenance.
+- Reimporting a duplicate SDE source now replaces the stale normalized rows instead of reusing the broken result.
+
+## v0.1.42 - 2026-07-21
+- Redesign the EIS Nyquist Fig as a connected measured-data curve with equal real/imaginary axis scaling, dotted publication-style grid lines, and bounded point markers.
+- Render the Nyquist-only, Nyquist + Bode, and Bode-only selections as distinct Fig layouts.
+
+## v0.1.41 - 2026-07-21
+- Repair visible Korean text in hierarchy selectors, upload and Dataset messages, Fig labels, and Analysis Lab fallback states.
+- Keep `public/app.js` ASCII-only with Unicode escapes and add a regression check so Windows code-page handling cannot silently ship mojibake.
+
 ## v0.1.40 - 2026-07-21
 - Keep the Render web service online when durable object storage is incomplete, so `/api/health` and the portal can show the missing configuration instead of Render exiting with status 3.
 - Continue refusing Dataset artifact writes with a 503 until durable object storage is configured; production never falls back to temporary local persistence.

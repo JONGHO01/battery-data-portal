@@ -42,6 +42,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.schemas.bdf import PARSER_VERSION as BDF_MAPPING_VERSION
 from backend.schemas.bdf import build_column_mapping, canonicalize_rows, evaluate_quality
+from backend.parsers import PARSER_VERSION as INSTRUMENT_PARSER_VERSION, inspect_path
 from backend.storage_layout import artifact_key
 from backend.analysis.common import ANALYSIS_VERSION
 from backend.analysis.dqdv import calculate_dqdv
@@ -126,7 +127,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.40", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.44", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -1492,6 +1493,13 @@ def init_db() -> None:
 
         # Existing datasets remain intact and gain only hierarchy references.
         migrate_existing_dataset_hierarchy(conn)
+        # A former SDE import mapped Z' to frequency. Rebuild only the clearly
+        # affected EIS datasets when their immutable local raw artifact exists.
+        repair_stale_sde_datasets(conn)
+        # Figure records created before source-first labels could inherit a
+        # cell ID from a different data type in the same experiment. Keep the
+        # stored record aligned with its actual Dataset before the UI reads it.
+        normalize_figure_record_identity(conn)
 
 
 def ensure_bootstrap_admin(conn) -> None:
@@ -1707,6 +1715,123 @@ def detect_data_type(columns: list, rows: list, filename: str = "") -> dict:
         "unknown": [{"id": "table-preview", "label": "표 형태로 미리보기"}],
     }
     return {"type": data_type, "confidence": confidence, "scores": score, "options": options.get(data_type, options["unknown"])}
+
+
+def _artifact_local_path(artifact: dict) -> Path | None:
+    """Return one validated local artifact path without trusting DB text."""
+
+    if not isinstance(artifact, dict):
+        return None
+    local_path = str(artifact.get("localPath") or "")
+    if not local_path:
+        return None
+    try:
+        candidate = (DATA_DIR / local_path).resolve()
+        candidate.relative_to(DATA_DIR.resolve())
+    except (OSError, ValueError):
+        return None
+    return candidate if candidate.is_file() else None
+
+
+def has_stale_sde_zreal_mapping(rows: list[dict]) -> bool:
+    """Detect the legacy defect where every Z' value was copied from frequency."""
+
+    comparable = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            frequency = float(row.get("frequency"))
+            zreal = float(row.get("zreal"))
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(frequency) and math.isfinite(zreal) and frequency > 0:
+            comparable.append((frequency, zreal))
+    if len(comparable) < 3:
+        return False
+    copied = sum(math.isclose(frequency, zreal, rel_tol=1e-12, abs_tol=1e-9) for frequency, zreal in comparable)
+    return copied / len(comparable) >= 0.95
+
+
+def parse_instrument_rows(path: Path) -> dict:
+    """Apply the same parser, BDF mapping, and quality checks used by uploads."""
+
+    raw_rows, _sheet_name, parser_name = inspect_path(path)
+    raw_rows = [row for row in raw_rows if any(str(cell).strip() for cell in row)]
+    if len(raw_rows) < 2:
+        raise RuntimeError("The raw instrument file does not contain a table.")
+    columns = [str(cell).strip() or f"col_{index + 1}" for index, cell in enumerate(raw_rows[0])]
+    rows = []
+    for raw in raw_rows[1:5001]:
+        rows.append({column: raw[index] if index < len(raw) else "" for index, column in enumerate(columns)})
+    detection = detect_data_type(columns, rows, path.name)
+    if detection["type"] != "eis":
+        raise RuntimeError("The raw artifact no longer parses as EIS data.")
+    canonical_rows = canonicalize_rows("eis", columns, rows)
+    quality = evaluate_quality("eis", canonical_rows)
+    return {
+        "columns": columns,
+        "rows": rows,
+        "columnMapping": build_column_mapping("eis", columns),
+        "quality": quality["summary"],
+        "canonicalRows": quality["rows"],
+        "parser": {
+            "name": parser_name,
+            "version": INSTRUMENT_PARSER_VERSION,
+            "mappingVersion": BDF_MAPPING_VERSION,
+        },
+    }
+
+
+def repair_stale_sde_datasets(conn) -> int:
+    """Repair pre-parser-3 SDE datasets while preserving their source identity."""
+
+    repaired = 0
+    rows = execute(conn, "SELECT * FROM datasets WHERE data_type = ?", ("eis",)).fetchall()
+    for row in rows:
+        dataset = dataset_from_row(row)
+        if Path(str(dataset.get("sourceName") or "")).suffix.lower() != ".sde":
+            continue
+        if not has_stale_sde_zreal_mapping(dataset.get("rows") or []):
+            continue
+        raw_path = _artifact_local_path(dataset.get("rawArtifact") or {})
+        if raw_path is None:
+            print(f"SDE parser repair skipped for {dataset['id']}: raw artifact is unavailable.", file=sys.stderr)
+            continue
+        owner = public_user(get_user_by_id(str(dataset.get("ownerId") or ""), conn))
+        if owner is None:
+            print(f"SDE parser repair skipped for {dataset['id']}: dataset owner is unavailable.", file=sys.stderr)
+            continue
+        try:
+            parsed = parse_instrument_rows(raw_path)
+            dataset.update({key: parsed[key] for key in ("columns", "rows", "columnMapping", "quality", "parser")})
+            cell_key = dataset.get("cellRecordId") or dataset.get("cell", {}).get("cellId") or "unassigned"
+            parsed_key = artifact_key(dataset.get("projectId", ""), cell_key, dataset["id"], "parsed", "normalized.json")
+            parsed_document = {
+                "schemaVersion": BDF_MAPPING_VERSION,
+                "datasetId": dataset["id"],
+                "sourceColumns": parsed["columns"],
+                "columnMapping": parsed["columnMapping"],
+                "quality": parsed["quality"],
+                "parser": parsed["parser"],
+                "canonicalRows": parsed["canonicalRows"],
+            }
+            dataset["parsedArtifact"] = write_dataset_artifact(
+                json_dumps(parsed_document).encode("utf-8"), parsed_key, "application/json"
+            )
+            provenance = dict(dataset.get("analysisProvenance") or {})
+            provenance["parserRefresh"] = {
+                "reason": "repair_stale_sde_zreal_mapping",
+                "parserVersion": INSTRUMENT_PARSER_VERSION,
+                "reparsedAt": now_iso(),
+            }
+            dataset["analysisProvenance"] = provenance
+            dataset["updatedAt"] = now_iso()
+            save_dataset(conn, dataset, actor_user=owner)
+            repaired += 1
+        except Exception as exc:
+            print(f"SDE parser repair skipped for {dataset['id']}: {type(exc).__name__}: {exc}", file=sys.stderr)
+    return repaired
 
 
 def upload_to_object_storage(data: bytes, object_name: str, content_type: str = "application/octet-stream") -> str | None:
@@ -2703,8 +2828,11 @@ def save_figure_record(payload: dict = Body(default_factory=dict), user=Depends(
             "datasetGroupId": dataset["datasetGroupId"],
             "cellRecordId": dataset["cellRecordId"],
             "ownerId": dataset["ownerId"],
-            "name": str(payload.get("name") or dataset_label(dataset))[:160],
-            "figureKind": str(payload.get("figureKind") or dataset["figureKind"]),
+            # A Fig must keep the source/type of the Dataset it represents.
+            # Client-side labels can be stale after switching CYC/EIS files,
+            # so never persist a caller-provided name or Figure kind here.
+            "name": figure_record_label(dataset)[:160],
+            "figureKind": str(dataset["figureKind"]),
             "edits": payload.get("edits") if isinstance(payload.get("edits"), dict) else dataset["figureEdits"],
             "createdAt": existing["created_at"] if existing else current,
             "updatedAt": current,
@@ -2896,6 +3024,16 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                 )
                 # The lookup already restricts the match to this authenticated owner.
                 if existing_source:
+                    if has_stale_sde_zreal_mapping(existing_source.get("rows") or []):
+                        # A retry after the parser repair must replace the old bad
+                        # normalized data instead of silently returning its Fig.
+                        existing_source["rows"] = payload.get("rows") if isinstance(payload.get("rows"), list) else existing_source["rows"]
+                        existing_source["columns"] = payload.get("columns") if isinstance(payload.get("columns"), list) else existing_source["columns"]
+                        existing_source.update(persist_upload_session_artifacts(conn, existing_source, upload_id, user))
+                        existing_source["updatedAt"] = now_iso()
+                        save_dataset(conn, existing_source, actor_user=user)
+                        existing_source["reparsedExistingSource"] = True
+                        return existing_source
                     consume_duplicate_upload_session(conn, session, existing_source["id"])
                     existing_source["reusedExistingSource"] = True
                     return existing_source
@@ -3096,6 +3234,33 @@ def min_max(values: list[float]) -> dict:
 def dataset_label(dataset: dict) -> str:
     cell = dataset.get("cell") if isinstance(dataset.get("cell"), dict) else {}
     return str(cell.get("cellId") or cell.get("sampleName") or cell.get("material") or dataset.get("sourceName") or dataset.get("id") or "데이터")
+
+
+def figure_record_label(dataset: dict) -> str:
+    """Return a Fig name that cannot confuse an EIS record with a CYC record."""
+    data_type = str(dataset.get("dataType") or "data").upper()
+    source_name = str(dataset.get("sourceName") or "").replace("\\", "/").rsplit("/", 1)[-1]
+    if source_name:
+        return f"{data_type} - {source_name}"
+    return f"{data_type} - {dataset_label(dataset)}"
+
+
+def normalize_figure_record_identity(conn) -> None:
+    """Repair legacy Fig labels/kinds from their linked Dataset without changing data."""
+    for figure in execute(conn, "SELECT * FROM figures").fetchall():
+        dataset_row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (figure["dataset_id"],)).fetchone()
+        if not dataset_row:
+            continue
+        dataset = dataset_from_row(dataset_row)
+        expected_name = figure_record_label(dataset)[:160]
+        expected_kind = str(dataset.get("figureKind") or "")
+        if figure["name"] == expected_name and figure["figure_kind"] == expected_kind:
+            continue
+        execute(
+            conn,
+            "UPDATE figures SET name = ?, figure_kind = ?, updated_at = ? WHERE id = ?",
+            (expected_name, expected_kind, now_iso(), figure["id"]),
+        )
 
 
 def cyc_metrics(dataset: dict) -> dict:

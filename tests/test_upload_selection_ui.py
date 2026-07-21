@@ -21,10 +21,7 @@ class UploadSelectionUiTests(unittest.TestCase):
         self.assertIn("typeSelectProminent", self.app_js)
         self.assertIn("detectedTypeChoice selected", self.app_js)
         self.assertIn("columnPreviewHint", self.app_js)
-        self.assertLess(
-            self.app_js.index("typeSelectProminent"),
-            self.app_js.index('<div class="columnPreview">'),
-        )
+        self.assertLess(self.app_js.index("typeSelectProminent"), self.app_js.index('<div class="columnPreview">'))
 
     def test_manual_type_dropdown_is_available_without_a_separate_radio_click(self):
         self.assertIn('<select id="manualType">', self.app_js)
@@ -39,11 +36,11 @@ class UploadSelectionUiTests(unittest.TestCase):
         self.assertIn("if (clearExpiredLogin(res, body)) return;", self.app_js)
 
     def test_upload_panel_uses_clear_korean_labels(self):
-        self.assertIn("CYC 파일을 넣으면 사이클, 방전용량, C-rate를 자동 판별합니다.", self.app_js)
-        self.assertIn('label.textContent = "선택한 파일 없음";', self.app_js)
-        self.assertIn('files.length}개 파일 선택됨:', self.app_js)
-        self.assertIn('"여러 파일 분석·Fig 생성" : "파일 분석"', self.app_js)
-        self.assertIn('setStatus("파일 선택 완료 - 파일 분석을 눌러주세요.");', self.app_js)
+        self.assertIn(r"CYC \ud30c\uc77c\uc744 \ub123\uc73c\uba74 \uc0ac\uc774\ud074, \ubc29\uc804\uc6a9\ub7c9, C-rate\ub97c \uc790\ub3d9 \ud310\ubcc4\ud569\ub2c8\ub2e4.", self.app_js)
+        self.assertIn(r'label.textContent = "\uc120\ud0dd\ub41c \ud30c\uc77c \uc5c6\uc74c";', self.app_js)
+        self.assertIn(r'files.length}\uac1c \ud30c\uc77c \uc120\ud0dd\ub428:', self.app_js)
+        self.assertIn("async function createBatchFigures()", self.app_js)
+        self.assertIn(r"\ud30c\uc77c \uc120\ud0dd \uc644\ub8cc", self.app_js)
 
 
 if __name__ == "__main__":

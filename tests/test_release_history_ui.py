@@ -22,9 +22,9 @@ class ReleaseHistoryUiTests(unittest.TestCase):
 
         self.assertIn(f'const PORTAL_VERSION = "{version}";', app_js)
         self.assertIn("const RELEASE_HISTORY = [", app_js)
-        self.assertIn(f'version: "{version}"', app_js)
-        self.assertIn("releaseHistory: \"버전 이력\"", app_js)
-        self.assertIn("## 버전 이력", readme)
+        self.assertIn(f'"version": "{version}"', app_js)
+        self.assertIn(r'releaseHistory: "\ubc84\uc804 \uc774\ub825"', app_js)
+        self.assertIn("## " + "\ubc84\uc804 \uc774\ub825", readme)
         self.assertIn("CHANGELOG.md", readme)
 
 

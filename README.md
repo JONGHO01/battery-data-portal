@@ -1,12 +1,12 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.40-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.44-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.40** - Render now stays online to show storage diagnostics while safely refusing uploads until durable storage is configured.
+> Current release: **v0.1.44** - Labels Fig records from their actual Dataset type and source file so EIS and CYC records cannot be confused.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
@@ -22,6 +22,10 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.44 | 2026-07-21 | Use linked Dataset type and source filename for Fig names; normalize legacy EIS/CYC record labels safely |
+| v0.1.43 | 2026-07-21 | Repair legacy SDE EIS rows where Z' was incorrectly saved as frequency; automatically reparse preserved raw artifacts |
+| v0.1.42 | 2026-07-21 | Render EIS Nyquist data as a connected, equal-axis publication-style plot and separate Nyquist/Bode layouts |
+| v0.1.41 | 2026-07-21 | Repair visible Korean UI text and guard frontend source against code-page corruption |
 | v0.1.40 | 2026-07-21 | Keep Render online for safe storage diagnostics while refusing uploads without durable storage |
 | v0.1.39 | 2026-07-21 | Add Render storage diagnostics, safe Dataset-save failures, and partial-artifact cleanup |
 | v0.1.38 | 2026-07-21 | Restore readable saved Fig comparison labels, reuse duplicate raw-source uploads, and exclude local SQLite WAL files from Git |

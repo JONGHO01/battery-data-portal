@@ -1,193 +1,322 @@
-const PORTAL_VERSION = "0.1.40";
+const PORTAL_VERSION = "0.1.44";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
-// README? CHANGELOG??理쒖떊 ?섎? ?덈뒗 蹂寃쎌쓣 愿由ъ옄 ?붾㈃?먯꽌??鍮좊Ⅴ寃??뺤씤?⑸땲??
-// ?꾩껜 怨쇨굅 ?대젰? ??μ냼??CHANGELOG.md媛 湲곗??대ŉ, ??紐⑸줉? ?댁쁺?먭? 蹂대뒗 ?붿빟?낅땲??
+// README?\u0080 CHANGELOG??\uf9e4\uc496\ub58a ?\uc10e? ?\ub348\ub497 \u8e42\u0080\u5bc3\uc38c\uc4e3 \u613f\u0080\u7531\u044a\uc604 ?\ubdbe\u3203?\uba2f\uaf4c??\u936e\uc88a\u2164\u5bc3??\ubea4\uc524?\u2478\ub572??
+// ?\uafa9\uaedc \u6028\uc1e8\uad45 ?\ub300\uc830?\u0080 ?\u0080?\u03bc\ub0fc??CHANGELOG.md\u5a9b\u0080 \u6e72\uacd7??\ub300\u0149, ??\uf9cf\u2478\uc909?\u0080 ?\ub301\uc07a?\uba2d? \u8e42\ub300\ub497 ?\ubdbf\ube5f?\ub085\ub572??
 const RELEASE_HISTORY = [
   {
-    version: "0.1.40",
-    date: "2026-07-21",
-    changes: ["Keep the Render service online when durable object storage is incomplete, while refusing Dataset uploads safely and exposing the missing configuration in health diagnostics."],
+    "version": "0.1.44",
+    "date": "2026-07-21",
+    "changes": [
+      "Fig cards and saved records now use the linked Dataset type and actual source filename, preventing EIS data from being presented as CYC."
+    ]
   },
   {
-    version: "0.1.39",
-    date: "2026-07-21",
-    changes: ["Render storage diagnostics now identify missing environment-variable names without revealing values, preserve the original upload failure in server logs, and clean partial artifacts after a failed Dataset finalization."],
+    "version": "0.1.43",
+    "date": "2026-07-21",
+    "changes": [
+      "Repairs legacy SDE datasets where Z' was incorrectly stored as frequency by reparsing the preserved raw artifact; reimports refresh that stale result instead of reusing it."
+    ]
   },
   {
-    version: "0.1.38",
-    date: "2026-07-21",
-    changes: ["Restore readable saved Fig comparison labels and controls, reuse duplicate raw-source uploads, and keep local SQLite WAL files out of Git uploads."],
+    "version": "0.1.42",
+    "date": "2026-07-21",
+    "changes": [
+      "EIS Nyquist Fig now connects measured points in frequency order, keeps equal real/imaginary axis scale, and renders separate Nyquist, Bode, and combined layouts."
+    ]
   },
   {
-    version: "0.1.37",
-    date: "2026-07-20",
-    changes: ["Restore clear Korean upload guidance, selected-file labels, batch action text, error messages, and CYC/CV/EIS Fig choices after dynamic text encoding damage."],
+    "version": "0.1.41",
+    "date": "2026-07-21",
+    "changes": [
+      "Repaired visible Korean text in hierarchy, upload, dataset, and Fig workflow messages; frontend source now uses safe Unicode escapes."
+    ]
   },
   {
-    version: "0.1.36",
-    date: "2026-07-20",
-    changes: ["CYC Fig filename parsing now ignores a cell/sample number before the first fractional C-rate, preventing labels such as 4 C for 0.33 C -> 1 C -> re 0.33 C runs."],
+    "version": "0.1.40",
+    "date": "2026-07-21",
+    "changes": [
+      "Render service stays online for health diagnostics when durable storage is not configured; Dataset writes fail safely."
+    ]
   },
   {
-    version: "0.1.35",
-    date: "2026-07-20",
-    changes: ["Restore clear Korean labels for saved Fig cards, Fig categories, and the administrator account badge."],
+    "version": "0.1.39",
+    "date": "2026-07-21",
+    "changes": [
+      "Storage diagnostics identify missing environment-variable names without exposing values."
+    ]
   },
   {
-    version: "0.1.34",
-    date: "2026-07-20",
-    changes: ["Restore clear Korean empty-state guidance in the Fig workspace and editable data table."],
+    "version": "0.1.38",
+    "date": "2026-07-21",
+    "changes": [
+      "Saved Fig comparison labels and duplicate raw-source upload reuse were restored."
+    ]
   },
   {
-    version: "0.1.33",
-    date: "2026-07-20",
-    changes: ["Support ZIVE SmartManager .SDE files through the validated EIS binary parser, including file-picker guidance and SDE-specific inspection labels."],
+    "version": "0.1.37",
+    "date": "2026-07-20",
+    "changes": [
+      "\ud30c\uc77c \uc5c5\ub85c\ub4dc \uc548\ub0b4, \uc624\ub958 \uba54\uc2dc\uc9c0, Fig \uc120\ud0dd \ubb38\uad6c\ub97c \uc815\ub9ac\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.32",
-    date: "2026-07-20",
-    changes: ["Batch analysis now uses the already selected hierarchy Cell when the separate Cell ID field is empty, so multi-file analysis starts without re-entering the same Cell."],
-  },  {
-    version: "0.1.31",
-    date: "2026-07-20",
-    changes: ["After a multi-file batch completes or fails, the file picker is released and cleared so another selection immediately starts a new batch. Duplicate batch starts are prevented while processing."],
+    "version": "0.1.36",
+    "date": "2026-07-20",
+    "changes": [
+      "Filename C-rate parsing ignores leading cell/sample numbers before fractional C-rate labels."
+    ]
   },
   {
-    version: "0.1.30",
-    date: "2026-07-20",
-    changes: ["WRD CYC parsing now prioritizes the precise electrode mass in the filename, and C-rate guides/y-axis ticks are constrained so CYC Figs remain readable without left-axis overlap."],
+    "version": "0.1.35",
+    "date": "2026-07-20",
+    "changes": [
+      "\uc800\uc7a5\ub41c Fig \uce74\ub4dc, Fig \uc885\ub958, \uad00\ub9ac\uc790 \ud45c\uc2dc \ubb38\uad6c\ub97c \ubcf5\uad6c\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.29",
-    date: "2026-07-20",
-    changes: ["When multiple files are selected, the primary analysis button now immediately starts the sequential batch Dataset and Fig workflow instead of showing a blocking instruction."],
+    "version": "0.1.34",
+    "date": "2026-07-20",
+    "changes": [
+      "Fig workspace and editable table empty-state guidance were clarified."
+    ]
   },
   {
-    version: "0.1.28",
-    date: "2026-07-20",
-    changes: ["The desktop data-registration sidebar is now 420-450px wide so selected-file details, action labels, and upload status do not clip."],
+    "version": "0.1.33",
+    "date": "2026-07-20",
+    "changes": [
+      "ZIVE SmartManager SDE files are supported through the EIS binary parser."
+    ]
   },
   {
-    version: "0.1.27",
-    date: "2026-07-20",
-    changes: ["Artifact paths now compact long project, cell, Dataset, and WRD filenames before writing them locally. This prevents Windows path-length failures after a successful CYC inspection."],
+    "version": "0.1.32",
+    "date": "2026-07-20",
+    "changes": [
+      "\ub2e4\uc911 \ud30c\uc77c \uc791\uc5c5\uc5d0 \uc120\ud0dd\ub41c Cell \uc815\ubcf4\ub97c \uc801\uc6a9\ud558\ub3c4\ub85d \uc218\uc815\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.26",
-    date: "2026-07-20",
-    changes: ["The desktop menu now preserves full button labels and scrolls horizontally only when needed. Retrying a completed file save returns the original Dataset instead of failing with a duplicate-upload error."],
+    "version": "0.1.31",
+    "date": "2026-07-20",
+    "changes": [
+      "\ub2e4\uc911 \ud30c\uc77c \uc791\uc5c5 \ud6c4 \ud30c\uc77c \uc120\ud0dd\uae30\ub97c \ucd08\uae30\ud654\ud558\ub3c4\ub85d \uc218\uc815\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.25",
-    date: "2026-07-16",
-    changes: ["Large CYC/EIS file finalization now uses SQLite WAL mode and a 30-second write wait, reducing transient Dataset-save server errors during concurrent browser activity."],
+    "version": "0.1.30",
+    "date": "2026-07-20",
+    "changes": [
+      "Long artifact paths are compacted and C-rate axis guides are kept readable."
+    ]
   },
   {
-    version: "0.1.24",
-    date: "2026-07-16",
-    changes: ["CYC ?붿빟 ?곗씠?곕룄 ?꾩븬怨??꾨쪟??cycle蹂?蹂?붾? ?④퍡 蹂댁뿬二쇨퀬, ?먮낯 ?꾩븬 ?꾨줈?뚯씪? 怨≪꽑蹂??됯퇏 ?꾨쪟瑜?踰붾????쒖떆?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
+    "version": "0.1.29",
+    "date": "2026-07-20",
+    "changes": [
+      "\uc5ec\ub7ec \ud30c\uc77c\uc744 \uc120\ud0dd\ud558\uba74 \uc21c\ucc28 \ubd84\uc11d\uacfc Fig \uc0dd\uc131\uc744 \uc9c4\ud589\ud569\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.23",
-    date: "2026-07-16",
-    changes: ["CYC Fig ?앹꽦 ???좏깮???깅뒫, ?꾩븬 ?꾨줈?뚯씪, ?듯빀 Fig 醫낅쪟媛 媛곴컖 ?ㅻⅨ ?붾㈃?쇰줈 ?뚮뜑留곷릺?꾨줉 ?섏젙?덉뒿?덈떎. ?꾩븬-?⑸웾/?쒓컙 怨≪꽑 ?먯씠 遺議깊븳 ?붿빟 ?뚯씪? ?섎せ??怨≪꽑??留뚮뱾吏 ?딄퀬 ?댁쑀瑜??덈궡?⑸땲??"],
+    "version": "0.1.28",
+    "date": "2026-07-20",
+    "changes": [
+      "\ub370\uc2a4\ud06c\ud1b1 \uc0ac\uc774\ub4dc\ubc14 \ub108\ube44\ub97c \ub298\ub824 \uc120\ud0dd \ud30c\uc77c \uc815\ubcf4\uac00 \uc798\ub9ac\uc9c0 \uc54a\uac8c \ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.22",
-    date: "2026-07-16",
-    changes: ["留뚮즺?섏뿀嫄곕굹 ?쒕쾭 ?ъ떆?묒쑝濡?臾댄슚媛 ??濡쒓렇???좏겙??媛먯??섎㈃, ?뚯씪 遺꾩꽍 ?ㅻ쪟 ???濡쒓렇???붾㈃?쇰줈 ?덉쟾?섍쾶 ?뚯븘媛?꾨줉 ?섏젙?덉뒿?덈떎."],
+    "version": "0.1.27",
+    "date": "2026-07-20",
+    "changes": [
+      "\uae34 \ud30c\uc77c\uba85\uc73c\ub85c \uc778\ud55c Windows \uc800\uc7a5 \uacbd\ub85c \uc624\ub958\ub97c \ubcf4\uc644\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.21",
-    date: "2026-07-16",
-    changes: ["?щ윭 ?뚯씪????踰덉뿉 ?좏깮??理쒕? 10媛쒓퉴吏 ?쒖꽌?濡?遺꾩꽍쨌??ν븯怨? ?뚯씪蹂?Dataset怨?Fig 湲곕줉??留뚮뱾 ???덈룄濡?異붽??덉뒿?덈떎."],
+    "version": "0.1.26",
+    "date": "2026-07-20",
+    "changes": [
+      "\uba54\ub274 \ubc84\ud2bc \ub77c\ubca8\uacfc \uc7ac\uc2dc\ub3c4 \uc800\uc7a5 \ub3d9\uc791\uc744 \uac1c\uc120\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.20",
-    date: "2026-07-16",
-    changes: ["CYC ?뚯씪??紐낆떆??C-rate ?댁쓣 ?쎌뼱 Fig cycle 援ш컙???먮룞 援щ텇?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
+    "version": "0.1.25",
+    "date": "2026-07-16",
+    "changes": [
+      "SQLite WAL mode and a write timeout reduce transient Dataset-save failures."
+    ]
   },
   {
-    version: "0.1.19",
-    date: "2026-07-16",
-    changes: ["?ы꽭 ?붾㈃??Fig ?⑹뼱瑜??듭씪?덉뒿?덈떎."],
+    "version": "0.1.24",
+    "date": "2026-07-16",
+    "changes": [
+      "CYC summary data now shows voltage and current trends by cycle."
+    ]
   },
   {
-    version: "0.1.18",
-    date: "2026-07-16",
-    changes: ["WBCS WRD?먯꽌 吏㏐쾶 ?딄릿 ?쒖옉쨌醫낅즺 議곌컖? ?쒖쇅?섍퀬, CYC Fig?먮뒗 1 ?댁긽???좏슚 cycle留?洹몃━?꾨줉 蹂댁셿?덉뒿?덈떎."],
+    "version": "0.1.23",
+    "date": "2026-07-16",
+    "changes": [
+      "CYC performance, voltage/current, and combined Fig kinds were separated."
+    ]
   },
   {
-    version: "0.1.17",
-    date: "2026-07-16",
-    changes: ["?뚯씪 醫낅쪟 ?좏깮 紐⑸줉????긽 ?댁뼱 ?먭퀬, CYC쨌CV쨌EIS ??ぉ??諛붾줈 怨좊Ⅴ硫?吏곸젒 ?좏깮 紐⑤뱶濡??꾪솚?섎룄濡??섏젙?덉뒿?덈떎."],
+    "version": "0.1.22",
+    "date": "2026-07-16",
+    "changes": [
+      "\ub9cc\ub8cc\ub41c \ub85c\uadf8\uc778 \ud1a0\ud070\uc744 \uc548\uc804\ud558\uac8c \ucd08\uae30\ud654\ud558\ub3c4\ub85d \uc218\uc815\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.16",
-    date: "2026-07-16",
-    changes: ["?쇱긽 ?묒뾽 ?붾㈃?먯꽌??Analysis Lab 硫붾돱, ??移대뱶, ?묒뾽 ??쓣 ?④꼈?듬땲?? 湲곗〈 遺꾩꽍 湲곕뒫怨?????대젰? 蹂댁〈?섏뼱 ?섏쨷???ㅼ떆 ?????덉뒿?덈떎."],
+    "version": "0.1.21",
+    "date": "2026-07-16",
+    "changes": [
+      "\ub2e4\uc911 \ud30c\uc77c Dataset \ubc0f Fig \uc791\uc5c5\uc744 \ucd94\uac00\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.15",
-    date: "2026-07-15",
-    changes: ["濡쒓렇???낅젰李쎌뿉??Enter濡??쒖텧?????덇쾶 ?섍퀬, ?뚯씪 ?먮퀎???곗씠??醫낅쪟 ?좏깮怨??쎄린 ?꾩슜 ???대쫫??紐낇솗??援щ텇?덉뒿?덈떎."],
+    "version": "0.1.20",
+    "date": "2026-07-16",
+    "changes": [
+      "\uba85\uc2dc\uc801 C-rate \uceec\ub7fc\uc744 Fig \uad6c\uac04 \uad6c\ubd84\uc5d0 \uc6b0\uc120 \uc0ac\uc6a9\ud569\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.14",
-    date: "2026-07-15",
-    changes: ["60 MB? WBCS CYC WRD ?뚯씪??湲곕낯 ?낅줈???쒕룄 100 MB?먯꽌 ?쎄퀬, ?쒕룄 珥덇낵 ?ъ쑀瑜??붾㈃??紐낇솗???쒖떆?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
+    "version": "0.1.19",
+    "date": "2026-07-16",
+    "changes": [
+      "\ud3ec\ud0c8 \uc804\uccb4 \uc6a9\uc5b4\ub97c Fig\ub85c \ud1b5\uc77c\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.13",
-    date: "2026-07-15",
-    changes: ["README? 愿由ъ옄 ?꾩슜 ?붾㈃?먯꽌 踰꾩쟾 ?대젰???뺤씤?????덈룄濡?異붽??덉뒿?덈떎."],
+    "version": "0.1.18",
+    "date": "2026-07-16",
+    "changes": [
+      "WBCS WRD parsing and C-rate guide rendering were improved."
+    ]
   },
   {
-    version: "0.1.12",
-    date: "2026-07-15",
-    changes: ["AI ?붿빟 硫붾돱, ??移대뱶, ?묒뾽 ??낵 ?꾩슜 ?붾㈃???쒓굅?섍퀬 湲곗〈 ?곗씠???명솚?깆? ?좎??덉뒿?덈떎."],
+    "version": "0.1.17",
+    "date": "2026-07-16",
+    "changes": [
+      "\ud30c\uc77c \uc885\ub958 \uc790\ub3d9 \ud310\ubcc4\uc640 \uc9c1\uc811 \uc120\ud0dd \ubaa8\ub4dc\ub97c \uad6c\ubd84\ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.11",
-    date: "2026-07-15",
-    changes: ["CYC ?덈? ?⑸웾(Ah/mAh)??Retention 遺꾩꽍??諛섏쁺?섍퀬, 遺꾩꽍 ?대젰???덈뒗 Dataset ??젣瑜?蹂댁셿?덉뒿?덈떎."],
+    "version": "0.1.16",
+    "date": "2026-07-16",
+    "changes": [
+      "Analysis Lab navigation was hidden while its stored analysis history remains intact."
+    ]
   },
   {
-    version: "0.1.10",
-    date: "2026-07-15",
-    changes: ["?댁쁺 ?섍꼍 ?몄쬆, CORS, ?뚯씪 ??? ?낅줈???ш린, Dataset ??젣? ?꾪떚?⑺듃 ?뺣━瑜?媛뺥솕?덉뒿?덈떎."],
+    "version": "0.1.15",
+    "date": "2026-07-15",
+    "changes": [
+      "\ub85c\uadf8\uc778 \uc785\ub825\ucc3d\uc5d0\uc11c Enter\ub85c \uc81c\ucd9c\ud560 \uc218 \uc788\uac8c \ud588\uc2b5\ub2c8\ub2e4."
+    ]
   },
   {
-    version: "0.1.9",
-    date: "2026-07-15",
-    changes: ["?쒕㎤??踰꾩쟾 泥닿퀎? ?꾨줈?앺듃 ?꾩슜 ?ㅽ궗, 蹂寃??대젰 湲곕줉 洹쒖튃???꾩엯?덉뒿?덈떎."],
+    "version": "0.1.14",
+    "date": "2026-07-15",
+    "changes": [
+      "The default upload limit was raised to support larger WBCS CYC WRD files."
+    ]
   },
+  {
+    "version": "0.1.13",
+    "date": "2026-07-15",
+    "changes": [
+      "\uad00\ub9ac\uc790 \ud654\uba74\uacfc README\uc5d0 \ubc84\uc804 \uc774\ub825\uc744 \ucd94\uac00\ud588\uc2b5\ub2c8\ub2e4."
+    ]
+  },
+  {
+    "version": "0.1.12",
+    "date": "2026-07-15",
+    "changes": [
+      "AI Summary was removed from the normal portal UI."
+    ]
+  },
+  {
+    "version": "0.1.11",
+    "date": "2026-07-15",
+    "changes": [
+      "CYC capacity metrics and Dataset deletion cleanup were strengthened."
+    ]
+  },
+  {
+    "version": "0.1.10",
+    "date": "2026-07-15",
+    "changes": [
+      "Authentication, CORS, upload limits, and artifact cleanup were hardened."
+    ]
+  },
+  {
+    "version": "0.1.9",
+    "date": "2026-07-15",
+    "changes": [
+      "\ubc84\uc804 \uad00\ub9ac\uc640 \ud504\ub85c\uc81d\ud2b8 \uc778\uc218\uc778\uacc4 \uaddc\uce59\uc744 \ucd94\uac00\ud588\uc2b5\ub2c8\ub2e4."
+    ]
+  }
 ];
 
-// ?ы깉 ?꾩껜?먯꽌 怨듭쑀?섎뒗 ?붾㈃ ?곹깭?낅땲??
-// ?쒕쾭????λ릺???곗씠?곕뒗 datasets???ㅼ뼱?ㅺ퀬, ?붾㈃ ?꾪꽣 寃곌낵??filtered???곕줈 ?〓땲??
-// ?대젃寃?遺꾨━?섎㈃ 寃??議곌굔??諛붽퓭???먮낯 ?곗씠??紐⑸줉???ㅼ떆 遺덈윭?ㅼ? ?딆븘???⑸땲??
+// ?\u044b\uae49 ?\uafa9\uaedc?\uba2f\uaf4c \u6028\ub4ed\uc440?\uc10e\ub497 ?\ubdbe\u3203 ?\uacf9\uae6d?\ub085\ub572??
+// ?\uc495\ucfad\\u003f\\u003f\\u003f\u0080?\u03bb\ub9ba\\u003f\\u003f\\u003f\uacd7\uc520?\uacd5\ub497 datasets\\u003f\\u003f\\u003f\u317c\ubf31?\u317a\ud02c, ?\ubdbe\u3203 ?\uafaa\uaf63 \u5bc3\uaccc\ub0b5??filtered\\u003f\\u003f\\u003f\uacd5\uc908 ?\u3013\ub572??
+// ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
-// ?꾧레 C-rate 怨꾩궛 ??μ냼???곗꽑 釉뚮씪?곗? localStorage????ν빀?덈떎.
-// ?좏깮??CYC???곸슜?섎㈃ 洹?怨꾩궛媛믪? CYC ?곗씠?곗쓽 cell.electrodeCalc濡??ㅼ뼱媛 DB?먮룄 ?④퍡 ??λ맗?덈떎.
+// ?\uafa7\ub808 C-rate \u6028\uafa9\uad9b ?\u0080?\u03bc\ub0fc\\u003f\\u003f\\u003f\uacd7\uaf51 \u91c9\ub6ae\uc52a?\uacd7? localStorage\\u003f\\u003f\\u003f\u0080?\u03bd\ube40?\ub348\ub58e.
+// ?\uc88f\uae6e??CYC\\u003f\\u003f\\u003f\uacf8\uc29c?\uc10e\u3203 \u6d39?\u6028\uafa9\uad9b\u5a9b\ubbea? CYC ?\uacd7\uc520?\uacd7\uc4fd cell.electrodeCalc\u6fe1??\u317c\ubf31\u5a9b\u0080 DB?\uba2e\ub8c4 ?\u2463\ud361 ?\u0080?\u03bb\ub9d7?\ub348\ub58e.
 const ELECTRODE_PROFILE_KEY = "batteryElectrodeRateProfiles";
 const ELECTRODE_CALC_SLOT_KEY = "batteryElectrodeCalcSlotsV1";
 const ELECTRODE_CALC_SLOT_COUNT = 8;
 const ELECTRODE_INPUT_IDS = ["calcElectrodeType", "calcTotalMass", "calcCollectorMass", "calcTotalThickness", "calcCollectorThickness", "calcDiameter", "calcCapacity", "calcNcmRatio", "calcSuperRatio", "calcPtfeRatio"];
 const ELECTRODE_SLOT_FIELDS = [
-  { id: "calcTotalMass", label: "?꾧레 ?꾩껜 臾닿쾶 (g)", step: "0.000001" },
-  { id: "calcTotalThickness", label: "?꾧레 ?꾩껜 ?먭퍡 (mm)", step: "0.001" },
-  { id: "calcCollectorMass", label: "吏묒쟾泥?臾닿쾶 (g)", step: "0.000001" },
-  { id: "calcCollectorThickness", label: "吏묒쟾泥??먭퍡 (mm)", step: "0.001" },
-  { id: "calcDiameter", label: "?꾧레 吏由?(mm)", step: "0.1" },
-  { id: "calcCapacity", label: "?대줎 ?⑸웾 (mAh g-1)", step: "1" },
-  { id: "calcNcmRatio", label: "?쒕Ъ吏?(%)", step: "0.1" },
-  { id: "calcSuperRatio", label: "?꾩쟾??(%)", step: "0.1" },
-  { id: "calcPtfeRatio", label: "諛붿씤??(%)", step: "0.1" },
+  {
+    "id": "calcTotalMass",
+    "label": "\uc804\uadf9 \uc804\uccb4 \ubb34\uac8c (g)",
+    "step": "0.000001"
+  },
+  {
+    "id": "calcTotalThickness",
+    "label": "\uc804\uadf9 \uc804\uccb4 \ub450\uaed8 (mm)",
+    "step": "0.001"
+  },
+  {
+    "id": "calcCollectorMass",
+    "label": "\uc9d1\uc804\uccb4 \ubb34\uac8c (g)",
+    "step": "0.000001"
+  },
+  {
+    "id": "calcCollectorThickness",
+    "label": "\uc9d1\uc804\uccb4 \ub450\uaed8 (mm)",
+    "step": "0.001"
+  },
+  {
+    "id": "calcDiameter",
+    "label": "\uc804\uadf9 \uc9c0\ub984 (mm)",
+    "step": "0.1"
+  },
+  {
+    "id": "calcCapacity",
+    "label": "\uc774\ub860 \uc6a9\ub7c9 (mAh g-1)",
+    "step": "1"
+  },
+  {
+    "id": "calcNcmRatio",
+    "label": "\ud65c\ubb3c\uc9c8 (%)",
+    "step": "0.1"
+  },
+  {
+    "id": "calcSuperRatio",
+    "label": "\ub3c4\uc804\uc7ac (%)",
+    "step": "0.1"
+  },
+  {
+    "id": "calcPtfeRatio",
+    "label": "\ubc14\uc778\ub354 (%)",
+    "step": "0.1"
+  }
 ];
 const FILE_INSPECT_TIMEOUT_MS = 150000;
 const BATCH_FIGURE_FILE_LIMIT = 10;
@@ -206,10 +335,11 @@ const todayLocal = () => {
 };
 
 function setStatus(text) {
-  $("saveStatus").textContent = text;
+  const node = $("saveStatus");
+  if (node) node.textContent = cleanDisplayText(text, "\uc0c1\ud0dc \ud655\uc778");
 }
 
-function setBusy(on, message = "?곗씠?곕? 泥섎━?섍퀬 ?덉뒿?덈떎.", timeoutMs = 45000) {
+function setBusy(on, message = "\ub370\uc774\ud130\ub97c \ucc98\ub9ac\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.", timeoutMs = 45000) {
   const overlay = $("busyOverlay");
   if (!overlay) return;
   if (busyUnlockTimer) {
@@ -221,16 +351,16 @@ function setBusy(on, message = "?곗씠?곕? 泥섎━?섍퀬 ?덉뒿?덈떎.", 
   if (on && timeoutMs > 0) {
     busyUnlockTimer = window.setTimeout(() => {
       overlay.classList.add("hidden");
-      setStatus("분석 지연");
+      setStatus("\ubd84\uc11d \uc9c0\uc5f0");
       setAnalysisMessage(
-        "?뚯씪 遺꾩꽍 ?묐떟???ㅻ옒 嫄몃젮 ?붾㈃ ?좉툑???먮룞?쇰줈 ??덉뒿?덈떎. ?덈줈怨좎묠?섏? 留먭퀬, ?뚯씪???ㅼ떆 ?좏깮????'?뚯씪 遺꾩꽍'????踰덈쭔 ?뚮윭二쇱꽭??",
-        "遺꾩꽍???ㅻ옒 嫄몃┰?덈떎"
+        "\ud30c\uc77c \ubd84\uc11d \uc751\ub2f5\uc774 \uc624\ub798 \uac78\ub824 \ud654\uba74 \uc7a0\uae08\uc744 \uc790\ub3d9\uc73c\ub85c \ud480\uc5c8\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68\ud558\uc9c0 \ub9d0\uace0, \ud30c\uc77c\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud55c \ub4a4 '\ud30c\uc77c \ubd84\uc11d'\uc744 \ud55c \ubc88\ub9cc \ub20c\ub7ec\uc8fc\uc138\uc694.",
+        "\ubd84\uc11d\uc774 \uc624\ub798 \uac78\ub9bd\ub2c8\ub2e4"
       );
     }, timeoutMs);
   }
 }
 
-function setAnalysisMessage(text, title = "?뺤씤 ?꾩슂") {
+function setAnalysisMessage(text, title = "\ud655\uc778 \ud544\uc694") {
   const panel = $("analysisPanel");
   if (!panel || !text) return;
   panel.classList.remove("hidden");
@@ -274,7 +404,7 @@ function applyUser(user) {
     $("loginScreen").classList.add("hidden");
     showHome();
     document.body.classList.toggle("isAdmin", user.role === "admin");
-    $("userChip").textContent = `${user.name || user.id} (${user.role === "admin" ? "관리자" : user.id})`;
+    $("userChip").textContent = `${user.name || user.id} (${user.role === "admin" ? "\uad00\ub9ac\uc790" : user.id})`;
     $("ownerPreview").value = `${user.name || user.id} / ${user.id}`;
     loadData().catch((err) => setStatus(err.message));
     loadHierarchy().catch((err) => setStatus(err.message));
@@ -315,7 +445,7 @@ function applyUser(user) {
 function showHome() {
   if ($("moduleHome")) $("moduleHome").classList.remove("hidden");
   $("dataWorkspace").classList.add("hidden");
-  setStatus("硫붾돱");
+  setStatus("\uf9ce\ubdbe\ub3f1");
 }
 
 function showWorkspace() {
@@ -324,8 +454,8 @@ function showWorkspace() {
   setStatus("Data workspace");
 }
 
-// ?곷떒 硫붾돱????뿉??"寃??, "?꾧레 怨꾩궛", "遺꾩꽍" 媛숈? ???붾㈃?쇰줈 ?대룞?????ъ슜?⑸땲??
-// 媛??붾㈃???????꾩슂???뚮뜑留곷룄 ?ш린????踰덉뿉 ?ㅽ뻾?⑸땲??
+// ?\uacf7\ub592 \uf9ce\ubdbe\ub3f1\\u003f\\u003f\\u003f?\ubfc9??"\u5bc3\u0080??, "?\uafa7\ub808 \u6028\uafa9\uad9b", "\u907a\uafa9\uaf4d" \u5a9b\uc208? \\u003f\\u003f\\u003f\ubdbe\u3203?\uc1f0\uc908 ?\ub300\ub8de\\u003f\\u003f\\u003f??\u044a\uc29c?\u2478\ub572??
+// \u5a9b??\ubdbe\u3203\\u003f\\u003f\\u003f\\u003f\\u003f\\u003f?\uafa9\uc282\\u003f\\u003f\\u003f\ub6ae\ub711\uf9cd\uacf7\ub8c4 ?\u0448\ub9b0\\u003f\\u003f\\u003f?\u8e30\ub349\ubfc9 ?\u317d\ubefe?\u2478\ub572??
 function openWorkspaceView(viewName) {
   if ($("moduleHome")) $("moduleHome").classList.add("hidden");
   $("dataWorkspace").classList.remove("hidden");
@@ -349,13 +479,13 @@ function openWorkspaceView(viewName) {
   renderSelect();
   renderSavedList();
   renderCurrent();
-  const label = { search: "검색", savedFigures: "Fig 모음", electrodeCalc: "전극 계산", analysisLab: "Analysis Lab", feedbackAdmin: "의견함", releaseHistory: "버전 이력", users: "사용자 관리", figure: "Fig" }[viewName] || "작업 화면";
+  const label = { search: "\uac80\uc0c9", savedFigures: "Fig \ubaa8\uc74c", electrodeCalc: "\uc804\uadf9 \uacc4\uc0b0", analysisLab: "Analysis Lab", feedbackAdmin: "\uc758\uacac\ud568", releaseHistory: "\ubc84\uc804 \uc774\ub825", users: "\uc0ac\uc6a9\uc790 \uad00\ub9ac", figure: "Fig" }[viewName] || "\uc791\uc5c5 \ud654\uba74";
   setStatus(label);
   if (viewName === "electrodeCalc") setElectrodeCalcMode("calc");
 }
 
-// ?곷떒 ?쒕∼?ㅼ슫 硫붾돱??怨듯넻 ?쇱슦?곗엯?덈떎.
-// 踰꾪듉??data-view, data-module 媛숈? ?띿꽦???ъ븘?먮㈃ ???⑥닔媛 ?뚮쭪? ?붾㈃?쇰줈 蹂대깄?덈떎.
+// ?\uacf7\ub592 ?\uc495\u223c?\u317c\uc2ab \uf9ce\ubdbe\ub3f1??\u6028\ub4ef\ub13b ?\uc1f1\uc2a6?\uacd7\uc5ef?\ub348\ub58e.
+// \u8e30\uafaa\ub4c9??data-view, data-module \u5a9b\uc208? ?\ub77f\uaf66\\u003f\\u003f\\u003f\u044a\ube18?\uba2e\u3203 \\u003f\\u003f\\u003f\u2465\ub2d4\u5a9b\u0080 ?\ub6ae\ucb6a?\u0080 ?\ubdbe\u3203?\uc1f0\uc908 \u8e42\ub300\uae44?\ub348\ub58e.
 function navigateMenuTarget(target) {
   const module = target?.dataset?.module;
   const view = target?.dataset?.view;
@@ -378,15 +508,15 @@ function navigateMenuTarget(target) {
   }
 }
 
-// ?꾧레 怨꾩궛 ?붾㈃? 怨꾩궛 ?낅젰 紐⑤뱶? ??μ냼 紐⑤뱶瑜??④퍡 ?곷땲??
-// ??μ냼 硫붾돱瑜??꾨Ⅴ硫?profileMode瑜?耳쒖꽌 ??μ냼 諛뺤뒪瑜????꾩뿉 蹂댁씠寃??⑸땲??
+// ?\uafa7\ub808 \u6028\uafa9\uad9b ?\ubdbe\u3203?\u0080 \u6028\uafa9\uad9b ?\ub085\uc830 \uf9cf\u2464\ubc76?\u0080 ?\u0080?\u03bc\ub0fc \uf9cf\u2464\ubc76\u745c??\u2463\ud361 ?\uacf7\ub572??
+// ?\u0080?\u03bc\ub0fc \uf9ce\ubdbe\ub3f1\u745c??\uafa8\u2164\uf9ce?profileMode\u745c?\u8033\uc496\uaf4c ?\u0080?\u03bc\ub0fc \u8adb\ubea4\ub4aa\u745c\\u003f\\u003f\\u003f?\uafa9\ubfc9 \u8e42\ub301\uc520\u5bc3??\u2478\ub572??
 function setElectrodeCalcMode(mode = "calc") {
   const view = $("electrodeCalcView");
   if (!view) return;
   const storeMode = mode === "store";
   view.classList.toggle("profileMode", storeMode);
   renderElectrodeProfileStore();
-  setStatus(storeMode ? "전극 C-rate 저장소" : "전극 C-rate 계산");
+  setStatus(storeMode ? "\uc804\uadf9 C-rate \uc800\uc7a5\uc18c" : "\uc804\uadf9 C-rate \uacc4\uc0b0");
 }
 
 function openSearchView(type = "all") {
@@ -395,7 +525,7 @@ function openSearchView(type = "all") {
   setSearchType(type);
   activateView("search");
   applyFilters();
-  setStatus("검색 페이지");
+  setStatus("\uac80\uc0c9 \ud398\uc774\uc9c0");
 }
 
 function showModule(module) {
@@ -405,13 +535,13 @@ function showModule(module) {
     $("dataWorkspace").classList.remove("hidden");
     ensureSelectedForModule(state.activeFigureModule);
     activateView("figure", state.activeFigureModule);
-    const label = { cyc: "CYC Fig", cv: "CV Fig", eis: "EIS Fig" }[state.activeFigureModule] || "Fig 만들기";
+    const label = { cyc: "CYC Fig", cv: "CV Fig", eis: "EIS Fig" }[state.activeFigureModule] || "Fig \ub9cc\ub4e4\uae30";
     const hint = {
-      cyc: "CYC 파일을 넣으면 사이클, 방전용량, C-rate를 자동 판별합니다.",
-      cv: "CV 파일을 넣으면 전압-전류 곡선과 scan rate를 자동 판별합니다.",
-      eis: "EIS 파일을 넣으면 Nyquist/Bode Fig 데이터를 자동 판별합니다.",
+      cyc: "CYC \ud30c\uc77c\uc744 \ub123\uc73c\uba74 \uc0ac\uc774\ud074, \ubc29\uc804\uc6a9\ub7c9, C-rate\ub97c \uc790\ub3d9 \ud310\ubcc4\ud569\ub2c8\ub2e4.",
+      cv: "CV \ud30c\uc77c\uc744 \ub123\uc73c\uba74 \uc804\uc555-\uc804\ub958 \uace1\uc120\uacfc scan rate\ub97c \uc790\ub3d9 \ud310\ubcc4\ud569\ub2c8\ub2e4.",
+      eis: "EIS \ud30c\uc77c\uc744 \ub123\uc73c\uba74 Nyquist/Bode Fig \ub370\uc774\ud130\ub97c \uc790\ub3d9 \ud310\ubcc4\ud569\ub2c8\ub2e4.",
     }[state.activeFigureModule];
-        if ($("fileHint") && hint) $("fileHint").textContent = `${hint} CSV/XLSX/XLSB/WRD/SEO/SDE 지원.`;
+        if ($("fileHint") && hint) $("fileHint").textContent = `${hint} CSV/XLSX/XLSB/WRD/SEO/SDE \uc9c0\uc6d0.`;
     renderSelect();
     renderSavedList();
     renderCurrent();
@@ -447,7 +577,7 @@ async function login(ev) {
     body: JSON.stringify({ id: fd.get("id"), password: fd.get("password") }),
   });
   const body = await res.json();
-  if (!res.ok) return setLoginError(body.error || "濡쒓렇???ㅽ뙣");
+  if (!res.ok) return setLoginError(body.error || "\ub85c\uadf8\uc778 \uc2e4\ud328");
   ev.currentTarget.reset();
   applyUser(body.user);
 }
@@ -463,11 +593,11 @@ async function register(ev) {
     body: JSON.stringify({ id: fd.get("id"), name: fd.get("name"), password: fd.get("password") }),
   });
   const body = await res.json();
-  if (!res.ok) return setLoginError(body.error || "?꾩씠???앹꽦 ?ㅽ뙣");
+  if (!res.ok) return setLoginError(body.error || "\uc544\uc774\ub514 \uc0dd\uc131 \uc2e4\ud328");
   ev.currentTarget.reset();
-  setLoginSuccess(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
+  setLoginSuccess(`${body.user.id} \uc544\uc774\ub514\uac00 \uc0dd\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
   applyUser(body.user);
-  setStatus(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
+  setStatus(`${body.user.id} \uc544\uc774\ub514\uac00 \uc0dd\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
 }
 
 async function safeLogin(ev) {
@@ -478,7 +608,7 @@ async function safeLogin(ev) {
     const form = $("loginForm");
     const fd = new FormData(form);
     if (!$("loginId").value || !$("loginPassword").value) {
-      return setLoginError("?꾩씠?붿? 鍮꾨?踰덊샇瑜??낅젰?섏꽭??");
+      return setLoginError("\uc544\uc774\ub514\uc640 \ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud558\uc138\uc694.");
     }
     const res = await fetch("/api/login", {
       method: "POST",
@@ -486,11 +616,11 @@ async function safeLogin(ev) {
       body: JSON.stringify({ id: fd.get("id"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "濡쒓렇???ㅽ뙣");
+    if (!res.ok) return setLoginError(body.error || "\ub85c\uadf8\uc778 \uc2e4\ud328");
     form.reset();
     applyUser(body.user);
   } catch (error) {
-    setLoginError(`濡쒓렇??泥섎━ 以??ㅻ쪟: ${error.message}`);
+    setLoginError(`\ub85c\uadf8\uc778 \ucc98\ub9ac \uc911 \uc624\ub958: ${error.message}`);
   }
 }
 
@@ -502,7 +632,7 @@ async function safeRegister(ev) {
     const form = $("registerForm");
     const fd = new FormData(form);
     if (!$("registerId").value || !$("registerPassword").value) {
-      return setLoginError("?꾩씠?붿? 鍮꾨?踰덊샇瑜??낅젰?섏꽭??");
+      return setLoginError("\uc544\uc774\ub514\uc640 \ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud558\uc138\uc694.");
     }
     const res = await fetch("/api/register", {
       method: "POST",
@@ -510,13 +640,13 @@ async function safeRegister(ev) {
       body: JSON.stringify({ id: fd.get("id"), name: fd.get("name"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "?꾩씠???앹꽦 ?ㅽ뙣");
+    if (!res.ok) return setLoginError(body.error || "\uc544\uc774\ub514 \uc0dd\uc131 \uc2e4\ud328");
     form.reset();
-    setLoginSuccess(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
+    setLoginSuccess(`${body.user.id} \uc544\uc774\ub514\uac00 \uc0dd\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     applyUser(body.user);
-    setStatus(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
+    setStatus(`${body.user.id} \uc544\uc774\ub514\uac00 \uc0dd\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
   } catch (error) {
-    setLoginError(`?꾩씠???앹꽦 以??ㅻ쪟: ${error.message}`);
+    setLoginError(`\uc544\uc774\ub514 \uc0dd\uc131 \uc911 \uc624\ub958: ${error.message}`);
   }
 }
 
@@ -538,9 +668,9 @@ function renderUsers() {
   body.innerHTML = state.users.map((user) => {
     const isSelf = user.id === state.user.id;
     const action = isSelf
-      ? `<span class="mutedText">?꾩옱 怨꾩젙</span>`
-      : `<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">?덊눜</button>`;
-    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${user.role === "admin" ? "愿由ъ옄" : "?쇰컲"}</td><td>${action}</td></tr>`;
+      ? `<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
+      : `<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
+    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${user.role === "admin" ? "\uad00\ub9ac\uc790" : "\uc77c\ubc18"}</td><td>${action}</td></tr>`;
   }).join("");
   for (const btn of body.querySelectorAll("[data-delete-user]")) {
     btn.addEventListener("click", () => deleteUser(btn.dataset.deleteUser));
@@ -562,7 +692,7 @@ async function loadFeedbacks() {
   }
   const res = await fetch("/api/feedback", { headers: authHeaders() });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || "?섍껄 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+  if (!res.ok) throw new Error(body.error || "\uc758\uacac \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   state.feedbacks = Array.isArray(body) ? body : [];
   renderFeedbackAdmin();
 }
@@ -573,26 +703,26 @@ function renderFeedbackAdmin() {
   if (!summary || !list) return;
   if (!state.user || state.user.role !== "admin") {
     summary.innerHTML = "";
-    list.innerHTML = `<p class="emptySaved">愿由ъ옄留??섍껄?⑥쓣 蹂????덉뒿?덈떎.</p>`;
+    list.innerHTML = `<p class="emptySaved">\uad00\ub9ac\uc790\ub9cc \uc758\uacac\ud568\uc744 \ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p>`;
     return;
   }
   const feedbacks = state.feedbacks || [];
   const latest = feedbacks[0]?.createdAt ? formatFeedbackTime(feedbacks[0].createdAt) : "-";
   const withContact = feedbacks.filter((item) => item.email).length;
   summary.innerHTML = `
-    <div><strong>${feedbacks.length}</strong><span>?꾩껜 ?섍껄</span></div>
-    <div><strong>${withContact}</strong><span>?곕씫泥??덉쓬</span></div>
-    <div><strong>${escapeXml(latest)}</strong><span>理쒓렐 ?묒닔</span></div>
+    <div><strong>${feedbacks.length}</strong><span>\uc804\uccb4 \uc758\uacac</span></div>
+    <div><strong>${withContact}</strong><span>\uc5f0\ub77d\ucc98 \uc788\uc74c</span></div>
+    <div><strong>${escapeXml(latest)}</strong><span>\ucd5c\uadfc \uc811\uc218</span></div>
   `;
   if (!feedbacks.length) {
-    list.innerHTML = `<p class="emptySaved">?꾩쭅 ?묒닔???섍껄???놁뒿?덈떎.</p>`;
+    list.innerHTML = `<p class="emptySaved">\uc544\uc9c1 \uc811\uc218\ub41c \uc758\uacac\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
     return;
   }
   list.innerHTML = feedbacks.map((item) => {
-    const author = item.name || item.userName || item.userId || "?듬챸";
-    const contact = item.email || "?곕씫泥??놁쓬";
-    const page = item.page || "페이지 미지정";
-    const user = item.userId ? `${item.userName || item.userId} / ${item.userId}` : "鍮꾨줈洹몄씤 ?먮뒗 ?ъ슜???뺣낫 ?놁쓬";
+    const author = item.name || item.userName || item.userId || "\uc775\uba85";
+    const contact = item.email || "\uc5f0\ub77d\ucc98 \uc5c6\uc74c";
+    const page = item.page || "\ud398\uc774\uc9c0 \ubbf8\uc9c0\uc815";
+    const user = item.userId ? `${item.userName || item.userId} / ${item.userId}` : "\ube44\ub85c\uadf8\uc778 \ub610\ub294 \uc0ac\uc6a9\uc790 \uc815\ubcf4 \uc5c6\uc74c";
     return `
       <article class="feedbackCard">
         <div class="feedbackCardTop">
@@ -603,9 +733,9 @@ function renderFeedbackAdmin() {
           <em>${escapeXml(item.status || "open")}</em>
         </div>
         <div class="feedbackMeta">
-          <span>?곕씫泥? ${escapeXml(contact)}</span>
-          <span>愿???섏씠吏: ${escapeXml(page)}</span>
-          <span>?묒꽦 怨꾩젙: ${escapeXml(user)}</span>
+          <span>\uc5f0\ub77d\ucc98: ${escapeXml(contact)}</span>
+          <span>\uad00\ub828 \ud398\uc774\uc9c0: ${escapeXml(page)}</span>
+          <span>\uc791\uc131 \uacc4\uc815: ${escapeXml(user)}</span>
         </div>
         <p>${escapeXml(item.message || "")}</p>
       </article>`;
@@ -616,7 +746,7 @@ function renderReleaseHistory() {
   const current = $("releaseCurrentVersion");
   const list = $("releaseHistoryList");
   if (!list) return;
-  if (current) current.textContent = `?꾩옱 踰꾩쟾 v${PORTAL_VERSION}`;
+  if (current) current.textContent = `\ud604\uc7ac \ubc84\uc804 v${PORTAL_VERSION}`;
   list.innerHTML = RELEASE_HISTORY.map((release) => `
     <article class="releaseHistoryCard">
       <div class="releaseHistoryCardHeader">
@@ -629,11 +759,11 @@ function renderReleaseHistory() {
 }
 
 async function deleteUser(id) {
-  if (!confirm(`${id} ?ъ슜?먮? ?덊눜?쒗궎怨????ъ슜?먯쓽 ?곗씠?곕? ??젣?좉퉴??`)) return;
+  if (!confirm(`${id} \uc0ac\uc6a9\uc790\ub97c \ud0c8\ud1f4\uc2dc\ud0a4\uace0 \uc774 \uc0ac\uc6a9\uc790\uc758 \ub370\uc774\ud130\ub97c \uc0ad\uc81c\ud560\uae4c\uc694?`)) return;
   const res = await fetch(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    setStatus(body.error || "?ъ슜????젣 ?ㅽ뙣");
+    setStatus(body.error || "\uc0ac\uc6a9\uc790 \uc0ad\uc81c \uc2e4\ud328");
     return;
   }
   setStatus(`${id} deleted`);
@@ -655,13 +785,13 @@ function splitCsvLine(line) {
 
 function parseCsv(text) {
   const lines = text.replace(/\r/g, "").split("\n").filter((x) => x.trim());
-  if (lines.length < 2) throw new Error("CSV???곗씠?곌? 遺議깊빀?덈떎.");
+  if (lines.length < 2) throw new Error("CSV\uc5d0 \ub370\uc774\ud130\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4.");
   const headers = splitCsvLine(lines[0]).map((x) => x.toLowerCase().replace(/[^a-z0-9]/g, ""));
   const find = (names) => headers.findIndex((h) => names.includes(h));
   const fi = find(["frequency", "freq", "f", "hz"]);
   const ri = find(["zreal", "real", "re", "zr", "zprime"]);
   const ii = find(["zimag", "imag", "im", "zi", "zdoubleprime"]);
-  if (fi < 0 || ri < 0 || ii < 0) throw new Error("frequency, zreal, zimag 而щ읆??李얠? 紐삵뻽?듬땲??");
+  if (fi < 0 || ri < 0 || ii < 0) throw new Error("frequency, zreal, zimag \uceec\ub7fc\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   return lines.slice(1).map((line) => {
     const cols = splitCsvLine(line);
     const frequency = Number(cols[fi]);
@@ -674,7 +804,7 @@ function parseCsv(text) {
 }
 
 function keyOf(name) {
-  return String(name || "").toLowerCase().replace(/[^a-z0-9가-힣]/g, "");
+  return String(name || "").toLowerCase().replace(/[^a-z0-9\uac00-\ud7a3]/g, "");
 }
 
 function findColumn(columns, terms) {
@@ -686,19 +816,19 @@ function hasAnyTerm(key, terms) {
 }
 
 function isDischargeColumn(key) {
-  return hasAnyTerm(key, ["諛⑹쟾", "discharge", "dchg", "dch"]);
+  return hasAnyTerm(key, ["\ubc29\uc804", "discharge", "dchg", "dch"]);
 }
 
 function isChargeOnlyColumn(key) {
-  return key.includes("異⑹쟾") || key.startsWith("charge") || key.startsWith("chg");
+  return key.includes("\ucda9\uc804") || key.startsWith("charge") || key.startsWith("chg");
 }
 
 function isSpecificCapacityColumn(key) {
-  return hasAnyTerm(key, ["specificcapacity", "?⑥쐞", "mahg", "ahg"]);
+  return hasAnyTerm(key, ["specificcapacity", "\ube44\uc6a9\ub7c9", "mahg", "ahg"]);
 }
 
 function isCapacityColumn(key) {
-  return hasAnyTerm(key, ["capacity", "cap", "?⑸웾", "mah", "ah"]);
+  return hasAnyTerm(key, ["capacity", "cap", "\uc6a9\ub7c9", "mah", "ah"]);
 }
 
 function findBestCycColumn(columns, role) {
@@ -717,8 +847,8 @@ function findBestCycColumn(columns, role) {
 
     if (role.startsWith("discharge") && chargeOnly) score = 0;
     if (role.startsWith("charge") && discharge) score = 0;
-    if (key.includes("?꾩쟻") || key.includes("energy") || key.includes("?먮꼫吏")) score -= 40;
-    if (key.includes("final") || key.includes("理쒖쥌") || key.includes("?꾩븬")) score -= 40;
+    if (key.includes("\uc5d0\ub108\uc9c0") || key.includes("energy")) score -= 40;
+    if (key.includes("final") || key.includes("\ucd5c\uc885") || key.includes("last")) score -= 40;
 
     return { col, score };
   }).filter((item) => item.score > 0);
@@ -772,19 +902,19 @@ function smartManagerEisColumns(columns, rows) {
 
 function canonicalRows(type, columns, rows) {
   const col = {
-    frequency: findColumn(columns, ["frequency", "freq", "hz", "주파수"]),
-    zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "실수"]),
-    zimag: findColumn(columns, ["zimag", "imag", "im", "zi", "zdoubleprime", "허수"]),
-    cycle: findColumn(columns, ["cycle", "사이클"]),
-    cRate: findColumn(columns, ["crate", "cratec", "ratec", "c-rate", "c rate", "c레이트"]),
-    specificCapacity: findBestCycColumn(columns, "dischargeSpecific") || findCycFallbackColumn(columns, "dischargeSpecific", ["dischargecapacityahg", "specificcapacity", "mahg", "방전용량ahg"]),
-    chargeSpecificCapacity: findBestCycColumn(columns, "chargeSpecific") || findCycFallbackColumn(columns, "chargeSpecific", ["chargecapacityahg", "충전용량ahg"]),
-    capacity: findBestCycColumn(columns, "dischargeCapacity") || findCycFallbackColumn(columns, "dischargeCapacity", ["dischargecapacity", "dischargecap", "dchgcap", "dchcap", "방전용량", "방전"]),
-    chargeCapacity: findBestCycColumn(columns, "chargeCapacity") || findCycFallbackColumn(columns, "chargeCapacity", ["chargecapacity", "chargecap", "chgcap", "충전용량", "충전"]),
-    efficiency: findColumn(columns, ["coulombicefficiency", "coulombefficiency", "쿨롬효율", "효율", "efficiency", "coulomb", "ce"]),
-    voltage: findColumn(columns, ["voltage", "potential", "전압"]),
-    current: findColumn(columns, ["current", "전류"]),
-    time: findColumn(columns, ["time", "시간"]),
+    frequency: findColumn(columns, ["frequency", "freq", "hz", "\uc8fc\ud30c\uc218"]),
+    zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "\uc2e4\uc218"]),
+    zimag: findColumn(columns, ["zimag", "imag", "im", "zi", "zdoubleprime", "\ud5c8\uc218"]),
+    cycle: findColumn(columns, ["cycle", "\uc0ac\uc774\ud074"]),
+    cRate: findColumn(columns, ["crate", "cratec", "ratec", "c-rate", "c rate", "c\ub808\uc774\ud2b8"]),
+    specificCapacity: findBestCycColumn(columns, "dischargeSpecific") || findCycFallbackColumn(columns, "dischargeSpecific", ["dischargecapacityahg", "specificcapacity", "mahg", "\ubc29\uc804\uc6a9\ub7c9ahg"]),
+    chargeSpecificCapacity: findBestCycColumn(columns, "chargeSpecific") || findCycFallbackColumn(columns, "chargeSpecific", ["chargecapacityahg", "\ucda9\uc804\uc6a9\ub7c9ahg"]),
+    capacity: findBestCycColumn(columns, "dischargeCapacity") || findCycFallbackColumn(columns, "dischargeCapacity", ["dischargecapacity", "dischargecap", "dchgcap", "dchcap", "\ubc29\uc804\uc6a9\ub7c9", "\ubc29\uc804"]),
+    chargeCapacity: findBestCycColumn(columns, "chargeCapacity") || findCycFallbackColumn(columns, "chargeCapacity", ["chargecapacity", "chargecap", "chgcap", "\ucda9\uc804\uc6a9\ub7c9", "\ucda9\uc804"]),
+    efficiency: findColumn(columns, ["coulombicefficiency", "coulombefficiency", "\ucfe8\ub86c\ud6a8\uc728", "\ud6a8\uc728", "efficiency", "coulomb", "ce"]),
+    voltage: findColumn(columns, ["voltage", "potential", "\uc804\uc555"]),
+    current: findColumn(columns, ["current", "\uc804\ub958"]),
+    time: findColumn(columns, ["time", "\uc2dc\uac04"]),
   };
   if (type === "eis") {
     const smartCols = smartManagerEisColumns(columns, rows);
@@ -868,7 +998,7 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FILE_INSPECT_
     return { res, body };
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error("?뚯씪 遺꾩꽍 ?쒓컙???덈Т ?ㅻ옒 嫄몃젮 以묐떒?덉뒿?덈떎. ??XLS ?뚯씪?대㈃ Excel?먯꽌 .xlsx濡??ㅼ떆 ??ν븳 ???ｌ뼱二쇱꽭??");
+      throw new Error("\ud30c\uc77c \ubd84\uc11d \uc2dc\uac04\uc774 \ub108\ubb34 \uae38\uc5b4 \uc911\ub2e8\ub418\uc5c8\uc2b5\ub2c8\ub2e4. XLS \ud30c\uc77c\uc740 Excel\uc5d0\uc11c XLSX\ub85c \ub2e4\uc2dc \uc800\uc7a5\ud55c \ud6c4 \uc7ac\uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
     }
     throw error;
   } finally {
@@ -911,7 +1041,7 @@ function baseNameWithoutExtension(filename) {
 async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
   const rows = canonicalRows(dataType, analysis.columns, analysis.rows);
   if (!rows.length) {
-    throw new Error("???뚯씪?먯꽌 Fig???ъ슜???レ옄 ?곗씠?곕? 李얠? 紐삵뻽?듬땲??");
+    throw new Error("\uc774 \ud30c\uc77c\uc5d0\uc11c Fig\uc5d0 \uc0ac\uc6a9\ud560 \uc22b\uc790 \ub370\uc774\ud130\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
   const { res, body: saved } = await fetchJsonWithTimeout("/api/datasets", {
     method: "POST",
@@ -932,7 +1062,7 @@ async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
     }),
   });
   if (!res.ok) {
-    throw new Error(apiErrorMessage(saved, "Dataset ???以??쒕쾭 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?섏씠吏瑜??덈줈怨좎묠?????ㅼ떆 ?쒕룄??二쇱꽭??"));
+    throw new Error(apiErrorMessage(saved, "Dataset \uc800\uc7a5 \uc911 \uc11c\ubc84 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ud398\uc774\uc9c0\ub97c \uc0c8\ub85c\uace0\uce68\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694."));
   }
   return saved;
 }
@@ -950,7 +1080,7 @@ async function saveFigureRecord(dataset) {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(apiErrorMessage(body, "Fig 湲곕줉????ν븯吏 紐삵뻽?듬땲??"));
+    throw new Error(apiErrorMessage(body, "Fig \uae30\ub85d\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
   }
   return body;
 }
@@ -967,17 +1097,17 @@ function renderBatchFigureResults() {
   const completed = results.filter((item) => item.ok).length;
   panel.classList.remove("hidden");
   panel.innerHTML = `
-    <strong>여러 파일 Fig 생성 결과: ${completed}/${results.length}개 완료</strong>
-    <p>파일은 순서대로 처리됩니다. 일부 파일이 실패해도 나머지 파일은 계속 분석합니다.</p>
+    <strong>\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131 \uacb0\uacfc: ${completed}/${results.length}\uac1c \uc644\ub8cc</strong>
+    <p>\ud30c\uc77c\uc740 \uc21c\uc11c\ub300\ub85c \ucc98\ub9ac\ub429\ub2c8\ub2e4. \uc77c\ubd80 \ud30c\uc77c\uc774 \uc2e4\ud328\ud574\ub3c4 \ub098\uba38\uc9c0 \ud30c\uc77c\uc740 \uacc4\uc18d \ubd84\uc11d\ud569\ub2c8\ub2e4.</p>
     <ul>
       ${results.map((item) => `
         <li class="batchFigureResult ${item.ok ? "isOk" : "hasError"}">
           <div>
             <strong>${escapeXml(item.fileName)}</strong>
-            <span>${item.ok ? `${String(item.dataType || "").toUpperCase()} Dataset 및 Fig 저장 완료${item.note ? ` · ${escapeXml(item.note)}` : ""}` : escapeXml(item.message || "처리하지 못했습니다.")}</span>
+            <span>${item.ok ? `${String(item.dataType || "").toUpperCase()} Dataset \ubc0f Fig \uc800\uc7a5 \uc644\ub8cc${item.note ? ` \u00b7 ${escapeXml(item.note)}` : ""}` : escapeXml(item.message || "\ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.")}</span>
             ${item.note ? `<span>${escapeXml(item.note)}</span>` : ""}
           </div>
-          ${item.ok ? `<button type="button" class="smallAction" data-open-batch-figure="${escapeAttr(item.datasetId)}">Fig 열기</button>` : ""}
+          ${item.ok ? `<button type="button" class="smallAction" data-open-batch-figure="${escapeAttr(item.datasetId)}">Fig \uc5f4\uae30</button>` : ""}
         </li>
       `).join("")}
     </ul>
@@ -987,13 +1117,13 @@ function renderBatchFigureResults() {
 async function createBatchFigures() {
   const files = selectedUploadFiles();
   if (state.batchInProgress) {
-    return setStatus("여러 파일 분석이 이미 진행 중입니다. 완료될 때까지 기다려주세요.");
+    return setStatus("\uc5ec\ub7ec \ud30c\uc77c \ubd84\uc11d\uc774 \uc774\ubbf8 \uc9c4\ud589 \uc911\uc785\ub2c8\ub2e4. \uc644\ub8cc\ub420 \ub54c\uae4c\uc9c0 \uae30\ub2e4\ub824\uc8fc\uc138\uc694.");
   }
   if (files.length < 2) {
-    return setStatus("여러 파일 Fig 생성은 파일을 2개 이상 선택해야 합니다.");
+    return setStatus("\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131\uc740 \ud30c\uc77c\uc744 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud574\uc57c \ud569\ub2c8\ub2e4.");
   }
   if (files.length > BATCH_FIGURE_FILE_LIMIT) {
-    return setStatus(`한 번에 최대 ${BATCH_FIGURE_FILE_LIMIT}개 파일까지 처리할 수 있습니다.`);
+    return setStatus(`\ud55c \ubc88\uc5d0 \ucd5c\ub300 ${BATCH_FIGURE_FILE_LIMIT}\uac1c \ud30c\uc77c\uae4c\uc9c0 \ucc98\ub9ac\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.`);
   }
 
   const cell = batchCellForUpload(collectCellForm());
@@ -1008,20 +1138,20 @@ async function createBatchFigures() {
   if (inspectButton) inspectButton.disabled = true;
   renderAnalysis();
   renderBatchFigureResults();
-  setStatus(`여러 파일 분석을 시작했습니다. ${files.length}개 파일을 순서대로 Dataset과 Fig로 저장합니다.`);
-  setBusy(true, `${files.length}개 파일을 분석하고 Dataset 및 Fig를 생성하고 있습니다.`, 0);
+  setStatus(`\uc5ec\ub7ec \ud30c\uc77c \ubd84\uc11d\uc744 \uc2dc\uc791\ud588\uc2b5\ub2c8\ub2e4. ${files.length}\uac1c \ud30c\uc77c\uc744 \uc21c\uc11c\ub300\ub85c Dataset\uacfc Fig\ub85c \uc800\uc7a5\ud569\ub2c8\ub2e4.`);
+  setBusy(true, `${files.length}\uac1c \ud30c\uc77c\uc744 \ubd84\uc11d\ud558\uace0 Dataset \ubc0f Fig\ub97c \uc0dd\uc131\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.`, 0);
 
   try {
     for (const file of files) {
       try {
-        setStatus(`${file.name} 분석 중...`);
+        setStatus(`${file.name} \ubd84\uc11d \uc911...`);
         const { res, body } = await inspectFileUpload(file);
         if (!res.ok) {
-          throw new Error(apiErrorMessage(body, "파일 분석을 시작하지 못했습니다."));
+          throw new Error(apiErrorMessage(body, "\ud30c\uc77c \ubd84\uc11d\uc744 \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
         }
         const dataType = body?.detection?.type;
         if (!BATCH_FIGURE_KIND_BY_TYPE[dataType]) {
-          throw new Error("CYC, CV, EIS로 판별되지 않은 파일입니다.");
+          throw new Error("CYC, CV, EIS\ub85c \ud310\ubcc4\ub418\uc9c0 \uc54a\uc740 \ud30c\uc77c\uc785\ub2c8\ub2e4.");
         }
         const fileCell = {
           ...cell,
@@ -1029,15 +1159,15 @@ async function createBatchFigures() {
         };
         const saved = await saveDatasetFromInspection(body, dataType, fileCell, BATCH_FIGURE_KIND_BY_TYPE[dataType]);
         if (!state.datasets.some((dataset) => dataset.id === saved.id)) state.datasets.unshift(saved);
-        let note = saved.reusedExistingSource ? "같은 원본 파일이라 기존 Dataset과 Fig를 재사용했습니다." : "";
+        let note = saved.reusedExistingSource ? "\uac19\uc740 \uc6d0\ubcf8 \ud30c\uc77c\uc774\ub77c \uae30\uc874 Dataset\uacfc Fig\ub97c \uc7ac\uc0ac\uc6a9\ud588\uc2b5\ub2c8\ub2e4." : "";
         try {
           await saveFigureRecord(saved);
         } catch (error) {
-          note = `Dataset은 저장했지만 Fig 기록을 저장하지 못했습니다: ${error.message}`;
+          note = `Dataset\uc740 \uc800\uc7a5\ud588\uc9c0\ub9cc Fig \uae30\ub85d\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`;
         }
         state.batchFigureResults.push({ ok: true, fileName: file.name, dataType, datasetId: saved.id, note });
       } catch (error) {
-        state.batchFigureResults.push({ ok: false, fileName: file.name, message: error.message || "처리하지 못했습니다." });
+        state.batchFigureResults.push({ ok: false, fileName: file.name, message: error.message || "\ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4." });
       }
       renderBatchFigureResults();
     }
@@ -1046,9 +1176,9 @@ async function createBatchFigures() {
       applyFilters();
     }
     const completed = state.batchFigureResults.filter((item) => item.ok).length;
-    setStatus(`여러 파일 Fig 생성 완료: ${completed}/${files.length}개`);
+    setStatus(`\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131 \uc644\ub8cc: ${completed}/${files.length}\uac1c`);
   } catch (error) {
-    setStatus(`여러 파일 Fig 생성 중 오류: ${error.message}`);
+    setStatus(`\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131 \uc911 \uc624\ub958: ${error.message}`);
   } finally {
     state.batchInProgress = false;
     clearUploadSelectionAfterProcessing();
@@ -1059,12 +1189,12 @@ async function createBatchFigures() {
 function isExpiredLoginResponse(res, body) {
   if (Number(res?.status) !== 401 || !state.user?.token) return false;
   const message = apiErrorMessage(body, "");
-  return !message || message.includes("토큰") || message.includes("로그인");
+  return !message || message.includes("\ud1a0\ud070") || message.includes("\ub85c\uadf8\uc778");
 }
 
 function clearExpiredLogin(res, body) {
   if (!isExpiredLoginResponse(res, body)) return false;
-  const message = "로그인 시간이 만료되었거나 서버가 다시 시작되었습니다. 다시 로그인해 주세요.";
+  const message = "\ub85c\uadf8\uc778 \uc2dc\uac04\uc774 \ub9cc\ub8cc\ub418\uc5c8\uac70\ub098 \uc11c\ubc84\uac00 \ub2e4\uc2dc \uc2dc\uc791\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \ub85c\uadf8\uc778\ud574 \uc8fc\uc138\uc694.";
   setBusy(false);
   applyUser(null);
   setLoginError(message);
@@ -1075,45 +1205,45 @@ function clearExpiredLogin(res, body) {
 async function inspectSelectedFile() {
   const files = selectedUploadFiles();
   const file = files[0];
-  if (!file) return setStatus("먼저 파일을 선택해 주세요.");
+  if (!file) return setStatus("\uba3c\uc800 \ud30c\uc77c\uc744 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.");
   if (files.length > 1) return createBatchFigures();
   const token = ++state.inspectToken;
   const inspectButton = $("inspectFile");
   if (inspectButton) {
     inspectButton.disabled = true;
-    inspectButton.textContent = "파일 분석 중...";
+    inspectButton.textContent = "\ud30c\uc77c \ubd84\uc11d \uc911...";
   }
-  setStatus("파일 분석 중...");
-  setBusy(true, "엑셀/CSV 파일을 읽고 데이터 종류를 추정하고 있습니다.");
+  setStatus("\ud30c\uc77c \ubd84\uc11d \uc911...");
+  setBusy(true, "\uc5d1\uc140/CSV \ud30c\uc77c\uc744 \uc77d\uace0 \ub370\uc774\ud130 \uc885\ub958\ub97c \ucd94\uc815\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.");
   try {
     const { res, body } = await inspectFileUpload(file);
     if (token !== state.inspectToken) return;
     if (!res.ok) {
       if (clearExpiredLogin(res, body)) return;
-      setStatus("파일 불러오기 실패");
-      setAnalysisMessage(body.detail || body.error || "파일을 불러오거나 분석하지 못했습니다.", "파일 불러오기 실패");
+      setStatus("\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
+      setAnalysisMessage(body.detail || body.error || "\ud30c\uc77c\uc744 \ubd88\ub7ec\uc624\uac70\ub098 \ubd84\uc11d\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", "\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
       return;
     }
     state.analysis = body;
     renderAnalysis();
-    setStatus(`${body.detection.type.toUpperCase()} 異붿젙`);
+    setStatus(`${body.detection.type.toUpperCase()} \ub370\uc774\ud130 \ud655\uc778 \uc644\ub8cc`);
   } catch (error) {
     if (token !== state.inspectToken) return;
-    setStatus("파일 불러오기 실패");
-    setAnalysisMessage(`파일을 불러오는 중 오류가 발생했습니다: ${error.message}`, "파일 불러오기 실패");
+    setStatus("\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
+    setAnalysisMessage(`\ud30c\uc77c\uc744 \ubd88\ub7ec\uc624\ub294 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`, "\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
   } finally {
     if (token === state.inspectToken) setBusy(false);
     if (inspectButton) {
       inspectButton.disabled = false;
-      inspectButton.textContent = "파일 분석";
+      inspectButton.textContent = "\ud30c\uc77c \ubd84\uc11d";
     }
   }
 }
 
 async function inspectManualFile() {
   const file = $("manualFile")?.files?.[0];
-  if (!file) return setStatus("癒쇱? 留ㅻ돱???묒? ?뚯씪???좏깮?섏꽭??");
-  setBusy(true, "留ㅻ돱???묒??먯꽌 ?꾨쪟? 濡쒕뵫 ?뺣낫瑜??쎄퀬 ?덉뒿?덈떎.");
+  if (!file) return setStatus("\uba3c\uc800 \ub9e4\ub274\uc5bc \uc5d1\uc140 \ud30c\uc77c\uc744 \uc120\ud0dd\ud558\uc138\uc694.");
+  setBusy(true, "\ub9e4\ub274\uc5bc \uc5d1\uc140\uc5d0\uc11c \uc804\ub958\uc640 \ub85c\ub529 \uc815\ubcf4\ub97c \uc77d\uace0 \uc788\uc2b5\ub2c8\ub2e4.");
   try {
     const { res, body } = await fetchJsonWithTimeout("/api/inspect-manual", {
       method: "POST",
@@ -1122,54 +1252,29 @@ async function inspectManualFile() {
     });
     if (!res.ok) {
       if (clearExpiredLogin(res, body)) return;
-      setStatus(body.error || "留ㅻ돱??遺꾩꽍 ?ㅽ뙣");
+      setStatus(body.error || "\ub9e4\ub274\uc5bc \ubd84\uc11d \uc2e4\ud328");
       return;
     }
     state.manualInfo = body;
     renderExperimentInfo(state.datasets.find((x) => x.id === state.selectedId));
-    setStatus("留ㅻ돱???ㅽ뿕 ?뺣낫 遺꾩꽍 ?꾨즺");
+    setStatus("\ub9e4\ub274\uc5bc \uc2e4\ud5d8 \uc815\ubcf4 \ubd84\uc11d \uc644\ub8cc");
     activateView("experimentInfo");
   } catch (error) {
-    setStatus(`留ㅻ돱??遺꾩꽍 ?ㅽ뙣: ${error.message}`);
+    setStatus(`\ub9e4\ub274\uc5bc \ubd84\uc11d \uc2e4\ud328: ${error.message}`);
   } finally {
     setBusy(false);
+  installBrokenUiTextRepair();
   }
 }
 
 function isBadText(text) {
   const s = String(text || "");
   if (!s.trim()) return true;
-  return s.includes("�");
+  return /\ufffd|\u00ec|\u00eb|\u00ea|\u00ed|\u00c3|\u00c2|\u613f|\u7531|\u912d|\u6028|\u4e2d|\uba2f|\ube18|\ub348|\ub4bf|\uca0c|\uc88e|\ub181|\u0080/.test(s);
 }
 
 function renderValidationSummaryLegacy(validation, quality = {}) {
-  if (!validation) return "";
-  const notes = Array.isArray(validation.notes) ? validation.notes : [];
-  const warnings = Array.isArray(validation.warnings) ? validation.warnings : [];
-  const stats = validation.stats || {};
-  const chips = [
-    stats.rowCount ? `${stats.rowCount} rows` : "",
-    Number.isFinite(stats.cycleMin) && Number.isFinite(stats.cycleMax) ? `cycle ${stats.cycleMin}-${stats.cycleMax}` : "",
-    Number.isFinite(stats.capacityMin) && Number.isFinite(stats.capacityMax) ? `${fmt(stats.capacityMin, 3)}-${fmt(stats.capacityMax, 3)} mAh g-1` : "",
-  ].filter(Boolean).map((item) => `<span>${escapeXml(item)}</span>`).join("");
-  const noteHtml = notes.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
-  const warningHtml = warnings.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
-  const qualityCounts = quality?.counts || {};
-  const qualityNote = quality?.status === "review"
-    ? `<p class="qualityReview">${Number(qualityCounts.review || 0)}媛??됱? 寃????遺꾩꽍???ы븿?????덉뒿?덈떎.</p>`
-    : quality?.status === "ok"
-      ? `<p class="qualityOk">?쒖? ?⑥쐞? 踰붿쐞 湲곗???湲곕낯 ?덉쭏 寃?좊? ?듦낵?덉뒿?덈떎.</p>`
-      : "";
-  return `
-    <div class="validationSummary ${warnings.length ? "hasWarning" : "isOk"}">
-      <div class="validationHead">
-        <strong>${warnings.length ? "?곗씠??寃???꾩슂" : "?곗씠??寃???꾨즺"}</strong>
-        <div class="validationChips">${chips}</div>
-      </div>
-      ${noteHtml ? `<ul>${noteHtml}</ul>` : ""}
-      ${warningHtml ? `<ul class="validationWarnings">${warningHtml}</ul>` : ""}
-      ${qualityNote}
-    </div>`;
+  return renderValidationSummary(validation, quality);
 }
 
 function renderValidationSummary(validation, quality = {}) {
@@ -1186,14 +1291,14 @@ function renderValidationSummary(validation, quality = {}) {
   const warningHtml = warnings.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
   const qualityCounts = quality?.counts || {};
   const qualityNote = quality?.status === "review"
-    ? `<p class="qualityReview">추가 검토가 필요한 ${Number(qualityCounts.review || 0)}개 행이 있어 분석 결과를 확인해 주세요.</p>`
+    ? `<p class="qualityReview">\ucd94\uac00 \uac80\ud1a0\uac00 \ud544\uc694\ud55c ${Number(qualityCounts.review || 0)}\uac1c \ud589\uc774 \uc788\uc5b4 \ubd84\uc11d \uacb0\uacfc\ub97c \ud655\uc778\ud574 \uc8fc\uc138\uc694.</p>`
     : quality?.status === "ok"
-      ? `<p class="qualityOk">표준 단위와 범위 기준의 기본 품질 검토를 통과했습니다.</p>`
+      ? `<p class="qualityOk">\ud45c\uc900 \ub2e8\uc704\uc640 \ubc94\uc704 \uae30\uc900\uc758 \uae30\ubcf8 \ud488\uc9c8 \uac80\ud1a0\ub97c \ud1b5\uacfc\ud588\uc2b5\ub2c8\ub2e4.</p>`
       : "";
   return `
     <div class="validationSummary ${warnings.length ? "hasWarning" : "isOk"}">
       <div class="validationHead">
-        <strong>${warnings.length ? "데이터 검토 필요" : "데이터 검토 완료"}</strong>
+        <strong>${warnings.length ? "\ub370\uc774\ud130 \uac80\ud1a0 \ud544\uc694" : "\ub370\uc774\ud130 \uac80\ud1a0 \uc644\ub8cc"}</strong>
         <div class="validationChips">${chips}</div>
       </div>
       ${noteHtml ? `<ul>${noteHtml}</ul>` : ""}
@@ -1235,164 +1340,65 @@ function renderAnalysis() {
     createBtn.classList.add("hidden");
     return;
   }
-  const typeLabel = { eis: "EIS", cyc: "CYC", cv: "CV", unknown: "?????녿뒗" }[a.detection.type] || a.detection.type;
+  const typeLabel = { eis: "EIS", cyc: "CYC", cv: "CV", unknown: "\uc54c \uc218 \uc5c6\ub294" }[a.detection.type] || a.detection.type;
   const shortName = a.filename.length > 42 ? `${a.filename.slice(0, 22)}...${a.filename.slice(-14)}` : a.filename;
   const readableColumns = a.columns.filter((c) => !isBadText(c));
   const badCount = a.columns.length - readableColumns.length;
   const columnPreview = readableColumns.length
     ? readableColumns.slice(0, 12).map((c) => `<span>${escapeXml(c)}</span>`).join("")
-    : `<span>而щ읆紐낆쓣 紐낇솗???쎌? 紐삵뻽?듬땲??</span>`;
-  const badNotice = badCount > 0 ? `<p>?쎄린 ?대젮??而щ읆紐?${badCount}媛쒕뒗 ?④꼈?듬땲?? ?곗씠??醫낅쪟媛 ?由щ㈃ 吏곸젒 ?좏깮??二쇱꽭??</p>` : "";
+    : `<span>\uceec\ub7fc\uba85\uc744 \uba85\ud655\ud788 \uc77d\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</span>`;
+  const badNotice = badCount > 0 ? `<p>\uc77d\uae30 \uc5b4\ub824\uc6b4 \uceec\ub7fc\uba85 ${badCount}\uac1c\ub294 \uc228\uacbc\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc885\ub958\uac00 \ud2c0\ub9ac\uba74 \uc9c1\uc811 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.</p>` : "";
   const detectedCRates = a.detection.type === "cyc" ? explicitCRateValues(a.canonicalRows || []) : [];
   const cRateNotice = detectedCRates.length
-    ? `<p class="columnPreviewHint"><strong>C-rate ??媛먯?:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. ?????CYC Fig?먯꽌 ??媛믪쑝濡?cycle 援ш컙??援щ텇?⑸땲??</p>`
+    ? `<p class="columnPreviewHint"><strong>C-rate \uc5f4 \uac10\uc9c0:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. \uc800\uc7a5 \ud6c4 CYC Fig\uc5d0\uc11c \uc774 \uac12\uc73c\ub85c cycle \uad6c\uac04\uc744 \uad6c\ubd84\ud569\ub2c8\ub2e4.</p>`
     : "";
   const eisColumnGuide = a.detection.type === "eis" ? `
     <div class="eisColumnGuide">
-      <strong>EIS ???덈궡</strong>
+      <strong>EIS \uc5f4 \uc548\ub0b4</strong>
       <ul>
-        <li><code>sweep</code>: 諛섎났 痢≪젙 ?뚯감, <code>point</code>: ?뚯감 ?덉쓽 痢≪젙 ?쒖꽌?낅땲??</li>
-        <li><code>frequency</code>: ?멸???援먮쪟 二쇳뙆??Hz)?낅땲??</li>
-        <li><code>zreal</code>: ?꾪뵾?섏뒪???ㅼ닔遺 Z'(ohm), <code>zimag</code>: ?덉닔遺 Z''(ohm)?낅땲?? Nyquist 洹몃옒?꾨뒗 愿濡??<code>-Z''</code>瑜??몃줈異뺤뿉 ?쒖떆?⑸땲??</li>
-        <li><code>mag</code>: ?꾪뵾?섏뒪 ?ш린 |Z|(ohm), <code>phase</code>: ?꾩긽媛?degree)?낅땲??</li>
+        <li><code>sweep</code>: \ubc18\ubcf5 \uce21\uc815 \ud68c\ucc28, <code>point</code>: \ud68c\ucc28 \uc548\uc758 \uce21\uc815 \uc21c\uc11c\uc785\ub2c8\ub2e4.</li>
+        <li><code>frequency</code>: \uc778\uac00\ud55c \uad50\ub958 \uc8fc\ud30c\uc218(Hz)\uc785\ub2c8\ub2e4.</li>
+        <li><code>zreal</code>: \uc784\ud53c\ub358\uc2a4\uc758 \uc2e4\uc218\ubd80 Z'(ohm), <code>zimag</code>: \ud5c8\uc218\ubd80 Z''(ohm)\uc785\ub2c8\ub2e4. Nyquist \uadf8\ub798\ud504\ub294 \uad00\ub840\uc0c1 <code>-Z''</code>\ub97c \uc138\ub85c\ucd95\uc5d0 \ud45c\uc2dc\ud569\ub2c8\ub2e4.</li>
+        <li><code>mag</code>: \uc784\ud53c\ub358\uc2a4 \ud06c\uae30 |Z|(ohm), <code>phase</code>: \uc704\uc0c1\uac01(degree)\uc785\ub2c8\ub2e4.</li>
       </ul>
-      <p>Fig ?앹꽦?먮뒗 二쇰줈 frequency, zreal, zimag瑜??ъ슜?⑸땲?? ?섎㉧吏 ?댁? 痢≪젙 ?쒖꽌 ?뺤씤怨?Bode 洹몃옒?꾩뿉 ?④퍡 ?곗엯?덈떎.</p>
+      <p>Fig \uc0dd\uc131\uc5d0\ub294 \uc8fc\ub85c frequency, zreal, zimag\ub97c \uc0ac\uc6a9\ud569\ub2c8\ub2e4. \ub098\uba38\uc9c0 \uc5f4\uc740 \uce21\uc815 \uc21c\uc11c \ud655\uc778\uacfc Bode \uadf8\ub798\ud504\uc5d0 \ud568\uaed8 \uc4f0\uc785\ub2c8\ub2e4.</p>
     </div>` : "";
   const isUnknown = a.detection.type === "unknown" || a.detection.confidence < 0.35;
   const heading = isUnknown
-    ? "?곗씠??醫낅쪟瑜??먮룞?쇰줈 ?먮떒?섏? 紐삵뻽?듬땲??"
-    : `${typeLabel} ?곗씠?곕줈 蹂댁엯?덈떎. 留욌굹??`;
+    ? "\ub370\uc774\ud130 \uc885\ub958\ub97c \uc790\ub3d9\uc73c\ub85c \ud310\ub2e8\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."
+    : `${typeLabel} \ub370\uc774\ud130\ub85c \ubcf4\uc785\ub2c8\ub2e4. \ub9de\ub098\uc694?`;
   const confirmChoice = isUnknown
     ? ""
-    : `<label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="${a.detection.type}" checked /> ?먮룞 ?좏깮?? ${typeLabel} ?곗씠?곕줈 怨꾩냽</label>`;
+    : `<label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="${a.detection.type}" checked /> \uc790\ub3d9 \uc120\ud0dd\ub428: ${typeLabel} \ub370\uc774\ud130\ub85c \uacc4\uc18d</label>`;
   const typeSelectMarkup = `
-    <div class="typeSelect typeSelectProminent" role="group" aria-label="?곗씠??醫낅쪟 ?좏깮">
-      <strong>?곗씠??醫낅쪟 ?좏깮</strong>
+    <div class="typeSelect typeSelectProminent" role="group" aria-label="\ub370\uc774\ud130 \uc885\ub958 \uc120\ud0dd">
+      <strong>\ub370\uc774\ud130 \uc885\ub958 \uc120\ud0dd</strong>
       ${confirmChoice}
-      <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "?곗씠??醫낅쪟瑜?吏곸젒 ?좏깮?섍쿋?듬땲??" : "?꾨땲?? 吏곸젒 ?좏깮?섍쿋?듬땲??"}</label>
+      <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "\ub370\uc774\ud130 \uc885\ub958\ub97c \uc9c1\uc811 \uc120\ud0dd\ud558\uaca0\uc2b5\ub2c8\ub2e4." : "\uc544\ub2c8\uc624, \uc9c1\uc811 \uc120\ud0dd\ud558\uaca0\uc2b5\ub2c8\ub2e4."}</label>
       <select id="manualType">
-        <option value="">?곗씠??醫낅쪟 ?좏깮</option>
+        <option value="">\ub370\uc774\ud130 \uc885\ub958 \uc120\ud0dd</option>
         <option value="eis">EIS</option>
         <option value="cyc">CYC</option>
         <option value="cv">CV</option>
-        <option value="unknown">紐⑸줉???녿뒗 ?곗씠??/option>
+        <option value="unknown">\ubaa9\ub85d\uc5d0 \uc5c6\ub294 \ub370\uc774\ud130</option>
       </select>
-      <span class="typeSelectHint">紐⑸줉??諛붾줈 怨좊Ⅴ硫?吏곸젒 ?좏깮?쇰줈 諛붾앸땲??</span>
+      <span class="typeSelectHint">\ubaa9\ub85d\uc744 \ubc14\ub85c \uace0\ub974\uba74 \uc9c1\uc811 \uc120\ud0dd\uc73c\ub85c \ubc14\ub01d\ub2c8\ub2e4.</span>
     </div>`;
   panel.classList.remove("hidden");
   createBtn.classList.toggle("hidden", isUnknown);
-  if (a.detection.type === "eis") {
-    panel.innerHTML = `
-      <h3>EIS 데이터로 보입니다. 맞나요?</h3>
-      <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} · ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
-      <div class="typeSelect typeSelectProminent" role="group" aria-label="데이터 종류 선택">
-        <strong>데이터 종류 선택</strong>
-        <label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="eis" checked /> 자동 선택됨: EIS 데이터로 계속</label>
-        <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" /> 아니오, 직접 선택하겠습니다.</label>
-        <select id="manualType">
-          <option value="">데이터 종류 선택</option>
-          <option value="eis">EIS</option>
-          <option value="cyc">CYC</option>
-          <option value="cv">CV</option>
-          <option value="unknown">판단되지 않음</option>
-        </select>
-        <span class="typeSelectHint">목록을 바로 고르면 직접 선택으로 바뀝니다.</span>
-      </div>
-      <p class="columnPreviewHint">아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.</p>
-      <div class="columnPreview">${columnPreview}</div>
-      <div class="eisColumnGuide">
-        <strong>EIS 열 안내</strong>
-        <ul>
-          <li><code>sweep</code>: 반복 측정 회차, <code>point</code>: 회차 안의 측정 순서입니다.</li>
-          <li><code>frequency</code>: 인가한 교류 주파수(Hz)입니다.</li>
-          <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
-          <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
-        </ul>
-        <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
-      </div>
-      ${renderValidationSummary(a.validation, a.quality)}
-      <h3 id="figureQuestion">어떤 Fig를 만들어 드릴까요?</h3>
-      <div class="choiceGrid" id="figureChoices"></div>
-    `;
-    for (const radio of panel.querySelectorAll("input[name='detectedType']")) {
-      radio.addEventListener("change", updateFigureChoices);
-    }
-    const manualType = $("manualType");
-    manualType.addEventListener("change", () => {
-      const manualRadio = panel.querySelector("input[name='detectedType'][value='manual']");
-      if (manualType.value && manualRadio) manualRadio.checked = true;
-      updateFigureChoices();
-    });
-    updateFigureChoices();
-    return;
-  }
   panel.innerHTML = `
     <h3>${heading}</h3>
-    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} 쨌 ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} 쨌 ` : ""}${a.rowCount} rows 쨌 confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
+    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} \u00b7 ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} \u00b7 ` : ""}${a.rowCount} rows \u00b7 confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
     ${typeSelectMarkup}
-    <p class="columnPreviewHint">?꾨옒 ??ぉ? ?뚯씪?먯꽌 ?쎌? ???대쫫?낅땲?? ?좏깮???꾩슂媛 ?놁뒿?덈떎.</p>
+    <p class="columnPreviewHint">\uc544\ub798 \ud56d\ubaa9\uc740 \ud30c\uc77c\uc5d0\uc11c \uc77d\uc740 \uc5f4 \uc774\ub984\uc785\ub2c8\ub2e4. \uc120\ud0dd\ud560 \ud544\uc694\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>
     <div class="columnPreview">${columnPreview}</div>
     ${cRateNotice}
     ${eisColumnGuide}
     ${renderValidationSummary(a.validation, a.quality)}
     ${badNotice}
-    <h3 id="figureQuestion">${isUnknown ? "癒쇱? ?곗씠??醫낅쪟瑜??좏깮??二쇱꽭??" : "?대뼡 Fig瑜?留뚮뱾???쒕┫源뚯슂?"}</h3>
+    <h3 id="figureQuestion">${isUnknown ? "\uba3c\uc800 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud574 \uc8fc\uc138\uc694." : "\uc5b4\ub5a4 Fig\ub97c \ub9cc\ub4e4\uc5b4 \ub4dc\ub9b4\uae4c\uc694?"}</h3>
     <div class="choiceGrid" id="figureChoices"></div>
   `;
-  if (a.detection.type === "eis") {
-    const detectedHeading = panel.querySelector("h3:not(#figureQuestion)");
-    if (detectedHeading) detectedHeading.textContent = "EIS 데이터로 보입니다. 맞나요?";
-    const meta = panel.querySelector("p[title]");
-    if (meta) {
-      meta.textContent = `${shortName} · ${a.sheetName ? `sheet ${a.sheetName} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%`;
-    }
-    const typeGroup = panel.querySelector(".typeSelectProminent");
-    if (typeGroup) {
-      const title = typeGroup.querySelector("strong");
-      if (title) title.textContent = "데이터 종류 선택";
-      const choices = typeGroup.querySelectorAll(".detectedTypeChoice");
-      if (choices[0]) choices[0].innerHTML = '<input type="radio" name="detectedType" value="eis" checked /> 자동 선택됨: EIS 데이터로 계속';
-      if (choices[1]) choices[1].innerHTML = '<input type="radio" name="detectedType" value="manual" /> 아니오, 직접 선택하겠습니다.';
-      const select = typeGroup.querySelector("#manualType");
-      if (select) {
-        select.innerHTML = `
-          <option value="">데이터 종류 선택</option>
-          <option value="eis">EIS</option>
-          <option value="cyc">CYC</option>
-          <option value="cv">CV</option>
-          <option value="unknown">판단되지 않음</option>`;
-      }
-      const hint = typeGroup.querySelector(".typeSelectHint");
-      if (hint) hint.textContent = "목록을 바로 고르면 직접 선택으로 바뀝니다.";
-    }
-    const previewHint = panel.querySelector(".columnPreviewHint");
-    if (previewHint) previewHint.textContent = "아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.";
-    const guide = panel.querySelector(".eisColumnGuide");
-    if (guide) {
-      guide.outerHTML = `
-        <div class="eisColumnGuide">
-          <strong>EIS 열 안내</strong>
-          <ul>
-            <li><code>sweep</code>: 반복 측정 회차, <code>point</code>: 회차 안의 측정 순서입니다.</li>
-            <li><code>frequency</code>: 인가한 교류 주파수(Hz)입니다.</li>
-            <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
-            <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
-          </ul>
-          <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
-        </div>`;
-    }
-    const validation = panel.querySelector(".validationSummary");
-    if (validation) {
-      const validationTitle = validation.querySelector(".validationHead > strong");
-      if (validationTitle) validationTitle.textContent = validation.classList.contains("hasWarning") ? "데이터 검토 필요" : "데이터 검토 완료";
-      const qualityOk = validation.querySelector(".qualityOk");
-      if (qualityOk) qualityOk.textContent = "표준 단위와 범위 기준의 기본 품질 검토를 통과했습니다.";
-      const qualityReview = validation.querySelector(".qualityReview");
-      if (qualityReview) qualityReview.textContent = "추가 검토가 필요한 행이 있어 분석 결과를 확인해 주세요.";
-    }
-    const question = panel.querySelector("#figureQuestion");
-    if (question) question.textContent = "어떤 Fig를 만들어 드릴까요?";
-  }
   for (const radio of panel.querySelectorAll("input[name='detectedType']")) {
     radio.addEventListener("change", updateFigureChoices);
   }
@@ -1451,22 +1457,19 @@ function updateSelectedFileName() {
   const label = $("selectedFileName");
   if (!label) return;
   if (!files.length) {
-    label.textContent = "선택한 파일 없음";
+    label.textContent = "\uc120\ud0dd\ub41c \ud30c\uc77c \uc5c6\uc74c";
   } else if (files.length === 1) {
     label.textContent = files[0].name;
   } else {
     const visibleNames = files.slice(0, 2).map((file) => file.name).join(", ");
-    label.textContent = `${files.length}개 파일 선택됨: ${visibleNames}${files.length > 2 ? " ..." : ""}`;
+    label.textContent = `${files.length}\uac1c \ud30c\uc77c \uc120\ud0dd\ub428: ${visibleNames}${files.length > 2 ? " ..." : ""}`;
   }
 }
 
 function updateBatchFigureControl() {
   const button = $("batchCreateFigures");
   if (!button) return;
-  const isBatch = selectedUploadFiles().length > 1;
-  button.classList.add("hidden");
-  const inspectButton = $("inspectFile");
-  if (inspectButton) inspectButton.textContent = isBatch ? "여러 파일 분석·Fig 생성" : "파일 분석";
+  button.classList.toggle("hidden", selectedUploadFiles().length < 2);
 }
 
 function resetAnalysisForNewFile() {
@@ -1482,7 +1485,7 @@ function resetAnalysisForNewFile() {
   renderBatchFigureResults();
   renderSelect();
   renderCurrent();
-  setStatus("파일 선택 완료 - 파일 분석을 눌러주세요.");
+  setStatus("\ud30c\uc77c \uc120\ud0dd \uc644\ub8cc - \ud30c\uc77c \ubd84\uc11d\uc744 \ub20c\ub7ec\uc8fc\uc138\uc694.");
 }
 
 function updateFigureChoices() {
@@ -1494,42 +1497,42 @@ function updateFigureChoices() {
   const question = $("figureQuestion");
   const createBtn = $("createFigure");
   if (!type || type === "unknown") {
-    $("figureChoices").innerHTML = `<p>현재 지원하지 않는 데이터 형식입니다. 데이터 종류를 직접 선택하면 해당 메뉴와 Fig 옵션을 안내합니다.</p>`;
-    if (question) question.textContent = type === "unknown" ? "지원 목록에 없는 데이터입니다." : "먼저 데이터 종류를 선택해 주세요.";
+    $("figureChoices").innerHTML = `<p>\ud604\uc7ac \uc9c0\uc6d0\ud558\uc9c0 \uc54a\ub294 \ub370\uc774\ud130\uc785\ub2c8\ub2e4. \uc5b4\ub5a4 \ub370\uc774\ud130\uc778\uc9c0 \uc54c\ub824\uc8fc\uc2dc\uba74 \uba54\ub274\uc640 Fig\ub97c \ucd94\uac00\ud558\uaca0\uc2b5\ub2c8\ub2e4.</p>`;
+    if (question) question.textContent = type === "unknown" ? "\uc9c0\uc6d0 \ubaa9\ub85d\uc5d0 \uc5c6\ub294 \ub370\uc774\ud130\uc785\ub2c8\ub2e4." : "\uba3c\uc800 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.";
     if (createBtn) createBtn.classList.add("hidden");
     return;
   }
-  if (question) question.textContent = "어떤 Fig를 만들어 드릴까요?";
+  if (question) question.textContent = "\uc5b4\ub5a4 Fig\ub97c \ub9cc\ub4e4\uc5b4 \ub4dc\ub9b4\uae4c\uc694?";
   if (createBtn) createBtn.classList.remove("hidden");
   const options = {
-    eis: [["eis-combined", "Nyquist + Bode 통합 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
-    cyc: [["cycling-performance", "셀 성능 테스트: capacity/efficiency vs cycle"], ["voltage-profile", "전압/전류 프로파일: voltage-capacity/time 또는 voltage/current vs cycle"], ["cyc-combined", "성능 + 전압/전류 통합 Fig"]],
-    cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate 비교 Fig"]],
-    unknown: [["table-preview", "표 형태로 미리보기"]],
-  }[type] || [["table-preview", "표 형태로 미리보기"]];
+    eis: [["eis-combined", "Nyquist + Bode \ud1b5\ud569 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
+    cyc: [["cycling-performance", "\uc140 \uc131\ub2a5 \ud14c\uc2a4\ud2b8: capacity/efficiency vs cycle"], ["voltage-profile", "\uc804\uc555/\uc804\ub958 \uac70\ub3d9: voltage-capacity/time \ub610\ub294 voltage/current vs cycle"], ["cyc-combined", "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 \ud1b5\ud569 Fig"]],
+    cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate \ube44\uad50 Fig"]],
+    unknown: [["table-preview", "\ud45c \ud615\ud0dc\ub85c \ubbf8\ub9ac\ubcf4\uae30"]],
+  }[type] || [["table-preview", "\ud45c \ud615\ud0dc\ub85c \ubbf8\ub9ac\ubcf4\uae30"]];
   $("figureChoices").innerHTML = options.map(([id, label], idx) => `<label><input type="radio" name="figureKind" value="${id}" ${idx === 0 ? "checked" : ""}/> ${label}</label>`).join("");
 }
 
 async function createSmartFigure() {
-  if (!state.analysis) return setStatus("癒쇱? ?뚯씪??遺꾩꽍?섏꽭??");
-  setBusy(true, "?좏깮???곗씠?곕줈 Fig瑜?留뚮뱾怨??덉뒿?덈떎.");
+  if (!state.analysis) return setStatus("\uba3c\uc800 \ud30c\uc77c\uc744 \ubd84\uc11d\ud558\uc138\uc694.");
+  setBusy(true, "\uc120\ud0dd\ud55c \ub370\uc774\ud130\ub85c Fig\ub97c \ub9cc\ub4e4\uace0 \uc788\uc2b5\ub2c8\ub2e4.");
   try {
     const dataType = selectedType();
     if (!dataType) {
-      setStatus("癒쇱? ?곗씠??醫낅쪟瑜??좏깮?섏꽭??");
-      setAnalysisMessage("癒쇱? ?곗씠??醫낅쪟瑜??좏깮??二쇱꽭??");
+      setStatus("\uba3c\uc800 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+      setAnalysisMessage("\uba3c\uc800 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.");
       return;
     }
     if (dataType === "unknown") {
-      setStatus("?녿뒗 ?곗씠???뺤떇?낅땲??");
-      setAnalysisMessage("?꾩쭅 吏?먰븯吏 ?딅뒗 ?곗씠?곗엯?덈떎. ?대뼡 ?곗씠?곗씤吏 ?뚮젮二쇱떆硫?硫붾돱? Fig瑜?異붽??섍쿋?듬땲??");
+      setStatus("\uc5c6\ub294 \ub370\uc774\ud130 \ud615\uc2dd\uc785\ub2c8\ub2e4.");
+      setAnalysisMessage("\uc544\uc9c1 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\ub294 \ub370\uc774\ud130\uc785\ub2c8\ub2e4. \uc5b4\ub5a4 \ub370\uc774\ud130\uc778\uc9c0 \uc54c\ub824\uc8fc\uc2dc\uba74 \uba54\ub274\uc640 Fig\ub97c \ucd94\uac00\ud558\uaca0\uc2b5\ub2c8\ub2e4.");
       return;
     }
     const figureKind = document.querySelector("input[name='figureKind']:checked")?.value || `${dataType}-combined`;
     const rows = canonicalRows(dataType, state.analysis.columns, state.analysis.rows);
     if (!rows.length) {
-      setStatus("?レ옄 而щ읆??李얠? 紐삵뻽?듬땲??");
-      setAnalysisMessage("?좏깮???곗씠????낆뿉 留욌뒗 ?レ옄 而щ읆??李얠? 紐삵뻽?듬땲?? ?ㅻⅨ ?곗씠??醫낅쪟瑜??좏깮?섍굅??而щ읆紐낆쓣 ?뺤씤??二쇱꽭??");
+      setStatus("\uc22b\uc790 \uceec\ub7fc\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
+      setAnalysisMessage("\uc120\ud0dd\ud55c \ub370\uc774\ud130 \ud0c0\uc785\uc5d0 \ub9de\ub294 \uc22b\uc790 \uceec\ub7fc\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\ub978 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud558\uac70\ub098 \uceec\ub7fc\uba85\uc744 \ud655\uc778\ud574 \uc8fc\uc138\uc694.");
       return;
     }
     const cell = collectCellForm();
@@ -1552,21 +1555,21 @@ async function createSmartFigure() {
       }),
     });
     if (!res.ok) {
-      const message = apiErrorMessage(saved, "?곗씠?곗뀑 ???以??쒕쾭 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?섏씠吏瑜??덈줈怨좎묠?????ㅼ떆 ?쒕룄??二쇱꽭??");
+      const message = apiErrorMessage(saved, "\ub370\uc774\ud130\uc14b \uc800\uc7a5 \uc911 \uc11c\ubc84 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ud398\uc774\uc9c0\ub97c \uc0c8\ub85c\uace0\uce68\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
       setStatus(message);
       setAnalysisMessage(message);
       return;
     }
-    if (!state.datasets.some((dataset) => dataset.id === saved.id)) state.datasets.unshift(saved);
+    state.datasets.unshift(saved);
     await loadHierarchy();
     state.analysis = null;
     renderAnalysis();
     showDatasetImmediately(saved);
     showModule(["cyc", "cv", "eis"].includes(dataType) ? dataType : "figure");
-    setStatus(`${dataType.toUpperCase()} Fig ?앹꽦 ?꾨즺`);
+    setStatus(`${dataType.toUpperCase()} Fig \uc0dd\uc131 \uc644\ub8cc`);
   } catch (error) {
-    setStatus("Fig ?앹꽦 ?ㅽ뙣");
-    setAnalysisMessage(`Fig ?앹꽦 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: ${error.message}`);
+    setStatus("Fig \uc0dd\uc131 \uc2e4\ud328");
+    setAnalysisMessage(`Fig \uc0dd\uc131 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -1578,7 +1581,7 @@ async function loadData() {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "?곗씠?곕? 遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+    throw new Error(body.error || "\ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
   state.datasets = await res.json();
   applyFilters();
@@ -1593,7 +1596,7 @@ async function loadHierarchy() {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "?ㅽ뿕 怨꾩링??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+    throw new Error(body.error || "\uc2e4\ud5d8 \uacc4\uce35\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
   state.hierarchy = await res.json();
   const current = state.datasets.find((item) => item.id === state.selectedId);
@@ -1616,7 +1619,7 @@ async function loadOrganizations() {
   const body = await res.json().catch(() => ([]));
   if (!res.ok) {
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "議곗쭅 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+    throw new Error(body.error || "\uc870\uc9c1 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
   state.organizations = Array.isArray(body) ? body : [];
   if (!state.organizations.some((item) => item.id === state.selectedOrganizationId)) {
@@ -1635,17 +1638,17 @@ function renderOrganizationSelectors() {
   const projectSelect = $("projectOrganizationSelect");
   const organizationSelect = $("organizationSelect");
   const optionMarkup = state.organizations
-    .map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.name)} 쨌 ${escapeXml(item.myRole || "member")}</option>`)
+    .map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.name)} \u00b7 ${escapeXml(item.myRole || "member")}</option>`)
     .join("");
   if (projectSelect) {
     const previous = projectSelect.value;
-    projectSelect.innerHTML = `<option value="">媛쒖씤 ?꾨줈?앺듃 (?섎쭔 蹂닿린)</option>${optionMarkup}`;
+    projectSelect.innerHTML = `<option value="">\uac1c\uc778 \ud504\ub85c\uc81d\ud2b8 (\ub098\ub9cc \ubcf4\uae30)</option>${optionMarkup}`;
     projectSelect.value = state.organizations.some((item) => item.id === previous) ? previous : "";
   }
   if (organizationSelect) {
     organizationSelect.innerHTML = state.organizations.length
       ? optionMarkup
-      : `<option value="">李몄뿬 以묒씤 議곗쭅???놁뒿?덈떎</option>`;
+      : `<option value="">\ucc38\uc5ec \uc911\uc778 \uc870\uc9c1\uc774 \uc5c6\uc2b5\ub2c8\ub2e4</option>`;
     organizationSelect.value = state.selectedOrganizationId;
   }
 }
@@ -1666,23 +1669,23 @@ function renderOrganizationView() {
   const canManage = canManageSelectedOrganization();
   if (hint) {
     hint.textContent = organization
-      ? `${organization.name} 쨌 ????븷: ${organization.myRole || "member"}`
-      : "??議곗쭅??留뚮뱾嫄곕굹, 議곗쭅 愿由ъ옄?먭쾶 珥덈?瑜??붿껌?섏꽭??";
+      ? `${organization.name} \u00b7 \ub0b4 \uc5ed\ud560: ${organization.myRole || "member"}`
+      : "\uc0c8 \uc870\uc9c1\uc744 \ub9cc\ub4e4\uac70\ub098, \uc870\uc9c1 \uad00\ub9ac\uc790\uc5d0\uac8c \ucd08\ub300\ub97c \uc694\uccad\ud558\uc138\uc694.";
   }
   for (const element of [addButton, memberId, memberRole]) {
     if (element) element.disabled = !organization || !canManage;
   }
   if (!organization && list) {
-    list.innerHTML = `<p class="organizationEmpty">?좏깮??議곗쭅???놁뒿?덈떎.</p>`;
+    list.innerHTML = `<p class="organizationEmpty">\uc120\ud0dd\ub41c \uc870\uc9c1\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
   } else if (organization && !state.organizationMembers.length && list) {
-    list.innerHTML = `<p class="organizationEmpty">硫ㅻ쾭 ?뺣낫瑜?遺덈윭?ㅻ뒗 以묒씠嫄곕굹 ?깅줉??硫ㅻ쾭媛 ?놁뒿?덈떎.</p>`;
+    list.innerHTML = `<p class="organizationEmpty">\uba64\ubc84 \uc815\ubcf4\ub97c \ubd88\ub7ec\uc624\ub294 \uc911\uc774\uac70\ub098 \ub4f1\ub85d\ub41c \uba64\ubc84\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
   } else if (list) {
     list.innerHTML = state.organizationMembers.map((member) => {
       const user = member.user || {};
       const remove = canManage && member.role !== "owner"
-        ? `<button type="button" class="smallDanger" data-remove-organization-member="${escapeAttr(user.id)}">?쒓굅</button>`
+        ? `<button type="button" class="smallDanger" data-remove-organization-member="${escapeAttr(user.id)}">\uc81c\uac70</button>`
         : "";
-      return `<div class="organizationMemberRow"><div><strong>${escapeXml(user.name || user.id)}</strong><span>${escapeXml(user.id)} 쨌 ${escapeXml(member.role || "viewer")}</span></div>${remove}</div>`;
+      return `<div class="organizationMemberRow"><div><strong>${escapeXml(user.name || user.id)}</strong><span>${escapeXml(user.id)} \u00b7 ${escapeXml(member.role || "viewer")}</span></div>${remove}</div>`;
     }).join("");
   }
 }
@@ -1696,7 +1699,7 @@ async function loadOrganizationMembers() {
   }
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members`, { headers: authHeaders() });
   const body = await res.json().catch(() => ([]));
-  if (!res.ok) throw new Error(body.error || "議곗쭅 硫ㅻ쾭瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+  if (!res.ok) throw new Error(body.error || "\uc870\uc9c1 \uba64\ubc84\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   state.organizationMembers = Array.isArray(body) ? body : [];
   renderOrganizationView();
 }
@@ -1704,18 +1707,18 @@ async function loadOrganizationMembers() {
 async function createOrganizationFromInput() {
   const input = $("newOrganizationName");
   const name = input?.value.trim() || "";
-  if (!name) return setStatus("議곗쭅 ?대쫫???낅젰?댁＜?몄슂.");
+  if (!name) return setStatus("\uc870\uc9c1 \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.");
   const res = await fetch("/api/organizations", {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "議곗쭅 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "\uc870\uc9c1 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   input.value = "";
   state.selectedOrganizationId = body.id;
   await loadOrganizations();
-  setStatus(`議곗쭅 '${body.name}'??留뚮뱾?덉뒿?덈떎.`);
+  setStatus(`\uc870\uc9c1 '${body.name}'\uc744 \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.`);
 }
 
 async function addOrganizationMember() {
@@ -1723,32 +1726,32 @@ async function addOrganizationMember() {
   const input = $("organizationMemberId");
   const memberUserId = input?.value.trim() || "";
   const role = $("organizationMemberRole")?.value || "researcher";
-  if (!organization) return setStatus("癒쇱? 議곗쭅???좏깮?댁＜?몄슂.");
-  if (!memberUserId) return setStatus("?뚯썝媛?낇븳 ?ъ슜???꾩씠?붾? ?낅젰?댁＜?몄슂.");
+  if (!organization) return setStatus("\uba3c\uc800 \uc870\uc9c1\uc744 \uc120\ud0dd\ud574\uc8fc\uc138\uc694.");
+  if (!memberUserId) return setStatus("\ud68c\uc6d0\uac00\uc785\ud55c \uc0ac\uc6a9\uc790 \uc544\uc774\ub514\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694.");
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members/${encodeURIComponent(memberUserId)}`, {
     method: "PUT",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ role }),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "硫ㅻ쾭 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "\uba64\ubc84 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   input.value = "";
   await loadOrganizationMembers();
-  setStatus(`${memberUserId} 怨꾩젙??${role} ??븷????ν뻽?듬땲??`);
+  setStatus(`${memberUserId} \uacc4\uc815\uc5d0 ${role} \uc5ed\ud560\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.`);
 }
 
 async function removeOrganizationMember(memberUserId) {
   const organization = selectedOrganization();
   if (!organization || !memberUserId) return;
-  if (!window.confirm(`${memberUserId} 怨꾩젙??議곗쭅?먯꽌 ?쒓굅?좉퉴??`)) return;
+  if (!window.confirm(`${memberUserId} \uacc4\uc815\uc744 \uc870\uc9c1\uc5d0\uc11c \uc81c\uac70\ud560\uae4c\uc694?`)) return;
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members/${encodeURIComponent(memberUserId)}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "硫ㅻ쾭 ?쒓굅???ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "\uba64\ubc84 \uc81c\uac70\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   await loadOrganizationMembers();
-  setStatus(`${memberUserId} 怨꾩젙??議곗쭅?먯꽌 ?쒓굅?덉뒿?덈떎.`);
+  setStatus(`${memberUserId} \uacc4\uc815\uc744 \uc870\uc9c1\uc5d0\uc11c \uc81c\uac70\ud588\uc2b5\ub2c8\ub2e4.`);
 }
 
 function selectedHierarchyCampaign(project = selectedHierarchyProject()) {
@@ -1779,7 +1782,11 @@ function hierarchyLabel(dataset) {
   const campaign = project?.campaigns?.find((item) => item.id === dataset.campaignId);
   const cell = campaign?.cells?.find((item) => item.id === dataset.cellRecordId);
   const group = cell?.datasetGroups?.find((item) => item.id === dataset.datasetGroupId);
-  return [project?.name, campaign?.name, cell?.cellId || dataset.cell?.cellId, group?.name].filter(Boolean).join(" / ");
+  return [project?.name, campaign?.name, cell?.cellId || dataset.cell?.cellId, group?.name]
+    .filter(Boolean)
+    .map((value) => cleanDisplayText(value, "\uc774\uc804 \uc800\uc7a5 \uc815\ubcf4"))
+    .filter(Boolean)
+    .join(" / ");
 }
 
 function renderHierarchyControls(preferred = {}) {
@@ -1790,39 +1797,42 @@ function renderHierarchyControls(preferred = {}) {
   if (!projectSelect || !campaignSelect || !cellSelect || !datasetGroupSelect) return;
 
   const previousProject = preferred.projectId ?? projectSelect.value;
-  projectSelect.innerHTML = `<option value="">?꾨줈?앺듃瑜??좏깮?섍굅???덈줈 留뚮뱶?몄슂</option>` + state.hierarchy
-    .map((project) => `<option value="${escapeAttr(project.id)}">${escapeXml(project.name)}</option>`)
+  projectSelect.innerHTML = `<option value="">\ud504\ub85c\uc81d\ud2b8\ub97c \uc120\ud0dd\ud558\uac70\ub098 \uc0c8\ub85c \ub9cc\ub4dc\uc138\uc694</option>` + state.hierarchy
+    .map((project) => `<option value="${escapeAttr(project.id)}">${escapeXml(cleanDisplayText(project.name, "\uc774\uc804 \ud504\ub85c\uc81d\ud2b8"))}</option>`)
     .join("");
   const project = state.hierarchy.find((item) => item.id === previousProject) || state.hierarchy[0] || null;
   projectSelect.value = project?.id || "";
 
   const previousCampaign = preferred.campaignId ?? campaignSelect.value;
   const campaigns = project?.campaigns || [];
-  campaignSelect.innerHTML = `<option value="">?ㅽ뿕 諛곗튂瑜??좏깮?섍굅???덈줈 留뚮뱶?몄슂</option>` + campaigns
-    .map((campaign) => `<option value="${escapeAttr(campaign.id)}">${escapeXml(campaign.name)}</option>`)
+  campaignSelect.innerHTML = `<option value="">\uc2e4\ud5d8 \ubc30\uce58\ub97c \uc120\ud0dd\ud558\uac70\ub098 \uc0c8\ub85c \ub9cc\ub4dc\uc138\uc694</option>` + campaigns
+    .map((campaign) => `<option value="${escapeAttr(campaign.id)}">${escapeXml(cleanDisplayText(campaign.name, "\uc774\uc804 \uc2e4\ud5d8 \ubc30\uce58"))}</option>`)
     .join("");
   const campaign = campaigns.find((item) => item.id === previousCampaign) || campaigns[0] || null;
   campaignSelect.value = campaign?.id || "";
 
   const previousCell = preferred.cellRecordId ?? cellSelect.value;
   const cells = campaign?.cells || [];
-  cellSelect.innerHTML = `<option value="">? ID ?낅젰 ???먮룞?쇰줈 ??????깅줉?⑸땲??/option>` + cells
-    .map((cell) => `<option value="${escapeAttr(cell.id)}">${escapeXml(cell.cellId)}${cell.sampleName ? ` 쨌 ${escapeXml(cell.sampleName)}` : ""}</option>`)
+  cellSelect.innerHTML = `<option value="">\uc140 ID\ub97c \uc785\ub825\ud558\uba74 \ub370\uc774\ud130 \uc800\uc7a5 \uc2dc \uc790\ub3d9 \ub4f1\ub85d\ub429\ub2c8\ub2e4</option>` + cells
+    .map((cell) => `<option value="${escapeAttr(cell.id)}">${escapeXml(cleanDisplayText(cell.cellId, "\uc774\uc804 \uc140"))}${cell.sampleName ? ` \u00b7 ${escapeXml(cleanDisplayText(cell.sampleName, "\uc0d8\ud50c \uc815\ubcf4 \ud655\uc778"))}` : ""}</option>`)
     .join("");
   cellSelect.value = cells.some((item) => item.id === previousCell) ? previousCell : "";
 
   const selectedCell = selectedHierarchyCell(campaign);
   const previousDatasetGroup = preferred.datasetGroupId ?? datasetGroupSelect.value;
   const datasetGroups = selectedCell?.datasetGroups || [];
-  datasetGroupSelect.innerHTML = `<option value="">???대쫫???낅젰?섍굅??湲곗〈 Dataset???좏깮?섏꽭??/option>` + datasetGroups
-    .map((group) => `<option value="${escapeAttr(group.id)}">${escapeXml(group.name)}</option>`)
+  datasetGroupSelect.innerHTML = `<option value="">Dataset \uc774\ub984\uc744 \uc785\ub825\ud558\uac70\ub098 \uae30\uc874 Dataset\uc744 \uc120\ud0dd\ud558\uc138\uc694</option>` + datasetGroups
+    .map((group) => `<option value="${escapeAttr(group.id)}">${escapeXml(cleanDisplayText(group.name, "\uc774\uc804 Dataset"))}</option>`)
     .join("");
   datasetGroupSelect.value = datasetGroups.some((item) => item.id === previousDatasetGroup) ? previousDatasetGroup : "";
 
   const path = $("hierarchyPath");
   if (path) {
     const selectedGroup = selectedHierarchyDatasetGroup(selectedCell);
-    path.textContent = [project?.name, campaign?.name, selectedCell?.cellId || "???", selectedGroup?.name || "??Dataset"].filter(Boolean).join("  ?? ") || "?꾨줈?앺듃? ?ㅽ뿕 諛곗튂瑜?癒쇱? 留뚮뱾?댁＜?몄슂.";
+    path.textContent = [project?.name, campaign?.name, selectedCell?.cellId || "\uc140 \ubbf8\uc120\ud0dd", selectedGroup?.name || "Dataset \ubbf8\uc120\ud0dd"]
+      .map((value) => cleanDisplayText(value, "\uc774\uc804 \uc800\uc7a5 \uc815\ubcf4"))
+      .filter(Boolean)
+      .join(" / ") || "\ud504\ub85c\uc81d\ud2b8\uc640 \uc2e4\ud5d8 \ubc30\uce58\ub97c \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.";
   }
 }
 
@@ -1839,52 +1849,52 @@ function selectHierarchyForDataset(dataset) {
 async function createProjectFromInput() {
   const input = $("newProjectName");
   const name = input?.value.trim() || "";
-  if (!name) return setStatus("???꾨줈?앺듃 ?대쫫???낅젰?댁＜?몄슂.");
+  if (!name) return setStatus("\uc0c8 \ud504\ub85c\uc81d\ud2b8 \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.");
   const res = await fetch("/api/projects", {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name, organizationId: $("projectOrganizationSelect")?.value || "" }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "?꾨줈?앺듃 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "\ud504\ub85c\uc81d\ud2b8 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({ projectId: body.id });
-  setStatus(`?꾨줈?앺듃 '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
+  setStatus(`\ud504\ub85c\uc81d\ud2b8 '${body.name}'\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.`);
 }
 
 async function createCampaignFromInput() {
   const project = selectedHierarchyProject();
   const input = $("newCampaignName");
   const name = input?.value.trim() || "";
-  if (!project) return setStatus("癒쇱? ?꾨줈?앺듃瑜??좏깮?섍굅???덈줈 留뚮뱾?댁＜?몄슂.");
-  if (!name) return setStatus("???ㅽ뿕 諛곗튂 ?대쫫???낅젰?댁＜?몄슂.");
+  if (!project) return setStatus("\uba3c\uc800 \ud504\ub85c\uc81d\ud2b8\ub97c \uc120\ud0dd\ud558\uac70\ub098 \uc0c8\ub85c \ub9cc\ub4e4\uc5b4\uc8fc\uc138\uc694.");
+  if (!name) return setStatus("\uc0c8 \uc2e4\ud5d8 \ubc30\uce58 \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.");
   const res = await fetch(`/api/projects/${encodeURIComponent(project.id)}/campaigns`, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "?ㅽ뿕 諛곗튂 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "\uc2e4\ud5d8 \ubc30\uce58 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({ projectId: project.id, campaignId: body.id });
-  setStatus(`?ㅽ뿕 諛곗튂 '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
+  setStatus(`\uc2e4\ud5d8 \ubc30\uce58 '${body.name}'\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.`);
 }
 
 async function createDatasetGroupFromInput() {
   const cell = selectedHierarchyCell();
   const input = $("newDatasetGroupName");
   const name = input?.value.trim() || "";
-  if (!cell) return setStatus("癒쇱? 湲곗〈 ????좏깮?섍굅?? ???? ?곗씠???????Dataset ?대쫫怨??④퍡 ?깅줉?댁＜?몄슂.");
-  if (!name) return setStatus("??Dataset ?대쫫???낅젰?댁＜?몄슂.");
+  if (!cell) return setStatus("\uba3c\uc800 \uae30\uc874 \uc140\uc744 \uc120\ud0dd\ud558\uac70\ub098, \uc0c8 \uc140\uc740 \ub370\uc774\ud130 \uc800\uc7a5 \uc2dc Dataset \uc774\ub984\uacfc \ud568\uaed8 \ub4f1\ub85d\ud574\uc8fc\uc138\uc694.");
+  if (!name) return setStatus("\uc0c8 Dataset \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.");
   const res = await fetch(`/api/cells/${encodeURIComponent(cell.id)}/dataset-groups`, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "Dataset ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
+  if (!res.ok) return setStatus(body.error || "Dataset \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({
@@ -1893,7 +1903,7 @@ async function createDatasetGroupFromInput() {
     cellRecordId: cell.id,
     datasetGroupId: body.id,
   });
-  setStatus(`Dataset '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
+  setStatus(`Dataset '${body.name}'\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.`);
 }
 
 function applyFilters() {
@@ -1932,7 +1942,7 @@ function clearSearchFilters() {
 }
 
 function typeDisplay(type) {
-  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "?꾩껜" }[type || "all"] || "DATA";
+  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "?\uafa9\uaedc" }[type || "all"] || "DATA";
 }
 
 function renderSearchResults() {
@@ -1940,7 +1950,7 @@ function renderSearchResults() {
   if (!list) return;
   const count = $("searchResultCount");
   const scope = $("searchScopeLabel");
-  if (count) count.textContent = `${state.filtered.length}개`;
+  if (count) count.textContent = `${state.filtered.length}\uac1c`;
   if (scope) scope.textContent = typeDisplay(state.searchType);
   document.querySelectorAll(".searchType").forEach((btn) => {
     btn.classList.toggle("active", (btn.dataset.searchType || "all") === (state.searchType || "all"));
@@ -1948,8 +1958,8 @@ function renderSearchResults() {
   if (!state.filtered.length) {
     list.innerHTML = `
       <div class="searchEmpty">
-        <strong>寃??寃곌낵媛 ?놁뒿?덈떎.</strong>
-        <span>?좎쭨 踰붿쐞瑜??볧엳嫄곕굹 ?뚯옱/? ID 寃?됱뼱瑜?以꾩뿬蹂댁꽭??</span>
+        <strong>\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</strong>
+        <span>\ub0a0\uc9dc \ubc94\uc704\ub97c \ub113\ud788\uac70\ub098 \uc18c\uc7ac/\uc140 ID \uac80\uc0c9\uc5b4\ub97c \uc904\uc5ec\ubcf4\uc138\uc694.</span>
       </div>`;
     return;
   }
@@ -1957,7 +1967,7 @@ function renderSearchResults() {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const meta = [cell.date || "?좎쭨 ?놁쓬", typeDisplay(d.dataType), `${d.rows?.length || 0} points`, displayUserName(d)].filter(Boolean).join(" 쨌 ");
+    const meta = [cell.date || "\ub0a0\uc9dc \uc5c6\uc74c", typeDisplay(d.dataType), `${d.rows?.length || 0} points`, displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     const detail = [hierarchyLabel(d), cell.material, cell.sampleName, cell.condition, d.sourceName].filter(Boolean).join(" / ");
     return `
       <article class="searchResultCard${active}">
@@ -1965,11 +1975,11 @@ function renderSearchResults() {
           <span class="resultType">${escapeXml(typeDisplay(d.dataType))}</span>
           <strong>${escapeXml(title)}</strong>
           <em>${escapeXml(meta)}</em>
-          <p>${escapeXml(detail || "저장된 실험 데이터")}</p>
+          <p>${escapeXml(detail || "\uc800\uc7a5\ub41c \uc2e4\ud5d8 \ub370\uc774\ud130")}</p>
         </button>
         <div class="searchResultActions">
-          <button type="button" data-open-figure="${escapeAttr(d.id)}">Fig ?닿린</button>
-          <button type="button" class="secondaryAction" data-open-saved="${escapeAttr(d.id)}">紐⑥쓬?먯꽌 蹂닿린</button>
+          <button type="button" data-open-figure="${escapeAttr(d.id)}">Fig \uc5f4\uae30</button>
+          <button type="button" class="secondaryAction" data-open-saved="${escapeAttr(d.id)}">\ubaa8\uc74c\uc5d0\uc11c \ubcf4\uae30</button>
         </div>
       </article>`;
   }).join("");
@@ -1985,7 +1995,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("figure", state.activeFigureModule);
-      setStatus("寃??寃곌낵瑜?Fig濡??댁뿀?듬땲??");
+      setStatus("\uac80\uc0c9 \uacb0\uacfc\ub97c Fig\ub85c \uc5f4\uc5c8\uc2b5\ub2c8\ub2e4.");
     });
   }
   for (const btn of list.querySelectorAll("[data-open-saved]")) {
@@ -1997,7 +2007,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("savedFigures");
-      setStatus("寃??寃곌낵瑜?Fig 紐⑥쓬?먯꽌 ?댁뿀?듬땲??");
+      setStatus("\uac80\uc0c9 \uacb0\uacfc\ub97c Fig \ubaa8\uc74c\uc5d0\uc11c \uc5f4\uc5c8\uc2b5\ub2c8\ub2e4.");
     });
   }
 }
@@ -2007,7 +2017,7 @@ function renderDateOptions() {
   if (!sel) return;
   const current = sel.value;
   const dates = [...new Set(state.datasets.map((d) => d.cell?.date).filter(Boolean))].sort().reverse();
-  sel.innerHTML = `<option value="">?꾩껜 ?좎쭨</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
+  sel.innerHTML = `<option value="">?\uafa9\uaedc ?\uc88e\ucb68</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
   sel.value = dates.includes(current) ? current : "";
 }
 
@@ -2031,7 +2041,7 @@ function renderSelect() {
   if (!sel) return;
   sel.innerHTML = "";
   if (!state.filtered.length) {
-    sel.innerHTML = `<option>寃??寃곌낵 ?놁쓬</option>`;
+    sel.innerHTML = `<option>\uac80\uc0c9 \uacb0\uacfc \uc5c6\uc74c</option>`;
     return;
   }
   for (const d of state.filtered) {
@@ -2045,56 +2055,31 @@ function renderSelect() {
 }
 
 function datasetDisplayName(d) {
-  const cell = d.cell || {};
-  return cell.cellId || cell.sampleName || cell.material || `${String(d.dataType || "DATA").toUpperCase()} ${String(d.id || "").split("-").pop()}`;
+  return figureDatasetLabel(d);
 }
 
-function renderSavedList() {
-  const list = $("savedList");
-  const count = $("savedCount");
-  if (!list) return;
-  document.querySelectorAll("#savedCount").forEach((el) => { el.textContent = `${state.filtered.length}개`; });
-  document.querySelectorAll("#savedCount").forEach((el) => { el.textContent = `${state.filtered.length}개`; });
-  if (count) count.textContent = `${state.filtered.length}개`;
-  if (!state.filtered.length) {
-    list.innerHTML = `<p class="emptySaved">??λ맂 ?곗씠?곌? ?놁뒿?덈떎.</p>`;
-    return;
-  }
-  list.innerHTML = state.filtered.map((d) => {
-    const cell = d.cell || {};
-    const active = d.id === state.selectedId ? " active" : "";
-    const title = datasetDisplayName(d);
-    const sub = [d.dataType?.toUpperCase(), `${d.rows?.length || 0} points`, d.ownerName || d.ownerId].filter(Boolean).join(" 쨌 ");
-    return `
-      <button type="button" class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
-        <strong>${escapeXml(title)}</strong>
-        <span>${escapeXml(cell.date || "?좎쭨 ?놁쓬")} 쨌 ${escapeXml(sub)}</span>
-        <em>${escapeXml(d.sourceName || d.id)}</em>
-      </button>`;
-  }).join("");
-  for (const btn of list.querySelectorAll(".savedItem")) {
-    btn.addEventListener("click", () => {
-      state.selectedId = btn.dataset.datasetId;
-      state.selectedAnnotation = null;
-      renderSelect();
-      renderSavedList();
-      renderCurrent();
-      setStatus("??λ맂 ?곗씠?곕? 遺덈윭?붿뒿?덈떎.");
-    });
-  }
+function figureDatasetLabel(d) {
+  const type = typeDisplay(d?.dataType);
+  const sourceName = String(d?.sourceName || "").trim().replace(/\\/g, "/").split("/").pop();
+  if (sourceName) return `${type} \u00b7 ${sourceName}`;
+  const cell = d.cell || {};
+  const fallback = cell.cellId || cell.sampleName || cell.material || String(d?.id || "Dataset").split("-").pop();
+  return `${type} \u00b7 ${fallback}`;
 }
+
+/* Legacy duplicate renderSavedList renderer removed; the clean authoritative definition below is used. */
 
 function figureLabel(d) {
   const labels = {
-    "cycling-performance": "용량 유지율 Fig",
-    "voltage-profile": "전압/전류 Fig",
-    "cyc-combined": "성능 + 전압/전류 Fig",
+    "cycling-performance": "\uc6a9\ub7c9 \uc720\uc9c0\uc728 Fig",
+    "voltage-profile": "\uc804\uc555/\uc804\ub958 Fig",
+    "cyc-combined": "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 Fig",
     "nyquist": "Nyquist Fig",
     "bode": "Bode Fig",
-    "eis-combined": "EIS 통합 Fig",
+    "eis-combined": "EIS \ud1b5\ud569 Fig",
     "cv-curve": "CV Fig",
-    "cv-comparison": "CV 비교 Fig",
-    "table-preview": "표 미리보기",
+    "cv-comparison": "CV \ube44\uad50 Fig",
+    "table-preview": "\ud45c \ubbf8\ub9ac\ubcf4\uae30",
   };
   return labels[d.figureKind] || `${(d.dataType || "data").toUpperCase()} Fig`;
 }
@@ -2150,31 +2135,31 @@ function renderSavedList() {
   const list = $("savedList");
   const count = $("savedCount");
   if (!list) return;
-  if (count) count.textContent = `${state.filtered.length}개`;
+  if (count) count.textContent = `${state.filtered.length}\uac1c`;
   if (!state.filtered.length) {
-    list.innerHTML = `<p class="emptySaved">저장된 Fig가 없습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">\uc800\uc7a5\ub41c Fig\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
     return;
   }
   list.innerHTML = state.filtered.map((d) => {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" · ");
+    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     return `
       <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
-        <label class="compareCheck${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"}" title="${String(d.dataType || "").toLowerCase() === "cyc" ? "CYC 비교 선택" : "CYC Fig만 비교할 수 있습니다."}">
+        <label class="compareCheck${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"}" title="${String(d.dataType || "").toLowerCase() === "cyc" ? "CYC \ube44\uad50 \uc120\ud0dd" : "CYC Fig\ub9cc \ube44\uad50\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}">
           <input type="checkbox" data-compare-id="${escapeAttr(d.id)}"${state.compareIds.includes(d.id) ? " checked" : ""}${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"} />
-          <span>비교</span>
+          <span>\ube44\uad50</span>
         </label>
-        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig 열기">
+        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig \uc5f4\uae30">
           ${figureThumb(d)}
           <span class="savedInfo">
             <strong>${escapeXml(title)}</strong>
-            <span>${escapeXml(cell.date || "날짜 없음")} · ${escapeXml(sub)}</span>
+            <span>${escapeXml(cell.date || "\ub0a0\uc9dc \uc5c6\uc74c")} \u00b7 ${escapeXml(sub)}</span>
             <em>${escapeXml(d.sourceName || d.id)}</em>
           </span>
         </button>
-        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="저장된 Fig 삭제">×</button>
+        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="\uc800\uc7a5\ub41c Fig \uc0ad\uc81c">\u00d7</button>
       </article>`;
   }).join("");
   for (const btn of list.querySelectorAll(".savedOpen")) {
@@ -2186,7 +2171,7 @@ function renderSavedList() {
       renderCurrent();
       state.activeFigureModule = state.datasets.find((d) => d.id === state.selectedId)?.dataType || state.activeFigureModule;
       activateView("figure", state.activeFigureModule);
-      setStatus("저장된 Fig를 불러왔습니다.");
+      setStatus("\uc800\uc7a5\ub41c Fig\ub97c \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4.");
     });
   }
   for (const btn of list.querySelectorAll(".savedDelete")) {
@@ -2204,32 +2189,32 @@ function renderSavedList() {
   const list = $("savedList");
   const count = $("savedCount");
   if (!list) return;
-  if (count) count.textContent = `${state.filtered.length}개`;
+  if (count) count.textContent = `${state.filtered.length}\uac1c`;
   if (!state.filtered.length) {
-    list.innerHTML = `<p class="emptySaved">저장된 Fig가 없습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">\uc800\uc7a5\ub41c Fig\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
     return;
   }
   list.innerHTML = state.filtered.map((d) => {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" · ");
+    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     const isCyc = String(d.dataType || "").toLowerCase() === "cyc";
     return `
       <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
-        <label class="compareCheck${isCyc ? "" : " disabled"}" title="${isCyc ? "CYC 비교 선택" : "CYC Fig만 비교할 수 있습니다."}">
+        <label class="compareCheck${isCyc ? "" : " disabled"}" title="${isCyc ? "CYC \ube44\uad50 \uc120\ud0dd" : "CYC Fig\ub9cc \ube44\uad50\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}">
           <input type="checkbox" data-compare-id="${escapeAttr(d.id)}"${state.compareIds.includes(d.id) ? " checked" : ""}${isCyc ? "" : " disabled"} />
-          <span>비교</span>
+          <span>\ube44\uad50</span>
         </label>
-        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig 열기">
+        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig \uc5f4\uae30">
           ${figureThumb(d)}
           <span class="savedInfo">
             <strong>${escapeXml(title)}</strong>
-            <span>${escapeXml(cell.date || "날짜 없음")} · ${escapeXml(sub)}</span>
+            <span>${escapeXml(cell.date || "\ub0a0\uc9dc \uc5c6\uc74c")} \u00b7 ${escapeXml(sub)}</span>
             <em>${escapeXml(d.sourceName || d.id)}</em>
           </span>
         </button>
-        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="저장된 Fig 삭제">×</button>
+        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="\uc800\uc7a5\ub41c Fig \uc0ad\uc81c">\u00d7</button>
       </article>`;
   }).join("");
   for (const btn of list.querySelectorAll(".savedOpen")) {
@@ -2241,7 +2226,7 @@ function renderSavedList() {
       renderCurrent();
       state.activeFigureModule = state.datasets.find((d) => d.id === state.selectedId)?.dataType || state.activeFigureModule;
       activateView("figure", state.activeFigureModule);
-      setStatus("저장된 Fig를 불러왔습니다.");
+      setStatus("\uc800\uc7a5\ub41c Fig\ub97c \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4.");
     });
   }
   for (const btn of list.querySelectorAll(".savedDelete")) {
@@ -2257,12 +2242,12 @@ function toggleCompareSelection(id, checked) {
   if (!id) return;
   const target = state.datasets.find((d) => d.id === id);
   if (target?.dataType !== "cyc") {
-    setStatus("CYC Fig留?鍮꾧탳?????덉뒿?덈떎.");
+    setStatus("CYC Fig\ub9cc \ube44\uad50\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
     return;
   }
   if (checked && !state.compareIds.includes(id)) state.compareIds.push(id);
   if (!checked) state.compareIds = state.compareIds.filter((x) => x !== id);
-  setStatus(`${state.compareIds.length}개 CYC Fig 선택됨`);
+  setStatus(`${state.compareIds.length}\uac1c CYC Fig \uc120\ud0dd\ub428`);
 }
 
 function clearCompareSelection() {
@@ -2273,7 +2258,7 @@ function clearCompareSelection() {
     preview.classList.add("hidden");
     preview.innerHTML = "";
   }
-  setStatus("鍮꾧탳 ?좏깮???댁젣?덉뒿?덈떎.");
+  setStatus("\ube44\uad50 \uc120\ud0dd\uc744 \ud574\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
 }
 
 const comparisonPalette = ["#0f766e", "#ef476f", "#3b82f6", "#f59e0b", "#7c3aed", "#64748b", "#10b981", "#dc2626"];
@@ -2354,88 +2339,17 @@ function renderComparisonSvg(series, colorMap = {}, svgId = "comparisonFigure") 
     </svg>`;
 }
 
-function renderCycComparison() {
-  const preview = $("comparisonPreview");
-  if (!preview) return;
-  const datasets = state.compareIds
-    .map((id) => state.datasets.find((d) => d.id === id))
-    .filter((d) => d?.dataType === "cyc")
-    .slice(0, 8);
-  if (datasets.length < 2) {
-    preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">鍮꾧탳?섎젮硫?CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??</p>`;
-    setStatus("CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
-    return;
-  }
-  const series = datasets.map((d) => ({
-    d,
-    name: datasetDisplayName(d),
-    points: dischargeSeries((d.rows || []).filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle)),
-  })).filter((s) => s.points.length);
-  if (series.length < 2) {
-    preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">?좏깮??CYC Fig?먯꽌 鍮꾧탳 媛?ν븳 諛⑹쟾?⑸웾??李얠? 紐삵뻽?듬땲??</p>`;
-    setStatus("鍮꾧탳 媛?ν븳 CYC ?곗씠?곌? 遺議깊빀?덈떎.");
-    return;
-  }
-  const colors = ["#0f766e", "#ef476f", "#3b82f6", "#f59e0b", "#7c3aed", "#64748b", "#10b981", "#dc2626"];
-  const allPoints = series.flatMap((s) => s.points);
-  const maxCycle = Math.max(...allPoints.map((p) => p.x));
-  const xTickMax = Math.max(5, Math.ceil(maxCycle / 5) * 5);
-  const maxCap = Math.max(...allPoints.map((p) => p.y), 1);
-  const yMax = maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20;
-  const svgW = 840, svgH = 520;
-  const plot = { x: 82, y: 64, w: 560, h: 340 };
-  const sx = makeScale([0, xTickMax], [plot.x, plot.x + plot.w]);
-  const sy = makeScale([0, yMax], [plot.y + plot.h, plot.y]);
-  const xTicks = Array.from({ length: Math.floor(xTickMax / 5) + 1 }, (_, i) => i * 5);
-  const yStep = yMax <= 200 ? 20 : Math.max(20, Math.ceil(yMax / 6 / 20) * 20);
-  const yTicks = Array.from({ length: Math.floor(yMax / yStep) + 1 }, (_, i) => i * yStep);
-  const paths = series.map((s, idx) => {
-    const color = colors[idx % colors.length];
-    const path = linePath(s.points, sx, sy);
-    const pts = markerPoints(s.points, sx, sy, `cmpPt cmpPt${idx}`, 3.7);
-    return `<path d="${path}" fill="none" stroke="${color}" stroke-width="2"/><g fill="#fff" stroke="${color}" stroke-width="1.6">${pts}</g>`;
-  }).join("");
-  const legend = series.map((s, idx) => {
-    const y = plot.y + 18 + idx * 24;
-    const color = colors[idx % colors.length];
-    return `<g><circle cx="${plot.x + plot.w + 38}" cy="${y}" r="4" fill="#fff" stroke="${color}" stroke-width="1.8"/><text x="${plot.x + plot.w + 50}" y="${y + 4}" class="cmpLegend">${escapeXml(s.name)}</text></g>`;
-  }).join("");
-  preview.classList.remove("hidden");
-  preview.innerHTML = `
-    <div class="comparisonTitle">
-      <strong>CYC 鍮꾧탳 Fig</strong>
-      <span>${series.length}媛?Fig 鍮꾧탳</span>
-    </div>
-    <svg id="comparisonFigure" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
-      <style>
-        .cmpAxis{stroke:#111;stroke-width:1.2;shape-rendering:crispEdges}.cmpGrid{stroke:#e8edf2;stroke-width:.7}
-        .cmpTick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.cmpLabel{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
-        .cmpTitle{font:700 18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.cmpLegend{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
-      </style>
-      <rect width="${svgW}" height="${svgH}" fill="#fff"/>
-      <text x="${plot.x}" y="34" class="cmpTitle">Discharge capacity comparison</text>
-      <rect x="${plot.x}" y="${plot.y}" width="${plot.w}" height="${plot.h}" fill="none" class="cmpAxis"/>
-      ${xTicks.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${plot.y + plot.h}" y2="${plot.y + plot.h - 8}" class="cmpAxis"/><text x="${sx(v)}" y="${plot.y + plot.h + 25}" text-anchor="middle" class="cmpTick">${v}</text>`).join("")}
-      ${yTicks.map((v) => `<line x1="${plot.x}" x2="${plot.x + plot.w}" y1="${sy(v)}" y2="${sy(v)}" class="cmpGrid"/><line x1="${plot.x}" x2="${plot.x + 8}" y1="${sy(v)}" y2="${sy(v)}" class="cmpAxis"/><text x="${plot.x - 12}" y="${sy(v) + 4}" text-anchor="end" class="cmpTick">${v}</text>`).join("")}
-      ${paths}
-      <text x="${plot.x + plot.w / 2}" y="${plot.y + plot.h + 58}" text-anchor="middle" class="cmpLabel">Cycle number</text>
-      <text transform="translate(${plot.x - 56},${plot.y + plot.h / 2}) rotate(-90)" text-anchor="middle" class="cmpLabel">Specific capacity (mAh g-1)</text>
-      ${legend}
-    </svg>`;
-  setStatus("CYC 鍮꾧탳 Fig瑜?留뚮뱾?덉뒿?덈떎.");
-}
+/* Legacy duplicate renderCycComparison renderer removed; the clean authoritative definition below is used. */
 
 async function deleteSavedFigure(id, event) {
   if (event) event.stopPropagation();
   const target = state.datasets.find((d) => d.id === id);
   const name = target ? datasetDisplayName(target) : id;
-  if (!id || !confirm(`??λ맂 Fig "${name}"瑜???젣?좉퉴??`)) return;
+  if (!id || !confirm(`\uc800\uc7a5\ub41c Fig "${name}"\ub97c \uc0ad\uc81c\ud560\uae4c\uc694?`)) return;
   const res = await fetch(`/api/datasets/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    setStatus(body.error || "Fig ??젣 ?ㅽ뙣");
+    setStatus(body.error || "Fig \uc0ad\uc81c \uc2e4\ud328");
     return;
   }
   state.datasets = state.datasets.filter((d) => d.id !== id);
@@ -2447,7 +2361,7 @@ async function deleteSavedFigure(id, event) {
   renderSelect();
   renderSavedList();
   renderCurrent();
-  setStatus("??λ맂 Fig瑜???젣?덉뒿?덈떎.");
+  setStatus("\uc800\uc7a5\ub41c Fig\ub97c \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
 }
 
 function niceBounds(values) {
@@ -2526,17 +2440,131 @@ function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, lo
     </g>`;
 }
 
+function equalAspectNyquistBounds(points, width, height) {
+  const xs = points.map((point) => point.x).filter(Number.isFinite);
+  const ys = points.map((point) => point.y).filter(Number.isFinite);
+  if (!xs.length || !ys.length) return { x: [0, 1], y: [0, 1] };
+  const xMin = Math.min(...xs, 0);
+  const xMax = Math.max(...xs, 0);
+  const yMin = Math.min(...ys, 0);
+  const yMax = Math.max(...ys, 0);
+  const xSpan = Math.max(xMax - xMin, 1e-9);
+  const ySpan = Math.max(yMax - yMin, 1e-9);
+  // One ohm occupies the same physical distance on both axes. Without this,
+  // a semicircle can look flattened or stretched just because of the panel size.
+  const unitPerPixel = Math.max(xSpan / width, ySpan / height) * 1.12;
+  const displayXSpan = unitPerPixel * width;
+  const displayYSpan = unitPerPixel * height;
+  const xCenter = (xMin + xMax) / 2;
+  const yCenter = (yMin + yMax) / 2;
+  return {
+    x: [xCenter - displayXSpan / 2, xCenter + displayXSpan / 2],
+    y: [yCenter - displayYSpan / 2, yCenter + displayYSpan / 2],
+  };
+}
+
+function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points }) {
+  const domains = equalAspectNyquistBounds(points, w, h);
+  const sx = makeScale(domains.x, [x, x + w]);
+  const sy = makeScale(domains.y, [y + h, y]);
+  const xTicks = ticks(domains.x[0], domains.x[1]);
+  const yTicks = ticks(domains.y[0], domains.y[1]);
+  const path = linePath(points, sx, sy);
+  const pointStep = Math.max(1, Math.ceil(points.length / 48));
+  const visiblePoints = points.filter((_, index) => index % pointStep === 0 || index === points.length - 1);
+  const pointMarkers = markerPoints(visiblePoints, sx, sy, "nyquistPoint", points.length > 90 ? 1.7 : 2.7);
+  return `
+    <g class="plot nyquistPlot">
+      <text x="${x}" y="${y - 18}" class="panelTitle">${title}</text>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" class="nyquistFrame"/>
+      ${xTicks.map((value) => `<line x1="${sx(value)}" x2="${sx(value)}" y1="${y}" y2="${y + h}" class="nyquistGrid"/><text x="${sx(value)}" y="${y + h + 23}" class="tick" text-anchor="middle">${fmt(value, 3)}</text>`).join("")}
+      ${yTicks.map((value) => `<line x1="${x}" x2="${x + w}" y1="${sy(value)}" y2="${sy(value)}" class="nyquistGrid"/><text x="${x - 10}" y="${sy(value) + 4}" class="tick" text-anchor="end">${fmt(value, 3)}</text>`).join("")}
+      <path d="${path}" class="nyquistLine"/>
+      <g>${pointMarkers}</g>
+      <text x="${x + w / 2}" y="${y + h + 54}" class="label" text-anchor="middle">${xlabel}</text>
+      <text transform="translate(${x - 58},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>
+    </g>`;
+}
+
+function renderEisFigure(d) {
+  const style = currentFigureStyle();
+  syncFigureControls(style);
+  const svgSize = figureSvgSize(style, "paper");
+  const kind = ["eis-combined", "nyquist", "bode"].includes(d.figureKind) ? d.figureKind : "eis-combined";
+  const rows = [...d.rows]
+    .map((row) => {
+      const frequency = Number(row.frequency);
+      const zreal = Number(row.zreal);
+      const zimag = Number(row.zimag);
+      return { ...row, frequency, zreal, zimag, mag: Math.hypot(zreal, zimag), phase: Math.atan2(zimag, zreal) * 180 / Math.PI };
+    })
+    .filter((row) => Number.isFinite(row.frequency) && row.frequency > 0 && Number.isFinite(row.zreal) && Number.isFinite(row.zimag))
+    .sort((left, right) => right.frequency - left.frequency);
+  const negativeImaginary = rows.filter((row) => row.zimag < 0).length >= rows.filter((row) => row.zimag > 0).length;
+  const nyquist = rows.map((row) => ({ x: row.zreal, y: negativeImaginary ? -row.zimag : row.zimag }));
+  const bodeMag = rows.map((row) => ({ x: row.frequency, y: row.mag }));
+  const bodePhase = rows.map((row) => ({ x: row.frequency, y: -row.phase }));
+  const fDomain = positiveLogBounds(rows.map((row) => row.frequency));
+  const magDomain = positiveLogBounds(rows.map((row) => row.mag));
+  const phaseDomain = niceBounds(bodePhase.map((point) => point.y));
+  const title = figureDatasetLabel(d);
+  const nyquistTitle = kind === "nyquist" ? "Nyquist impedance" : "Nyquist plot";
+  const nyquistYLabel = negativeImaginary ? "-Z'' / \u03a9" : "Z'' / \u03a9";
+  const margin = 88;
+  const panels = [];
+  if (kind !== "bode") {
+    const isOnlyNyquist = kind === "nyquist";
+    const side = isOnlyNyquist
+      ? Math.min(svgSize.w - margin * 2, svgSize.h - 228)
+      : Math.max(300, Math.min(Math.round(svgSize.w * 0.42), Math.round(svgSize.h * 0.57)));
+    const nx = isOnlyNyquist ? Math.round((svgSize.w - side) / 2) : margin;
+    const ny = 126;
+    panels.push(nyquistPanel({ x: nx, y: ny, w: side, h: side, title: nyquistTitle, xlabel: "Z' / \u03a9", ylabel: nyquistYLabel, points: nyquist }));
+    if (!isOnlyNyquist) {
+      const bodeX = nx + side + 78;
+      const bodeW = Math.max(230, svgSize.w - bodeX - margin);
+      const bodeH = Math.max(145, Math.round((side - 58) / 2));
+      panels.push(panel({ x: bodeX, y: ny, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true }));
+      panels.push(panel({ x: bodeX, y: ny + side - bodeH, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
+    }
+  } else {
+    const bodeW = svgSize.w - margin * 2;
+    const bodeH = Math.max(190, Math.round((svgSize.h - 330) / 2));
+    panels.push(panel({ x: margin, y: 132, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true }));
+    panels.push(panel({ x: margin, y: 132 + bodeH + 130, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
+  }
+  $("figureTitle").textContent = title;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "\u00b7 " + d.cell.material : ""} ${rows.length} points`;
+  $("metaGrid").innerHTML = [["Material", d.cell.material], ["Electrolyte", d.cell.electrolyte], ["Condition", d.cell.condition], ["Owner", d.ownerName || d.ownerId], ["Notes", d.cell.notes]].map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
+  $("figureCanvas").innerHTML = `
+    <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .axis,.nyquistFrame{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.nyquistGrid{stroke:#9ca3af;stroke-width:1;stroke-dasharray:2 7}
+        .seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}
+        .nyquistLine{fill:none;stroke:#0f766e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:#0f766e;stroke-width:1.35}
+        .label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}
+        .panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}
+      </style>
+      <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
+      <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
+      <text x="72" y="74" class="caption">${escapeXml(d.cell.date || "")} ${escapeXml(d.cell.condition || "")}</text>
+      ${panels.join("")}
+    </svg>`;
+  applyAnnotationsToSvg();
+}
+
 function renderFigure(d) {
   if (!d) {
     $("figureCanvas").innerHTML = "";
-    $("figureTitle").textContent = "선택한 Dataset 없음";
-    $("figureSubtitle").textContent = "파일을 분석하거나 저장된 Dataset을 선택하세요.";
+    $("figureTitle").textContent = "\uc120\ud0dd\ud55c Dataset \uc5c6\uc74c";
+    $("figureSubtitle").textContent = "\ub370\uc774\ud130\ub97c \ub4f1\ub85d\ud558\uac70\ub098 \uc120\ud0dd\ud558\uc138\uc694.";
     $("metaGrid").innerHTML = "";
     return;
   }
   if (d.dataType === "cyc-comparison") return renderSavedCycComparison(d);
   if (d.dataType === "cyc") return renderCycFigure(d);
   if (d.dataType === "cv") return renderCvFigure(d);
+  if (d.dataType === "eis") return renderEisFigure(d);
   const style = currentFigureStyle();
   syncFigureControls(style);
   const svgSize = figureSvgSize(style, "paper");
@@ -2575,9 +2603,9 @@ function renderFigure(d) {
   const fDomain = [Math.min(...rows.map((r) => r.frequency)), Math.max(...rows.map((r) => r.frequency))];
   const magDomain = positiveLogBounds(rows.map((r) => r.mag));
   const phaseDomain = niceBounds(bodePhase.map((p) => p.y));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
+  const title = figureDatasetLabel(d);
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "쨌 " + d.cell.material : ""} ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "\u00b7 " + d.cell.material : ""} ${d.rows.length} points`;
   $("metaGrid").innerHTML = [
     ["Material", d.cell.material],
     ["Electrolyte", d.cell.electrolyte],
@@ -2596,9 +2624,9 @@ function renderFigure(d) {
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
       <text x="72" y="74" class="caption">${escapeXml(d.cell.date || "")} ${escapeXml(d.cell.condition || "")}</text>
-      ${panel({ x: eisPlot.nyquist.x, y: eisPlot.nyquist.y, w: eisPlot.nyquist.w, h: eisPlot.nyquist.h, xlabel: "Z' / 廓", ylabel: "-Z'' / 廓", title: "Nyquist plot", xDomain: xNy, yDomain: yNy, points: ny, line: false })}
-      ${panel({ x: eisPlot.bodeX, y: eisPlot.nyquist.y, w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / 廓", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: false })}
-      ${panel({ x: eisPlot.bodeX, y: Math.round(svgSize.h * 0.58), w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -罐 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: false })}
+      ${panel({ x: eisPlot.nyquist.x, y: eisPlot.nyquist.y, w: eisPlot.nyquist.w, h: eisPlot.nyquist.h, xlabel: "Z' / \u03a9", ylabel: "-Z'' / \u03a9", title: "Nyquist plot", xDomain: xNy, yDomain: yNy, points: ny, line: false })}
+      ${panel({ x: eisPlot.bodeX, y: eisPlot.nyquist.y, w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: false })}
+      ${panel({ x: eisPlot.bodeX, y: Math.round(svgSize.h * 0.58), w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: false })}
     </svg>`;
   applyAnnotationsToSvg();
 }
@@ -2608,12 +2636,12 @@ function renderLegacyCycFigure(d) {
   syncFigureControls(style);
   const svgSize = figureSvgSize(style, "paper");
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
+  const title = figureDatasetLabel(d);
   const capRows = rows.filter((r) => Number.isFinite(r.capacity));
   const effRows = rows.filter((r) => Number.isFinite(r.efficiency));
   const voltRows = rows.filter((r) => Number.isFinite(r.voltage) && (Number.isFinite(r.capacity) || Number.isFinite(r.time)));
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} 쨌 CYC 쨌 ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} \u00b7 CYC \u00b7 ${d.rows.length} points`;
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const panels = [];
   if (d.figureKind !== "voltage-profile" && capRows.length) {
@@ -2631,7 +2659,7 @@ function renderLegacyCycFigure(d) {
       <style>.axis{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}.label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}.panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}</style>
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
-      <text x="72" y="74" class="caption">CYC 쨌 ${escapeXml(d.cell.condition || "")}</text>
+      <text x="72" y="74" class="caption">CYC \u00b7 ${escapeXml(d.cell.condition || "")}</text>
       ${panels.join("")}
     </svg>`;
 }
@@ -3048,7 +3076,7 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ figureEdits }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "Fig ?섏젙 ????ㅽ뙣");
+    if (!res.ok) throw new Error(saved.error || "Fig \uc218\uc815 \uc800\uc7a5 \uc2e4\ud328");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
     state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
@@ -3062,11 +3090,11 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ datasetId: saved.id, name: `${sampleLabel(saved)} figure`, figureKind: saved.figureKind, edits: saved.figureEdits }),
     });
     const figureBody = await figureRes.json().catch(() => ({}));
-    if (!figureRes.ok) throw new Error(figureBody.error || "Fig ?쇱씠釉뚮윭由???μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+    if (!figureRes.ok) throw new Error(figureBody.error || "Fig \ub77c\uc774\ube0c\ub7ec\ub9ac \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
     if (state.cellWorkspace?.cell?.id === saved.cellRecordId) loadCellWorkspace(saved);
-    if (!silent) setStatus("Fig ?섏젙 ?댁슜????λ릺?덉뒿?덈떎.");
+    if (!silent) setStatus("Fig \uc218\uc815 \ub0b4\uc6a9\uc774 \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(`Fig ?섏젙 ????ㅽ뙣: ${error.message}`);
+    setStatus(`Fig \uc218\uc815 \uc800\uc7a5 \uc2e4\ud328: ${error.message}`);
   }
 }
 
@@ -3151,7 +3179,7 @@ function selectAnnotation(idx) {
   const ann = state.selectedAnnotation === null ? null : currentAnnotations()[state.selectedAnnotation];
   if (input && ann) input.value = ann.text;
   if (sizeInput) sizeInput.value = ann ? clampFontSize(ann.size) : clampFontSize(sizeInput.value);
-  if (button) button.textContent = ann ? "湲 ?섏젙" : "湲 異붽?";
+  if (button) button.textContent = ann ? "\uae00 \uc218\uc815" : "\uae00 \ucd94\uac00";
   for (const el of document.querySelectorAll(".userAnnotation")) {
     const selected = Number(el.dataset.annotationIndex) === state.selectedAnnotation;
     el.classList.toggle("selected", selected);
@@ -3164,8 +3192,8 @@ function addOrUpdateAnnotation() {
   const input = $("annotationText");
   const text = input?.value.trim();
   const size = clampFontSize($("annotationSize")?.value);
-  if (!state.selectedId) return setStatus("癒쇱? ?뚯씪 遺꾩꽍 ??Fig瑜??앹꽦?섍굅?? 湲곗〈 Fig瑜??좏깮?섏꽭??");
-  if (!text) return setStatus("異붽???湲???낅젰?섏꽭??");
+  if (!state.selectedId) return setStatus("\uba3c\uc800 \ud30c\uc77c \ubd84\uc11d \ud6c4 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098, \uae30\uc874 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  if (!text) return setStatus("\ucd94\uac00\ud560 \uae00\uc744 \uc785\ub825\ud558\uc138\uc694.");
   const annotations = currentAnnotations();
   if (state.selectedAnnotation !== null && annotations[state.selectedAnnotation]) {
     annotations[state.selectedAnnotation].text = text;
@@ -3189,7 +3217,7 @@ function clearAnnotations() {
   const sizeInput = $("annotationSize");
   if (sizeInput) sizeInput.value = 13;
   const button = $("addAnnotation");
-  if (button) button.textContent = "湲 異붽?";
+  if (button) button.textContent = "\uae00 \ucd94\uac00";
   renderCurrent();
   saveFigureEdits(false);
 }
@@ -3207,7 +3235,7 @@ function changeAnnotationSize(delta) {
 }
 
 function changeFigureSeriesColor() {
-  if (!state.selectedId) return setStatus("癒쇱? ?뚯씪 遺꾩꽍 ??Fig瑜??앹꽦?섍굅?? 湲곗〈 Fig瑜??좏깮?섏꽭??");
+  if (!state.selectedId) return setStatus("\uba3c\uc800 \ud30c\uc77c \ubd84\uc11d \ud6c4 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098, \uae30\uc874 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
   const input = $("figureSeriesColor");
   const style = currentFigureStyle();
   style.seriesColor = normalizeHexColor(input?.value, style.seriesColor);
@@ -3217,7 +3245,7 @@ function changeFigureSeriesColor() {
 }
 
 function changeFigureAspectRatio() {
-  if (!state.selectedId) return setStatus("癒쇱? Fig瑜??좏깮?섏꽭??");
+  if (!state.selectedId) return setStatus("\uba3c\uc800 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
   const input = $("figureAspectRatio");
   const style = currentFigureStyle();
   style.aspectRatio = normalizeFigureAspectRatio(input?.value);
@@ -3366,8 +3394,8 @@ function formatCurrentForFigure(currentA) {
   return `Iavg ${fmt(currentA, 4)} A`;
 }
 
-// CYC ?붿빟 ?뚯씪?먮뒗 cycle留덈떎 ?꾩븬怨??꾨쪟媛 ???먯뵫留??덉쓣 ???덉뒿?덈떎.
-// ??寃쎌슦 ?꾩븬-?⑸웾 怨≪꽑?쇰줈 ?ㅽ빐?섏? ?딄퀬, cycle蹂??됯퇏 ?꾩븬/?꾨쪟 異붿꽭瑜?蹂꾨룄濡?洹몃┰?덈떎.
+// CYC ?\ubdbf\ube5f ?\ub6af\uc52a?\uba2e\ub497 cycle\uf9cd\ub348\ub58e ?\uafa9\ube2c\u6028??\uafa8\uca9f\u5a9b\u0080 \\u003f\\u003f\\u003f\uba2f\ubd6b\uf9cd??\ub349\uc4e3 \\u003f\\u003f\\u003f\ub349\ub4bf?\ub348\ub58e.
+// ??\u5bc3\uc38c\uc2a6 ?\uafa9\ube2c-?\u2478\uc6fe \u6028\u226a\uaf51?\uc1f0\uc908 ?\u317d\ube50?\uc10f? ?\ub504\ud02c, cycle\u8e42??\ub42f\ud1cf ?\uafa9\ube2c/?\uafa8\uca9f \u7570\ubdbf\uaf6d\u745c?\u8e42\uafa8\ub8c4\u6fe1?\u6d39\uba83\u2530?\ub348\ub58e.
 function cycVoltageCurrentTrend(rows) {
   const byCycle = new Map();
   for (const row of rows || []) {
@@ -3385,7 +3413,7 @@ function cycVoltageCurrentTrend(rows) {
   const entries = [...byCycle.entries()].sort(([left], [right]) => left - right);
   return {
     voltage: entries.filter(([, group]) => group.voltages.length).map(([cycle, group]) => ({ x: cycle, y: average(group.voltages) })),
-    // BDF???쒖? current_a(A)瑜??ъ슜?먯뿉寃??쎄린 ?ъ슫 mA 異뺤쑝濡?蹂?섑빀?덈떎.
+    // BDF\uc758 \ud45c\uc900 current_a(A)\ub97c \uc0ac\uc6a9\uc790\uc5d0\uac8c \uc77d\uae30 \uc26c\uc6b4 mA \ucd95\uc73c\ub85c \ubcc0\ud658\ud569\ub2c8\ub2e4.
     current: entries.filter(([, group]) => group.currents.length).map(([cycle, group]) => ({ x: cycle, y: average(group.currents) * 1000 })),
   };
 }
@@ -3396,9 +3424,9 @@ function cycProfilePanel({ x, y, w, h, profile }) {
       <g>
         <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
         <rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/>
-        <text x="${x + w / 2}" y="${y + h / 2 - 16}" class="profileEmptyTitle" text-anchor="middle">?꾩븬 ?꾨줈?뚯씪???먯씠 遺議깊빀?덈떎.</text>
-        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">?꾩옱 ?뚯씪? cycle蹂??붿빟媛믪씠???꾩븬-?⑸웾/?쒓컙 怨≪꽑??留뚮뱾 ???놁뒿?덈떎.</text>
-        <text x="${x + w / 2}" y="${y + h / 2 + 40}" class="profileEmptyText" text-anchor="middle">cycle ?덉뿉 ?щ윭 voltage? capacity ?먮뒗 time ?먯씠 ?덈뒗 ?먮낯 ?곗씠?곕? ?ъ슜?섏꽭??</text>
+        <text x="${x + w / 2}" y="${y + h / 2 - 16}" class="profileEmptyTitle" text-anchor="middle">\uc804\uc555 \ud504\ub85c\ud30c\uc77c\uc744 \ub9cc\ub4e4 \uc218 \uc788\ub294 \ud3ec\uc778\ud2b8\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">\ud604\uc7ac \ud30c\uc77c\uc5d0\ub294 cycle\ubcc4 \uc694\uc57d\uac12\ub9cc \uc788\uc5b4 \uc804\uc555-\uc6a9\ub7c9 \ub610\ub294 \uc804\uc555-\uc2dc\uac04 \uace1\uc120\uc744 \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 40}" class="profileEmptyText" text-anchor="middle">cycle \ub0b4\uc5d0 \uc5ec\ub7ec voltage\uc640 capacity \ub610\ub294 time \ud3ec\uc778\ud2b8\uac00 \uc788\ub294 \uc6d0\ubcf8 \ub370\uc774\ud130\ub97c \uc0ac\uc6a9\ud574 \uc8fc\uc138\uc694.</text>
       </g>`;
   }
   const allPoints = profile.series.flatMap((series) => series.points);
@@ -3438,7 +3466,7 @@ function cycProfilePanel({ x, y, w, h, profile }) {
 
 function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
   if (!trend.voltage.length) {
-    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Voltage/current behavior</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">Voltage ?곗씠?곌? ?놁뼱 ?꾩븬쨌?꾨쪟 異붿꽭瑜?留뚮뱾 ???놁뒿?덈떎.</text></g>`;
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Voltage/current behavior</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">\uc804\uc555 \ub370\uc774\ud130\uac00 \uc5c6\uc5b4 \uc804\ub958\uc5d0 \ub530\ub978 \ubcc0\ud654\ub97c \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.</text></g>`;
   }
   const allCycles = [...trend.voltage, ...trend.current].map((point) => point.x);
   const hasCurrent = trend.current.length > 0;
@@ -3452,7 +3480,7 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
     y2Domain: hasCurrent ? niceBounds(trend.current.map((point) => point.y)) : null,
     xlabel: "Cycle number",
     ylabel: "Voltage (V)",
-    // ?ㅻⅨ履??꾨쪟 異??쒕ぉ? ?⑤꼸 ??뿉 留욎떠 ?꾨옒?먯꽌 吏곸젒 諛곗튂?⑸땲??
+    // ?\u317b\u2168\uf9df??\uafa8\uca9f \u7570??\uc495\u3049?\u0080 ?\u2464\uaf38 ??\ubfc9 \uf9cd\uc68e\ub5a0 ?\uafa8\uc612?\uba2f\uaf4c \uf9de\uacf8\uc812 \u8adb\uacd7\ud282?\u2478\ub572??
     y2label: "",
     integerX: true,
     xlabelOffset: 48,
@@ -3477,7 +3505,7 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
 
 function cycPerformancePanel({ x, y, w, h, points }) {
   if (!points.length) {
-    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">?⑸웾 ?곗씠?곕? 李얠? 紐삵뻽?듬땲??</text></g>`;
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">\uc6a9\ub7c9 \ub370\uc774\ud130\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</text></g>`;
   }
   return panel({
     x,
@@ -3497,7 +3525,7 @@ function renderCycAlternativeFigure(d, mode) {
   const style = currentFigureStyle();
   syncFigureControls(style);
   const rows = (d.rows || []).filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle);
-  const title = `${d.cell.cellId || d.id}${d.cell.sampleName ? " - " + d.cell.sampleName : ""}`;
+  const title = figureDatasetLabel(d);
   const profile = cycVoltageProfileSeries(rows);
   const electricalTrend = cycVoltageCurrentTrend(rows);
   const hasRawVoltageProfile = profile.series.length > 0;
@@ -3550,7 +3578,7 @@ function renderCycPerformanceFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
-  const title = `${d.cell.cellId || d.id}${d.cell.sampleName ? " - " + d.cell.sampleName : ""}`;
+  const title = figureDatasetLabel(d);
   const capPts = dischargeSeries(rows);
   const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
   const isRateFigure = rateSegments.length >= 2;
@@ -3640,23 +3668,59 @@ function renderCvFigure(d) {
     h: Math.max(300, Math.round(svgSize.h * 0.58)),
   };
   const rows = d.rows.filter((r) => Number.isFinite(r.voltage) && Number.isFinite(r.current));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
+  const title = figureDatasetLabel(d);
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} 쨌 CV 쨌 ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} \u00b7 CV \u00b7 ${d.rows.length} points`;
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
       <style>.axis{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}.label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}.panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}</style>
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
-      <text x="72" y="74" class="caption">CV 쨌 ${escapeXml(d.cell.condition || "")}</text>
+      <text x="72" y="74" class="caption">CV \u00b7 ${escapeXml(d.cell.condition || "")}</text>
       ${panel({ x: cvPlot.x, y: cvPlot.y, w: cvPlot.w, h: cvPlot.h, xlabel: "Voltage (V)", ylabel: "Current", title: "Cyclic voltammetry", xDomain: niceBounds(rows.map((r) => r.voltage)), yDomain: niceBounds(rows.map((r) => r.current)), points: rows.map((r) => ({ x: r.voltage, y: r.current })) })}
     </svg>`;
   applyAnnotationsToSvg();
 }
 
+function cleanDisplayText(value, fallback = "\uc815\ubcf4 \ud655\uc778") {
+  const text = String(value ?? "").replace(/\s*\uca0c\s*/g, " \u00b7 ");
+  if (!/[\u4e00-\u9fff\ufffd]|\?{2,}/.test(text)) return text;
+  return fallback;
+}
+
+function repairBrokenUiText(root = document.body) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    const parent = node.parentElement;
+    if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) continue;
+    if (/[\u4e00-\u9fff\ufffd\uca0c]|\?{2,}/.test(node.nodeValue || "")) nodes.push(node);
+  }
+  nodes.forEach((textNode) => { textNode.nodeValue = cleanDisplayText(textNode.nodeValue); });
+  root.querySelectorAll?.("[title], [aria-label], [placeholder]").forEach((element) => {
+    for (const attribute of ["title", "aria-label", "placeholder"]) {
+      const value = element.getAttribute(attribute);
+      if (value && /[\u4e00-\u9fff\ufffd\uca0c]|\?{2,}/.test(value)) element.setAttribute(attribute, cleanDisplayText(value));
+    }
+  });
+}
+
+function installBrokenUiTextRepair() {
+  repairBrokenUiText();
+  let queued = false;
+  const queueRepair = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; repairBrokenUiText(); });
+  };
+  new MutationObserver(queueRepair).observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
 function escapeXml(s) {
-  return String(s || "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+  return cleanDisplayText(s, "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
 }
 
 function escapeAttr(s) {
@@ -3688,80 +3752,42 @@ function renderExperimentInfo(d) {
   const manual = bestManualSample();
   const savedCalc = d?.cell?.electrodeCalc || null;
   const blocks = [];
-
   if (d?.dataType === "cyc") {
-    const rows = d.rows.filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
+    const rows = d.rows.filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle);
     const capPts = dischargeSeries(rows);
     const segments = inferCRateSegments(d, rows, capPts);
     const oneC = Number(savedCalc?.oneC_mA ?? manual?.sample?.oneC_mA);
-    const segmentRows = segments.map((seg) => {
-      const inSeg = rows.filter((r) => r.cycle >= seg.start && r.cycle <= seg.end);
-      const avgCap = average(inSeg.map((r) => r.capacity).filter(Number.isFinite).map((v) => Math.abs(v) < 10 ? v * 1000 : v));
-      const avgCurrent = average(inSeg.map((r) => r.current).filter(Number.isFinite).map(Math.abs));
-      const rate = rateNumber(seg.label);
-      const estimated = Number.isFinite(oneC) && Number.isFinite(rate) ? oneC * rate : null;
-      return [seg.label, `${seg.start}-${seg.end}`, avgCap, avgCurrent, estimated];
+    const segmentRows = segments.map((segment) => {
+      const within = rows.filter((row) => row.cycle >= segment.start && row.cycle <= segment.end);
+      const capacity = average(within.map((row) => row.capacity).filter(Number.isFinite).map((value) => Math.abs(value) < 10 ? value * 1000 : value));
+      const current = average(within.map((row) => row.current).filter(Number.isFinite).map(Math.abs));
+      const rate = rateNumber(segment.label);
+      const expected = Number.isFinite(oneC) && Number.isFinite(rate) ? oneC * rate : null;
+      return [segment.label, `${segment.start}-${segment.end}`, capacity, current, expected];
     });
     blocks.push(`
       <section class="infoBlock">
-        <h3>?꾩옱 CYC ?곗씠???붿빟</h3>
+        <h3>\ud604\uc7ac CYC \ub370\uc774\ud130 \uc694\uc57d</h3>
         <div class="infoCards">
-          <div><strong>?곗씠??/strong><span>${escapeXml(d.sourceName || d.id)}</span></div>
-          <div><strong>?ъ씤??/strong><span>${d.rows.length} rows</span></div>
-          <div><strong>C-rate</strong><span>${segments.map((s) => s.label).join(" | ") || "-"}</span></div>
-          <div><strong>?꾧레 怨꾩궛</strong><span>${savedCalc ? `${escapeXml(savedCalc.profileName || "??κ컪")} 쨌 1C ${fixed(oneC, 4)} mA` : (manual ? "留ㅻ돱??湲곗?" : "-")}</span></div>
+          <div><strong>\ub370\uc774\ud130</strong><span>${escapeXml(d.sourceName || d.id)}</span></div>
+          <div><strong>\ud589 \uc218</strong><span>${d.rows.length} rows</span></div>
+          <div><strong>C-rate</strong><span>${segments.map((segment) => segment.label).join(" | ") || "-"}</span></div>
+          <div><strong>\uc804\uadf9 \uacc4\uc0b0</strong><span>${savedCalc ? `${escapeXml(savedCalc.profileName || "\uae30\uc900 \uacc4\uc0b0")} \u00b7 1C ${fixed(oneC, 4)} mA` : (manual ? "\ub9e4\ub274\uc5bc \uae30\uc900" : "-")}</span></div>
         </div>
-        <table>
-          <thead><tr><th>C-rate</th><th>Cycle</th><th>?됯퇏 諛⑹쟾?⑸웾 (mAh g-1)</th><th>?곗씠???꾨쪟</th><th>???留ㅻ돱??湲곗? ?꾨쪟 (mA)</th></tr></thead>
-          <tbody>${segmentRows.map(([label, range, cap, current, estimated]) => `
-            <tr>
-              <td>${escapeXml(label)}</td>
-              <td>${escapeXml(range)}</td>
-              <td>${cap == null ? "-" : fmt(cap, 5)}</td>
-              <td>${current == null ? "-" : fmt(current, 5)}</td>
-              <td>${estimated == null ? "-" : fmt(estimated, 5)}</td>
-            </tr>`).join("")}</tbody>
-        </table>
+        <table><thead><tr><th>C-rate</th><th>Cycle</th><th>\ud3c9\uade0 \ubc29\uc804 \uc6a9\ub7c9 (mAh g-1)</th><th>\ud3c9\uade0 \uc804\ub958 (mA)</th><th>\uc608\uc0c1 \uc804\ub958 (mA)</th></tr></thead>
+        <tbody>${segmentRows.map(([label, range, capacity, current, expected]) => `<tr><td>${escapeXml(label)}</td><td>${escapeXml(range)}</td><td>${capacity == null ? "-" : fmt(capacity, 5)}</td><td>${current == null ? "-" : fmt(current, 5)}</td><td>${expected == null ? "-" : fmt(expected, 5)}</td></tr>`).join("")}</tbody></table>
       </section>`);
   }
-
   if (state.manualInfo) {
-    const sheets = state.manualInfo.sheets || [];
-    const sheetCards = sheets.slice(0, 8).map((sheet) => {
+    const sheetCards = (state.manualInfo.sheets || []).slice(0, 8).map((sheet) => {
       const samples = (sheet.samples || []).slice(0, 8);
-      return `
-        <section class="infoBlock">
-          <h3>${escapeXml(sheet.sheet)}</h3>
-          <div class="infoCards">
-            <div><strong>?쒕Ъ吏??대줎?⑸웾</strong><span>${sheet.theoreticalCapacity_mAh_g || "-"} mAh g-1</span></div>
-            <div><strong>?섑뵆 ??/strong><span>${sheet.sampleCount || 0}</span></div>
-            <div><strong>議곗꽦</strong><span>${Object.entries(sheet.composition || {}).map(([k, v]) => `${k} ${v}`).join(" / ") || "-"}</span></div>
-          </div>
-          <table>
-            <thead><tr><th>?섑뵆</th><th>1C ?꾨쪟 (mA)</th><th>?꾧레 臾닿쾶 (g)</th><th>?먭퍡 (mm)</th><th>NCM mass (g)</th><th>C-rate蹂??꾨쪟</th></tr></thead>
-            <tbody>${samples.map((s) => `
-              <tr>
-                <td>${escapeXml(s.sample)}</td>
-                <td>${escapeXml(s.oneC_mA)}</td>
-                <td>${escapeXml(s.electrodeWeight_g)}</td>
-                <td>${escapeXml(s.thickness_mm)}</td>
-                <td>${escapeXml(s.ncmMass_g)}</td>
-                <td>${(s.rateCurrents || []).map((r) => `${escapeXml(r.rate)} ${escapeXml(r.current_mA)} mA`).join(" / ") || "-"}</td>
-              </tr>`).join("")}</tbody>
-          </table>
-        </section>`;
+      return `<section class="infoBlock"><h3>${escapeXml(sheet.sheet)}</h3>
+        <div class="infoCards"><div><strong>\uc774\ub860 \uc6a9\ub7c9</strong><span>${sheet.theoreticalCapacity_mAh_g || "-"} mAh g-1</span></div><div><strong>\uc0d8\ud50c \uc218</strong><span>${sheet.sampleCount || 0}</span></div><div><strong>\uc870\uc131</strong><span>${Object.entries(sheet.composition || {}).map(([key, value]) => `${key} ${value}`).join(" / ") || "-"}</span></div></div>
+        <table><thead><tr><th>\uc0d8\ud50c</th><th>1C \uc804\ub958 (mA)</th><th>\uc804\uadf9 \ubb34\uac8c (g)</th><th>\ub450\uaed8 (mm)</th><th>NCM mass (g)</th><th>C-rate\ubcc4 \uc804\ub958</th></tr></thead><tbody>${samples.map((sample) => `<tr><td>${escapeXml(sample.sample)}</td><td>${escapeXml(sample.oneC_mA)}</td><td>${escapeXml(sample.electrodeWeight_g)}</td><td>${escapeXml(sample.thickness_mm)}</td><td>${escapeXml(sample.ncmMass_g)}</td><td>${(sample.rateCurrents || []).map((rate) => `${escapeXml(rate.rate)} ${escapeXml(rate.current_mA)} mA`).join(" / ") || "-"}</td></tr>`).join("")}</tbody></table></section>`;
     }).join("");
-    blocks.push(`
-      <section class="infoBlock">
-        <h3>留ㅻ돱???뚯씪</h3>
-        <p>${escapeXml(state.manualInfo.filename)} 쨌 ${state.manualInfo.sheetCount} sheets</p>
-      </section>
-      ${sheetCards}`);
+    blocks.push(`<section class="infoBlock"><h3>\ub9e4\ub274\uc5bc \ucc38\uace0 \ud30c\uc77c</h3><p>${escapeXml(state.manualInfo.filename)} \u00b7 ${state.manualInfo.sheetCount} sheets</p></section>${sheetCards}`);
   }
-
-  if (!blocks.length) {
-    blocks.push(`<section class="infoBlock emptyInfo"><h3>?ㅽ뿕 ?뺣낫 ?놁쓬</h3><p>CYC Fig瑜??좏깮?섍굅??留ㅻ돱???묒????ｌ쑝硫?C-rate? ?꾨쪟 ?뺣낫媛 ?ш린???뺣━?⑸땲??</p></section>`);
-  }
+  if (!blocks.length) blocks.push('<section class="infoBlock emptyInfo"><h3>\uc2e4\ud5d8 \uc815\ubcf4 \uc5c6\uc74c</h3><p>CYC Fig\ub97c \uc120\ud0dd\ud558\uac70\ub098 \ub9e4\ub274\uc5bc \ucc38\uace0 \ud30c\uc77c\uc744 \ubd88\ub7ec\uc624\uba74 C-rate\uc640 \uc804\ub958 \uc815\ubcf4\ub97c \uc5ec\uae30\uc5d0 \uc815\ub9ac\ud569\ub2c8\ub2e4.</p></section>');
   panel.innerHTML = blocks.join("");
 }
 
@@ -3777,10 +3803,10 @@ function renderCellWorkspace(d) {
   if (!title || !path || !tags || !groupList || !segmentList || !figureList || !reportList || !form) return;
 
   if (!d) {
-    title.textContent = "????좏깮?댁＜?몄슂";
-    path.textContent = "Project ??Campaign ??Cell ??Dataset";
+    title.textContent = "\uc140\uc744 \uc120\ud0dd\ud574\uc8fc\uc138\uc694";
+    path.textContent = "Project \u2192 Campaign \u2192 Cell \u2192 Dataset";
     tags.innerHTML = "";
-    groupList.innerHTML = segmentList.innerHTML = figureList.innerHTML = reportList.innerHTML = `<span class="recordEmpty">?좏깮?????湲곕줉???ш린???쒖떆?⑸땲??</span>`;
+    groupList.innerHTML = segmentList.innerHTML = figureList.innerHTML = reportList.innerHTML = `<span class="recordEmpty">\uc120\ud0dd\ud55c \uc140\uc758 \uae30\ub85d\uc774 \uc5ec\uae30\uc5d0 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</span>`;
     form.reset();
     return;
   }
@@ -3789,8 +3815,8 @@ function renderCellWorkspace(d) {
   const metadata = workspace?.metadata?.metadata || {};
   const savedTags = Array.isArray(workspace?.metadata?.tags) ? workspace.metadata.tags : [];
   title.textContent = workspace?.cell?.cellId || d.cell?.cellId || "Cell record";
-  path.textContent = hierarchyLabel(d) || "Project ??Campaign ??Cell ??Dataset";
-  tags.innerHTML = savedTags.map((tag) => `<span>${escapeXml(tag)}</span>`).join("") || `<span class="recordChip">?쒓렇 ?놁쓬</span>`;
+  path.textContent = hierarchyLabel(d) || "Project \u2192 Campaign \u2192 Cell \u2192 Dataset";
+  tags.innerHTML = savedTags.map((tag) => `<span>${escapeXml(tag)}</span>`).join("") || `<span class="recordChip">\ud0dc\uadf8 \uc5c6\uc74c</span>`;
   for (const key of ["cathode", "anode", "separator", "spacer", "cellFormat"]) {
     if (form.elements[key]) form.elements[key].value = metadata[key] || "";
   }
@@ -3798,32 +3824,32 @@ function renderCellWorkspace(d) {
 
   const groups = workspace?.datasetGroups || [];
   groupList.innerHTML = groups.length ? groups.map((group) => {
-    const typeText = Object.entries(group.dataTypes || {}).map(([type, count]) => `${String(type).toUpperCase()} ${count}`).join(" 쨌 ") || "?꾩쭅 ?곗씠???놁쓬";
-    const current = group.id === d.datasetGroupId ? "?꾩옱 ?좏깮" : "?좏깮";
+    const typeText = Object.entries(group.dataTypes || {}).map(([type, count]) => `${String(type).toUpperCase()} ${count}`).join(" \u00b7 ") || "\uc544\uc9c1 \ub370\uc774\ud130 \uc5c6\uc74c";
+    const current = group.id === d.datasetGroupId ? "\ud604\uc7ac \uc120\ud0dd" : "\uc120\ud0dd";
     return `<div class="recordListItem"><span><strong>${escapeXml(group.name)}</strong><br/><em>${escapeXml(typeText)}</em></span><button type="button" data-select-dataset-group="${escapeAttr(group.id)}">${current}</button></div>`;
-  }).join("") : `<span class="recordEmpty">Dataset 臾띠쓬???놁뒿?덈떎.</span>`;
+  }).join("") : `<span class="recordEmpty">Dataset \ubb36\uc74c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</span>`;
 
   const segments = workspace?.protocolSegments || [];
   segmentList.innerHTML = segments.length ? segments.map((segment) => {
-    const rate = Number.isFinite(Number(segment.cRate)) ? `${segment.cRate} C` : "C-rate 미입력";
-    return `<div class="recordListItem"><span><strong>${escapeXml(segment.label)}</strong><br/><em>${segment.startCycle}-${segment.endCycle} cycle 쨌 ${escapeXml(rate)} 쨌 ${escapeXml(segment.mode || "other")}</em></span><button type="button" class="smallDanger" data-delete-segment="${escapeAttr(segment.id)}">??젣</button></div>`;
-  }).join("") : `<span class="recordEmpty">?깅줉???꾨줈?좎퐳 援ш컙???놁뒿?덈떎.</span>`;
+    const rate = Number.isFinite(Number(segment.cRate)) ? `${segment.cRate} C` : "C-rate \ubbf8\uc785\ub825";
+    return `<div class="recordListItem"><span><strong>${escapeXml(segment.label)}</strong><br/><em>${segment.startCycle}-${segment.endCycle} cycle \u00b7 ${escapeXml(rate)} \u00b7 ${escapeXml(segment.mode || "other")}</em></span><button type="button" class="smallDanger" data-delete-segment="${escapeAttr(segment.id)}">\uc0ad\uc81c</button></div>`;
+  }).join("") : `<span class="recordEmpty">\ub4f1\ub85d\ud55c \ud504\ub85c\ud1a0\ucf5c \uad6c\uac04\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</span>`;
 
   const figures = workspace?.figures || [];
-  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">?닿린</button></div>`).join("") : `<span class="recordEmpty">??ν븳 Fig媛 ?놁뒿?덈떎.</span>`;
+  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">\uc5f4\uae30</button></div>`).join("") : `<span class="recordEmpty">\uc800\uc7a5\ud55c Fig\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</span>`;
 
   const reports = workspace?.reports || [];
   reportList.innerHTML = reports.length ? reports.map((report) => {
     const lead = String(report.content?.main || report.content?.sections?.main || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").slice(0, 90);
-    return `<div class="recordListItem"><span><strong>${escapeXml(report.title)}</strong><br/><em>${escapeXml(lead || report.reportType || "report")}</em></span><button type="button" data-open-report-record="${escapeAttr(report.id)}">蹂닿린</button></div>`;
-  }).join("") : `<span class="recordEmpty">??ν븳 AI 蹂닿퀬?쒓? ?놁뒿?덈떎.</span>`;
+    return `<div class="recordListItem"><span><strong>${escapeXml(report.title)}</strong><br/><em>${escapeXml(lead || report.reportType || "report")}</em></span><button type="button" data-open-report-record="${escapeAttr(report.id)}">\ubcf4\uae30</button></div>`;
+  }).join("") : `<span class="recordEmpty">\uc800\uc7a5\ud55c AI \ubcf4\uace0\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</span>`;
 
   for (const button of groupList.querySelectorAll("[data-select-dataset-group]")) {
     button.addEventListener("click", () => {
       const select = $("datasetGroupSelect");
       if (select) select.value = button.dataset.selectDatasetGroup;
       renderHierarchyControls({ ...hierarchySelectionPayload(), datasetGroupId: button.dataset.selectDatasetGroup });
-      setStatus("?좏깮??Dataset 臾띠쓬???ㅼ쓬 ????꾩튂濡??ㅼ젙?덉뒿?덈떎.");
+      setStatus("\uc120\ud0dd\ud55c Dataset \ubb36\uc74c\uc744 \ub2e4\uc74c \uc800\uc7a5 \uc704\uce58\ub85c \uc124\uc815\ud588\uc2b5\ub2c8\ub2e4.");
     });
   }
   for (const button of segmentList.querySelectorAll("[data-delete-segment]")) {
@@ -3847,20 +3873,20 @@ async function loadCellWorkspace(d = currentDataset()) {
   try {
     const res = await fetch(`/api/cells/${encodeURIComponent(d.cellRecordId)}/workspace`, { headers: authHeaders() });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "? 湲곕줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+    if (!res.ok) throw new Error(body.error || "\uc140 \uae30\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
     if (requestId !== state.cellWorkspaceRequestId || currentDataset()?.cellRecordId !== d.cellRecordId) return;
     state.cellWorkspace = body;
     renderCellWorkspace(d);
   } catch (error) {
     if (requestId !== state.cellWorkspaceRequestId) return;
-    setStatus(error.message || "? 湲곕줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+    setStatus(error.message || "\uc140 \uae30\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
 }
 
 async function saveCellMetadata(event) {
   event.preventDefault();
   const d = currentDataset();
-  if (!d?.cellRecordId) return setStatus("癒쇱? ??λ맂 ? ?곗씠?곕? ?좏깮?댁＜?몄슂.");
+  if (!d?.cellRecordId) return setStatus("\uba3c\uc800 \uc800\uc7a5\ub41c \uc140 \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud574\uc8fc\uc138\uc694.");
   const form = event.currentTarget;
   const values = Object.fromEntries(new FormData(form));
   const tags = String(values.tags || "").split(",").map((item) => item.trim()).filter(Boolean);
@@ -3872,19 +3898,19 @@ async function saveCellMetadata(event) {
       body: JSON.stringify({ metadata: values, tags }),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "? 硫뷀??곗씠????μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+    if (!res.ok) throw new Error(body.error || "\uc140 \uba54\ud0c0\ub370\uc774\ud130 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
     state.cellWorkspace = { ...(state.cellWorkspace || {}), cell: state.cellWorkspace?.cell || { id: d.cellRecordId }, metadata: body };
     renderCellWorkspace(d);
-    setStatus("? 硫뷀??곗씠?곗? ?쒓렇瑜???ν뻽?듬땲??");
+    setStatus("\uc140 \uba54\ud0c0\ub370\uc774\ud130\uc640 \ud0dc\uadf8\ub97c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(error.message || "? 硫뷀??곗씠????μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+    setStatus(error.message || "\uc140 \uba54\ud0c0\ub370\uc774\ud130 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   }
 }
 
 async function saveProtocolSegment(event) {
   event.preventDefault();
   const d = currentDataset();
-  if (!d?.cellRecordId) return setStatus("癒쇱? ??λ맂 ? ?곗씠?곕? ?좏깮?댁＜?몄슂.");
+  if (!d?.cellRecordId) return setStatus("\uba3c\uc800 \uc800\uc7a5\ub41c \uc140 \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud574\uc8fc\uc138\uc694.");
   const values = Object.fromEntries(new FormData(event.currentTarget));
   try {
     const res = await fetch(`/api/cells/${encodeURIComponent(d.cellRecordId)}/protocol-segments`, {
@@ -3893,32 +3919,32 @@ async function saveProtocolSegment(event) {
       body: JSON.stringify({ ...values, datasetGroupId: d.datasetGroupId || "" }),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "?꾨줈?좎퐳 援ш컙 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+    if (!res.ok) throw new Error(body.error || "\ud504\ub85c\ud1a0\ucf5c \uad6c\uac04 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
     event.currentTarget.reset();
     await loadCellWorkspace(d);
-    setStatus(`${body.label} 援ш컙????ν뻽?듬땲??`);
+    setStatus(`${body.label} \uad6c\uac04\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.`);
   } catch (error) {
-    setStatus(error.message || "?꾨줈?좎퐳 援ш컙 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+    setStatus(error.message || "\ud504\ub85c\ud1a0\ucf5c \uad6c\uac04 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   }
 }
 
 async function deleteProtocolSegment(segmentId) {
   if (!segmentId) return;
-  if (!window.confirm("???꾨줈?좎퐳 援ш컙????젣?좉퉴??")) return;
+  if (!window.confirm("\uc774 \ud504\ub85c\ud1a0\ucf5c \uad6c\uac04\uc744 \uc0ad\uc81c\ud560\uae4c\uc694?")) return;
   try {
     const res = await fetch(`/api/protocol-segments/${encodeURIComponent(segmentId)}`, { method: "DELETE", headers: authHeaders() });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "?꾨줈?좎퐳 援ш컙 ??젣???ㅽ뙣?덉뒿?덈떎.");
+    if (!res.ok) throw new Error(body.error || "\ud504\ub85c\ud1a0\ucf5c \uad6c\uac04 \uc0ad\uc81c\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
     await loadCellWorkspace();
-    setStatus("?꾨줈?좎퐳 援ш컙????젣?덉뒿?덈떎.");
+    setStatus("\ud504\ub85c\ud1a0\ucf5c \uad6c\uac04\uc744 \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(error.message || "?꾨줈?좎퐳 援ш컙 ??젣???ㅽ뙣?덉뒿?덈떎.");
+    setStatus(error.message || "\ud504\ub85c\ud1a0\ucf5c \uad6c\uac04 \uc0ad\uc81c\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   }
 }
 
 function openCellRecordDataset(datasetId) {
   const target = state.datasets.find((item) => item.id === datasetId);
-  if (!target) return setStatus("?꾩옱 紐⑸줉?먯꽌 Fig ?곗씠?곗뀑??李얠쓣 ???놁뒿?덈떎.");
+  if (!target) return setStatus("\ud604\uc7ac \ubaa9\ub85d\uc5d0\uc11c Fig \ub370\uc774\ud130\uc14b\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.");
   state.selectedId = target.id;
   state.activeFigureModule = target.dataType || state.activeFigureModule;
   renderSelect();
@@ -3931,7 +3957,7 @@ function openCellReport(reportId) {
   const report = state.cellWorkspace?.reports?.find((item) => item.id === reportId);
   if (!report) return;
   const message = Object.values(report.content || {}).map((value) => String(value).replace(/<[^>]*>/g, " ")).join("\n\n").slice(0, 4000);
-  window.alert(`${report.title}\n\n${message || "??λ맂 ?댁슜???놁뒿?덈떎."}`);
+  window.alert(`${report.title}\n\n${message || "\uc800\uc7a5\ub41c \ub0b4\uc6a9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4."}`);
 }
 
 function currentDataset() {
@@ -3946,24 +3972,24 @@ function analysisLabel(name) {
     eis: "EIS summary",
     "pulse-resistance": "Pulse resistance",
     "rate-capability": "Rate capability",
-  }[name] || name || "遺꾩꽍";
+  }[name] || name || "\ubd84\uc11d";
 }
 
 function analysisMetricLabel(key) {
   return {
-    cycle_count: "분석 cycle 수",
-    capacity_field: "용량 기준 필드",
-    capacity_unit: "용량 단위",
-    initial_capacity: "초기 용량",
-    final_capacity: "마지막 용량",
-    initial_capacity_mah: "초기 용량 (mAh)",
-    final_capacity_mah: "마지막 용량 (mAh)",
-    initial_capacity_mah_g: "초기 용량 (mAh g-1)",
-    final_capacity_mah_g: "마지막 용량 (mAh g-1)",
-    final_retention_pct: "용량 유지율 (%)",
-    point_count: "분석 포인트 수",
-    pulse_count: "pulse 수",
-    group_count: "C-rate 그룹 수",
+    cycle_count: "\ubd84\uc11d cycle \uc218",
+    capacity_field: "\uc6a9\ub7c9 \uae30\uc900 \ud544\ub4dc",
+    capacity_unit: "\uc6a9\ub7c9 \ub2e8\uc704",
+    initial_capacity: "\ucd08\uae30 \uc6a9\ub7c9",
+    final_capacity: "\ub9c8\uc9c0\ub9c9 \uc6a9\ub7c9",
+    initial_capacity_mah: "\ucd08\uae30 \uc6a9\ub7c9 (mAh)",
+    final_capacity_mah: "\ub9c8\uc9c0\ub9c9 \uc6a9\ub7c9 (mAh)",
+    initial_capacity_mah_g: "\ucd08\uae30 \uc6a9\ub7c9 (mAh g-1)",
+    final_capacity_mah_g: "\ub9c8\uc9c0\ub9c9 \uc6a9\ub7c9 (mAh g-1)",
+    final_retention_pct: "\uc6a9\ub7c9 \uc720\uc9c0\uc728 (%)",
+    point_count: "\ubd84\uc11d \ud3ec\uc778\ud2b8 \uc218",
+    pulse_count: "pulse \uc218",
+    group_count: "C-rate \uadf8\ub8f9 \uc218",
   }[key] || key.replaceAll("_", " ");
 }
 
@@ -3979,24 +4005,24 @@ function renderAnalysisResult(run) {
   if (!resultNode || !statusNode) return;
   const dataset = currentDataset();
   if (!dataset) {
-    statusNode.innerHTML = "<strong>遺꾩꽍???곗씠?곗뀑??癒쇱? ??ν븯嫄곕굹 ?좏깮?섏꽭??</strong>";
+    statusNode.innerHTML = "<strong>\ubd84\uc11d\ud560 \ub370\uc774\ud130\uc14b\uc744 \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.</strong>";
     resultNode.innerHTML = "";
     return;
   }
   const provenance = run?.provenance || {};
   statusNode.innerHTML = `
     <strong>${escapeXml(datasetDisplayName(dataset))}</strong>
-    <span>${escapeXml((dataset.dataType || "data").toUpperCase())} - ${dataset.parsedArtifact?.objectKey ? "BDF 정규화 데이터 우선" : "기존 데이터"}</span>
-    ${run ? `<span>${escapeXml(analysisLabel(run.analysisName))} - ${escapeXml(run.createdAt || "")}</span>` : "<span>분석 방법을 선택하고 실행해 주세요.</span>"}
-    ${run?.provenance ? `<small>데이터 출처: ${escapeXml(provenance.rowSource || "dataset-rows")} - 품질 제외 행: ${Number(provenance.excludedQualityRowCount || 0)}</small>` : ""}
+    <span>${escapeXml((dataset.dataType || "data").toUpperCase())} - ${dataset.parsedArtifact?.objectKey ? "BDF \uc815\uaddc\ud654 \ub370\uc774\ud130 \uc6b0\uc120" : "\uae30\uc874 \ub370\uc774\ud130"}</span>
+    ${run ? `<span>${escapeXml(analysisLabel(run.analysisName))} - ${escapeXml(run.createdAt || "")}</span>` : "<span>\ubd84\uc11d \ubc29\ubc95\uc744 \uc120\ud0dd\ud558\uace0 \uc2e4\ud589\ud574 \uc8fc\uc138\uc694.</span>"}
+    ${run?.provenance ? `<small>\ub370\uc774\ud130 \ucd9c\ucc98: ${escapeXml(provenance.rowSource || "dataset-rows")} - \ud488\uc9c8 \uc81c\uc678 \ud589: ${Number(provenance.excludedQualityRowCount || 0)}</small>` : ""}
   `;
   if (!run) {
-    resultNode.innerHTML = "<p class=\"analysisEmpty\">?꾩쭅 ?좏깮???곗씠?곗뀑????λ맂 遺꾩꽍 寃곌낵媛 ?놁뒿?덈떎.</p>";
+    resultNode.innerHTML = "<p class=\"analysisEmpty\">\ubd84\uc11d \ubc29\ubc95\uc744 \uc120\ud0dd\ud558\uace0 \uc2e4\ud589\ud558\uba74 \uacb0\uacfc\uac00 \uc5ec\uae30\uc5d0 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</p>";
     return;
   }
   const result = run.result || {};
   if (run.status !== "ok") {
-    resultNode.innerHTML = `<div class="analysisUnavailable"><strong>遺꾩꽍 寃곌낵瑜?留뚮뱾 ???놁뒿?덈떎.</strong><span>${escapeXml(result.reason || "?곗씠???뺤떇怨??꾩슂??而щ읆???뺤씤?섏꽭??")}</span></div>`;
+    resultNode.innerHTML = `<div class="analysisUnavailable"><strong>\ubd84\uc11d \uacb0\uacfc\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.</strong><span>${escapeXml(result.reason || "\ub370\uc774\ud130 \ud615\uc2dd\uacfc \ud544\uc218 \uceec\ub7fc\uc744 \ud655\uc778\ud574 \uc8fc\uc138\uc694.")}</span></div>`;
     return;
   }
   const metrics = Object.entries(result)
@@ -4014,8 +4040,8 @@ function renderAnalysisResult(run) {
   const pulseHtml = Array.isArray(result.pulses) && result.pulses.length
     ? `<div class="analysisDataTable"><h4>Pulse resistance</h4><table><thead><tr><th>time (s)</th><th>delta I (A)</th><th>R (ohm)</th></tr></thead><tbody>${result.pulses.slice(0, 12).map((pulse) => `<tr><td>${escapeXml(formatAnalysisMetric(pulse.time_s))}</td><td>${escapeXml(formatAnalysisMetric(pulse.delta_current_a))}</td><td>${escapeXml(formatAnalysisMetric(pulse.resistance_ohm))}</td></tr>`).join("")}</tbody></table></div>`
     : "";
-  const pointNote = Array.isArray(result.points) ? `<p class="analysisPointNote">怨≪꽑 ?곗텧 ?? ${result.points.length}媛? 寃곌낵 JSON ?꾪떚?⑺듃???꾩껜 ?먯씠 蹂댁〈?⑸땲??</p>` : "";
-  resultNode.innerHTML = `<div class="analysisResultTitle"><span class="analysisState ok">?꾨즺</span><h3>${escapeXml(analysisLabel(run.analysisName))}</h3></div>${metricHtml}${rangeHtml ? `<dl class="analysisMetricGrid">${rangeHtml}</dl>` : ""}${groupHtml}${pulseHtml}${pointNote}`;
+  const pointNote = Array.isArray(result.points) ? `<p class="analysisPointNote">\uace1\uc120 \ucd94\ucd9c\uc5d0 \uc0ac\uc6a9\ud55c ${result.points.length}\uac1c \ud3ec\uc778\ud2b8\ub294 \uacb0\uacfc JSON \uc544\ud2f0\ud329\ud2b8\uc5d0 \ubcf4\uc874\ub429\ub2c8\ub2e4.</p>` : "";
+  resultNode.innerHTML = `<div class="analysisResultTitle"><span class="analysisState ok">\uc644\ub8cc</span><h3>${escapeXml(analysisLabel(run.analysisName))}</h3></div>${metricHtml}${rangeHtml ? `<dl class="analysisMetricGrid">${rangeHtml}</dl>` : ""}${groupHtml}${pulseHtml}${pointNote}`;
 }
 
 function renderAnalysisLab() {
@@ -4026,8 +4052,8 @@ function renderAnalysisLab() {
   const selectedId = state.selectedId || state.datasets[0]?.id || "";
   if (selectedId && selectedId !== state.selectedId) state.selectedId = selectedId;
   select.innerHTML = state.datasets.length
-    ? state.datasets.map((dataset) => `<option value="${escapeAttr(dataset.id)}" ${dataset.id === state.selectedId ? "selected" : ""}>${escapeXml(datasetDisplayName(dataset))} 쨌 ${escapeXml((dataset.dataType || "data").toUpperCase())}</option>`).join("")
-    : "<option value=\"\">??λ맂 ?곗씠?곗뀑???놁뒿?덈떎.</option>";
+    ? state.datasets.map((dataset) => `<option value="${escapeAttr(dataset.id)}" ${dataset.id === state.selectedId ? "selected" : ""}>${escapeXml(datasetDisplayName(dataset))} \u00b7 ${escapeXml((dataset.dataType || "data").toUpperCase())}</option>`).join("")
+    : "<option value=\"\">\uc800\uc7a5\ub41c \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</option>";
   if (state.pendingAnalysisName) {
     typeSelect.value = state.pendingAnalysisName;
     state.pendingAnalysisName = "";
@@ -4041,8 +4067,8 @@ function renderAnalysisLab() {
   const list = $("analysisRunList");
   if (!list) return;
   list.innerHTML = state.analysisRuns.length
-    ? state.analysisRuns.map((run) => `<button type="button" class="analysisRunItem${run.id === state.selectedAnalysisRunId ? " active" : ""}" data-analysis-run-id="${escapeAttr(run.id)}"><strong>${escapeXml(analysisLabel(run.analysisName))}</strong><span>${escapeXml(run.status)} 쨌 ${escapeXml(run.createdAt || "")}</span></button>`).join("")
-    : "<p class=\"analysisEmpty\">???곗씠?곗뀑??遺꾩꽍 ?대젰???놁뒿?덈떎.</p>";
+    ? state.analysisRuns.map((run) => `<button type="button" class="analysisRunItem${run.id === state.selectedAnalysisRunId ? " active" : ""}" data-analysis-run-id="${escapeAttr(run.id)}"><strong>${escapeXml(analysisLabel(run.analysisName))}</strong><span>${escapeXml(run.status)} \u00b7 ${escapeXml(run.createdAt || "")}</span></button>`).join("")
+    : "<p class=\"analysisEmpty\">\uc774 \ub370\uc774\ud130\uc14b\uc758 \ubd84\uc11d \uc774\ub825\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</p>";
   for (const button of list.querySelectorAll("[data-analysis-run-id]")) {
     button.addEventListener("click", () => {
       state.selectedAnalysisRunId = button.dataset.analysisRunId;
@@ -4061,7 +4087,7 @@ async function loadAnalysisRuns() {
   }
   const res = await fetch(`/api/datasets/${encodeURIComponent(dataset.id)}/analyses`, { headers: authHeaders() });
   const body = await res.json().catch(() => []);
-  if (!res.ok) throw new Error(body.detail || body.error || "遺꾩꽍 ?대젰??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
+  if (!res.ok) throw new Error(body.detail || body.error || "\ubd84\uc11d \uc774\ub825\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   state.analysisRuns = Array.isArray(body) ? body : [];
   if (!state.analysisRuns.some((run) => run.id === state.selectedAnalysisRunId)) state.selectedAnalysisRunId = state.analysisRuns[0]?.id || null;
   renderAnalysisLab();
@@ -4070,14 +4096,14 @@ async function loadAnalysisRuns() {
 async function runSelectedDatasetAnalysis() {
   const datasetId = $("analysisLabDatasetSelect")?.value || state.selectedId;
   const analysisName = $("analysisType")?.value || "retention";
-  if (!datasetId) return setStatus("遺꾩꽍???곗씠?곗뀑???놁뒿?덈떎.");
+  if (!datasetId) return setStatus("\ubd84\uc11d\ud560 \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
   state.selectedId = datasetId;
   const parameters = { includeReviewRows: Boolean($("includeReviewRows")?.checked) };
   if (analysisName === "dqdv") parameters.voltageBinV = Number($("dqdvVoltageBin")?.value || 0.005);
   const button = $("runDatasetAnalysis");
   if (button) {
     button.disabled = true;
-    button.textContent = "遺꾩꽍 ?ㅽ뻾 以?..";
+    button.textContent = "\ubd84\uc11d \uc2e4\ud589 \uc911...";
   }
   try {
     const res = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/analyses`, {
@@ -4086,36 +4112,35 @@ async function runSelectedDatasetAnalysis() {
       body: JSON.stringify({ analysisName, parameters }),
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.detail || body.error || "遺꾩꽍 ?ㅽ뻾???ㅽ뙣?덉뒿?덈떎.");
+    if (!res.ok) throw new Error(body.detail || body.error || "\ubd84\uc11d \uc2e4\ud589\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
     state.analysisRuns = [body, ...state.analysisRuns.filter((run) => run.id !== body.id)];
     state.selectedAnalysisRunId = body.id;
     renderAnalysisLab();
-    setStatus(`${analysisLabel(analysisName)} 遺꾩꽍????ν뻽?듬땲??`);
+    setStatus(`${analysisLabel(analysisName)} \ubd84\uc11d\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.`);
   } catch (error) {
-    setStatus(error.message || "遺꾩꽍 ?ㅽ뻾???ㅽ뙣?덉뒿?덈떎.");
+    setStatus(error.message || "\ubd84\uc11d \uc2e4\ud589\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "?좏깮 遺꾩꽍 ?ㅽ뻾";
+      button.textContent = "\uc120\ud0dd \ubd84\uc11d \uc2e4\ud589";
     }
   }
 }
 
 function sampleLabel(d) {
-  if (!d) return "?좏깮 ?놁쓬";
-  const cell = d.cell || {};
-  return cell.cellId || cell.sampleName || cell.material || d.sourceName || d.id || "데이터";
+  if (!d) return "?\uc88f\uae6e ?\ub181\uc4ec";
+  return figureDatasetLabel(d);
 }
 
-// ?レ옄 諛곗뿴?먯꽌 理쒖냼/理쒕? 踰붿쐞瑜?援ы빀?덈떎.
-// CV ?꾩븬 踰붿쐞, EIS 二쇳뙆??踰붿쐞泥섎읆 "?붿빟 臾몄옣????踰붿쐞"瑜?留뚮뱾 ???ъ궗?⑺빀?덈떎.
+// ?\u30ec\uc604 \u8adb\uacd7\ubff4?\uba2f\uaf4c \uf9e4\uc496\ub0fc/\uf9e4\uc495? \u8e30\ubdbf\uc41e\u745c?\u63f4\u044b\ube40?\ub348\ub58e.
+// CV ?\uafa9\ube2c \u8e30\ubdbf\uc41e, EIS \u4e8c\uc1f3\ub646??\u8e30\ubdbf\uc41e\uf9e3\uc10e\uc746 "?\ubdbf\ube5f \u81fe\uba84\uc623\\u003f\\u003f\\u003f?\u8e30\ubdbf\uc41e"\u745c?\uf9cd\ub6ae\ubc7e \\u003f\\u003f\\u003f\u044a\uad97?\u247a\ube40?\ub348\ub58e.
 function rangeOf(nums) {
   const arr = nums.filter(Number.isFinite);
   return arr.length ? [Math.min(...arr), Math.max(...arr)] : [null, null];
 }
 
-// CYC ?곗씠???붿빟???꾩슂???듭떖 吏?쒕? ??踰덉뿉 怨꾩궛?⑸땲??
-// 珥덇린/留덉?留??⑸웾? ?몄씠利덈? 以꾩씠?ㅺ퀬 ??3媛? ??3媛쒖쓽 ?됯퇏???ъ슜?⑸땲??
+// CYC ?\uacd7\uc520\\u003f\\u003f\\u003f\ubdbf\ube5f\\u003f\\u003f\\u003f\uafa9\uc282\\u003f\\u003f\\u003f\ub4ed\ub596 \uf9de\u0080?\uc495? ??\u8e30\ub349\ubfc9 \u6028\uafa9\uad9b?\u2478\ub572??
+// \u73e5\ub347\ub9b0/\uf9cd\ub349?\uf9cd??\u2478\uc6fe?\u0080 ?\uba84\uc520\uf9dd\ub348? \u4ee5\uafa9\uc520?\u317a\ud02c ??3\u5a9b? ??3\u5a9b\uc496\uc4fd ?\ub42f\ud1cf\\u003f\\u003f\\u003f\u044a\uc29c?\u2478\ub572??
 function cycStats(d) {
   const rows = (d?.rows || []).filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
   const capPts = dischargeSeries(rows).sort((a, b) => a.x - b.x);
@@ -4134,8 +4159,8 @@ function cycStats(d) {
   return { rows, capPts, firstCap, lastCap, maxCap, minCap, retention, fromBest, avgEfficiency, cycleMin, cycleMax, segments };
 }
 
-// cycle ?ъ씠?먯꽌 ?⑸웾??湲됯꺽??以꾩뼱??援ш컙??李얠뒿?덈떎.
-// 湲곗?? 2% ?댁긽 媛먯냼 ?먮뒗 5 mAh g-1 ?댁긽 媛먯냼?대ŉ, ??媛먯냼 ?쒖꽌?濡?理쒕? 5媛쒕쭔 蹂댁뿬以띾땲??
+// cycle ?\u044a\uc520?\uba2f\uaf4c ?\u2478\uc6fe??\u6e72\ub42f\uaebd??\u4ee5\uafa9\ubf31??\u63f4\u0448\uced9??\uf9e1\uc5a0\ub4bf?\ub348\ub58e.
+// \u6e72\uacd7??\u0080 2% ?\ub301\uae3d \u5a9b\uba2f\ub0fc ?\uba2e\ub497 5 mAh g-1 ?\ub301\uae3d \u5a9b\uba2f\ub0fc?\ub300\u0149, ??\u5a9b\uba2f\ub0fc ?\uc496\uaf4c?\u0080\u6fe1?\uf9e4\uc495? 5\u5a9b\uc495\ucb54 \u8e42\ub301\ubfec\u4ee5\ub77e\ub572??
 function degradationSegments(stats) {
   const pts = stats.capPts || [];
   if (pts.length < 4) return [];
@@ -4153,27 +4178,27 @@ function degradationSegments(stats) {
   return drops.sort((a, b) => b.lossPct - a.lossPct).slice(0, 5);
 }
 
-// "???곗씠?곗쓽 二쇱슂 寃곌낵 ?붿빟" 移대뱶???ㅼ뼱媛?HTML??留뚮벊?덈떎.
-// ?ㅼ젣 ?몃? AI API瑜??몄텧?섏? ?딄퀬, ?ы깉???덈뒗 ?ㅽ뿕 ?곗씠?곕? 怨꾩궛?댁꽌 ?ㅻ챸??臾몄옣?쇰줈 蹂?섑빀?덈떎.
+// "\\u003f\\u003f\\u003f\uacd7\uc520?\uacd7\uc4fd \u4e8c\uc1f1\uc282 \u5bc3\uaccc\ub0b5 ?\ubdbf\ube5f" \u79fb\ub300\ubc76\\u003f\\u003f\\u003f\u317c\ubf31\u5a9b?HTML??\uf9cd\ub6ae\ubc8a?\ub348\ub58e.
+// ?\u317c\uc823 ?\uba83? AI API\u745c??\uba84\ud167?\uc10f? ?\ub504\ud02c, ?\u044b\uae49\\u003f\\u003f\\u003f\ub348\ub497 ?\u317d\ubfd5 ?\uacd7\uc520?\uacd5? \u6028\uafa9\uad9b?\ub301\uaf4c ?\u317b\ucc78??\u81fe\uba84\uc623?\uc1f0\uc908 \u8e42\u0080?\uc111\ube40?\ub348\ub58e.
 function aiMainSummaryHtml(d) {
-  if (!d) return `<p class="aiEmpty">?붿빟???곗씠?곕? 癒쇱? ?좏깮?섏꽭?? ?쇱そ ?곗씠??紐⑸줉?대굹 寃??寃곌낵?먯꽌 CYC/CV/EIS ?곗씠?곕? ?좏깮?섎㈃ ?ш린???먮룞 ?붿빟???쒖떆?⑸땲??</p>`;
+  if (!d) return `<p class="aiEmpty">\uc694\uc57d\ud560 \ub370\uc774\ud130\ub97c \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694. \uc67c\ucabd \ub370\uc774\ud130 \ubaa9\ub85d\uc774\ub098 \uac80\uc0c9 \uacb0\uacfc\uc5d0\uc11c CYC/CV/EIS \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uba74 \uc5ec\uae30\uc5d0 \uc790\ub3d9 \uc694\uc57d\uc774 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</p>`;
   const type = String(d.dataType || "").toLowerCase();
   if (type === "cyc") {
     const s = cycStats(d);
-    const rateText = s.segments?.length ? s.segments.map((seg) => seg.label).join(" | ") : "?먮룞 援ш컙 ?놁쓬";
-    const quality = s.retention == null ? "?⑸웾 ?좎??⑥쓣 怨꾩궛?섍린?먮뒗 ?곗씠?곌? 遺議깊빀?덈떎." : (s.retention >= 95 ? "?⑸웾 ?좎?媛 留ㅼ슦 ?덉젙?곸엯?덈떎." : s.retention >= 85 ? "以묎컙 ?섏????⑸웾 媛먯냼媛 愿李곕맗?덈떎." : "?쒕졆???깅뒫 ??섍? 愿李곕맗?덈떎.");
+    const rateText = s.segments?.length ? s.segments.map((seg) => seg.label).join(" | ") : "\uc790\ub3d9 \uad6c\uac04 \uc5c6\uc74c";
+    const quality = s.retention == null ? "\uc6a9\ub7c9 \uc720\uc9c0\uc728\uc744 \uacc4\uc0b0\ud558\uae30\uc5d0\ub294 \ub370\uc774\ud130\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4." : (s.retention >= 95 ? "\uc6a9\ub7c9 \uc720\uc9c0\uac00 \ub9e4\uc6b0 \uc548\uc815\uc801\uc785\ub2c8\ub2e4." : s.retention >= 85 ? "\uc911\uac04 \uc218\uc900\uc758 \uc6a9\ub7c9 \uac10\uc18c\uac00 \uad00\ucc30\ub429\ub2c8\ub2e4." : "\ub69c\ub837\ud55c \uc131\ub2a5 \uc800\ud558\uac00 \uad00\ucc30\ub429\ub2c8\ub2e4.");
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle 踰붿쐞??CYC ?곗씠?곗씠硫? ${quality}</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}\ub294 ${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle \ubc94\uc704\uc758 CYC \ub370\uc774\ud130\uc774\uba70, ${quality}</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>珥덇린 ?⑸웾</strong><span>${s.firstCap == null ? "-" : `${fmt(s.firstCap, 5)} mAh g-1`}</span></div>
-        <div class="aiMetric"><strong>留덉?留??⑸웾</strong><span>${s.lastCap == null ? "-" : `${fmt(s.lastCap, 5)} mAh g-1`}</span></div>
-        <div class="aiMetric"><strong>?좎???/strong><span>${s.retention == null ? "-" : `${fmt(s.retention, 4)} %`}</span></div>
-        <div class="aiMetric"><strong>?됯퇏 ?⑥쑉</strong><span>${s.avgEfficiency == null ? "-" : `${fmt(s.avgEfficiency, 5)} %`}</span></div>
+        <div class="aiMetric"><strong>\ucd08\uae30 \uc6a9\ub7c9</strong><span>${s.firstCap == null ? "-" : `${fmt(s.firstCap, 5)} mAh g-1`}</span></div>
+        <div class="aiMetric"><strong>\ub9c8\uc9c0\ub9c9 \uc6a9\ub7c9</strong><span>${s.lastCap == null ? "-" : `${fmt(s.lastCap, 5)} mAh g-1`}</span></div>
+        <div class="aiMetric"><strong>\uc720\uc9c0\uc728</strong><span>${s.retention == null ? "-" : `${fmt(s.retention, 4)} %`}</span></div>
+        <div class="aiMetric"><strong>\ud3c9\uade0 \ud6a8\uc728</strong><span>${s.avgEfficiency == null ? "-" : `${fmt(s.avgEfficiency, 5)} %`}</span></div>
       </div>
       <ul class="aiBulletList">
-        <li>媛???믪? 諛⑹쟾 ?⑸웾? ${Number.isFinite(s.maxCap) ? `${fmt(s.maxCap, 5)} mAh g-1` : "-"} ?섏??낅땲??</li>
-        <li>C-rate 異붿젙 援ш컙? ${escapeXml(rateText)}?낅땲??</li>
-        <li>?꾧레 怨꾩궛媛믪씠 ?곌껐??寃쎌슦 loading caption怨?湲곗? ?꾨쪟 ?ㅻ챸???④퍡 諛섏쁺?⑸땲??</li>
+        <li>\uac00\uc7a5 \ub192\uc740 \ubc29\uc804 \uc6a9\ub7c9\uc740 ${Number.isFinite(s.maxCap) ? `${fmt(s.maxCap, 5)} mAh g-1` : "-"} \uc218\uc900\uc785\ub2c8\ub2e4.</li>
+        <li>C-rate \ucd94\uc815 \uad6c\uac04\uc740 ${escapeXml(rateText)}\uc785\ub2c8\ub2e4.</li>
+        <li>\uc804\uadf9 \uacc4\uc0b0\uac12\uc774 \uc5f0\uacb0\ub41c \uacbd\uc6b0 loading caption\uacfc \uae30\uc900 \uc804\ub958 \uc124\uba85\uc5d0 \ud568\uaed8 \ubc18\uc601\ub429\ub2c8\ub2e4.</li>
       </ul>`;
   }
   if (type === "eis") {
@@ -4181,12 +4206,12 @@ function aiMainSummaryHtml(d) {
     const [fMin, fMax] = rangeOf(rows.map((r) => Number(r.frequency)));
     const [zrMin, zrMax] = rangeOf(rows.map((r) => Number(r.zreal)));
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${rows.length}媛??ъ씤?몄쓽 EIS ?곗씠?곗엯?덈떎. 二쇳뙆?섏? ?꾪뵾?섏뒪 踰붿쐞瑜?以묒떖?쇰줈 Nyquist/Bode ?댁꽍???ъ슜?????덉뒿?덈떎.</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}\ub294 ${rows.length}\uac1c \ud3ec\uc778\ud2b8\uc758 EIS \ub370\uc774\ud130\uc785\ub2c8\ub2e4. \uc8fc\ud30c\uc218\uc640 \uc784\ud53c\ub358\uc2a4 \ubc94\uc704\ub97c \uc911\uc2ec\uc73c\ub85c Nyquist/Bode \ud574\uc11d\uc5d0 \uc0ac\uc6a9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>?ъ씤????/strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>二쇳뙆??踰붿쐞</strong><span>${fMin == null ? "-" : `${fmt(fMin, 3)}-${fmt(fMax, 3)}`}</span></div>
-        <div class="aiMetric"><strong>Z' 踰붿쐞</strong><span>${zrMin == null ? "-" : `${fmt(zrMin, 4)}-${fmt(zrMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>?곗씠?????/strong><span>EIS</span></div>
+        <div class="aiMetric"><strong>\ud3ec\uc778\ud2b8 \uc218</strong><span>${rows.length}</span></div>
+        <div class="aiMetric"><strong>\uc8fc\ud30c\uc218 \ubc94\uc704</strong><span>${fMin == null ? "-" : `${fmt(fMin, 3)}-${fmt(fMax, 3)}`}</span></div>
+        <div class="aiMetric"><strong>Z' \ubc94\uc704</strong><span>${zrMin == null ? "-" : `${fmt(zrMin, 4)}-${fmt(zrMax, 4)}`}</span></div>
+        <div class="aiMetric"><strong>\ub370\uc774\ud130 \ud0c0\uc785</strong><span>EIS</span></div>
       </div>`;
   }
   if (type === "cv") {
@@ -4194,68 +4219,68 @@ function aiMainSummaryHtml(d) {
     const [vMin, vMax] = rangeOf(rows.map((r) => Number(r.voltage)));
     const [iMin, iMax] = rangeOf(rows.map((r) => Number(r.current)));
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${rows.length}媛??ъ씤?몄쓽 CV ?곗씠?곗엯?덈떎. ?꾩븬-?꾨쪟 踰붿쐞? peak 蹂??鍮꾧탳???ъ슜?????덉뒿?덈떎.</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}\ub294 ${rows.length}\uac1c \ud3ec\uc778\ud2b8\uc758 CV \ub370\uc774\ud130\uc785\ub2c8\ub2e4. \uc804\uc555-\uc804\ub958 \ubc94\uc704\uc640 peak \ubcc0\ud654 \ube44\uad50\uc5d0 \uc0ac\uc6a9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>?ъ씤????/strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>?꾩븬 踰붿쐞</strong><span>${vMin == null ? "-" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V`}</span></div>
-        <div class="aiMetric"><strong>?꾨쪟 踰붿쐞</strong><span>${iMin == null ? "-" : `${fmt(iMin, 4)}-${fmt(iMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>?곗씠?????/strong><span>CV</span></div>
+        <div class="aiMetric"><strong>\ud3ec\uc778\ud2b8 \uc218</strong><span>${rows.length}</span></div>
+        <div class="aiMetric"><strong>\uc804\uc555 \ubc94\uc704</strong><span>${vMin == null ? "-" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V`}</span></div>
+        <div class="aiMetric"><strong>\uc804\ub958 \ubc94\uc704</strong><span>${iMin == null ? "-" : `${fmt(iMin, 4)}-${fmt(iMax, 4)}`}</span></div>
+        <div class="aiMetric"><strong>\ub370\uc774\ud130 \ud0c0\uc785</strong><span>CV</span></div>
       </div>`;
   }
-  return `<p class="aiEmpty">${escapeXml(typeDisplay(type))} ?곗씠?곕뒗 ?꾩옱 湲곕낯 ?붿빟留?吏?먰빀?덈떎. CYC ?곗씠?곕? ?좏깮?섎㈃ ?깅뒫 ??섏? 鍮꾧탳 ?ㅻ챸源뚯? ?먮룞 怨꾩궛?⑸땲??</p>`;
+  return `<p class="aiEmpty">${escapeXml(typeDisplay(type))} \ub370\uc774\ud130\ub294 \ud604\uc7ac \uae30\ubcf8 \uc694\uc57d\ub9cc \uc9c0\uc6d0\ud569\ub2c8\ub2e4. CYC \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uba74 \uc131\ub2a5 \uc800\ud558\uc640 \ube44\uad50 \uc124\uba85\uae4c\uc9c0 \uc790\ub3d9 \uacc4\uc0b0\ub429\ub2c8\ub2e4.</p>`;
 }
 
-// "?깅뒫 ???援ш컙 ?쒖떆" 移대뱶?낅땲??
-// CYC媛 ?꾨땶 ?곗씠?곕뒗 ?꾩쭅 ???援ш컙 媛쒕뀗??紐낇솗?섏? ?딆븘 ?덈궡 臾멸뎄留?蹂댁뿬以띾땲??
+// "?\uae45\ub4ab ?\u0080??\u63f4\u0448\uced9 ?\uc496\ub586" \u79fb\ub300\ubc76?\ub085\ub572??
+// CYC\u5a9b\u0080 ?\uafa8\ub576 ?\uacd7\uc520?\uacd5\ub497 ?\uafa9\ucb45 ?\u0080??\u63f4\u0448\uced9 \u5a9b\uc495\ub017??\uf9cf\ub087\uc197?\uc10f? ?\ub506\ube18 ?\ub348\uada1 \u81fe\uba78\ub384\uf9cd?\u8e42\ub301\ubfec\u4ee5\ub77e\ub572??
 function aiDegradationHtml(d) {
-  if (!d) return `<p class="aiEmpty">?곗씠?곕? ?좏깮?섎㈃ ?깅뒫 ???援ш컙??怨꾩궛?⑸땲??</p>`;
-  if (String(d.dataType || "").toLowerCase() !== "cyc") return `<p class="aiEmpty">?깅뒫 ???援ш컙 ?쒖떆??CYC ?곗씠?곗뿉???곗꽑 吏?먮맗?덈떎.</p>`;
+  if (!d) return `<p class="aiEmpty">?\uacd7\uc520?\uacd5? ?\uc88f\uae6e?\uc10e\u3203 ?\uae45\ub4ab ?\u0080??\u63f4\u0448\uced9??\u6028\uafa9\uad9b?\u2478\ub572??</p>`;
+  if (String(d.dataType || "").toLowerCase() !== "cyc") return `<p class="aiEmpty">?\uae45\ub4ab ?\u0080??\u63f4\u0448\uced9 ?\uc496\ub586??CYC ?\uacd7\uc520?\uacd7\ubfc9\\u003f\\u003f\\u003f\uacd7\uaf51 \uf9de\u0080?\uba2e\ub9d7?\ub348\ub58e.</p>`;
   const stats = cycStats(d);
   const drops = degradationSegments(stats);
   if (!drops.length) {
-    return `<p class="aiSummaryLead">2% ?댁긽 湲됯꺽??cycle-to-cycle ?⑸웾 ??섎뒗 ?쒕졆?섍쾶 蹂댁씠吏 ?딆뒿?덈떎.</p>
+    return `<p class="aiSummaryLead">2% ?\ub301\uae3d \u6e72\ub42f\uaebd??cycle-to-cycle ?\u2478\uc6fe ?\u0080?\uc10e\ub497 ?\uc495\uc846?\uc10d\ucfb6 \u8e42\ub301\uc520\uf9de\u0080 ?\ub506\ub4bf?\ub348\ub58e.</p>
       <ul class="aiBulletList">
-        <li>?꾩껜 ?좎??? ${stats.retention == null ? "-" : `${fmt(stats.retention, 4)} %`}</li>
-        <li>理쒓퀬 ?⑸웾 ?鍮?留덉?留??⑸웾: ${stats.fromBest == null ? "-" : `${fmt(stats.fromBest, 4)} %`}</li>
+        <li>?\uafa9\uaedc ?\uc88e\\u003f\\u003f\\u003f ${stats.retention == null ? "-" : `${fmt(stats.retention, 4)} %`}</li>
+        <li>\uf9e4\uc493\ud02c ?\u2478\uc6fe ?\u0080\u936e?\uf9cd\ub349?\uf9cd??\u2478\uc6fe: ${stats.fromBest == null ? "-" : `${fmt(stats.fromBest, 4)} %`}</li>
       </ul>`;
   }
   return `<div class="aiDegradeList">${drops.map((drop) => `
     <div class="aiSegment">
       <strong>Cycle ${escapeXml(drop.start)} -> ${escapeXml(drop.end)}</strong>
-      <span>?⑸웾??${fmt(drop.from, 5)}?먯꽌 ${fmt(drop.to, 5)} mAh g-1濡?媛먯냼?덉뒿?덈떎. 媛먯냼??? ${fmt(drop.loss, 4)} mAh g-1, ??${fmt(drop.lossPct, 4)}%?낅땲??</span>
+      <span>?\u2478\uc6fe??${fmt(drop.from, 5)}?\uba2f\uaf4c ${fmt(drop.to, 5)} mAh g-1\u6fe1?\u5a9b\uba2f\ub0fc?\ub349\ub4bf?\ub348\ub58e. \u5a9b\uba2f\ub0fc\\u003f\\u003f\\u003f ${fmt(drop.loss, 4)} mAh g-1, ??${fmt(drop.lossPct, 4)}%?\ub085\ub572??</span>
     </div>`).join("")}</div>`;
 }
 
-// "鍮꾧탳 寃곌낵 ?ㅻ챸" 移대뱶?낅땲??
-// Fig 紐⑥쓬?먯꽌 泥댄겕??CYC ?곗씠?곕뱾??鍮꾧탳 ??곸쑝濡??ъ슜?⑸땲??
+// "\u936e\uafa7\ud0f3 \u5bc3\uaccc\ub0b5 ?\u317b\ucc78" \u79fb\ub300\ubc76?\ub085\ub572??
+// Fig \uf9cf\u2465\uc4ec?\uba2f\uaf4c \uf9e3\ub304\uac95??CYC ?\uacd7\uc520?\uacd5\ubc7e??\u936e\uafa7\ud0f3 ?\u0080?\uacf8\uc45d\u6fe1??\u044a\uc29c?\u2478\ub572??
 function comparisonSummaryHtml() {
   const selected = state.compareIds
     .map((id) => state.datasets.find((d) => d.id === id))
     .filter((d) => d && d.dataType === "cyc");
   if (selected.length < 2) {
-    return `<p class="aiEmpty">鍮꾧탳 寃곌낵 ?ㅻ챸??蹂대젮硫?Fig 紐⑥쓬?먯꽌 CYC ?곗씠?곕? 2媛??댁긽 泥댄겕???????섏씠吏濡??뚯븘?ㅼ꽭?? ?꾩옱 ?좏깮??鍮꾧탳 ??곸? ${selected.length}媛쒖엯?덈떎.</p>`;
+    return `<p class="aiEmpty">\u936e\uafa7\ud0f3 \u5bc3\uaccc\ub0b5 ?\u317b\ucc78??\u8e42\ub300\uc82e\uf9ce?Fig \uf9cf\u2465\uc4ec?\uba2f\uaf4c CYC ?\uacd7\uc520?\uacd5? 2\u5a9b??\ub301\uae3d \uf9e3\ub304\uac95\\u003f\\u003f\\u003f\\u003f\\u003f\\u003f?\uc10f\uc520\uf9de\u0080\u6fe1??\ub6af\ube18?\u317c\uaf6d?? ?\uafa9\uc631 ?\uc88f\uae6e??\u936e\uafa7\ud0f3 ?\u0080?\uacf8? ${selected.length}\u5a9b\uc496\uc5ef?\ub348\ub58e.</p>`;
   }
   const rows = selected.map((d) => ({ d, stats: cycStats(d) }));
   const ranked = [...rows].sort((a, b) => (b.stats.lastCap || 0) - (a.stats.lastCap || 0));
   const best = ranked[0];
   const stable = [...rows].filter((item) => item.stats.retention != null).sort((a, b) => b.stats.retention - a.stats.retention)[0];
   return `
-    <p class="aiSummaryLead">${selected.length}媛?CYC ?곗씠?곕? 鍮꾧탳?덉뒿?덈떎. 留덉?留??⑸웾 湲곗??쇰줈??${escapeXml(sampleLabel(best.d))}媛 媛???믪뒿?덈떎.</p>
+    <p class="aiSummaryLead">${selected.length}\u5a9b?CYC ?\uacd7\uc520?\uacd5? \u936e\uafa7\ud0f3?\ub349\ub4bf?\ub348\ub58e. \uf9cd\ub349?\uf9cd??\u2478\uc6fe \u6e72\uacd7??\uc1f0\uc908??${escapeXml(sampleLabel(best.d))}\u5a9b\u0080 \u5a9b\u0080\\u003f\\u003f\\u003f\ubbea\ub4bf?\ub348\ub58e.</p>
     <div class="aiCompareList">
       ${ranked.map((item, idx) => `
         <div class="aiCompareItem">
           <strong>${idx + 1}. ${escapeXml(sampleLabel(item.d))}</strong>
-          <span>留덉?留??⑸웾 ${item.stats.lastCap == null ? "-" : `${fmt(item.stats.lastCap, 5)} mAh g-1`} 쨌 ?좎???${item.stats.retention == null ? "-" : `${fmt(item.stats.retention, 4)} %`} 쨌 ${item.stats.cycleMin ?? "-"}-${item.stats.cycleMax ?? "-"} cycle</span>
+          <span>\uf9cd\ub349?\uf9cd??\u2478\uc6fe ${item.stats.lastCap == null ? "-" : `${fmt(item.stats.lastCap, 5)} mAh g-1`} \uca0c ?\uc88e\\u003f\\u003f\\u003f${item.stats.retention == null ? "-" : `${fmt(item.stats.retention, 4)} %`} \uca0c ${item.stats.cycleMin ?? "-"}-${item.stats.cycleMax ?? "-"} cycle</span>
         </div>`).join("")}
     </div>
     <ul class="aiBulletList">
-      <li>?⑸웾 ?좎???湲곗??쇰줈??${stable ? escapeXml(sampleLabel(stable.d)) : "-"}媛 媛???덉젙?곸쑝濡?蹂댁엯?덈떎.</li>
-      <li>?쇰Ц??鍮꾧탳 ?ㅻ챸?먯꽌??留덉?留??⑸웾, ?좎??? cycle 踰붿쐞瑜??④퍡 ?쒖떆?섎뒗 寃껋씠 醫뗭뒿?덈떎.</li>
+      <li>?\u2478\uc6fe ?\uc88e\\u003f\\u003f\\u003f\u6e72\uacd7??\uc1f0\uc908??${stable ? escapeXml(sampleLabel(stable.d)) : "-"}\u5a9b\u0080 \u5a9b\u0080\\u003f\\u003f\\u003f\ub349\uc819?\uacf8\uc45d\u6fe1?\u8e42\ub301\uc5ef?\ub348\ub58e.</li>
+      <li>?\uc1f0\u0426??\u936e\uafa7\ud0f3 ?\u317b\ucc78?\uba2f\uaf4c??\uf9cd\ub349?\uf9cd??\u2478\uc6fe, ?\uc88e\\u003f\\u003f\\u003f cycle \u8e30\ubdbf\uc41e\u745c??\u2463\ud361 ?\uc496\ub586?\uc10e\ub497 \u5bc3\uaecb\uc520 \u91ab\ub5ed\ub4bf?\ub348\ub58e.</li>
     </ul>`;
 }
 
-// AI ?붿빟 ?섏씠吏 ?꾩껜瑜??ㅼ떆 洹몃┰?덈떎.
-// ?곗씠???좏깮, 鍮꾧탳 泥댄겕, ?덈줈怨좎묠 踰꾪듉???뚮┫ ?????⑥닔瑜??몄텧?섎㈃ 理쒖떊 ?곹깭媛 諛섏쁺?⑸땲??
+// AI ?\ubdbf\ube5f ?\uc10f\uc520\uf9de\u0080 ?\uafa9\uaedc\u745c??\u317c\ub586 \u6d39\uba83\u2530?\ub348\ub58e.
+// ?\uacd7\uc520\\u003f\\u003f\\u003f\uc88f\uae6e, \u936e\uafa7\ud0f3 \uf9e3\ub304\uac95, ?\ub348\uc908\u6028\uc88e\ubb20 \u8e30\uafaa\ub4c9\\u003f\\u003f\\u003f\ub6ae\u252b \\u003f\\u003f\\u003f??\u2465\ub2d4\u745c??\uba84\ud167?\uc10e\u3203 \uf9e4\uc496\ub58a ?\uacf9\uae6d\u5a9b\u0080 \u8adb\uc10f\uc07a?\u2478\ub572??
 function aiValue(value, unit = "", digits = 5) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "-";
@@ -4269,8 +4294,8 @@ function aiPercent(value, digits = 4) {
 
 function aiStatusFromCyc(stats) {
   const retention = Number(stats?.retention);
-  if (!Number.isFinite(retention)) return { label: "데이터 부족", tone: "neutral", text: "AI 요약 화면은 현재 비활성화되어 있습니다." };
-  return { label: retention >= 90 ? "안정" : "검토 필요", tone: retention >= 90 ? "good" : "warning", text: "AI 요약 화면은 현재 비활성화되어 있습니다." };
+  if (!Number.isFinite(retention)) return { label: "\ub370\uc774\ud130 \ubd80\uc871", tone: "neutral", text: "AI \uc694\uc57d \ud654\uba74\uc740 \ud604\uc7ac \ube44\ud65c\uc131\ud654\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4." };
+  return { label: retention >= 90 ? "\uc548\uc815" : "\uac80\ud1a0 \ud544\uc694", tone: retention >= 90 ? "good" : "warning", text: "AI \uc694\uc57d \ud654\uba74\uc740 \ud604\uc7ac \ube44\ud65c\uc131\ud654\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4." };
 }
 
 function aiMainSummaryV2Html() { return ""; }
@@ -4290,80 +4315,9 @@ function renderLocalAISummary() {
   if (content) content.innerHTML = "";
 }
 
-function renderTable(d) {
-  const body = $("dataTable");
-  const head = $("excelTableHead");
-  const summary = $("excelSummary");
-  if (!body || !head) return;
-  if (!d || !Array.isArray(d.rows) || !d.rows.length) {
-    head.innerHTML = "";
-    body.innerHTML = `<tr><td>?쒖떆???곗씠?곌? ?놁뒿?덈떎.</td></tr>`;
-    if (summary) summary.textContent = "0 rows";
-    updateExcelUndoButton();
-    return;
-  }
-  const preferred = {
-    cyc: [
-      ["cycle", "Cycle"],
-      ["capacity", "Discharge capacity"],
-      ["chargeCapacity", "Charge capacity"],
-      ["efficiency", "Efficiency"],
-      ["voltage", "Voltage"],
-      ["current", "Current"],
-      ["time", "Time"],
-    ],
-    eis: [
-      ["frequency", "Frequency"],
-      ["zreal", "Z'"],
-      ["zimag", "Z''"],
-      ["mag", "|Z|"],
-      ["phase", "罐"],
-    ],
-    cv: [
-      ["voltage", "Voltage"],
-      ["current", "Current"],
-      ["cycle", "Cycle"],
-    ],
-  };
-  const keys = preferred[d.dataType] || Object.keys(d.rows[0]).map((key) => [key, key]);
-  const columns = [["__index", "#"], ...keys.filter(([key]) => d.rows.some((row) => row[key] !== undefined && row[key] !== null && row[key] !== ""))];
-  head.innerHTML = `<tr>${columns.map(([, label]) => `<th>${escapeXml(label)}</th>`).join("")}</tr>`;
-  body.innerHTML = d.rows.map((r, i) => `<tr>${columns.map(([key]) => {
-    const value = key === "__index" ? i + 1 : r[key];
-    if (key === "__index") return `<td class="rowIndex">${escapeXml(value)}</td>`;
-    return `<td class="editableCell" contenteditable="true" data-row-index="${i}" data-key="${escapeAttr(key)}" title="?대┃?댁꽌 ?섏젙">${typeof value === "number" ? escapeXml(fmt(value, 6)) : escapeXml(value ?? "")}</td>`;
-  }).join("")}</tr>`).join("");
-  if (summary) summary.textContent = `${d.rows.length} rows`;
-  updateExcelUndoButton();
-  bindEditableTable();
-}
+/* Legacy duplicate renderTable renderer removed; the clean authoritative definition below is used. */
 
-function bindEditableTable() {
-  const body = $("dataTable");
-  if (!body) return;
-  for (const cell of body.querySelectorAll(".editableCell")) {
-    cell.addEventListener("focus", () => {
-      cell.dataset.originalValue = cell.textContent || "";
-      cell.classList.add("editing");
-      setStatus("???섏젙 以?..");
-    });
-    cell.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        cell.blur();
-      }
-      if (event.key === "Escape") {
-        event.preventDefault();
-        cell.textContent = cell.dataset.originalValue || "";
-        cell.blur();
-      }
-    });
-    cell.addEventListener("blur", () => {
-      cell.classList.remove("editing");
-      applyTableCellEdit(cell);
-    });
-  }
-}
+/* Legacy duplicate bindEditableTable renderer removed; the clean authoritative definition below is used. */
 
 function coerceTableValue(text, previous) {
   const trimmed = String(text ?? "").trim();
@@ -4394,7 +4348,7 @@ function applyTableCellEdit(cell) {
 
 function scheduleRowsSave(d) {
   clearTimeout(state.tableSaveTimer);
-  setStatus("???섏젙 諛섏쁺 以?..");
+  setStatus("\ud45c \uc218\uc815 \ub0b4\uc6a9\uc744 \uc800\uc7a5 \uc911...");
   state.tableSaveTimer = setTimeout(() => saveRowsEdit(d), 650);
 }
 
@@ -4406,17 +4360,17 @@ async function saveRowsEdit(d) {
       body: JSON.stringify({ rows: d.rows }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "??????ㅽ뙣");
+    if (!res.ok) throw new Error(saved.error || "\ud45c \uc800\uc7a5 \uc2e4\ud328");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("???섏젙??Fig??諛섏쁺?섍퀬 ??λ릱?듬땲??");
+    setStatus("\ud45c \uc218\uc815 \ub0b4\uc6a9\uc774 Fig\uc640 DB\uc5d0 \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(`??????ㅽ뙣: ${error.message}`);
+    setStatus(`\ud45c \uc800\uc7a5 \uc2e4\ud328: ${error.message}`);
   }
 }
 
-// ?섎떒 "?묒? ?곗씠?? ?쒕? ?묒? ?ㅽ봽?덈뱶?쒗듃泥섎읆 ?ㅻ（??湲곕뒫?낅땲??
-// ? 吏곸젒 ?섏젙, Tab/Enter ?대룞, ?щ윭 移?遺숈뿬?ｊ린, ??異붽?/??젣, ?먮룞 ??μ쓣 ??臾띠쓬?먯꽌 泥섎━?⑸땲??
+// ?\uc10e\ub592 "?\ubb12? ?\uacd7\uc520?? ?\uc495? ?\ubb12? ?\u317d\ubd3d?\ub348\ubc76?\uc497\ub4c3\uf9e3\uc10e\uc746 ?\u317b\uff08??\u6e72\uacd5\ub4ab?\ub085\ub572??
+// ?\u0080 \uf9de\uacf8\uc812 ?\uc10f\uc819, Tab/Enter ?\ub300\ub8de, ?\u0449\uc72d \u79fb?\u907a\uc208\ubfec?\uff4a\ub9b0, ??\u7570\ubdbd?/??\uc823, ?\uba2e\ub8de ?\u0080?\u03bc\uc4e3 ??\u81fe\ub760\uc4ec?\uba2f\uaf4c \uf9e3\uc10e\u2501?\u2478\ub572??
 function tableColumnDefs(d) {
   const preferred = {
     cyc: [
@@ -4433,7 +4387,7 @@ function tableColumnDefs(d) {
       ["zreal", "Z'"],
       ["zimag", "Z''"],
       ["mag", "|Z|"],
-      ["phase", "罐"],
+      ["phase", "\u03b8"],
     ],
     cv: [
       ["voltage", "Voltage"],
@@ -4454,13 +4408,13 @@ function tableColumnDefs(d) {
   return columns.length ? columns : base.slice(0, Math.min(base.length, 5));
 }
 
-// ?レ옄??蹂닿린 醫뗪쾶 以꾩씠怨? 臾몄옄?댁? 洹몃?濡?蹂댁뿬二쇰뒗 ???쒖떆???щ㎎?곗엯?덈떎.
+// ?\u30ec\uc604??\u8e42\ub2ff\ub9b0 \u91ab\ub5ea\ucfb6 \u4ee5\uafa9\uc520\u6028? \u81fe\uba84\uc604?\ub301? \u6d39\uba83?\u6fe1?\u8e42\ub301\ubfec\u4e8c\uc1f0\ub497 \\u003f\\u003f\\u003f\uc496\ub586\\u003f\\u003f\\u003f\u0449\u338e?\uacd7\uc5ef?\ub348\ub58e.
 function formatTableValue(value) {
   return typeof value === "number" ? fmt(value, 6) : (value ?? "");
 }
 
-// ?좏깮???곗씠?곗뀑??rows瑜??붾㈃ ?쒕줈 蹂?섑빀?덈떎.
-// contenteditable ???留뚮뱾?댁꽌 ?ъ슜?먭? 諛붾줈 媛믪쓣 怨좎튌 ???덇쾶 ?⑸땲??
+// ?\uc88f\uae6e\\u003f\\u003f\\u003f\uacd7\uc520?\uacd7\ub011??rows\u745c??\ubdbe\u3203 ?\uc495\uc908 \u8e42\u0080?\uc111\ube40?\ub348\ub58e.
+// contenteditable ?\u0080??\uf9cd\ub6ae\ubc7e?\ub301\uaf4c ?\u044a\uc29c?\uba2d? \u8adb\ubdbe\uc908 \u5a9b\ubbea\uc4e3 \u6028\uc88e\ud28c \\u003f\\u003f\\u003f\ub347\ucfb6 ?\u2478\ub572??
 function renderTable(d) {
   const body = $("dataTable");
   const head = $("excelTableHead");
@@ -4469,7 +4423,7 @@ function renderTable(d) {
   state.tableSelection = null;
   if (!d || !Array.isArray(d.rows) || !d.rows.length) {
     head.innerHTML = "";
-    body.innerHTML = `<tr><td class="emptyCell" colspan="99">표시할 데이터가 없습니다. 파일을 분석하거나 저장된 Dataset을 선택하세요.</td></tr>`;
+    body.innerHTML = `<tr><td class="emptyCell" colspan="99">\ud45c\uc2dc\ud560 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</td></tr>`;
     if (summary) summary.textContent = "0 rows";
     updateExcelUndoButton();
     return;
@@ -4478,16 +4432,16 @@ function renderTable(d) {
   head.innerHTML = `<tr>${columns.map(([, label]) => `<th>${escapeXml(label)}</th>`).join("")}</tr>`;
   body.innerHTML = d.rows.map((row, i) => `<tr data-row-index="${i}">${columns.map(([key]) => {
     const value = key === "__index" ? i + 1 : row[key];
-    if (key === "__index") return `<td class="rowIndex" data-row-index="${i}" title="???좏깮">${escapeXml(value)}</td>`;
-    return `<td class="editableCell" contenteditable="true" spellcheck="false" data-row-index="${i}" data-key="${escapeAttr(key)}" title="?대┃?댁꽌 ?섏젙">${escapeXml(formatTableValue(value))}</td>`;
+    if (key === "__index") return `<td class="rowIndex" data-row-index="${i}" title="\ud589 \uc120\ud0dd">${escapeXml(value)}</td>`;
+    return `<td class="editableCell" contenteditable="true" spellcheck="false" data-row-index="${i}" data-key="${escapeAttr(key)}" title="\ud074\ub9ad\ud574\uc11c \uc218\uc815">${escapeXml(formatTableValue(value))}</td>`;
   }).join("")}</tr>`).join("");
-  if (summary) summary.textContent = `${d.rows.length} rows · 편집 가능`;
+  if (summary) summary.textContent = `${d.rows.length} rows \u00b7 editable`;
   updateExcelUndoButton();
   bindEditableTable();
 }
 
-// ???덉쓽 媛?????대┃/?ㅻ낫??遺숈뿬?ｊ린 ?대깽?몃? ?곌껐?⑸땲??
-// ???⑥닔??renderTable???쒕? ?덈줈 洹몃┛ 吏곹썑留덈떎 ?ㅼ떆 ?몄텧?섏뼱???⑸땲??
+// \\u003f\\u003f\\u003f\ub349\uc4fd \u5a9b??\u0080\\u003f\\u003f\\u003f\ub300\u2503/?\u317b\ub0ab??\u907a\uc208\ubfec?\uff4a\ub9b0 ?\ub300\uae7d?\uba83? ?\uaccc\uaed0?\u2478\ub572??
+// \\u003f\\u003f\\u003f\u2465\ub2d4??renderTable\\u003f\\u003f\\u003f\uc495? ?\ub348\uc908 \u6d39\uba83\u251b \uf9de\uacf9\uc351\uf9cd\ub348\ub58e ?\u317c\ub586 ?\uba84\ud167?\uc10f\ubf31\\u003f\\u003f\\u003f\u2478\ub572??
 function bindEditableTable() {
   const body = $("dataTable");
   if (!body) return;
@@ -4499,7 +4453,7 @@ function bindEditableTable() {
       cell.dataset.originalValue = cell.textContent || "";
       cell.classList.add("editing");
       selectTableCell(cell);
-      setStatus("???섏젙 以?..");
+      setStatus("\ud45c \uc218\uc815 \uc911...");
     });
     cell.addEventListener("click", () => selectTableCell(cell));
     cell.addEventListener("paste", (event) => handleTablePaste(event, cell));
@@ -4531,8 +4485,8 @@ function bindEditableTable() {
   }
 }
 
-// ??踰덊샇瑜??꾨Ⅴ硫??대떦 ?됱쓣 ?좏깮?⑸땲??
-// ?좏깮 ????젣 踰꾪듉?????좏깮 ?뺣낫瑜??ъ슜?⑸땲??
+// ??\u8e30\ub34a\uc0c7\u745c??\uafa8\u2164\uf9ce??\ub300\ub5a6 ?\ub431\uc4e3 ?\uc88f\uae6e?\u2478\ub572??
+// ?\uc88f\uae6e \\u003f\\u003f\\u003f?\uc823 \u8e30\uafaa\ub4c9\\u003f\\u003f\\u003f??\uc88f\uae6e ?\ubea3\ub0ab\u745c??\u044a\uc29c?\u2478\ub572??
 function selectTableRow(rowIndex) {
   const body = $("dataTable");
   if (!body || !Number.isInteger(rowIndex)) return;
@@ -4547,8 +4501,8 @@ function selectTableRow(rowIndex) {
   }
 }
 
-// ?ъ슜?먭? ?대┃??????꾩옱 ?좏깮 ?濡??쒖떆?⑸땲??
-// ?뚮? ?뚮몢由ъ? ??媛뺤“?????⑥닔?먯꽌 遺숇뒗 CSS ?대옒?ㅺ? ?대떦?⑸땲??
+// ?\u044a\uc29c?\uba2d? ?\ub300\u2503\\u003f\\u003f\\u003f\u0080\\u003f\\u003f\\u003f\uafa9\uc631 ?\uc88f\uae6e ?\u0080\u6fe1??\uc496\ub586?\u2478\ub572??
+// ?\ub6ae? ?\ub6ae\ubaa2\u7531\u044a? ??\u5a9b\ubea4\u201c\\u003f\\u003f\\u003f??\u2465\ub2d4?\uba2f\uaf4c \u907a\uc207\ub497 CSS ?\ub300\uc612?\u317a? ?\ub300\ub5a6?\u2478\ub572??
 function selectTableCell(cell) {
   const body = $("dataTable");
   if (!body || !cell) return;
@@ -4559,8 +4513,8 @@ function selectTableCell(cell) {
   state.tableSelection = { rowIndex, key: cell.dataset.key };
 }
 
-// Enter???꾨옒 ?? Tab? ???濡??대룞?⑸땲??
-// ?쇰컲 ?묒? 議곗옉 媛먭컖??媛源앷쾶 留뚮뱾湲??꾪븳 蹂댁“ ?⑥닔?낅땲??
+// Enter\\u003f\\u003f\\u003f\uafa8\uc612 ?? Tab?\u0080 \\u003f\\u003f\\u003f\u0080\u6fe1??\ub300\ub8de?\u2478\ub572??
+// ?\uc1f0\ucef2 ?\ubb12? \u8b70\uacd7\uc609 \u5a9b\uba2d\uced6??\u5a9b\u0080\u6e90\uc577\ucfb6 \uf9cd\ub6ae\ubc7e\u6e72??\uafaa\ube33 \u8e42\ub301\u201c ?\u2465\ub2d4?\ub085\ub572??
 function moveTableFocus(cell, rowStep, colStep) {
   const rowIndex = Number(cell.dataset.rowIndex);
   const cells = [...document.querySelectorAll("#dataTable .editableCell")];
@@ -4581,8 +4535,8 @@ function moveTableFocus(cell, rowStep, colStep) {
   }
 }
 
-// ?ъ슜?먭? ?낅젰???띿뒪?몃? ??ν븯湲??꾩뿉 ?レ옄?몄? ?먮떒?⑸땲??
-// "0.123"泥섎읆 ?レ옄濡??댁꽍 媛?ν븳 媛믪? number濡???ν빐??洹몃옒??怨꾩궛??諛붾줈 ?????덉뒿?덈떎.
+// ?\u044a\uc29c?\uba2d? ?\ub085\uc830\\u003f\\u003f\\u003f\ub77f\ub4aa?\uba83? ?\u0080?\u03bd\ube2f\u6e72??\uafa9\ubfc9 ?\u30ec\uc604?\uba84? ?\uba2e\ub592?\u2478\ub572??
+// "0.123"\uf9e3\uc10e\uc746 ?\u30ec\uc604\u6fe1??\ub301\uaf4d \u5a9b\u0080?\u03bd\ube33 \u5a9b\ubbea? number\u6fe1??\u0080?\u03bd\ube50??\u6d39\uba83\uc612??\u6028\uafa9\uad9b??\u8adb\ubdbe\uc908 \\u003f\\u003f\\u003f??\ub349\ub4bf?\ub348\ub58e.
 function coerceTableValue(text, previous) {
   const trimmed = String(text ?? "").trim();
   if (trimmed === "") return "";
@@ -4594,7 +4548,7 @@ function coerceTableValue(text, previous) {
   return trimmed;
 }
 
-// ?쒖쓽 rows媛 諛붾뚮㈃ ?붾㈃ ?곹깭, Fig, ?ㅽ뿕 ?뺣낫, ?먮룞 ????덉빟????踰덉뿉 媛깆떊?⑸땲??
+// ?\uc496\uc4fd rows\u5a9b\u0080 \u8adb\ubdbe\u0080\ub6ae\u3203 ?\ubdbe\u3203 ?\uacf9\uae6d, Fig, ?\u317d\ubfd5 ?\ubea3\ub0ab, ?\uba2e\ub8de ?\u0080\\u003f\\u003f\\u003f\ub349\ube5f\\u003f\\u003f\\u003f?\u8e30\ub349\ubfc9 \u5a9b\uae46\ub58a?\u2478\ub572??
 function cloneTableRows(rows) {
   return JSON.parse(JSON.stringify(Array.isArray(rows) ? rows : []));
 }
@@ -4613,7 +4567,7 @@ function pushTableUndo(d) {
 
 function undoExcelEdit() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("?섎룎由??곗씠?곌? ?놁뒿?덈떎.");
+  if (!d) return setStatus("\ub418\ub3cc\ub9b4 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.");
   let snapshot = null;
   while (state.tableUndoStack.length) {
     const candidate = state.tableUndoStack.pop();
@@ -4623,11 +4577,11 @@ function undoExcelEdit() {
     }
   }
   updateExcelUndoButton();
-  if (!snapshot) return setStatus("?섎룎由??섏젙 ?댁뿭???놁뒿?덈떎.");
+  if (!snapshot) return setStatus("\ub418\ub3cc\ub9b4 \uc218\uc815 \ub0b4\uc5ed\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
   d.rows = cloneTableRows(snapshot.rows);
   updateDatasetRows(d);
   renderTable(d);
-  setStatus("???섏젙???댁쟾 ?곹깭濡??섎룎?몄뒿?덈떎.");
+  setStatus("\ud45c \uc218\uc815\uc744 \uc774\uc804 \uc0c1\ud0dc\ub85c \ub418\ub3cc\ub838\uc2b5\ub2c8\ub2e4.");
 }
 
 function updateDatasetRows(d) {
@@ -4638,8 +4592,8 @@ function updateDatasetRows(d) {
   scheduleRowsSave(d);
 }
 
-// ? ?섎굹瑜??섏젙?????ㅼ젣 ?곗씠?곗뀑 rows??諛섏쁺?⑸땲??
-// ?댄썑 updateDatasetRows媛 Fig 媛깆떊怨??쒕쾭 ??κ퉴吏 ?댁뼱以띾땲??
+// ?\u0080 ?\uc10e\uad79\u745c??\uc10f\uc819\\u003f\\u003f\\u003f??\u317c\uc823 ?\uacd7\uc520?\uacd7\ub011 rows??\u8adb\uc10f\uc07a?\u2478\ub572??
+// ?\ub304\uc351 updateDatasetRows\u5a9b\u0080 Fig \u5a9b\uae46\ub58a\u6028??\uc495\ucfad ?\u0080?\u03ba\ud274\uf9de\u0080 ?\ub301\ubf31\u4ee5\ub77e\ub572??
 function applyTableCellEdit(cell) {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return false;
@@ -4655,8 +4609,8 @@ function applyTableCellEdit(cell) {
   return true;
 }
 
-// ?묒??먯꽌 蹂듭궗???щ윭 移몄쓣 洹몃?濡?遺숈뿬?ｌ쓣 ???덇쾶 ?⑸땲??
-// ??? ?? 以꾨컮轅덉? ?됱쑝濡??댁꽍?댁꽌 ?꾩슂??寃쎌슦 ?됱쓣 ?먮룞?쇰줈 ?섎┰?덈떎.
+// ?\ubb12??\uba2f\uaf4c \u8e42\ub4ed\uad97\\u003f\\u003f\\u003f\u0449\uc72d \u79fb\uba84\uc4e3 \u6d39\uba83?\u6fe1?\u907a\uc208\ubfec?\uff4c\uc4e3 \\u003f\\u003f\\u003f\ub347\ucfb6 ?\u2478\ub572??
+// \\u003f\\u003f\\u003f ?? \u4ee5\uafa8\uceee\u8f45\ub349? ?\ub431\uc45d\u6fe1??\ub301\uaf4d?\ub301\uaf4c ?\uafa9\uc282??\u5bc3\uc38c\uc2a6 ?\ub431\uc4e3 ?\uba2e\ub8de?\uc1f0\uc908 ?\uc10e\u2530?\ub348\ub58e.
 function handleTablePaste(event, cell) {
   const text = event.clipboardData?.getData("text/plain") || "";
   if (!text) return;
@@ -4693,7 +4647,7 @@ function makeEmptyTableRow(d) {
 
 function addExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("癒쇱? ?곗씠?곕? ?좏깮?섏꽭??");
+  if (!d) return setStatus("\uba3c\uc800 \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
   d.rows = Array.isArray(d.rows) ? d.rows : [];
   pushTableUndo(d);
   d.rows.push(makeEmptyTableRow(d));
@@ -4706,26 +4660,26 @@ function addExcelRow() {
 
 function deleteSelectedExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d || !Array.isArray(d.rows) || !d.rows.length) return setStatus("??젣???됱씠 ?놁뒿?덈떎.");
+  if (!d || !Array.isArray(d.rows) || !d.rows.length) return setStatus("\uc0ad\uc81c\ud560 \ud589\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
   const rowIndex = Number(state.tableSelection?.rowIndex);
-  if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= d.rows.length) return setStatus("??젣???됱쓣 癒쇱? ?좏깮?섏꽭??");
+  if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= d.rows.length) return setStatus("\uc0ad\uc81c\ud560 \ud589\uc744 \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.");
   pushTableUndo(d);
   d.rows.splice(rowIndex, 1);
   updateDatasetRows(d);
   renderTable(d);
-  setStatus("?좏깮???됱쓣 ??젣?덉뒿?덈떎.");
+  setStatus("\uc120\ud0dd\ud55c \ud589\uc744 \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
 }
 
 function saveCurrentExcelRows() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("??ν븷 ?곗씠?곌? ?놁뒿?덈떎.");
+  if (!d) return setStatus("\uc800\uc7a5\ud560 \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
   clearTimeout(state.tableSaveTimer);
   return saveRowsEdit(d);
 }
 
 function scheduleRowsSave(d) {
   clearTimeout(state.tableSaveTimer);
-  setStatus("???섏젙 ?댁슜?????以?..");
+  setStatus("\ud45c \uc218\uc815 \ub0b4\uc6a9\uc744 \uc800\uc7a5 \uc911...");
   state.tableSaveTimer = setTimeout(() => saveRowsEdit(d), 650);
 }
 
@@ -4737,12 +4691,12 @@ async function saveRowsEdit(d) {
       body: JSON.stringify({ rows: d.rows }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "??????ㅽ뙣");
+    if (!res.ok) throw new Error(saved.error || "\ud45c \uc800\uc7a5 \uc2e4\ud328");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("???섏젙 ?댁슜??Fig? DB????λ릺?덉뒿?덈떎.");
+    setStatus("\ud45c \uc218\uc815 \ub0b4\uc6a9\uc774 Fig\uc640 DB\uc5d0 \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(`??????ㅽ뙣: ${error.message}`);
+    setStatus(`\ud45c \uc800\uc7a5 \uc2e4\ud328: ${error.message}`);
   }
 }
 
@@ -4759,8 +4713,8 @@ function renderCurrent() {
 
 async function applyCellInfo() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("癒쇱? ?곗씠?곕? ?좏깮?섏꽭??");
-  setBusy(true, "?낅젰???뺣낫瑜??꾩옱 ?곗씠?곗뿉 ?곸슜?섍퀬 ?덉뒿?덈떎.");
+  if (!d) return setStatus("\uba3c\uc800 \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  setBusy(true, "\uc785\ub825\ud55c \uc815\ubcf4\ub97c \ud604\uc7ac \ub370\uc774\ud130\uc5d0 \uc801\uc6a9\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.");
   try {
     const hierarchy = hierarchySelectionPayload();
     delete hierarchy.datasetGroupName;
@@ -4771,7 +4725,7 @@ async function applyCellInfo() {
     });
     const saved = await res.json();
     if (!res.ok) {
-      setStatus(saved.error || "?뺣낫 ????ㅽ뙣");
+      setStatus(saved.error || "\uc815\ubcf4 \uc800\uc7a5 \uc2e4\ud328");
       return;
     }
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
@@ -4781,9 +4735,9 @@ async function applyCellInfo() {
     renderSelect();
     renderSavedList();
     renderCurrent();
-    setStatus("?낅젰 ?뺣낫媛 ?꾩옱 Fig???곸슜?섏뿀?듬땲??");
+    setStatus("\uc785\ub825 \uc815\ubcf4\uac00 \ud604\uc7ac Fig\uc5d0 \uc801\uc6a9\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
-    setStatus(`?뺣낫 ????ㅽ뙣: ${error.message}`);
+    setStatus(`\uc815\ubcf4 \uc800\uc7a5 \uc2e4\ud328: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -4805,7 +4759,7 @@ async function saveDataset(ev) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || "????ㅽ뙣");
+    throw new Error(body.error || "\uc800\uc7a5 \uc2e4\ud328");
   }
   const saved = await res.json();
   state.datasets.unshift(saved);
@@ -4838,7 +4792,7 @@ function exportPng() {
     a.download = "battery-figure.png";
     a.click();
     URL.revokeObjectURL(a.href);
-  }).catch((err) => setStatus(err.message || "PNG 蹂???ㅽ뙣"));
+  }).catch((err) => setStatus(err.message || "PNG \ubcc0\ud658 \uc2e4\ud328"));
 }
 
 function svgToPngBlob(svg) {
@@ -4857,7 +4811,7 @@ function svgToPngBlob(svg) {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
           URL.revokeObjectURL(url);
-          blob ? resolve(blob) : reject(new Error("PNG 蹂???ㅽ뙣"));
+          blob ? resolve(blob) : reject(new Error("PNG \ubcc0\ud658 \uc2e4\ud328"));
         }, "image/png");
       } catch (err) {
         URL.revokeObjectURL(url);
@@ -4866,7 +4820,7 @@ function svgToPngBlob(svg) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Fig ?대?吏瑜?蹂?섑븯吏 紐삵뻽?듬땲??"));
+      reject(new Error("Fig \uc774\ubbf8\uc9c0\ub97c \ubcc0\ud658\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
     };
     img.src = url;
   });
@@ -4891,19 +4845,19 @@ function renderCycComparison() {
   const series = selectedComparisonSeries();
   preview.classList.remove("hidden");
   if (series.length < 2) {
-    preview.innerHTML = `<p class="emptySaved">CYC Fig瑜?2媛??댁긽 ?좏깮?섎㈃ 鍮꾧탳 洹몃옒?꾨? 留뚮뱾 ???덉뒿?덈떎.</p>`;
-    setStatus("CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
+    preview.innerHTML = `<p class="emptySaved">CYC Fig\ub97c 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud558\uba74 \ube44\uad50 \uadf8\ub798\ud504\ub97c \ub9cc\ub4e4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p>`;
+    setStatus("CYC Fig\ub97c 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud558\uc138\uc694.");
     return;
   }
   const colorMap = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   preview.innerHTML = `
     <div class="comparisonTitle">
       <div>
-        <strong>CYC 鍮꾧탳 Fig</strong>
-        <span>${series.length}媛?Fig 鍮꾧탳</span>
+        <strong>CYC \ube44\uad50 Fig</strong>
+        <span>${series.length}\uac1c Fig \ube44\uad50</span>
       </div>
       <div class="comparisonActions">
-        <button type="button" id="saveComparisonFigure">鍮꾧탳 Fig ???/button>
+        <button type="button" id="saveComparisonFigure">\ube44\uad50 Fig \uc800\uc7a5</button>
         <button type="button" id="exportComparisonSvg" class="secondaryAction">SVG</button>
         <button type="button" id="exportComparisonPng" class="secondaryAction">PNG</button>
       </div>
@@ -4926,12 +4880,12 @@ function renderCycComparison() {
   $("saveComparisonFigure")?.addEventListener("click", saveComparisonFigure);
   $("exportComparisonSvg")?.addEventListener("click", exportComparisonSvg);
   $("exportComparisonPng")?.addEventListener("click", exportComparisonPng);
-  setStatus("CYC 鍮꾧탳 Fig瑜?留뚮뱾?덉뒿?덈떎.");
+  setStatus("CYC \ube44\uad50 Fig\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.");
 }
 
 async function saveComparisonFigure() {
   const series = selectedComparisonSeries();
-  if (series.length < 2) return setStatus("??ν븯?ㅻ㈃ CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
+  if (series.length < 2) return setStatus("\uc800\uc7a5\ud558\ub824\uba74 CYC Fig\ub97c 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud558\uc138\uc694.");
   const comparisonColors = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   const payload = {
     dataType: "cyc-comparison",
@@ -4956,31 +4910,31 @@ async function saveComparisonFigure() {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    return setStatus(body.error || "鍮꾧탳 Fig ????ㅽ뙣");
+    return setStatus(body.error || "\ube44\uad50 Fig \uc800\uc7a5 \uc2e4\ud328");
   }
   const saved = await res.json();
   state.datasets.unshift(saved);
   showDatasetImmediately(saved);
   activateView("figure", "cyc");
-  setStatus("鍮꾧탳 C-rate Fig瑜???ν뻽?듬땲??");
+  setStatus("\ube44\uad50 C-rate Fig\ub97c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.");
 }
 
 function exportComparisonSvg() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("癒쇱? 鍮꾧탳 Fig瑜?留뚮뱾?댁＜?몄슂.");
+  if (!svg) return setStatus("\uba3c\uc800 \ube44\uad50 Fig\ub97c \ub9cc\ub4e4\uc5b4\uc8fc\uc138\uc694.");
   download("cyc-comparison.svg", new XMLSerializer().serializeToString(svg), "image/svg+xml");
 }
 
 function exportComparisonPng() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("癒쇱? 鍮꾧탳 Fig瑜?留뚮뱾?댁＜?몄슂.");
+  if (!svg) return setStatus("\uba3c\uc800 \ube44\uad50 Fig\ub97c \ub9cc\ub4e4\uc5b4\uc8fc\uc138\uc694.");
   svgToPngBlob(svg).then((blob) => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "cyc-comparison.png";
     a.click();
     URL.revokeObjectURL(a.href);
-  }).catch((err) => setStatus(err.message || "PNG 蹂???ㅽ뙣"));
+  }).catch((err) => setStatus(err.message || "PNG \ubcc0\ud658 \uc2e4\ud328"));
 }
 
 function renderSavedCycComparison(d) {
@@ -4994,7 +4948,7 @@ function renderSavedCycComparison(d) {
     ["Source", d.sourceName],
   ].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   if (series.length < 1) {
-    $("figureCanvas").innerHTML = `<p class="emptySaved">??λ맂 鍮꾧탳 Fig ?곗씠?곌? ?놁뒿?덈떎.</p>`;
+    $("figureCanvas").innerHTML = `<p class="emptySaved">\uc800\uc7a5\ub41c \ube44\uad50 Fig \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
     return;
   }
   const colorMap = Object.fromEntries(series.map((s) => [s.sourceId, s.color]));
@@ -5063,13 +5017,13 @@ function bytesToBase64(bytes) {
 
 async function exportPpt() {
   const svg = $("paperFigure");
-  if (!svg) return setStatus("癒쇱? Fig瑜??앹꽦?섍굅???좏깮?섏꽭??");
+  if (!svg) return setStatus("\uba3c\uc800 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098 \uc120\ud0dd\ud558\uc138\uc694.");
   let pngBytes;
   try {
     const pngBlob = await svgToPngBlob(svg);
     pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
   } catch (err) {
-    return setStatus(err.message || "PPT 蹂???ㅽ뙣");
+    return setStatus(err.message || "PPT \ubcc0\ud658 \uc2e4\ud328");
   }
   try {
     const res = await fetch("/api/export-ppt", {
@@ -5082,7 +5036,7 @@ async function exportPpt() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || "PPT ?뚯씪??留뚮뱾吏 紐삵뻽?듬땲??");
+      throw new Error(body.error || "PPT \ud30c\uc77c\uc744 \ub9cc\ub4e4\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
     }
     const blob = await res.blob();
     const a = document.createElement("a");
@@ -5090,9 +5044,9 @@ async function exportPpt() {
     a.download = "battery-figure.pptx";
     a.click();
     URL.revokeObjectURL(a.href);
-    return setStatus("PPT ?ㅼ슫濡쒕뱶 ?꾨즺");
+    return setStatus("PPT \ub2e4\uc6b4\ub85c\ub4dc \uc644\ub8cc");
   } catch (err) {
-    return setStatus(err.message || "PPT ?ㅼ슫濡쒕뱶 ?ㅽ뙣");
+    return setStatus(err.message || "PPT \ub2e4\uc6b4\ub85c\ub4dc \uc2e4\ud328");
   }
   const files = [
     { name: "[Content_Types].xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -5176,7 +5130,7 @@ async function exportPpt() {
 </Relationships>` },
     { name: "ppt/theme/theme1.xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Battery Data Portal">
-<a:themeElements><a:clrScheme name="Office"><a:dk1><a:srgbClr val="000000"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1F2937"/></a:dk2><a:lt2><a:srgbClr val="F8FAFC"/></a:lt2><a:accent1><a:srgbClr val="0F766E"/></a:accent1><a:accent2><a:srgbClr val="EC4899"/></a:accent2><a:accent3><a:srgbClr val="64748B"/></a:accent3><a:accent4><a:srgbClr val="A78BFA"/></a:accent4><a:accent5><a:srgbClr val="14B8A6"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="2563EB"/></a:hlink><a:folHlink><a:srgbClr val="7C3AED"/></a:folHlink></a:clrScheme><a:fontScheme name="Office"><a:majorFont><a:latin typeface="Segoe UI"/><a:ea typeface="留묒? 怨좊뵓"/><a:cs typeface="Segoe UI"/></a:majorFont><a:minorFont><a:latin typeface="Segoe UI"/><a:ea typeface="留묒? 怨좊뵓"/><a:cs typeface="Segoe UI"/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements>
+<a:themeElements><a:clrScheme name="Office"><a:dk1><a:srgbClr val="000000"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1F2937"/></a:dk2><a:lt2><a:srgbClr val="F8FAFC"/></a:lt2><a:accent1><a:srgbClr val="0F766E"/></a:accent1><a:accent2><a:srgbClr val="EC4899"/></a:accent2><a:accent3><a:srgbClr val="64748B"/></a:accent3><a:accent4><a:srgbClr val="A78BFA"/></a:accent4><a:accent5><a:srgbClr val="14B8A6"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="2563EB"/></a:hlink><a:folHlink><a:srgbClr val="7C3AED"/></a:folHlink></a:clrScheme><a:fontScheme name="Office"><a:majorFont><a:latin typeface="Segoe UI"/><a:ea typeface="\ub9d1\uc740 \uace0\ub515"/><a:cs typeface="Segoe UI"/></a:majorFont><a:minorFont><a:latin typeface="Segoe UI"/><a:ea typeface="\ub9d1\uc740 \uace0\ub515"/><a:cs typeface="Segoe UI"/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements>
 </a:theme>` },
     { name: "ppt/media/battery-figure.png", bytes: pngBytes },
   ];
@@ -5185,11 +5139,11 @@ async function exportPpt() {
   a.download = "battery-figure.pptx";
   a.click();
   URL.revokeObjectURL(a.href);
-  setStatus("PPT ?ㅼ슫濡쒕뱶 ?꾨즺");
+  setStatus("PPT \ub2e4\uc6b4\ub85c\ub4dc \uc644\ub8cc");
 }
 
 async function deleteCurrent() {
-  if (!state.selectedId || !confirm("?좏깮???곗씠?곕? ??젣?좉퉴??")) return;
+  if (!state.selectedId || !confirm("\uc120\ud0dd\ud55c \ub370\uc774\ud130\ub97c \uc0ad\uc81c\ud560\uae4c\uc694?")) return;
   await fetch(`/api/datasets/${encodeURIComponent(state.selectedId)}`, { method: "DELETE", headers: authHeaders() });
   state.datasets = state.datasets.filter((d) => d.id !== state.selectedId);
   state.selectedId = null;
@@ -5255,9 +5209,9 @@ const electrodePresets = {
 };
 
 const ELECTRODE_PRESET_OPTIONS = [
-  { value: "ncm", label: "?묎레 / NCM" },
-  { value: "lfp", label: "?묎레 / LFP" },
-  { value: "graphite", label: "?뚭레 / Graphite" },
+  { value: "ncm", label: "?\ubb0e\ub808 / NCM" },
+  { value: "lfp", label: "?\ubb0e\ub808 / LFP" },
+  { value: "graphite", label: "?\ub6ad\ub808 / Graphite" },
 ];
 
 function electrodePresetByKey(key) {
@@ -5296,8 +5250,8 @@ function applyElectrodePreset() {
 function updateElectrodeLabels() {
   const p = currentElectrodePreset();
   const labels = {
-    calcCollectorMass: `${p.collector} 臾닿쾶 (g)`,
-    calcCollectorThickness: `${p.collector} ?먭퍡 (mm)`,
+    calcCollectorMass: `${p.collector} \ubb34\uac8c (g)`,
+    calcCollectorThickness: `${p.collector} \ub450\uaed8 (mm)`,
     calcNcmRatio: `${p.active} (%)`,
     calcSuperRatio: `${p.conductor} (%)`,
     calcPtfeRatio: `${p.binder} (%)`,
@@ -5314,7 +5268,7 @@ function fixed(n, d = 6) {
 }
 
 function calcHelp(text) {
-  return `<button class="calcHelpButton" type="button" data-calc-help="${escapeAttr(text)}" aria-label="怨꾩궛 ?ㅻ챸 蹂닿린">?</button>`;
+  return `<button class="calcHelpButton" type="button" data-calc-help="${escapeAttr(text)}" aria-label="\uacc4\uc0b0 \uc124\uba85 \ubcf4\uae30">?</button>`;
 }
 
 function calcHelpLabel(label, text) {
@@ -5362,8 +5316,8 @@ function electrodeInputSnapshot() {
   return Object.fromEntries(ELECTRODE_INPUT_IDS.map((id) => [id, $(id)?.value ?? ""]));
 }
 
-// 釉뚮씪?곗? localStorage?먯꽌 ??λ맂 ?꾧레 C-rate 怨꾩궛媛?紐⑸줉??遺덈윭?듬땲??
-// ?쒕쾭 DB????ν븯湲??꾩쓽 媛쒖씤 ?묒뾽 蹂닿?????븷?낅땲??
+// \u91c9\ub6ae\uc52a?\uacd7? localStorage?\uba2f\uaf4c ?\u0080?\u03bb\ub9c2 ?\uafa7\ub808 C-rate \u6028\uafa9\uad9b\u5a9b?\uf9cf\u2478\uc909??\u907a\ub348\uc72d?\ub4ec\ub572??
+// ?\uc495\ucfad DB\\u003f\\u003f\\u003f\u0080?\u03bd\ube2f\u6e72??\uafa9\uc4fd \u5a9b\uc496\uc524 ?\ubb12\ubfbd \u8e42\ub2ff\\u003f\\u003f\\u003f??\ube37?\ub085\ub572??
 function loadElectrodeProfiles() {
   try {
     const parsed = JSON.parse(localStorage.getItem(ELECTRODE_PROFILE_KEY) || "[]");
@@ -5376,22 +5330,22 @@ function loadElectrodeProfiles() {
   }
 }
 
-// ?꾧레 ??μ냼 紐⑸줉??localStorage????ν븯怨??붾㈃ 紐⑸줉???ㅼ떆 洹몃┰?덈떎.
+// ?\uafa7\ub808 ?\u0080?\u03bc\ub0fc \uf9cf\u2478\uc909??localStorage\\u003f\\u003f\\u003f\u0080?\u03bd\ube2f\u6028??\ubdbe\u3203 \uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u6d39\uba83\u2530?\ub348\ub58e.
 function persistElectrodeProfiles() {
   localStorage.setItem(ELECTRODE_PROFILE_KEY, JSON.stringify(state.electrodeProfiles));
   renderElectrodeProfileStore();
   renderElectrodeCalcSlots();
 }
 
-// ?대쫫??鍮꾩썙?먭퀬 ??ν븷 ???먮룞?쇰줈 遺숇뒗 ?대쫫?낅땲??
-// ?좎쭨, active material, 1C ?꾨쪟媛 ?ㅼ뼱媛硫??섏쨷??李얘린媛 ?쎌뒿?덈떎.
+// ?\ub300\ucaeb??\u936e\uafa9\uc359?\uba2d\ud02c ?\u0080?\u03bd\ube37 \\u003f\\u003f\\u003f\uba2e\ub8de?\uc1f0\uc908 \u907a\uc207\ub497 ?\ub300\ucaeb?\ub085\ub572??
+// ?\uc88e\ucb68, active material, 1C ?\uafa8\uca9f\u5a9b\u0080 ?\u317c\ubf31\u5a9b\u0080\uf9ce??\uc10f\uca37??\uf9e1\uc598\ub9b0\u5a9b\u0080 ?\uc38c\ub4bf?\ub348\ub58e.
 function defaultElectrodeProfileName(c) {
   const date = todayLocal().slice(5);
   return `${date} ${c.preset.active} 1C ${fixed(c.oneC, 3)} mA`;
 }
 
-// ?꾩옱 ?꾧레 怨꾩궛 ?낅젰媛믨낵 怨꾩궛 寃곌낵瑜??섎굹?????媛앹껜濡?臾띠뒿?덈떎.
-// ??媛앹껜媛 ??μ냼 移대뱶媛 ?섍퀬, ?섏쨷??CYC ?곗씠?곗뿉 ?ｌ쓣 payload???먮낯???⑸땲??
+// ?\uafa9\uc631 ?\uafa7\ub808 \u6028\uafa9\uad9b ?\ub085\uc830\u5a9b\ubbe8\ub0b5 \u6028\uafa9\uad9b \u5bc3\uaccc\ub0b5\u745c??\uc10e\uad79\\u003f\\u003f\\u003f\u0080??\u5a9b\uc579\uaedc\u6fe1?\u81fe\ub760\ub4bf?\ub348\ub58e.
+// ??\u5a9b\uc579\uaedc\u5a9b\u0080 ?\u0080?\u03bc\ub0fc \u79fb\ub300\ubc76\u5a9b\u0080 ?\uc10d\ud02c, ?\uc10f\uca37??CYC ?\uacd7\uc520?\uacd7\ubfc9 ?\uff4c\uc4e3 payload\\u003f\\u003f\\u003f\uba2e\ub0af\\u003f\\u003f\\u003f\u2478\ub572??
 function buildElectrodeProfileFromCalc(c, name, inputs, presetKey) {
   return {
     id: `electrode-${Date.now()}`,
@@ -5422,18 +5376,18 @@ function buildElectrodeProfile() {
   return buildElectrodeProfileFromCalc(c, name, inputs, presetKey);
 }
 
-// ?꾩옱 怨꾩궛 寃곌낵瑜???μ냼??異붽??⑸땲??
-// 理쒓렐 ??κ컪???꾩뿉 ?ㅻ룄濡?unshift ?뺥깭濡??ｊ퀬, ?덈Т 而ㅼ?吏 ?딄쾶 40媛쒓퉴吏留??좎??⑸땲??
+// ?\uafa9\uc631 \u6028\uafa9\uad9b \u5bc3\uaccc\ub0b5\u745c??\u0080?\u03bc\ub0fc??\u7570\ubdbd??\u2478\ub572??
+// \uf9e4\uc493\ub810 ?\u0080?\u03ba\uceea\\u003f\\u003f\\u003f\uafa9\ubfc9 ?\u317b\ub8c4\u6fe1?unshift ?\ubea5\uae6d\u6fe1??\uff4a\ud02c, ?\ub348\u0422 \u800c\u317c?\uf9de\u0080 ?\ub504\ucfb6 40\u5a9b\uc493\ud274\uf9de\u0080\uf9cd??\uc88e??\u2478\ub572??
 function saveElectrodeProfile() {
   const profile = buildElectrodeProfile();
   state.electrodeProfiles = [profile, ...state.electrodeProfiles.filter((item) => item.id !== profile.id)].slice(0, 40);
   state.selectedElectrodeProfileId = profile.id;
   persistElectrodeProfiles();
   if ($("electrodeProfileName")) $("electrodeProfileName").value = "";
-  setStatus(`?꾧레 C-rate 怨꾩궛媛믪쓣 ??ν뻽?듬땲?? ${profile.name}`);
+  setStatus(`\uc804\uadf9 C-rate \uacc4\uc0b0\uac12\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4: ${profile.name}`);
 }
 
-// ??μ냼?먯꽌 ?꾩옱 ?좏깮??怨꾩궛 ?꾨줈?꾩쓣 李얠뒿?덈떎.
+// ?\u0080?\u03bc\ub0fc?\uba2f\uaf4c ?\uafa9\uc631 ?\uc88f\uae6e??\u6028\uafa9\uad9b ?\uafa8\uc908?\uafa9\uc4e3 \uf9e1\uc5a0\ub4bf?\ub348\ub58e.
 function normalizedSlotInputs(inputs = {}, presetKey = "ncm") {
   return { ...defaultElectrodeInputs(presetKey), ...inputs, calcElectrodeType: presetKey };
 }
@@ -5441,7 +5395,7 @@ function normalizedSlotInputs(inputs = {}, presetKey = "ncm") {
 function defaultElectrodeSlot(index, presetKey = "ncm") {
   return {
     id: `electrode-slot-${index + 1}`,
-    name: `怨꾩궛湲?${index + 1}`,
+    name: `\uacc4\uc0b0\uae30 ${index + 1}`,
     presetKey,
     inputs: defaultElectrodeInputs(presetKey),
   };
@@ -5451,7 +5405,7 @@ function normalizeElectrodeSlot(slot, index) {
   const presetKey = slot?.presetKey || slot?.inputs?.calcElectrodeType || "ncm";
   return {
     id: slot?.id || `electrode-slot-${index + 1}`,
-    name: slot?.name || `怨꾩궛湲?${index + 1}`,
+    name: slot?.name || `\uacc4\uc0b0\uae30 ${index + 1}`,
     presetKey,
     inputs: normalizedSlotInputs(slot?.inputs || {}, presetKey),
   };
@@ -5482,8 +5436,8 @@ function electrodeSlotCalc(slot) {
 }
 
 function electrodeSlotFieldLabel(field, preset) {
-  if (field.id === "calcCollectorMass") return `${preset.collector} 臾닿쾶 (g)`;
-  if (field.id === "calcCollectorThickness") return `${preset.collector} ?먭퍡 (mm)`;
+  if (field.id === "calcCollectorMass") return `${preset.collector} \ubb34\uac8c (g)`;
+  if (field.id === "calcCollectorThickness") return `${preset.collector} \ub450\uaed8 (mm)`;
   if (field.id === "calcNcmRatio") return `${preset.active} (%)`;
   if (field.id === "calcSuperRatio") return `${preset.conductor} (%)`;
   if (field.id === "calcPtfeRatio") return `${preset.binder} (%)`;
@@ -5495,53 +5449,8 @@ function renderElectrodeCalcSlots() {
   if (!box) return;
   if (!state.electrodeCalcSlots.length) loadElectrodeCalcSlots();
   box.innerHTML = `
-    <div class="calcSlotHeader">
-      <div>
-        <h3>?꾧레 C-rate 怨꾩궛湲?8移?/h3>
-        <p>?섑뵆蹂꾨줈 媛믪쓣 ?곕줈 怨꾩궛?섍퀬, ?꾩슂??怨꾩궛媛믪? 硫붿씤 怨꾩궛湲곕굹 C-rate ??μ냼濡?諛붾줈 蹂대궪 ???덉뒿?덈떎.</p>
-      </div>
-      <span>?꾨옒濡??ㅽ겕濡ㅽ빐??8媛?怨꾩궛湲곕? ?ъ슜?섏꽭??/span>
-    </div>
-    <div class="calcSlotList">
-      ${state.electrodeCalcSlots.map((slot, index) => {
-        const c = electrodeSlotCalc(slot);
-        const preset = c.preset;
-        const options = ELECTRODE_PRESET_OPTIONS.map((option) => `<option value="${escapeAttr(option.value)}"${option.value === slot.presetKey ? " selected" : ""}>${escapeXml(option.label)}</option>`).join("");
-        const fields = ELECTRODE_SLOT_FIELDS.map((field) => `
-          <label>
-            ${escapeXml(electrodeSlotFieldLabel(field, preset))}
-            <input type="number" step="${escapeAttr(field.step)}" value="${escapeAttr(slot.inputs[field.id] ?? "")}" data-slot-field="${escapeAttr(field.id)}" />
-          </label>`).join("");
-        return `
-          <article class="calcSlotCard" data-slot-index="${index}">
-            <div class="calcSlotTop">
-              <label>
-                怨꾩궛 ?대쫫
-                <input type="text" value="${escapeAttr(slot.name)}" data-slot-field="name" />
-              </label>
-              <label>
-                ?꾧레
-                <select data-slot-field="calcElectrodeType">${options}</select>
-              </label>
-            </div>
-            <div class="calcSlotGrid">${fields}</div>
-            <div class="calcSlotSummary">
-              <div><small>1C ?꾨쪟</small><b>${fixed(c.oneC, 4)} mA</b></div>
-              <div><small>${escapeXml(preset.active)} loading</small><b>${fixed(c.ncmLoadingArea, 8)} g cm-2</b></div>
-              <div><small>${escapeXml(preset.collector)} ?쒖쇅 吏덈웾</small><b>${fixed(c.electrodeMass, 6)} g</b></div>
-              <div><small>${escapeXml(preset.collector)} ?쒖쇅 ?먭퍡</small><b>${fixed(c.electrodeThickness, 4)} mm</b></div>
-            </div>
-            <div class="calcSlotRateGrid">
-              ${c.rates.map((rate) => `<span><strong>${rate.rate} C</strong>${fixed(rate.current, 4)} mA</span>`).join("")}
-            </div>
-            <div class="calcSlotActions">
-              <button type="button" data-slot-action="calc">怨꾩궛 ?덈줈怨좎묠</button>
-              <button type="button" data-slot-action="load" class="secondaryAction">硫붿씤??遺덈윭?ㅺ린</button>
-              <button type="button" data-slot-action="save" class="saveAction">??μ냼 ???/button>
-            </div>
-          </article>`;
-      }).join("")}
-    </div>`;
+    <div class="calcSlotHeader"><div><h3>\uc804\uadf9 C-rate \uacc4\uc0b0\uae30 8\uce78</h3><p>\uc0d8\ud50c\ubcc4\ub85c \uacc4\uc0b0\ud55c \uac12\uc744 \ubcf4\uad00\ud558\uace0, \ud544\uc694\ud55c \uac12\uc744 \uba54\uc778 \uacc4\uc0b0\uae30\ub098 C-rate \uc800\uc7a5\uc18c\ub85c \ubd88\ub7ec\uc635\ub2c8\ub2e4.</p></div><span>\uc544\ub798\ub85c \uc2a4\ud06c\ub864\ud558\uba74 8\uac1c \uacc4\uc0b0\uae30\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</span></div>
+    <div class="calcSlotList">${state.electrodeCalcSlots.map((slot, index) => { const calc = electrodeSlotCalc(slot); const preset = calc.preset; const options = ELECTRODE_PRESET_OPTIONS.map((option) => `<option value="${escapeAttr(option.value)}"${option.value === slot.presetKey ? " selected" : ""}>${escapeXml(option.label)}</option>`).join(""); const fields = ELECTRODE_SLOT_FIELDS.map((field) => `<label>${escapeXml(electrodeSlotFieldLabel(field, preset))}<input type="number" step="${escapeAttr(field.step)}" value="${escapeAttr(slot.inputs[field.id] ?? "")}" data-slot-field="${escapeAttr(field.id)}" /></label>`).join(""); return `<article class="calcSlotCard" data-slot-index="${index}"><div class="calcSlotTop"><label>\uacc4\uc0b0 \uc774\ub984<input type="text" value="${escapeAttr(slot.name)}" data-slot-field="name" /></label><label>\uc804\uadf9<select data-slot-field="calcElectrodeType">${options}</select></label></div><div class="calcSlotGrid">${fields}</div><div class="calcSlotSummary"><div><small>1C \uc804\ub958</small><b>${fixed(calc.oneC, 4)} mA</b></div><div><small>${escapeXml(preset.active)} loading</small><b>${fixed(calc.ncmLoadingArea, 8)} g cm-2</b></div><div><small>${escapeXml(preset.collector)} \uc81c\uc678 \uc9c8\ub7c9</small><b>${fixed(calc.electrodeMass, 6)} g</b></div><div><small>${escapeXml(preset.collector)} \uc81c\uc678 \ub450\uaed8</small><b>${fixed(calc.electrodeThickness, 4)} mm</b></div></div><div class="calcSlotRateGrid">${calc.rates.map((rate) => `<span><strong>${rate.rate} C</strong>${fixed(rate.current, 4)} mA</span>`).join("")}</div><div class="calcSlotActions"><button type="button" data-slot-action="calc">\uacc4\uc0b0 \uc0c8\ub85c\uace0\uce68</button><button type="button" data-slot-action="load" class="secondaryAction">\uba54\uc778\uc73c\ub85c \ubd88\ub7ec\uc624\uae30</button><button type="button" data-slot-action="save" class="saveAction">\uc800\uc7a5\uc18c\uc5d0 \uc800\uc7a5</button></div></article>`; }).join("")}</div>`;
 }
 
 function updateElectrodeSlotField(target) {
@@ -5583,21 +5492,21 @@ function applyElectrodeSlotToMain(slot) {
   updateElectrodeLabels();
   renderElectrodeCalc();
   $("electrodeCalcResult")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  setStatus(`${slot.name || "계산기"} 값을 메인 전극 계산기에 불러왔습니다.`);
+  setStatus(`${slot.name || "\uacc4\uc0b0\uae30"} \uac12\uc744 \uba54\uc778 \uc804\uadf9 \uacc4\uc0b0\uae30\uc5d0 \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4.`);
 }
 
 function saveElectrodeSlotProfile(slot) {
   const inputs = normalizedSlotInputs(slot.inputs, slot.presetKey);
   const c = electrodeCalcFromInputs(inputs, slot.presetKey);
   const customName = String(slot.name || "").trim();
-  const genericName = /^계산기\\s*\\d+$/i.test(customName);
-  const name = customName && !genericName ? customName : `${customName || "계산기"} - ${defaultElectrodeProfileName(c)}`;
+  const genericName = /^\uacc4\uc0b0\uae30\\s*\\d+$/i.test(customName);
+  const name = customName && !genericName ? customName : `${customName || "\uacc4\uc0b0\uae30"} - ${defaultElectrodeProfileName(c)}`;
   const profile = buildElectrodeProfileFromCalc(c, name, inputs, slot.presetKey);
   state.electrodeProfiles = [profile, ...state.electrodeProfiles.filter((item) => item.id !== profile.id)].slice(0, 40);
   state.selectedElectrodeProfileId = profile.id;
   persistElectrodeProfiles();
   renderElectrodeCalcSlots();
-  setStatus(`계산기 값을 전극 C-rate 저장소에 저장했습니다. ${profile.name}`);
+  setStatus(`\uacc4\uc0b0\uae30 \uac12\uc744 \uc804\uadf9 C-rate \uc800\uc7a5\uc18c\uc5d0 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4. ${profile.name}`);
 }
 
 function handleElectrodeSlotClick(event) {
@@ -5610,7 +5519,7 @@ function handleElectrodeSlotClick(event) {
   const action = button.dataset.slotAction;
   if (action === "calc") {
     renderElectrodeCalcSlots();
-    return setStatus(`${slot.name || "계산기"} C-rate 계산 결과를 갱신했습니다.`);
+    return setStatus(`${slot.name || "\uacc4\uc0b0\uae30"} C-rate \uacc4\uc0b0 \uacb0\uacfc\ub97c \uac31\uc2e0\ud588\uc2b5\ub2c8\ub2e4.`);
   }
   if (action === "load") return applyElectrodeSlotToMain(slot);
   if (action === "save") return saveElectrodeSlotProfile(slot);
@@ -5625,16 +5534,16 @@ function selectElectrodeProfile(id) {
   renderElectrodeProfileStore();
 }
 
-// ??μ냼 移대뱶??"遺덈윭?ㅺ린" 踰꾪듉???꾨Ⅴ硫??낅젰移몄쓣 ????뱀떆 媛믪쑝濡??섎룎由쎈땲??
+// ?\u0080?\u03bc\ub0fc \u79fb\ub300\ubc76??"\u907a\ub348\uc72d?\u317a\ub9b0" \u8e30\uafaa\ub4c9\\u003f\\u003f\\u003f\uafa8\u2164\uf9ce??\ub085\uc830\u79fb\uba84\uc4e3 ?\u0080\\u003f\\u003f\\u003f\ubc40\ub586 \u5a9b\ubbea\uc45d\u6fe1??\uc10e\ub8ce\u7531\uc388\ub572??
 function applyElectrodeProfileToInputs(id = state.selectedElectrodeProfileId) {
   const profile = selectedElectrodeProfile(id);
-  if (!profile) return setStatus("遺덈윭???꾧레 怨꾩궛媛믪쓣 癒쇱? ?좏깮?섏꽭??");
+  if (!profile) return setStatus("\ubd88\ub7ec\uc62c \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.");
   for (const [inputId, value] of Object.entries(profile.inputs || {})) {
     if ($(inputId)) $(inputId).value = value;
   }
   updateElectrodeLabels();
   renderElectrodeCalc();
-  setStatus(`?꾧레 怨꾩궛媛믪쓣 遺덈윭?붿뒿?덈떎: ${profile.name}`);
+  setStatus(`\uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4: ${profile.name}`);
 }
 
 function deleteElectrodeProfile(id) {
@@ -5643,11 +5552,11 @@ function deleteElectrodeProfile(id) {
     state.selectedElectrodeProfileId = state.electrodeProfiles[0]?.id || null;
   }
   persistElectrodeProfiles();
-  setStatus("??λ맂 ?꾧레 怨꾩궛媛믪쓣 ??젣?덉뒿?덈떎.");
+  setStatus("\uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
 }
 
-// ??μ냼 移대뱶???댁슜??CYC ?곗씠??cell.electrodeCalc???ｊ린 ?꾪븳 ?뺥깭濡??뺣━?⑸땲??
-// ?대젃寃??ｌ뼱?먮㈃ CYC Fig? 遺꾩꽍 ?붾㈃?먯꽌 媛숈? 怨꾩궛媛믪쓣 ?ㅼ떆 ?ъ슜?????덉뒿?덈떎.
+// ?\u0080?\u03bc\ub0fc \u79fb\ub300\ubc76\\u003f\\u003f\\u003f\ub301\uc29c??CYC ?\uacd7\uc520??cell.electrodeCalc\\u003f\\u003f\\u003f\uff4a\ub9b0 ?\uafaa\ube33 ?\ubea5\uae6d\u6fe1??\ubea3\u2501?\u2478\ub572??
+// ?\ub300\uc803\u5bc3??\uff4c\ubf31?\uba2e\u3203 CYC Fig?\u0080 \u907a\uafa9\uaf4d ?\ubdbe\u3203?\uba2f\uaf4c \u5a9b\uc208? \u6028\uafa9\uad9b\u5a9b\ubbea\uc4e3 ?\u317c\ub586 ?\u044a\uc29c\\u003f\\u003f\\u003f??\ub349\ub4bf?\ub348\ub58e.
 function electrodeProfileCellPayload(profile) {
   return {
     profileId: profile.id,
@@ -5669,14 +5578,14 @@ function electrodeProfileCellPayload(profile) {
   };
 }
 
-// ?좏깮??CYC ?곗씠?곗뿉 ??λ맂 ?꾧레 怨꾩궛媛믪쓣 ?곸슜?⑸땲??
-// PATCH API瑜??몄텧?섍린 ?뚮Ц???곸슜 ?꾩뿉??SQLite DB?먮룄 ?④퍡 ??λ맗?덈떎.
+// ?\uc88f\uae6e??CYC ?\uacd7\uc520?\uacd7\ubfc9 ?\u0080?\u03bb\ub9c2 ?\uafa7\ub808 \u6028\uafa9\uad9b\u5a9b\ubbea\uc4e3 ?\uacf8\uc29c?\u2478\ub572??
+// PATCH API\u745c??\uba84\ud167?\uc10d\ub9b0 ?\ub6ae\u0426\\u003f\\u003f\\u003f\uacf8\uc29c ?\uafa9\ubfc9??SQLite DB?\uba2e\ub8c4 ?\u2463\ud361 ?\u0080?\u03bb\ub9d7?\ub348\ub58e.
 async function applyElectrodeProfileToSelectedCyc(id = state.selectedElectrodeProfileId) {
   const profile = selectedElectrodeProfile(id);
-  if (!profile) return setStatus("CYC???ｌ쓣 ?꾧레 怨꾩궛媛믪쓣 癒쇱? ?좏깮?섏꽭??");
+  if (!profile) return setStatus("CYC\uc5d0 \ub123\uc744 \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.");
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("癒쇱? CYC ?곗씠?곕? ?좏깮?섏꽭??");
-  if (d.dataType !== "cyc") return setStatus("?좏깮???곗씠?곌? CYC媛 ?꾨떃?덈떎. CYC ?곗씠?곕? ?좏깮?????곸슜?섏꽭??");
+  if (!d) return setStatus("\uba3c\uc800 CYC \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  if (d.dataType !== "cyc") return setStatus("\uc120\ud0dd\ud55c \ub370\uc774\ud130\uac00 CYC\uac00 \uc544\ub2d9\ub2c8\ub2e4. CYC \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud55c \ub4a4 \uc801\uc6a9\ud558\uc138\uc694.");
   try {
     const nextCell = {
       ...(d.cell || {}),
@@ -5689,20 +5598,20 @@ async function applyElectrodeProfileToSelectedCyc(id = state.selectedElectrodePr
       body: JSON.stringify({ cell: nextCell }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "CYC ?곗씠???곸슜 ?ㅽ뙣");
+    if (!res.ok) throw new Error(saved.error || "CYC \ub370\uc774\ud130 \uc801\uc6a9 \uc2e4\ud328");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
     renderCurrent();
     renderSearchResults();
     renderSavedList();
-    setStatus(`?꾧레 怨꾩궛媛믪쓣 CYC ?곗씠?곗뿉 ?ｌ뿀?듬땲?? ${profile.name}`);
+    setStatus(`\uc804\uadf9 \uacc4\uc0b0\uac12\uc744 CYC \ub370\uc774\ud130\uc5d0 \ub123\uc5c8\uc2b5\ub2c8\ub2e4: ${profile.name}`);
   } catch (error) {
-    setStatus(`CYC ?곸슜 ?ㅽ뙣: ${error.message}`);
+    setStatus(`CYC \uc801\uc6a9 \uc2e4\ud328: ${error.message}`);
   }
 }
 
-// ??μ냼 移대뱶 ?대? 踰꾪듉?ㅼ쓣 ??怨녹뿉??泥섎━?섎뒗 ?대깽???꾩엫 ?⑥닔?낅땲??
-// 移대뱶媛 ?덈줈 洹몃젮?몃룄 遺紐?紐⑸줉 ?섎굹?먮쭔 ?대깽?몃? 嫄몃㈃ 怨꾩냽 ?묐룞?⑸땲??
+// ?\u0080?\u03bc\ub0fc \u79fb\ub300\ubc76 ?\ub300? \u8e30\uafaa\ub4c9?\u317c\uc4e3 ??\u6028\ub179\ubfc9??\uf9e3\uc10e\u2501?\uc10e\ub497 ?\ub300\uae7d\\u003f\\u003f\\u003f\uafa9\uc5eb ?\u2465\ub2d4?\ub085\ub572??
+// \u79fb\ub300\ubc76\u5a9b\u0080 ?\ub348\uc908 \u6d39\uba83\uc82e?\uba83\ub8c4 \u907a\u0080\uf9cf?\uf9cf\u2478\uc909 ?\uc10e\uad79?\uba2e\ucb54 ?\ub300\uae7d?\uba83? \u5ac4\uba83\u3203 \u6028\uafa9\ub0fd ?\ubb10\ub8de?\u2478\ub572??
 function handleElectrodeProfileListClick(event) {
   const button = event.target.closest("button[data-profile-action]");
   if (!button) return;
@@ -5714,16 +5623,16 @@ function handleElectrodeProfileListClick(event) {
   if (action === "delete") return deleteElectrodeProfile(id);
 }
 
-// ?꾧레 C-rate ??μ냼 移대뱶 紐⑸줉???붾㈃??洹몃┰?덈떎.
-// ?좏깮??移대뱶?먮뒗 active ?대옒?ㅻ? 遺숈뿬 ?ъ슜?먭? ?꾩옱 ?좏깮媛믪쓣 ?뚯븘蹂닿린 ?쎄쾶 ?⑸땲??
+// ?\uafa7\ub808 C-rate ?\u0080?\u03bc\ub0fc \u79fb\ub300\ubc76 \uf9cf\u2478\uc909\\u003f\\u003f\\u003f\ubdbe\u3203??\u6d39\uba83\u2530?\ub348\ub58e.
+// ?\uc88f\uae6e??\u79fb\ub300\ubc76?\uba2e\ub497 active ?\ub300\uc612?\u317b? \u907a\uc208\ubfec ?\u044a\uc29c?\uba2d? ?\uafa9\uc631 ?\uc88f\uae6e\u5a9b\ubbea\uc4e3 ?\ub6af\ube18\u8e42\ub2ff\ub9b0 ?\uc384\ucfb6 ?\u2478\ub572??
 function renderElectrodeProfileStore() {
   const list = $("electrodeProfileList");
   const count = $("electrodeProfileCount");
   if (!list) return;
   const profiles = state.electrodeProfiles || [];
-  if (count) count.textContent = `${profiles.length}媛???λ맖`;
+  if (count) count.textContent = `${profiles.length}\uac1c \uc800\uc7a5\ub428`;
   if (!profiles.length) {
-    list.innerHTML = `<p class="emptyProfileList">?꾩쭅 ??λ맂 ?꾧레 C-rate 怨꾩궛媛믪씠 ?놁뒿?덈떎. ??媛믪쓣 怨꾩궛????"?꾩옱 怨꾩궛 ??????꾨Ⅴ?몄슂.</p>`;
+    list.innerHTML = `<p class="emptyProfileList">\uc544\uc9c1 \uc800\uc7a5\ub41c \uc804\uadf9 C-rate \uacc4\uc0b0\uac12\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uc704 \uac12\uc744 \uacc4\uc0b0\ud55c \ub4a4 "\ud604\uc7ac \uacc4\uc0b0 \uc800\uc7a5"\uc744 \ub204\ub974\uc138\uc694.</p>`;
     return;
   }
   list.innerHTML = profiles.map((profile) => {
@@ -5736,16 +5645,16 @@ function renderElectrodeProfileStore() {
           <span>${escapeXml(created)}</span>
         </div>
         <div class="electrodeProfileMeta">
-          <div><small>?꾧레</small><b>${escapeXml(profile.preset?.active || "-")}</b></div>
+          <div><small>\uc804\uadf9</small><b>${escapeXml(profile.preset?.active || "-")}</b></div>
           <div><small>1C</small><b>${fixed(Number(profile.oneC_mA), 4)} mA</b></div>
           <div><small>loading</small><b>${fixed(Number(profile.activeLoading_g_cm2), 8)} g cm-2</b></div>
-          <div><small>吏덈웾</small><b>${fixed(Number(profile.electrodeMass_g), 6)} g</b></div>
+          <div><small>\uc9c8\ub7c9</small><b>${fixed(Number(profile.electrodeMass_g), 6)} g</b></div>
         </div>
         <div class="electrodeProfileButtons">
-          <button type="button" data-profile-action="select" data-profile-id="${escapeAttr(profile.id)}">?좏깮</button>
-          <button type="button" data-profile-action="load" data-profile-id="${escapeAttr(profile.id)}">遺덈윭?ㅺ린</button>
-          <button type="button" data-profile-action="apply" data-profile-id="${escapeAttr(profile.id)}" class="saveAction">CYC???ｊ린</button>
-          <button type="button" data-profile-action="delete" data-profile-id="${escapeAttr(profile.id)}" class="secondaryAction">??젣</button>
+          <button type="button" data-profile-action="select" data-profile-id="${escapeAttr(profile.id)}">\uc120\ud0dd</button>
+          <button type="button" data-profile-action="load" data-profile-id="${escapeAttr(profile.id)}">\ubd88\ub7ec\uc624\uae30</button>
+          <button type="button" data-profile-action="apply" data-profile-id="${escapeAttr(profile.id)}" class="saveAction">CYC\uc5d0 \ub123\uae30</button>
+          <button type="button" data-profile-action="delete" data-profile-id="${escapeAttr(profile.id)}" class="secondaryAction">\uc0ad\uc81c</button>
         </div>
       </article>`;
   }).join("");
@@ -5754,94 +5663,31 @@ function renderElectrodeProfileStore() {
 function renderElectrodeCalc() {
   const box = $("electrodeCalcResult");
   if (!box) return;
-  const c = electrodeCalcData();
-  const activeName = c.preset.active;
-  const collectorName = c.preset.collector;
-  const conductorName = c.preset.conductor;
-  const binderName = c.preset.binder;
+  const calc = electrodeCalcData();
+  const active = calc.preset.active;
+  const collector = calc.preset.collector;
+  const conductor = calc.preset.conductor;
+  const binder = calc.preset.binder;
   box.innerHTML = `
     <div class="calcCards">
-      <div class="calcCard"><strong>1C ?꾨쪟 ${calcHelp(`1C ?꾨쪟 = ${activeName} 吏덈웾 횞 ?대줎?⑸웾?낅땲?? 吏湲덉? ${fixed(c.ncmMass, 9)} g 횞 ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA濡?怨꾩궛?덉뒿?덈떎.`)}</strong><span>${fixed(c.oneC, 4)} mA</span></div>
-      <div class="calcCard"><strong>${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 ${calcHelp(`${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 = ?꾧레 ?꾩껜 臾닿쾶 - ${collectorName} 臾닿쾶?낅땲?? ${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g?낅땲??`)}</strong><span>${fixed(c.electrodeMass, 6)} g</span></div>
-      <div class="calcCard"><strong>${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 ${calcHelp(`${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 = ?꾧레 ?꾩껜 ?먭퍡 - ${collectorName} ?먭퍡?낅땲?? ${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm?낅땲??`)}</strong><span>${fixed(c.electrodeThickness, 4)} mm</span></div>
-      <div class="calcCard"><strong>${activeName} loading ${calcHelp(`${activeName} loading = ${activeName} 吏덈웾 / ?꾧레 硫댁쟻?낅땲?? ?꾧레 硫댁쟻? 吏由?${fixed(c.diameter, 4)} mm 湲곗? ? 횞 (吏由?20)^2 = ${fixed(c.area, 6)} cm2?닿퀬, ${fixed(c.ncmMass, 9)} g / ${fixed(c.area, 6)} cm2 = ${fixed(c.ncmLoadingArea, 8)} g cm-2?낅땲??`)}</strong><span>${fixed(c.ncmLoadingArea, 8)} g cm-2</span></div>
+      <div class="calcCard"><strong>1C \uc804\ub958 ${calcHelp(`1C \uc804\ub958 = ${active} \uc9c8\ub7c9 \u00d7 \uc774\ub860 \uc6a9\ub7c9\uc785\ub2c8\ub2e4. ${fixed(calc.ncmMass, 9)} g \u00d7 ${fixed(calc.capacity, 4)} mAh g-1 = ${fixed(calc.oneC, 4)} mA`)}</strong><span>${fixed(calc.oneC, 4)} mA</span></div>
+      <div class="calcCard"><strong>${collector} \uc81c\uc678 \uc804\uadf9 \ubb34\uac8c ${calcHelp(`${collector} \uc81c\uc678 \uc804\uadf9 \ubb34\uac8c = \uc804\uadf9 \uc804\uccb4 \ubb34\uac8c - ${collector} \ubb34\uac8c`)}</strong><span>${fixed(calc.electrodeMass, 6)} g</span></div>
+      <div class="calcCard"><strong>${collector} \uc81c\uc678 \uc804\uadf9 \ub450\uaed8 ${calcHelp(`${collector} \uc81c\uc678 \uc804\uadf9 \ub450\uaed8 = \uc804\uadf9 \uc804\uccb4 \ub450\uaed8 - ${collector} \ub450\uaed8`)}</strong><span>${fixed(calc.electrodeThickness, 4)} mm</span></div>
+      <div class="calcCard"><strong>${active} loading ${calcHelp(`${active} loading = ${active} \uc9c8\ub7c9 / \uc804\uadf9 \uba74\uc801`)}</strong><span>${fixed(calc.ncmLoadingArea, 8)} g cm-2</span></div>
     </div>
-    <section class="calcFormulaBox">
-      <div>
-        <strong>臾닿쾶 怨꾩궛</strong>
-        <span>${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g</span>
-      </div>
-      <div>
-        <strong>?먭퍡 怨꾩궛</strong>
-        <span>${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm</span>
-      </div>
-    </section>
-    <section class="rateCurrentBox">
-      <div class="rateCurrentHeader">
-        <h3>C-rate蹂??꾨쪟 ${calcHelp(`媛?C-rate ?꾨쪟 = 1C ?꾨쪟 횞 C-rate?낅땲?? ?덈? ?ㅼ뼱 0.33C??${fixed(c.oneC, 4)} mA 횞 0.33 = ${fixed(c.oneC * 0.33, 4)} mA?낅땲??`)}</h3>
-        <span>1C = ${fixed(c.oneC, 4)} mA 湲곗?</span>
-      </div>
-      <div class="rateCurrentGrid">
-        ${c.rates.map((r) => `
-          <div class="rateCurrentItem">
-            <strong>${r.rate} C</strong>
-            <span>${fixed(r.current, 4)} mA</span>
-          </div>`).join("")}
-      </div>
-    </section>
-    <div class="calcTableWrap">
-      <table class="calcTable">
-        <thead>
-          <tr>
-            <th colspan="2">濡쒕뵫 ${calcHelp(`濡쒕뵫 怨꾩궛???꾩슂??湲곗?媛믪엯?덈떎. C-Al? 吏묒쟾泥?臾닿쾶, 1C??NCM 吏덈웾怨??대줎?⑸웾?쇰줈 怨꾩궛??湲곗? ?꾨쪟?낅땲??`)}</th>
-            <th colspan="3">?꾧레 ?낅젰媛?${calcHelp(`?꾧레 ?꾩껜 ?낅젰媛믪뿉??C-coated Al 媛믪쓣 鍮쇨퀬, ?꾧레 吏由꾩쑝濡?硫댁쟻??怨꾩궛?⑸땲??`)}</th>
-            <th colspan="3" class="sectionBlue">loading amount ${calcHelp(`媛??깅텇 吏덈웾 = Al ?쒖쇅 ?꾧레 臾닿쾶 횞 議곗꽦鍮꾩엯?덈떎. NCM? ${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ncmRatio * 100, 2)}% = ${fixed(c.ncmMass, 9)} g?낅땲??`)}</th>
-            <th colspan="2" class="sectionGreen">諛??怨꾩궛 ${calcHelp(`?꾩껜 諛??= Al ?쒖쇅 ?꾧레 臾닿쾶 / ?꾧레 遺?쇱엯?덈떎. ?꾧레 遺??= 硫댁쟻 횞 ?먭퍡(cm) = ${fixed(c.area, 6)} 횞 ${fixed(c.electrodeThickness / 10, 6)} = ${fixed(c.volume, 8)} cm3?낅땲??`)}</th>
-          </tr>
-          <tr>
-            <th>${calcHelpLabel(collectorName, `${collectorName} 吏묒쟾泥댁쓽 臾닿쾶?낅땲?? ?꾧레 ?꾩껜 臾닿쾶?먯꽌 ??媛믪쓣 鍮쇱꽌 ?쒕Ъ吏덉링 臾닿쾶瑜?援ы빀?덈떎.`)}</th>
-            <th class="rateHead">${calcHelpLabel("1C", `1C ?꾨쪟??${activeName} 吏덈웾 횞 ?대줎?⑸웾?쇰줈 怨꾩궛??湲곗? ?꾨쪟?낅땲??`)}</th>
-            <th>${calcHelpLabel(`${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 (g)`, `?꾧레 ?꾩껜 臾닿쾶?먯꽌 ${collectorName} 臾닿쾶瑜?類 媛믪엯?덈떎.`)}</th>
-            <th>${calcHelpLabel(`${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 (mm)`, `?꾧레 ?꾩껜 ?먭퍡?먯꽌 ${collectorName} ?먭퍡瑜?類 媛믪엯?덈떎.`)}</th>
-            <th>${calcHelpLabel("Area (cm2)", "?꾧레 吏由꾩쑝濡?怨꾩궛???먰삎 ?꾧레 硫댁쟻?낅땲?? ? 횞 (吏由?20)^2 ?낅땲??")}</th>
-            <th>${calcHelpLabel(activeName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${activeName} 議곗꽦鍮꾨? 怨깊븳 吏덈웾?낅땲??`)}</th>
-            <th>${calcHelpLabel(conductorName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${conductorName} 議곗꽦鍮꾨? 怨깊븳 ?꾩쟾??吏덈웾?낅땲??`)}</th>
-            <th>${calcHelpLabel(binderName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${binderName} 議곗꽦鍮꾨? 怨깊븳 諛붿씤??吏덈웾?낅땲??`)}</th>
-            <th>${calcHelpLabel("전체 밀도", "Al 제외 전극 무게를 전극 부피로 나눈 값입니다.")}</th>
-            <th>${calcHelpLabel(`${activeName} density`, `${activeName} 吏덈웾???꾧레 遺?쇰줈 ?섎늿 媛믪엯?덈떎.`)}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 臾닿쾶 ?낅젰媛믪엯?덈떎.`)}</td>
-            <td class="rateHead">${fixed(c.oneC, 4)} ${calcHelp(`${fixed(c.ncmMass, 9)} g 횞 ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA`)}</td>
-            <td>${fixed(c.electrodeMass, 6)} ${calcHelp(`${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g`)}</td>
-            <td>${fixed(c.electrodeThickness, 4)} ${calcHelp(`${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm`)}</td>
-            <td>${fixed(c.area, 6)} ${calcHelp(`吏由?${fixed(c.diameter, 4)} mm 湲곗? 硫댁쟻?낅땲??`)}</td>
-            <td>${fixed(c.ncmMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ncmRatio * 100, 2)}%`)}</td>
-            <td>${fixed(c.superMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.superRatio * 100, 2)}%`)}</td>
-            <td>${fixed(c.ptfeMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ptfeRatio * 100, 2)}%`)}</td>
-            <td>${fixed(c.totalDensity, 8)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g / ${fixed(c.volume, 8)} cm3`)}</td>
-            <td>${fixed(c.ncmLoadingVolume, 8)} ${calcHelp(`${fixed(c.ncmMass, 9)} g / ${fixed(c.volume, 8)} cm3`)}</td>
-          </tr>
-          <tr>
-            <th>${calcHelpLabel(collectorName, `${collectorName} 吏묒쟾泥??먭퍡?낅땲??`)}</th>
-            <th>${calcHelpLabel(`${collectorName} 臾닿쾶`, `${collectorName} 吏묒쟾泥?臾닿쾶?낅땲??`)}</th>
-            <th>${calcHelpLabel("loading (g cm-2)", "Al ?쒖쇅 ?꾧레 臾닿쾶瑜??꾧레 硫댁쟻?쇰줈 ?섎늿 媛믪엯?덈떎.")}</th>
-            ${c.rates.map((r) => `<th>${calcHelpLabel(`${r.rate} C ?꾨쪟`, `1C ?꾨쪟 ${fixed(c.oneC, 4)} mA 횞 ${r.rate} = ${fixed(r.current, 4)} mA?낅땲??`)}</th>`).join("")}
-            <th colspan="2">${calcHelpLabel(`${activeName} loading (g cm-2)`, `${activeName} 吏덈웾???꾧레 硫댁쟻?쇰줈 ?섎늿 媛믪엯?덈떎.`)}</th>
-          </tr>
-          <tr>
-            <td>${fixed(c.collectorThickness, 4)} ${calcHelp(`C-coated Al ?먭퍡 ?낅젰媛믪엯?덈떎.`)}</td>
-            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 臾닿쾶 ?낅젰媛믪엯?덈떎.`)}</td>
-            <td>${fixed(c.loading, 8)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g / ${fixed(c.area, 6)} cm2`)}</td>
-            ${c.rates.map((r) => `<td>${fixed(r.current, 4)} ${calcHelp(`${fixed(c.oneC, 4)} mA 횞 ${r.rate}`)}</td>`).join("")}
-            <td colspan="2">${fixed(c.ncmLoadingArea, 8)} ${calcHelp(`${fixed(c.ncmMass, 9)} g / ${fixed(c.area, 6)} cm2`)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="copyNote">Al ?쒖쇅 ?꾧레 臾닿쾶/?먭퍡???낅젰???꾧레 ?꾩껜媛믪뿉??C-coated Al 媛믪쓣 類 媛믪엯?덈떎. ?꾧레 吏由?湲곗? 硫댁쟻???ъ슜?섎?濡?吏由꾩쓣 諛붽씀硫?loading怨?諛?꾧? 媛숈씠 諛붾앸땲??</p>`;
+    <section class="calcFormulaBox"><div><strong>\ubb34\uac8c \uacc4\uc0b0</strong><span>${fixed(calc.totalMass, 6)} g - ${fixed(calc.collectorMass, 6)} g = ${fixed(calc.electrodeMass, 6)} g</span></div><div><strong>\ub450\uaed8 \uacc4\uc0b0</strong><span>${fixed(calc.totalThickness, 4)} mm - ${fixed(calc.collectorThickness, 4)} mm = ${fixed(calc.electrodeThickness, 4)} mm</span></div></section>
+    <section class="rateCurrentBox"><div class="rateCurrentHeader"><h3>C-rate\ubcc4 \uc804\ub958 ${calcHelp(`\uac01 C-rate \uc804\ub958 = 1C \uc804\ub958 \u00d7 C-rate\uc785\ub2c8\ub2e4.`)}</h3><span>1C = ${fixed(calc.oneC, 4)} mA \uae30\uc900</span></div><div class="rateCurrentGrid">${calc.rates.map((rate) => `<div class="rateCurrentItem"><strong>${rate.rate} C</strong><span>${fixed(rate.current, 4)} mA</span></div>`).join("")}</div></section>
+    <div class="calcTableWrap"><table class="calcTable"><thead><tr><th>\ud56d\ubaa9</th><th>\uacc4\uc0b0 \uac12</th><th>\uc124\uba85</th></tr></thead><tbody>
+      <tr><td>${escapeXml(collector)} \ubb34\uac8c</td><td>${fixed(calc.collectorMass, 6)} g</td><td>\uc785\ub825\ud55c \uc9d1\uc804\uccb4 \ubb34\uac8c</td></tr>
+      <tr><td>\uc804\uadf9 \uc9c8\ub7c9</td><td>${fixed(calc.electrodeMass, 6)} g</td><td>\uc804\uccb4 \ubb34\uac8c\uc5d0\uc11c \uc9d1\uc804\uccb4 \ubb34\uac8c\ub97c \uc81c\uc678</td></tr>
+      <tr><td>\uc804\uadf9 \uba74\uc801</td><td>${fixed(calc.area, 6)} cm2</td><td>\uc9c0\ub984 ${fixed(calc.diameter, 4)} mm \uae30\uc900</td></tr>
+      <tr><td>${escapeXml(active)} \uc9c8\ub7c9</td><td>${fixed(calc.ncmMass, 9)} g</td><td>\uc804\uadf9 \uc9c8\ub7c9 \u00d7 ${fixed(calc.ncmRatio * 100, 2)}%</td></tr>
+      <tr><td>${escapeXml(conductor)} \uc9c8\ub7c9</td><td>${fixed(calc.superMass, 9)} g</td><td>\uc804\uadf9 \uc9c8\ub7c9 \u00d7 ${fixed(calc.superRatio * 100, 2)}%</td></tr>
+      <tr><td>${escapeXml(binder)} \uc9c8\ub7c9</td><td>${fixed(calc.ptfeMass, 9)} g</td><td>\uc804\uadf9 \uc9c8\ub7c9 \u00d7 ${fixed(calc.ptfeRatio * 100, 2)}%</td></tr>
+      <tr><td>loading</td><td>${fixed(calc.loading, 8)} g cm-2</td><td>\uc804\uadf9 \uc9c8\ub7c9 / \uba74\uc801</td></tr>
+      <tr><td>${escapeXml(active)} loading</td><td>${fixed(calc.ncmLoadingArea, 8)} g cm-2</td><td>${escapeXml(active)} \uc9c8\ub7c9 / \uba74\uc801</td></tr>
+    </tbody></table></div>
+    <p class="copyNote">\uc9d1\uc804\uccb4 \ubb34\uac8c\uc640 \ub450\uaed8\ub294 \uc804\uccb4 \uc804\uadf9 \uac12\uc5d0\uc11c \ube60\uc9c4 \uac12\uc785\ub2c8\ub2e4. \uc9c0\ub984\uc744 \ubc14\uafb8\uba74 loading\uacfc \ubc00\ub3c4\uac00 \ud568\uaed8 \ubc14\ub00d\ub2c8\ub2e4.</p>`;
   renderElectrodeProfileStore();
   renderElectrodeCalcSlots();
 }
@@ -5850,11 +5696,11 @@ function runElectrodeCalc() {
   lastElectrodeCalcAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   renderElectrodeCalc();
   const box = $("electrodeCalcResult");
-  box?.insertAdjacentHTML("beforeend", `<p class="calcUpdated">怨꾩궛 ?꾨즺: ${escapeXml(lastElectrodeCalcAt)}</p>`);
+  box?.insertAdjacentHTML("beforeend", `<p class="calcUpdated">\uacc4\uc0b0 \uc644\ub8cc: ${escapeXml(lastElectrodeCalcAt)}</p>`);
   box?.classList.remove("calcFlash");
   void box?.offsetWidth;
   box?.classList.add("calcFlash");
-  setStatus("?꾧레 怨꾩궛 ?꾨즺");
+  setStatus("\uc804\uadf9 \uacc4\uc0b0 \uc644\ub8cc");
 }
 
 function toggleCalcHelp(event) {
@@ -5881,24 +5727,24 @@ function toggleCalcHelp(event) {
 function copyElectrodeCalc() {
   const c = electrodeCalcData();
   const rows = [
-    ["항목", "값", "단위"],
-    ["1C ?꾨쪟", fixed(c.oneC, 6), "mA"],
-    ["?꾧레 臾닿쾶 except Al", fixed(c.electrodeMass, 9), "g"],
-    ["?꾧레 ?먭퍡 except Al", fixed(c.electrodeThickness, 6), "mm"],
-    ["硫댁쟻", fixed(c.area, 9), "cm2"],
+    ["\ud56d\ubaa9", "\uac12", "\ub2e8\uc704"],
+    ["1C \uc804\ub958", fixed(c.oneC, 6), "mA"],
+    ["\uc804\uadf9 \ubb34\uac8c except Al", fixed(c.electrodeMass, 9), "g"],
+    ["\uc804\uadf9 \ub450\uaed8 except Al", fixed(c.electrodeThickness, 6), "mm"],
+    ["\uba74\uc801", fixed(c.area, 9), "cm2"],
     ["loading", fixed(c.loading, 9), "g cm-2"],
-    ["NCM 吏덈웾", fixed(c.ncmMass, 9), "g"],
-    ["Super P 吏덈웾", fixed(c.superMass, 9), "g"],
-    ["PTFE 吏덈웾", fixed(c.ptfeMass, 9), "g"],
-    ["전체 밀도", fixed(c.totalDensity, 9), "g cm-3"],
+    ["NCM \uc9c8\ub7c9", fixed(c.ncmMass, 9), "g"],
+    ["Super P \uc9c8\ub7c9", fixed(c.superMass, 9), "g"],
+    ["PTFE \uc9c8\ub7c9", fixed(c.ptfeMass, 9), "g"],
+    ["\uc804\uccb4 \ubc00\ub3c4", fixed(c.totalDensity, 9), "g cm-3"],
     ["NCM loading", fixed(c.ncmLoadingArea, 9), "g cm-2"],
     ["NCM density", fixed(c.ncmLoadingVolume, 9), "g cm-3"],
-    ...c.rates.map((r) => [`${r.rate} C ?꾨쪟`, fixed(r.current, 6), "mA"]),
+    ...c.rates.map((r) => [`${r.rate} C \uc804\ub958`, fixed(r.current, 6), "mA"]),
   ];
   const text = rows.map((row) => row.join("\t")).join("\n");
   navigator.clipboard?.writeText(text).then(
-    () => setStatus("?꾧레 怨꾩궛?쒕? 蹂듭궗?덉뒿?덈떎."),
-    () => setStatus("蹂듭궗 沅뚰븳???놁뼱 ?쒕? ?좏깮?댁꽌 蹂듭궗??二쇱꽭??")
+    () => setStatus("\uc804\uadf9 \uacc4\uc0b0\ud45c\ub97c \ubcf5\uc0ac\ud588\uc2b5\ub2c8\ub2e4."),
+    () => setStatus("\ubcf5\uc0ac \uad8c\ud55c\uc774 \uc5c6\uc5b4 \ud45c\ub97c \uc120\ud0dd\ud574\uc11c \ubcf5\uc0ac\ud574 \uc8fc\uc138\uc694.")
   );
 }
 
@@ -5910,7 +5756,7 @@ async function submitFeedback(event) {
   const message = String(fd.get("message") || "").trim();
   if (!message) {
     if (status) {
-      status.textContent = "?섏젙 ?붿껌 ?댁슜??癒쇱? ?곸뼱二쇱꽭??";
+      status.textContent = "\uc218\uc815 \uc694\uccad \ub0b4\uc6a9\uc744 \uba3c\uc800 \uc801\uc5b4\uc8fc\uc138\uc694.";
       status.className = "error";
     }
     return;
@@ -5926,7 +5772,7 @@ async function submitFeedback(event) {
     selectedDatasetName: selected ? sampleLabel(selected) : "",
   };
   if (status) {
-    status.textContent = "?섍껄????ν븯??以묒엯?덈떎...";
+    status.textContent = "\uc758\uacac\uc744 \uc800\uc7a5\ud558\ub294 \uc911\uc785\ub2c8\ub2e4...";
     status.className = "";
   }
   try {
@@ -5936,18 +5782,18 @@ async function submitFeedback(event) {
       body: JSON.stringify(payload),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "?섍껄 ????ㅽ뙣");
+    if (!res.ok) throw new Error(body.error || "\uc758\uacac \uc800\uc7a5 \uc2e4\ud328");
     form.reset();
     if (status) {
       const when = new Date(body.createdAt || Date.now()).toLocaleString("ko-KR");
-      status.textContent = `??λ릱?듬땲?? ?묒닔 ?쒓컙: ${when}`;
+      status.textContent = `\uc800\uc7a5\ub410\uc2b5\ub2c8\ub2e4. \uc811\uc218 \uc2dc\uac04: ${when}`;
       status.className = "success";
     }
-    setStatus("?섏젙 ?붿껌 ????꾨즺");
+    setStatus("\uc218\uc815 \uc694\uccad \uc800\uc7a5 \uc644\ub8cc");
     if (state.user?.role === "admin") loadFeedbacks().catch(() => {});
   } catch (err) {
     if (status) {
-      status.textContent = err.message || "?섍껄????ν븯吏 紐삵뻽?듬땲??";
+      status.textContent = err.message || "\uc758\uacac\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.";
       status.className = "error";
     }
   }
@@ -6073,7 +5919,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const button = event.target.closest("[data-open-batch-figure]");
     if (!button) return;
     const dataset = state.datasets.find((item) => item.id === button.dataset.openBatchFigure);
-    if (!dataset) return setStatus("??λ맂 Dataset??李얠? 紐삵뻽?듬땲?? 紐⑸줉???덈줈怨좎묠??二쇱꽭??");
+    if (!dataset) return setStatus("\uc120\ud0dd\ud55c Dataset\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ubaa9\ub85d\uc744 \uc0c8\ub85c\uace0\uce68\ud55c \ub4a4 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.");
     showDatasetImmediately(dataset);
     showModule(["cyc", "cv", "eis"].includes(dataset.dataType) ? dataset.dataType : "figure");
   });

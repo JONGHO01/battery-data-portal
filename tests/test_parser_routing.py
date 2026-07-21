@@ -42,6 +42,10 @@ class ParserRoutingTests(unittest.TestCase):
         self.assertEqual(sheet, "SDE EIS binary")
         self.assertEqual(rows[0], ["sweep", "point", "frequency", "zreal", "zimag", "mag", "phase"])
         self.assertEqual(len(rows) - 1, 3)
+        self.assertAlmostEqual(rows[1][2], 100000.0)
+        self.assertAlmostEqual(rows[1][3], 2.8)
+        self.assertAlmostEqual(rows[1][4], -0.4)
+        self.assertNotAlmostEqual(rows[1][2], rows[1][3])
 
     def test_rejects_unknown_extensions(self):
         with self.assertRaises(ValueError):

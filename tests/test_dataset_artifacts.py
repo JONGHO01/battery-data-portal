@@ -1,4 +1,5 @@
 import os
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -62,6 +63,59 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertEqual(saved["parser"]["name"], "csv")
         self.assertEqual(saved["quality"]["status"], "ok")
         self.assertEqual(saved["analysisProvenance"]["sourceUploadId"], upload_id)
+
+    def test_stale_sde_dataset_is_reparsed_from_its_raw_artifact(self):
+        """Legacy SDE rows must not keep frequency values in the Z' column."""
+
+        source = bytearray(112 * 6)
+        for point, (frequency, zreal, zimag) in enumerate(
+            ((100000.0, 2.8, -0.4), (80000.0, 2.9, -0.5), (63000.0, 3.0, -0.6))
+        ):
+            offset = point * 112
+            struct.pack_into("<f", source, offset, frequency)
+            struct.pack_into("<f", source, offset + 28, zreal)
+            struct.pack_into("<f", source, offset + 32, zimag)
+
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-STALE-SDE-REPAIR-TEST"
+        raw_artifact = portal.write_dataset_artifact(
+            bytes(source),
+            f"projects/repair/cells/repair/datasets/{dataset_id}/raw/legacy.SDE",
+            "application/octet-stream",
+        )
+        legacy_rows = [
+            {"sweep": 1, "point": index + 1, "frequency": frequency, "zreal": frequency, "zimag": zimag}
+            for index, (frequency, _zreal, zimag) in enumerate(
+                ((100000.0, 2.8, -0.4), (80000.0, 2.9, -0.5), (63000.0, 3.0, -0.6))
+            )
+        ]
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "eis",
+                    "sourceName": "legacy.SDE",
+                    "cell": {"cellId": "CELL-SDE-REPAIR"},
+                    "columns": ["sweep", "point", "frequency", "zreal", "zimag"],
+                    "rows": legacy_rows,
+                    "rawArtifact": raw_artifact,
+                    "parser": {"name": "seo", "version": "parser-2", "mappingVersion": "bdf-map-2"},
+                },
+                actor_user=user,
+            )
+            repaired = portal.repair_stale_sde_datasets(conn)
+            saved = portal.dataset_from_row(
+                portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+            )
+
+        self.assertGreaterEqual(repaired, 1)
+        self.assertAlmostEqual(float(saved["rows"][0]["zreal"]), 2.8, places=4)
+        self.assertNotEqual(saved["rows"][0]["frequency"], saved["rows"][0]["zreal"])
+        self.assertEqual(saved["parser"]["version"], portal.INSTRUMENT_PARSER_VERSION)
+        self.assertTrue((portal.DATA_DIR / saved["parsedArtifact"]["localPath"]).exists())
 
     def test_retrying_a_completed_upload_returns_the_existing_dataset(self):
         """A browser retry must not turn an already saved upload into an error."""
@@ -252,6 +306,46 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertEqual(first_figure["artifact"]["objectKey"], second_figure["artifact"]["objectKey"])
         self.assertEqual(first_report["id"], second_report["id"])
         self.assertEqual(first_report["artifact"]["objectKey"], second_report["artifact"]["objectKey"])
+
+    def test_figure_identity_uses_dataset_type_and_source_not_shared_cell_id(self):
+        """An EIS record linked to a CYC-looking Cell must still be labelled as EIS."""
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-FIGURE-IDENTITY-EIS-TEST"
+        source_name = "TalkFile_260309_PC_PTFE91_100cycle_01.SDE.sde"
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "eis",
+                    "figureKind": "eis-combined",
+                    "sourceName": source_name,
+                    "cell": {"cellId": "260715_NCM622_50mg.cyc_083.wrd"},
+                    "rows": [{"frequency": 1000.0, "zreal": 3.1, "zimag": -0.4}],
+                    "columns": ["frequency", "zreal", "zimag"],
+                },
+            )
+
+        figure = portal.save_figure_record(
+            {"datasetId": dataset_id, "name": "CYC-looking stale label", "figureKind": "cycling-performance"},
+            user,
+        )
+        self.assertEqual(figure["name"], f"EIS - {source_name}")
+        self.assertEqual(figure["figureKind"], "eis-combined")
+
+        with portal.connect() as conn:
+            portal.execute(
+                conn,
+                "UPDATE figures SET name = ?, figure_kind = ? WHERE id = ?",
+                ("wrong CYC label", "cycling-performance", figure["id"]),
+            )
+            portal.normalize_figure_record_identity(conn)
+            repaired = portal.execute(conn, "SELECT * FROM figures WHERE id = ?", (figure["id"],)).fetchone()
+
+        self.assertEqual(repaired["name"], f"EIS - {source_name}")
+        self.assertEqual(repaired["figure_kind"], "eis-combined")
 
     def test_deleting_a_dataset_removes_dependent_records_and_local_artifacts(self):
         user = {"id": "tester", "name": "Tester", "role": "user"}

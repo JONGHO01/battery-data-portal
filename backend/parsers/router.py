@@ -11,7 +11,9 @@ from .seo import read_seo
 from .wrd import read_wrd
 
 
-PARSER_VERSION = "parser-2"
+# Bump this whenever an instrument parser changes its interpreted values. The
+# portal uses it to distinguish data imported with older parser behavior.
+PARSER_VERSION = "parser-3"
 
 
 def parser_key_for_path(path: Path) -> str:
