@@ -20,6 +20,7 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 - The repository release state is `v0.1.45` in `VERSION`, `README.md`, `CHANGELOG.md`, `package.json`, FastAPI, and `public/app.js`.
 - v0.1.45 applies each saved Fig series color to EIS Nyquist and Bode line/point styles as well as CYC and CV renderers.
+- Release commit `e563273 Release Battery Portal v0.1.45` was pushed to `origin/main` on 2026-07-21.
 - v0.1.44 prevents an EIS Dataset linked to a CYC-named Cell from being shown as CYC. Fig labels use `DATA TYPE - source filename`, and startup normalization repairs legacy `figures.name` and `figures.figure_kind` values from their linked Dataset only.
 - v0.1.43 repairs legacy SDE datasets only when at least three stored rows have `zreal == frequency` for at least 95% of finite positive-frequency rows. It reparses the preserved local raw artifact, updates the parsed artifact and provenance, and leaves data untouched when the raw artifact is unavailable.
 - v0.1.42 renders EIS Nyquist data as a frequency-ordered connected trace with equal real/imaginary physical scale, dotted grid lines, limited marker density, and distinct Nyquist, Bode, and combined Fig layouts. It preserves measured points and does not perform unverified smoothing or circuit fitting.
