@@ -62,6 +62,95 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertEqual(saved["quality"]["status"], "ok")
         self.assertEqual(saved["analysisProvenance"]["sourceUploadId"], upload_id)
 
+    def test_retrying_a_completed_upload_returns_the_existing_dataset(self):
+        """A browser retry must not turn an already saved upload into an error."""
+
+        source = b"cycle,discharge capacity\n1,160\n"
+        source_path, _ = portal.save_upload_bytes(source, "retry.csv", "raw")
+        parsed = {
+            "parser": {"name": "csv", "version": "parser-2"},
+            "columnMapping": {"cycle_index": {"source": "cycle"}},
+            "quality": {"status": "ok"},
+            "canonicalRows": [{"record_index": 1, "cycle_index": 1, "discharge_capacity_mAh": 160.0}],
+        }
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        with portal.connect() as conn:
+            upload_id = portal.create_upload_session(conn, user, "retry.csv", source_path, None, source, parsed)
+
+        def payload():
+            return {
+                "dataType": "cyc",
+                "sourceName": "retry.csv",
+                "figureKind": "cycling-performance",
+                "cell": {"cellId": "CELL-RETRY"},
+                "columns": ["cycle", "discharge capacity"],
+                "rows": [{"cycle": 1, "discharge capacity": 160.0}],
+                "uploadId": upload_id,
+            }
+
+        first = portal.create_dataset(payload(), user)
+        retry = portal.create_dataset(payload(), user)
+
+        self.assertEqual(retry["id"], first["id"])
+        with portal.connect() as conn:
+            count = portal.scalar(
+                portal.execute(conn, "SELECT COUNT(*) FROM datasets WHERE id = ?", (first["id"],)).fetchone()
+            )
+        self.assertEqual(int(count), 1)
+
+    def test_new_upload_of_the_same_source_reuses_dataset_and_figure(self):
+        """A freshly inspected duplicate source must not add another Fig card."""
+
+        source = b"cycle,discharge capacity\\n1,160\\n2,155\\n"
+        parsed = {
+            "parser": {"name": "csv", "version": "parser-2"},
+            "columnMapping": {"cycle_index": {"source": "cycle"}},
+            "quality": {"status": "ok"},
+            "canonicalRows": [
+                {"record_index": 1, "cycle_index": 1, "discharge_capacity_mAh": 160.0},
+                {"record_index": 2, "cycle_index": 2, "discharge_capacity_mAh": 155.0},
+            ],
+        }
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+
+        def payload(upload_id):
+            return {
+                "dataType": "cyc",
+                "sourceName": "same-source.csv",
+                "figureKind": "cycling-performance",
+                "cell": {"cellId": "CELL-SAME-SOURCE"},
+                "columns": ["cycle", "discharge capacity"],
+                "rows": [{"cycle": 1, "discharge capacity": 160.0}],
+                "uploadId": upload_id,
+            }
+
+        first_path, _ = portal.save_upload_bytes(source, "same-source.csv", "raw")
+        with portal.connect() as conn:
+            first_upload_id = portal.create_upload_session(conn, user, "same-source.csv", first_path, None, source, parsed)
+        first = portal.create_dataset(payload(first_upload_id), user)
+        portal.save_figure_record({"datasetId": first["id"], "name": "Same source"}, user)
+
+        second_path, _ = portal.save_upload_bytes(source, "same-source.csv", "raw")
+        with portal.connect() as conn:
+            second_upload_id = portal.create_upload_session(conn, user, "same-source.csv", second_path, None, source, parsed)
+        second = portal.create_dataset(payload(second_upload_id), user)
+
+        self.assertEqual(second["id"], first["id"])
+        self.assertTrue(second["reusedExistingSource"])
+        self.assertFalse(second_path.exists())
+        with portal.connect() as conn:
+            dataset_count = portal.scalar(
+                portal.execute(conn, "SELECT COUNT(*) FROM datasets WHERE owner_id = ? AND source_name = ?", (user["id"], "same-source.csv")).fetchone()
+            )
+            figure_count = portal.scalar(
+                portal.execute(conn, "SELECT COUNT(*) FROM figures WHERE dataset_id = ?", (first["id"],)).fetchone()
+            )
+            duplicate_session = portal.execute(conn, "SELECT consumed_dataset_id, local_path FROM upload_sessions WHERE id = ?", (second_upload_id,)).fetchone()
+        self.assertEqual(int(dataset_count), 1)
+        self.assertEqual(int(figure_count), 1)
+        self.assertEqual(duplicate_session["consumed_dataset_id"], first["id"])
+        self.assertEqual(duplicate_session["local_path"], "")
+
     def test_saved_figure_and_report_keep_reproducible_artifacts(self):
         user = {"id": "tester", "name": "Tester", "role": "user"}
         with portal.connect() as conn:

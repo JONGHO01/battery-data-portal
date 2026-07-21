@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battery Data Portal</title>
-    <link rel="stylesheet" href="/style.css?portal=0.1.25" />
+    <link rel="stylesheet" href="/style.css?portal=0.1.38" />
   </head>
   <body>
     <div class="busyOverlay hidden" id="busyOverlay">
@@ -118,7 +118,7 @@
       <div class="moduleIntro">
         <span class="eyebrow">Battery experiment workspace</span>
         <h2>데이터를 넣으면, Fig와 계산표까지 한 화면에서.</h2>
-        <p>WRD, SEO, XLSX, XLSB, CSV 파일을 읽고 오류 가능성을 확인한 뒤 CYC, EIS, CV Fig를 저장할 수 있습니다.</p>
+        <p>WRD, SEO, SDE, XLSX, XLSB, CSV 파일을 읽고 오류 가능성을 확인한 뒤 CYC, EIS, CV Fig를 저장할 수 있습니다.</p>
       </div>
       <div class="homeStats" aria-label="main features">
         <div><strong>WRD/XLSX</strong><span>자동 분석</span></div>
@@ -210,9 +210,9 @@
             <label>소유자 <input id="ownerPreview" disabled /></label>
             <label class="filebox">
               데이터 파일
-              <input id="smartFile" type="file" name="csv" multiple accept=".csv,.txt,.xlsx,.xlsm,.xls,.xlsb,.wrd,.WRD,.seo,.SEO,application/vnd.ms-excel.sheet.binary.macroEnabled.12" />
+              <input id="smartFile" type="file" name="csv" multiple accept=".csv,.txt,.xlsx,.xlsm,.xls,.xlsb,.wrd,.WRD,.seo,.SEO,.sde,.SDE,application/vnd.ms-excel.sheet.binary.macroEnabled.12" />
               <span id="selectedFileName" class="selectedFileName">선택된 파일 없음</span>
-              <span id="fileHint">CSV/XLSX/XLSB/WRD/SEO 지원. EIS, CYC, CV 데이터를 자동 판별합니다.</span>
+              <span id="fileHint">CSV/XLSX/XLSB/WRD/SEO/SDE 지원. EIS, CYC, CV 데이터를 자동 판별합니다.</span>
             </label>
             <button id="inspectFile" type="button">파일 분석</button>
             <button id="batchCreateFigures" type="button" class="secondaryAction hidden">여러 파일 일괄 Fig 생성</button>
@@ -333,8 +333,8 @@
           </div>
           <div class="figureHeader">
             <div>
-              <h2 id="figureTitle">No dataset</h2>
-              <p id="figureSubtitle">데이터를 등록하거나 선택하세요.</p>
+              <h2 id="figureTitle">선택한 Dataset 없음</h2>
+              <p id="figureSubtitle">파일을 분석하거나 저장된 Dataset을 선택하세요.</p>
             </div>
             <div class="metaGrid" id="metaGrid"></div>
           </div>
@@ -697,6 +697,6 @@
       </section>
     </main>
 
-    <script src="/app.js?portal=0.1.25"></script>
+    <script src="/app.js?portal=0.1.38"></script>
   </body>
 </html>

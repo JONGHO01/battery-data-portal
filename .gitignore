@@ -12,6 +12,7 @@ __pycache__/
 
 # Local SQLite database. The source code creates this file again on first run.
 data/*.sqlite3
+data/*.sqlite3-*
 data/*.json
 
 # Uploaded raw experiment files can be large and may contain private lab data.

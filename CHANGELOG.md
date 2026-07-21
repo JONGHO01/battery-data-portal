@@ -1,7 +1,56 @@
 # Changelog
 
+## v0.1.38 - 2026-07-21
+- Restore readable saved Fig comparison labels and controls through one authoritative browser renderer.
+- Reuse duplicate raw-source uploads without creating duplicate Dataset and Fig records.
+- Ignore local SQLite WAL and SHM files so runtime data is not included in Git uploads.
+
+## v0.1.37 - 2026-07-20
+- Restore clear Korean upload guidance, selected-file labels, batch action text, failure messages, and CYC/CV/EIS Fig choices after dynamic JavaScript text encoding damage.
+
+## v0.1.36 - 2026-07-20
+- Ignore the cell/sample number before the first fractional C-rate in WBCS-style CYC filenames, preventing incorrect Fig labels such as `4 C` for a `0.33 C -> 1 C -> re 0.33 C` sequence.
+
+## v0.1.35 - 2026-07-20
+- Restore clear Korean labels for saved Fig cards, Fig categories, and the administrator account badge after dynamic JavaScript text encoding damage.
+
+## v0.1.34 - 2026-07-20
+- Restore clear Korean empty-state guidance in the Fig workspace and editable data table.
+- Replace the English `No dataset` title with a direct Dataset-selection instruction.
+
 ## Unreleased
 - Record every delivered meaningful portal change here before commit, push, packaging, or deployment. Move these entries into the next version section when the version is released.
+- Restore the EIS inspection panel's Korean labels and column guide directly in the renderer, so sweep, point, frequency, zreal, zimag, mag, phase, quality review, and Fig choices remain readable.
+- Verify that saving the same raw source reuses one Dataset and one Fig record instead of adding a duplicate Fig card.
+
+## v0.1.33 - 2026-07-20
+- Add ZIVE SmartManager `.SDE` binary file support through the validated EIS parser used for compatible `.SEO` records.
+- Expose `.SDE` in the file picker and upload guidance, and label inspection output as `SDE EIS binary`.
+
+## v0.1.32 - 2026-07-20
+- Start multi-file analysis with the already selected hierarchy Cell when the separate Cell ID input is blank, so users do not have to re-enter the same Cell before processing.
+- Restore the browser batch-analysis script and its Korean progress/result messages after encoding corruption stopped the file-analysis action from running.
+
+## v0.1.31 - 2026-07-20
+- Clear and re-enable the multi-file picker after every batch outcome, so the next file selection always starts a new workflow.
+- Prevent overlapping multi-file batch runs while a current batch is being processed.
+
+## v0.1.30 - 2026-07-20
+- Prefer the precise electrode mass encoded in a WRD filename over unrelated binary text, producing correct specific-capacity values for WBCS CYC files.
+- Render C-rate guide lines only for complete positive displayed-cycle segments and cap y-axis tick density, preventing overlapping left-axis artifacts in CYC Figs.
+
+## v0.1.29 - 2026-07-20
+- Make the primary file-analysis button start the sequential batch Dataset and Fig workflow when two or more files are selected, instead of stopping with a separate-button instruction.
+
+## v0.1.28 - 2026-07-20
+- Widen the desktop data-registration sidebar to 420-450px so multi-file names, upload status, and action labels remain readable without clipping.
+
+## v0.1.27 - 2026-07-20
+- Compact long project, Cell, Dataset, and source-file path segments with stable hashes before local artifact storage, preventing Windows path-length failures after successful WRD/CYC inspection.
+
+## v0.1.26 - 2026-07-20
+- Keep desktop navigation buttons at their natural width and use horizontal scrolling only when the viewport cannot fit every menu, preventing vertically split menu labels.
+- Make Dataset creation idempotent for a completed upload session: a browser retry now returns the original Dataset instead of failing because the upload was already consumed.
 
 ## v0.1.25 - 2026-07-16
 - Use SQLite WAL mode and a 30-second busy timeout for local Dataset persistence so an artifact finalization does not immediately fail with a transient server error when the browser is reading portal data at the same time.

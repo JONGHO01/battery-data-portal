@@ -1,6 +1,6 @@
 {
   "name": "battery-data-portal",
-  "version": "0.1.25",
+  "version": "0.1.38",
   "private": true,
   "description": "Battery EIS/CYC/CV data portal",
   "main": "python_backend.py",

@@ -1,14 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.25-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.38-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
+> Current release: **v0.1.38** - Saved Fig comparison labels are readable again, and duplicate raw-source uploads reuse their Dataset and Fig.
+
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.25**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
+현재 버전은 **v0.1.37**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -20,6 +22,19 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.38 | 2026-07-21 | Restore readable saved Fig comparison labels, reuse duplicate raw-source uploads, and exclude local SQLite WAL files from Git |
+| v0.1.37 | 2026-07-20 | Restore clear Korean upload guidance, selected-file labels, batch action text, and CYC/CV/EIS Fig choices |
+| v0.1.36 | 2026-07-20 | Prevent a WBCS CYC cell/sample number from being displayed as a C-rate in Fig guides |
+| v0.1.35 | 2026-07-20 | Restore clear Korean labels for saved Fig cards, Fig categories, and the administrator account badge |
+| v0.1.34 | 2026-07-20 | Restore clear Korean empty-state guidance in the Fig workspace and editable data table |
+| v0.1.33 | 2026-07-20 | Support ZIVE SmartManager `.SDE` EIS files through the validated binary EIS parser |
+| v0.1.32 | 2026-07-20 | Reuse the selected hierarchy Cell when multi-file analysis starts with a blank Cell ID form input |
+| v0.1.31 | 2026-07-20 | Release the multi-file picker after batch completion and block duplicate runs |
+| v0.1.30 | 2026-07-20 | Correct WRD filename-mass parsing and CYC Fig axis/guide readability |
+| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
+| v0.1.29 | 2026-07-20 | 데스크톱 데이터 등록 패널을 넓혀 여러 파일명, 저장 상태, 버튼 문구가 잘리지 않도록 개선 |
+| v0.1.27 | 2026-07-20 | 긴 WRD 원본 파일명과 실험 계층에서도 Windows 저장 경로 길이 오류 없이 Dataset 원본/분석 파일 저장 |
+| v0.1.26 | 2026-07-20 | 상단 메뉴 줄바꿈 방지 및 완료된 업로드 저장 재시도 안정화 |
 | v0.1.25 | 2026-07-16 | SQLite 동시 저장 대기와 WAL 모드로 대용량 Dataset 저장 안정화 |
 | v0.1.24 | 2026-07-16 | CYC 전압/전류 거동 Fig와 원본 프로파일의 평균 전류 표기를 추가 |
 | v0.1.23 | 2026-07-16 | CYC Fig 선택값에 따라 성능, 전압 프로파일, 통합 화면을 각각 렌더링 |
@@ -73,6 +88,7 @@ Organization (선택)
 
 | 구분 | 기능 | 설명 |
 |---|---|---|
+| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
 | 데이터 등록 | CYC, CV, EIS 업로드 | 실험 파일을 올리고 데이터 종류별로 정리합니다. |
 | 데이터 편집 | 표 직접 수정 | 업로드된 CYC 표를 엑셀처럼 수정하고 행을 추가/삭제할 수 있습니다. |
 | 전극 계산 | 1C, C-rate, loading 계산 | 전극 질량, 두께, 조성비, 이론용량을 바탕으로 전류값을 계산합니다. |
@@ -177,6 +193,7 @@ SQLite 또는 PostgreSQL DB
 
 | Method | Endpoint | 용도 |
 |---|---|---|
+| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
 | GET | `/api/health` | 서버 상태 확인 |
 | GET | `/api/datasets` | 저장된 데이터 목록 조회 |
 | POST | `/api/datasets` | 새 데이터 저장 |
@@ -215,6 +232,7 @@ OPENAI_REASONING_EFFORT=low
 
 | 단계 | 저장 방식 | 설명 |
 |---|---|---|
+| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
 | 로컬 개발 | `data/uploads` | 내 컴퓨터에서만 사용합니다. |
 | 연구실 공유 | Supabase Storage | 로그인 기반 포털로 확장하기 좋습니다. |
 | 운영 배포 | S3 계열 Storage | 장기 운영과 백업에 유리합니다. |

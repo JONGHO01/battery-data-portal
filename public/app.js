@@ -1,9 +1,73 @@
-const PORTAL_VERSION = "0.1.25";
+const PORTAL_VERSION = "0.1.38";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
-// README와 CHANGELOG의 최신 의미 있는 변경을 관리자 화면에서도 빠르게 확인합니다.
-// 전체 과거 이력은 저장소의 CHANGELOG.md가 기준이며, 이 목록은 운영자가 보는 요약입니다.
+// README? CHANGELOG??理쒖떊 ?섎? ?덈뒗 蹂寃쎌쓣 愿由ъ옄 ?붾㈃?먯꽌??鍮좊Ⅴ寃??뺤씤?⑸땲??
+// ?꾩껜 怨쇨굅 ?대젰? ??μ냼??CHANGELOG.md媛 湲곗??대ŉ, ??紐⑸줉? ?댁쁺?먭? 蹂대뒗 ?붿빟?낅땲??
 const RELEASE_HISTORY = [
+  {
+    version: "0.1.38",
+    date: "2026-07-21",
+    changes: ["Restore readable saved Fig comparison labels and controls, reuse duplicate raw-source uploads, and keep local SQLite WAL files out of Git uploads."],
+  },
+  {
+    version: "0.1.37",
+    date: "2026-07-20",
+    changes: ["Restore clear Korean upload guidance, selected-file labels, batch action text, error messages, and CYC/CV/EIS Fig choices after dynamic text encoding damage."],
+  },
+  {
+    version: "0.1.36",
+    date: "2026-07-20",
+    changes: ["CYC Fig filename parsing now ignores a cell/sample number before the first fractional C-rate, preventing labels such as 4 C for 0.33 C -> 1 C -> re 0.33 C runs."],
+  },
+  {
+    version: "0.1.35",
+    date: "2026-07-20",
+    changes: ["Restore clear Korean labels for saved Fig cards, Fig categories, and the administrator account badge."],
+  },
+  {
+    version: "0.1.34",
+    date: "2026-07-20",
+    changes: ["Restore clear Korean empty-state guidance in the Fig workspace and editable data table."],
+  },
+  {
+    version: "0.1.33",
+    date: "2026-07-20",
+    changes: ["Support ZIVE SmartManager .SDE files through the validated EIS binary parser, including file-picker guidance and SDE-specific inspection labels."],
+  },
+  {
+    version: "0.1.32",
+    date: "2026-07-20",
+    changes: ["Batch analysis now uses the already selected hierarchy Cell when the separate Cell ID field is empty, so multi-file analysis starts without re-entering the same Cell."],
+  },  {
+    version: "0.1.31",
+    date: "2026-07-20",
+    changes: ["After a multi-file batch completes or fails, the file picker is released and cleared so another selection immediately starts a new batch. Duplicate batch starts are prevented while processing."],
+  },
+  {
+    version: "0.1.30",
+    date: "2026-07-20",
+    changes: ["WRD CYC parsing now prioritizes the precise electrode mass in the filename, and C-rate guides/y-axis ticks are constrained so CYC Figs remain readable without left-axis overlap."],
+  },
+  {
+    version: "0.1.29",
+    date: "2026-07-20",
+    changes: ["When multiple files are selected, the primary analysis button now immediately starts the sequential batch Dataset and Fig workflow instead of showing a blocking instruction."],
+  },
+  {
+    version: "0.1.28",
+    date: "2026-07-20",
+    changes: ["The desktop data-registration sidebar is now 420-450px wide so selected-file details, action labels, and upload status do not clip."],
+  },
+  {
+    version: "0.1.27",
+    date: "2026-07-20",
+    changes: ["Artifact paths now compact long project, cell, Dataset, and WRD filenames before writing them locally. This prevents Windows path-length failures after a successful CYC inspection."],
+  },
+  {
+    version: "0.1.26",
+    date: "2026-07-20",
+    changes: ["The desktop menu now preserves full button labels and scrolls horizontally only when needed. Retrying a completed file save returns the original Dataset instead of failing with a duplicate-upload error."],
+  },
   {
     version: "0.1.25",
     date: "2026-07-16",
@@ -12,108 +76,108 @@ const RELEASE_HISTORY = [
   {
     version: "0.1.24",
     date: "2026-07-16",
-    changes: ["CYC 요약 데이터도 전압과 전류의 cycle별 변화를 함께 보여주고, 원본 전압 프로파일은 곡선별 평균 전류를 범례에 표시하도록 개선했습니다."],
+    changes: ["CYC ?붿빟 ?곗씠?곕룄 ?꾩븬怨??꾨쪟??cycle蹂?蹂?붾? ?④퍡 蹂댁뿬二쇨퀬, ?먮낯 ?꾩븬 ?꾨줈?뚯씪? 怨≪꽑蹂??됯퇏 ?꾨쪟瑜?踰붾????쒖떆?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
   },
   {
     version: "0.1.23",
     date: "2026-07-16",
-    changes: ["CYC Fig 생성 시 선택한 성능, 전압 프로파일, 통합 Fig 종류가 각각 다른 화면으로 렌더링되도록 수정했습니다. 전압-용량/시간 곡선 점이 부족한 요약 파일은 잘못된 곡선을 만들지 않고 이유를 안내합니다."],
+    changes: ["CYC Fig ?앹꽦 ???좏깮???깅뒫, ?꾩븬 ?꾨줈?뚯씪, ?듯빀 Fig 醫낅쪟媛 媛곴컖 ?ㅻⅨ ?붾㈃?쇰줈 ?뚮뜑留곷릺?꾨줉 ?섏젙?덉뒿?덈떎. ?꾩븬-?⑸웾/?쒓컙 怨≪꽑 ?먯씠 遺議깊븳 ?붿빟 ?뚯씪? ?섎せ??怨≪꽑??留뚮뱾吏 ?딄퀬 ?댁쑀瑜??덈궡?⑸땲??"],
   },
   {
     version: "0.1.22",
     date: "2026-07-16",
-    changes: ["만료되었거나 서버 재시작으로 무효가 된 로그인 토큰을 감지하면, 파일 분석 오류 대신 로그인 화면으로 안전하게 돌아가도록 수정했습니다."],
+    changes: ["留뚮즺?섏뿀嫄곕굹 ?쒕쾭 ?ъ떆?묒쑝濡?臾댄슚媛 ??濡쒓렇???좏겙??媛먯??섎㈃, ?뚯씪 遺꾩꽍 ?ㅻ쪟 ???濡쒓렇???붾㈃?쇰줈 ?덉쟾?섍쾶 ?뚯븘媛?꾨줉 ?섏젙?덉뒿?덈떎."],
   },
   {
     version: "0.1.21",
     date: "2026-07-16",
-    changes: ["여러 파일을 한 번에 선택해 최대 10개까지 순서대로 분석·저장하고, 파일별 Dataset과 Fig 기록을 만들 수 있도록 추가했습니다."],
+    changes: ["?щ윭 ?뚯씪????踰덉뿉 ?좏깮??理쒕? 10媛쒓퉴吏 ?쒖꽌?濡?遺꾩꽍쨌??ν븯怨? ?뚯씪蹂?Dataset怨?Fig 湲곕줉??留뚮뱾 ???덈룄濡?異붽??덉뒿?덈떎."],
   },
   {
     version: "0.1.20",
     date: "2026-07-16",
-    changes: ["CYC 파일의 명시적 C-rate 열을 읽어 Fig cycle 구간을 자동 구분하도록 개선했습니다."],
+    changes: ["CYC ?뚯씪??紐낆떆??C-rate ?댁쓣 ?쎌뼱 Fig cycle 援ш컙???먮룞 援щ텇?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
   },
   {
     version: "0.1.19",
     date: "2026-07-16",
-    changes: ["포털 화면의 Fig 용어를 통일했습니다."],
+    changes: ["?ы꽭 ?붾㈃??Fig ?⑹뼱瑜??듭씪?덉뒿?덈떎."],
   },
   {
     version: "0.1.18",
     date: "2026-07-16",
-    changes: ["WBCS WRD에서 짧게 끊긴 시작·종료 조각은 제외하고, CYC Fig에는 1 이상인 유효 cycle만 그리도록 보완했습니다."],
+    changes: ["WBCS WRD?먯꽌 吏㏐쾶 ?딄릿 ?쒖옉쨌醫낅즺 議곌컖? ?쒖쇅?섍퀬, CYC Fig?먮뒗 1 ?댁긽???좏슚 cycle留?洹몃━?꾨줉 蹂댁셿?덉뒿?덈떎."],
   },
   {
     version: "0.1.17",
     date: "2026-07-16",
-    changes: ["파일 종류 선택 목록을 항상 열어 두고, CYC·CV·EIS 항목을 바로 고르면 직접 선택 모드로 전환되도록 수정했습니다."],
+    changes: ["?뚯씪 醫낅쪟 ?좏깮 紐⑸줉????긽 ?댁뼱 ?먭퀬, CYC쨌CV쨌EIS ??ぉ??諛붾줈 怨좊Ⅴ硫?吏곸젒 ?좏깮 紐⑤뱶濡??꾪솚?섎룄濡??섏젙?덉뒿?덈떎."],
   },
   {
     version: "0.1.16",
     date: "2026-07-16",
-    changes: ["일상 작업 화면에서는 Analysis Lab 메뉴, 홈 카드, 작업 탭을 숨겼습니다. 기존 분석 기능과 저장 이력은 보존되어 나중에 다시 열 수 있습니다."],
+    changes: ["?쇱긽 ?묒뾽 ?붾㈃?먯꽌??Analysis Lab 硫붾돱, ??移대뱶, ?묒뾽 ??쓣 ?④꼈?듬땲?? 湲곗〈 遺꾩꽍 湲곕뒫怨?????대젰? 蹂댁〈?섏뼱 ?섏쨷???ㅼ떆 ?????덉뒿?덈떎."],
   },
   {
     version: "0.1.15",
     date: "2026-07-15",
-    changes: ["로그인 입력창에서 Enter로 제출할 수 있게 하고, 파일 판별의 데이터 종류 선택과 읽기 전용 열 이름을 명확히 구분했습니다."],
+    changes: ["濡쒓렇???낅젰李쎌뿉??Enter濡??쒖텧?????덇쾶 ?섍퀬, ?뚯씪 ?먮퀎???곗씠??醫낅쪟 ?좏깮怨??쎄린 ?꾩슜 ???대쫫??紐낇솗??援щ텇?덉뒿?덈떎."],
   },
   {
     version: "0.1.14",
     date: "2026-07-15",
-    changes: ["60 MB대 WBCS CYC WRD 파일을 기본 업로드 한도 100 MB에서 읽고, 한도 초과 사유를 화면에 명확히 표시하도록 개선했습니다."],
+    changes: ["60 MB? WBCS CYC WRD ?뚯씪??湲곕낯 ?낅줈???쒕룄 100 MB?먯꽌 ?쎄퀬, ?쒕룄 珥덇낵 ?ъ쑀瑜??붾㈃??紐낇솗???쒖떆?섎룄濡?媛쒖꽑?덉뒿?덈떎."],
   },
   {
     version: "0.1.13",
     date: "2026-07-15",
-    changes: ["README와 관리자 전용 화면에서 버전 이력을 확인할 수 있도록 추가했습니다."],
+    changes: ["README? 愿由ъ옄 ?꾩슜 ?붾㈃?먯꽌 踰꾩쟾 ?대젰???뺤씤?????덈룄濡?異붽??덉뒿?덈떎."],
   },
   {
     version: "0.1.12",
     date: "2026-07-15",
-    changes: ["AI 요약 메뉴, 홈 카드, 작업 탭과 전용 화면을 제거하고 기존 데이터 호환성은 유지했습니다."],
+    changes: ["AI ?붿빟 硫붾돱, ??移대뱶, ?묒뾽 ??낵 ?꾩슜 ?붾㈃???쒓굅?섍퀬 湲곗〈 ?곗씠???명솚?깆? ?좎??덉뒿?덈떎."],
   },
   {
     version: "0.1.11",
     date: "2026-07-15",
-    changes: ["CYC 절대 용량(Ah/mAh)을 Retention 분석에 반영하고, 분석 이력이 있는 Dataset 삭제를 보완했습니다."],
+    changes: ["CYC ?덈? ?⑸웾(Ah/mAh)??Retention 遺꾩꽍??諛섏쁺?섍퀬, 遺꾩꽍 ?대젰???덈뒗 Dataset ??젣瑜?蹂댁셿?덉뒿?덈떎."],
   },
   {
     version: "0.1.10",
     date: "2026-07-15",
-    changes: ["운영 환경 인증, CORS, 파일 저장, 업로드 크기, Dataset 삭제와 아티팩트 정리를 강화했습니다."],
+    changes: ["?댁쁺 ?섍꼍 ?몄쬆, CORS, ?뚯씪 ??? ?낅줈???ш린, Dataset ??젣? ?꾪떚?⑺듃 ?뺣━瑜?媛뺥솕?덉뒿?덈떎."],
   },
   {
     version: "0.1.9",
     date: "2026-07-15",
-    changes: ["시맨틱 버전 체계와 프로젝트 전용 스킬, 변경 이력 기록 규칙을 도입했습니다."],
+    changes: ["?쒕㎤??踰꾩쟾 泥닿퀎? ?꾨줈?앺듃 ?꾩슜 ?ㅽ궗, 蹂寃??대젰 湲곕줉 洹쒖튃???꾩엯?덉뒿?덈떎."],
   },
 ];
 
-// 포탈 전체에서 공유하는 화면 상태입니다.
-// 서버에 저장되는 데이터는 datasets에 들어오고, 화면 필터 결과는 filtered에 따로 둡니다.
-// 이렇게 분리하면 검색 조건을 바꿔도 원본 데이터 목록을 다시 불러오지 않아도 됩니다.
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
+// ?ы깉 ?꾩껜?먯꽌 怨듭쑀?섎뒗 ?붾㈃ ?곹깭?낅땲??
+// ?쒕쾭????λ릺???곗씠?곕뒗 datasets???ㅼ뼱?ㅺ퀬, ?붾㈃ ?꾪꽣 寃곌낵??filtered???곕줈 ?〓땲??
+// ?대젃寃?遺꾨━?섎㈃ 寃??議곌굔??諛붽퓭???먮낯 ?곗씠??紐⑸줉???ㅼ떆 遺덈윭?ㅼ? ?딆븘???⑸땲??
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
-// 전극 C-rate 계산 저장소는 우선 브라우저 localStorage에 저장합니다.
-// 선택한 CYC에 적용하면 그 계산값은 CYC 데이터의 cell.electrodeCalc로 들어가 DB에도 함께 저장됩니다.
+// ?꾧레 C-rate 怨꾩궛 ??μ냼???곗꽑 釉뚮씪?곗? localStorage????ν빀?덈떎.
+// ?좏깮??CYC???곸슜?섎㈃ 洹?怨꾩궛媛믪? CYC ?곗씠?곗쓽 cell.electrodeCalc濡??ㅼ뼱媛 DB?먮룄 ?④퍡 ??λ맗?덈떎.
 const ELECTRODE_PROFILE_KEY = "batteryElectrodeRateProfiles";
 const ELECTRODE_CALC_SLOT_KEY = "batteryElectrodeCalcSlotsV1";
 const ELECTRODE_CALC_SLOT_COUNT = 8;
 const ELECTRODE_INPUT_IDS = ["calcElectrodeType", "calcTotalMass", "calcCollectorMass", "calcTotalThickness", "calcCollectorThickness", "calcDiameter", "calcCapacity", "calcNcmRatio", "calcSuperRatio", "calcPtfeRatio"];
 const ELECTRODE_SLOT_FIELDS = [
-  { id: "calcTotalMass", label: "전극 전체 무게 (g)", step: "0.000001" },
-  { id: "calcTotalThickness", label: "전극 전체 두께 (mm)", step: "0.001" },
-  { id: "calcCollectorMass", label: "집전체 무게 (g)", step: "0.000001" },
-  { id: "calcCollectorThickness", label: "집전체 두께 (mm)", step: "0.001" },
-  { id: "calcDiameter", label: "전극 지름 (mm)", step: "0.1" },
-  { id: "calcCapacity", label: "이론 용량 (mAh g-1)", step: "1" },
-  { id: "calcNcmRatio", label: "활물질 (%)", step: "0.1" },
-  { id: "calcSuperRatio", label: "도전재 (%)", step: "0.1" },
-  { id: "calcPtfeRatio", label: "바인더 (%)", step: "0.1" },
+  { id: "calcTotalMass", label: "?꾧레 ?꾩껜 臾닿쾶 (g)", step: "0.000001" },
+  { id: "calcTotalThickness", label: "?꾧레 ?꾩껜 ?먭퍡 (mm)", step: "0.001" },
+  { id: "calcCollectorMass", label: "吏묒쟾泥?臾닿쾶 (g)", step: "0.000001" },
+  { id: "calcCollectorThickness", label: "吏묒쟾泥??먭퍡 (mm)", step: "0.001" },
+  { id: "calcDiameter", label: "?꾧레 吏由?(mm)", step: "0.1" },
+  { id: "calcCapacity", label: "?대줎 ?⑸웾 (mAh g-1)", step: "1" },
+  { id: "calcNcmRatio", label: "?쒕Ъ吏?(%)", step: "0.1" },
+  { id: "calcSuperRatio", label: "?꾩쟾??(%)", step: "0.1" },
+  { id: "calcPtfeRatio", label: "諛붿씤??(%)", step: "0.1" },
 ];
 const FILE_INSPECT_TIMEOUT_MS = 150000;
 const BATCH_FIGURE_FILE_LIMIT = 10;
@@ -135,7 +199,7 @@ function setStatus(text) {
   $("saveStatus").textContent = text;
 }
 
-function setBusy(on, message = "데이터를 처리하고 있습니다.", timeoutMs = 45000) {
+function setBusy(on, message = "?곗씠?곕? 泥섎━?섍퀬 ?덉뒿?덈떎.", timeoutMs = 45000) {
   const overlay = $("busyOverlay");
   if (!overlay) return;
   if (busyUnlockTimer) {
@@ -149,14 +213,14 @@ function setBusy(on, message = "데이터를 처리하고 있습니다.", timeou
       overlay.classList.add("hidden");
       setStatus("분석 지연");
       setAnalysisMessage(
-        "파일 분석 응답이 오래 걸려 화면 잠금을 자동으로 풀었습니다. 새로고침하지 말고, 파일을 다시 선택한 뒤 '파일 분석'을 한 번만 눌러주세요.",
-        "분석이 오래 걸립니다"
+        "?뚯씪 遺꾩꽍 ?묐떟???ㅻ옒 嫄몃젮 ?붾㈃ ?좉툑???먮룞?쇰줈 ??덉뒿?덈떎. ?덈줈怨좎묠?섏? 留먭퀬, ?뚯씪???ㅼ떆 ?좏깮????'?뚯씪 遺꾩꽍'????踰덈쭔 ?뚮윭二쇱꽭??",
+        "遺꾩꽍???ㅻ옒 嫄몃┰?덈떎"
       );
     }, timeoutMs);
   }
 }
 
-function setAnalysisMessage(text, title = "확인 필요") {
+function setAnalysisMessage(text, title = "?뺤씤 ?꾩슂") {
   const panel = $("analysisPanel");
   if (!panel || !text) return;
   panel.classList.remove("hidden");
@@ -241,7 +305,7 @@ function applyUser(user) {
 function showHome() {
   if ($("moduleHome")) $("moduleHome").classList.remove("hidden");
   $("dataWorkspace").classList.add("hidden");
-  setStatus("메뉴");
+  setStatus("硫붾돱");
 }
 
 function showWorkspace() {
@@ -250,8 +314,8 @@ function showWorkspace() {
   setStatus("Data workspace");
 }
 
-// 상단 메뉴나 탭에서 "검색", "전극 계산", "분석" 같은 큰 화면으로 이동할 때 사용합니다.
-// 각 화면을 열 때 필요한 렌더링도 여기서 한 번에 실행합니다.
+// ?곷떒 硫붾돱????뿉??"寃??, "?꾧레 怨꾩궛", "遺꾩꽍" 媛숈? ???붾㈃?쇰줈 ?대룞?????ъ슜?⑸땲??
+// 媛??붾㈃???????꾩슂???뚮뜑留곷룄 ?ш린????踰덉뿉 ?ㅽ뻾?⑸땲??
 function openWorkspaceView(viewName) {
   if ($("moduleHome")) $("moduleHome").classList.add("hidden");
   $("dataWorkspace").classList.remove("hidden");
@@ -280,8 +344,8 @@ function openWorkspaceView(viewName) {
   if (viewName === "electrodeCalc") setElectrodeCalcMode("calc");
 }
 
-// 상단 드롭다운 메뉴의 공통 라우터입니다.
-// 버튼에 data-view, data-module 같은 속성을 달아두면 이 함수가 알맞은 화면으로 보냅니다.
+// ?곷떒 ?쒕∼?ㅼ슫 硫붾돱??怨듯넻 ?쇱슦?곗엯?덈떎.
+// 踰꾪듉??data-view, data-module 媛숈? ?띿꽦???ъ븘?먮㈃ ???⑥닔媛 ?뚮쭪? ?붾㈃?쇰줈 蹂대깄?덈떎.
 function navigateMenuTarget(target) {
   const module = target?.dataset?.module;
   const view = target?.dataset?.view;
@@ -304,8 +368,8 @@ function navigateMenuTarget(target) {
   }
 }
 
-// 전극 계산 화면은 계산 입력 모드와 저장소 모드를 함께 씁니다.
-// 저장소 메뉴를 누르면 profileMode를 켜서 저장소 박스를 더 위에 보이게 합니다.
+// ?꾧레 怨꾩궛 ?붾㈃? 怨꾩궛 ?낅젰 紐⑤뱶? ??μ냼 紐⑤뱶瑜??④퍡 ?곷땲??
+// ??μ냼 硫붾돱瑜??꾨Ⅴ硫?profileMode瑜?耳쒖꽌 ??μ냼 諛뺤뒪瑜????꾩뿉 蹂댁씠寃??⑸땲??
 function setElectrodeCalcMode(mode = "calc") {
   const view = $("electrodeCalcView");
   if (!view) return;
@@ -321,7 +385,7 @@ function openSearchView(type = "all") {
   setSearchType(type);
   activateView("search");
   applyFilters();
-  setStatus("검색");
+  setStatus("검색 페이지");
 }
 
 function showModule(module) {
@@ -333,11 +397,11 @@ function showModule(module) {
     activateView("figure", state.activeFigureModule);
     const label = { cyc: "CYC Fig", cv: "CV Fig", eis: "EIS Fig" }[state.activeFigureModule] || "Fig 만들기";
     const hint = {
-      cyc: "CYC 파일을 넣으면 사이클/방전용량/C-rate를 자동 판별합니다.",
-      cv: "CV 파일을 넣으면 전압-전류 곡선을 자동 판별합니다.",
-      eis: "EIS 파일을 넣으면 Nyquist/Bode Fig를 자동 판별합니다.",
+      cyc: "CYC 파일을 넣으면 사이클, 방전용량, C-rate를 자동 판별합니다.",
+      cv: "CV 파일을 넣으면 전압-전류 곡선과 scan rate를 자동 판별합니다.",
+      eis: "EIS 파일을 넣으면 Nyquist/Bode Fig 데이터를 자동 판별합니다.",
     }[state.activeFigureModule];
-    if ($("fileHint") && hint) $("fileHint").textContent = `${hint} CSV/XLSX/XLSB/WRD 지원.`;
+        if ($("fileHint") && hint) $("fileHint").textContent = `${hint} CSV/XLSX/XLSB/WRD/SEO/SDE 지원.`;
     renderSelect();
     renderSavedList();
     renderCurrent();
@@ -373,7 +437,7 @@ async function login(ev) {
     body: JSON.stringify({ id: fd.get("id"), password: fd.get("password") }),
   });
   const body = await res.json();
-  if (!res.ok) return setLoginError(body.error || "로그인 실패");
+  if (!res.ok) return setLoginError(body.error || "濡쒓렇???ㅽ뙣");
   ev.currentTarget.reset();
   applyUser(body.user);
 }
@@ -389,11 +453,11 @@ async function register(ev) {
     body: JSON.stringify({ id: fd.get("id"), name: fd.get("name"), password: fd.get("password") }),
   });
   const body = await res.json();
-  if (!res.ok) return setLoginError(body.error || "아이디 생성 실패");
+  if (!res.ok) return setLoginError(body.error || "?꾩씠???앹꽦 ?ㅽ뙣");
   ev.currentTarget.reset();
-  setLoginSuccess(`${body.user.id} 아이디가 생성되었습니다.`);
+  setLoginSuccess(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
   applyUser(body.user);
-  setStatus(`${body.user.id} 아이디가 생성되었습니다.`);
+  setStatus(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
 }
 
 async function safeLogin(ev) {
@@ -404,7 +468,7 @@ async function safeLogin(ev) {
     const form = $("loginForm");
     const fd = new FormData(form);
     if (!$("loginId").value || !$("loginPassword").value) {
-      return setLoginError("아이디와 비밀번호를 입력하세요.");
+      return setLoginError("?꾩씠?붿? 鍮꾨?踰덊샇瑜??낅젰?섏꽭??");
     }
     const res = await fetch("/api/login", {
       method: "POST",
@@ -412,11 +476,11 @@ async function safeLogin(ev) {
       body: JSON.stringify({ id: fd.get("id"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "로그인 실패");
+    if (!res.ok) return setLoginError(body.error || "濡쒓렇???ㅽ뙣");
     form.reset();
     applyUser(body.user);
   } catch (error) {
-    setLoginError(`로그인 처리 중 오류: ${error.message}`);
+    setLoginError(`濡쒓렇??泥섎━ 以??ㅻ쪟: ${error.message}`);
   }
 }
 
@@ -428,7 +492,7 @@ async function safeRegister(ev) {
     const form = $("registerForm");
     const fd = new FormData(form);
     if (!$("registerId").value || !$("registerPassword").value) {
-      return setLoginError("아이디와 비밀번호를 입력하세요.");
+      return setLoginError("?꾩씠?붿? 鍮꾨?踰덊샇瑜??낅젰?섏꽭??");
     }
     const res = await fetch("/api/register", {
       method: "POST",
@@ -436,13 +500,13 @@ async function safeRegister(ev) {
       body: JSON.stringify({ id: fd.get("id"), name: fd.get("name"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "아이디 생성 실패");
+    if (!res.ok) return setLoginError(body.error || "?꾩씠???앹꽦 ?ㅽ뙣");
     form.reset();
-    setLoginSuccess(`${body.user.id} 아이디가 생성되었습니다.`);
+    setLoginSuccess(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
     applyUser(body.user);
-    setStatus(`${body.user.id} 아이디가 생성되었습니다.`);
+    setStatus(`${body.user.id} ?꾩씠?붽? ?앹꽦?섏뿀?듬땲??`);
   } catch (error) {
-    setLoginError(`아이디 생성 중 오류: ${error.message}`);
+    setLoginError(`?꾩씠???앹꽦 以??ㅻ쪟: ${error.message}`);
   }
 }
 
@@ -464,9 +528,9 @@ function renderUsers() {
   body.innerHTML = state.users.map((user) => {
     const isSelf = user.id === state.user.id;
     const action = isSelf
-      ? `<span class="mutedText">현재 계정</span>`
-      : `<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">탈퇴</button>`;
-    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${user.role === "admin" ? "관리자" : "일반"}</td><td>${action}</td></tr>`;
+      ? `<span class="mutedText">?꾩옱 怨꾩젙</span>`
+      : `<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">?덊눜</button>`;
+    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${user.role === "admin" ? "愿由ъ옄" : "?쇰컲"}</td><td>${action}</td></tr>`;
   }).join("");
   for (const btn of body.querySelectorAll("[data-delete-user]")) {
     btn.addEventListener("click", () => deleteUser(btn.dataset.deleteUser));
@@ -488,7 +552,7 @@ async function loadFeedbacks() {
   }
   const res = await fetch("/api/feedback", { headers: authHeaders() });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || "의견 목록을 불러오지 못했습니다.");
+  if (!res.ok) throw new Error(body.error || "?섍껄 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   state.feedbacks = Array.isArray(body) ? body : [];
   renderFeedbackAdmin();
 }
@@ -499,26 +563,26 @@ function renderFeedbackAdmin() {
   if (!summary || !list) return;
   if (!state.user || state.user.role !== "admin") {
     summary.innerHTML = "";
-    list.innerHTML = `<p class="emptySaved">관리자만 의견함을 볼 수 있습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">愿由ъ옄留??섍껄?⑥쓣 蹂????덉뒿?덈떎.</p>`;
     return;
   }
   const feedbacks = state.feedbacks || [];
   const latest = feedbacks[0]?.createdAt ? formatFeedbackTime(feedbacks[0].createdAt) : "-";
   const withContact = feedbacks.filter((item) => item.email).length;
   summary.innerHTML = `
-    <div><strong>${feedbacks.length}</strong><span>전체 의견</span></div>
-    <div><strong>${withContact}</strong><span>연락처 있음</span></div>
-    <div><strong>${escapeXml(latest)}</strong><span>최근 접수</span></div>
+    <div><strong>${feedbacks.length}</strong><span>?꾩껜 ?섍껄</span></div>
+    <div><strong>${withContact}</strong><span>?곕씫泥??덉쓬</span></div>
+    <div><strong>${escapeXml(latest)}</strong><span>理쒓렐 ?묒닔</span></div>
   `;
   if (!feedbacks.length) {
-    list.innerHTML = `<p class="emptySaved">아직 접수된 의견이 없습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">?꾩쭅 ?묒닔???섍껄???놁뒿?덈떎.</p>`;
     return;
   }
   list.innerHTML = feedbacks.map((item) => {
-    const author = item.name || item.userName || item.userId || "익명";
-    const contact = item.email || "연락처 없음";
+    const author = item.name || item.userName || item.userId || "?듬챸";
+    const contact = item.email || "?곕씫泥??놁쓬";
     const page = item.page || "페이지 미지정";
-    const user = item.userId ? `${item.userName || item.userId} / ${item.userId}` : "비로그인 또는 사용자 정보 없음";
+    const user = item.userId ? `${item.userName || item.userId} / ${item.userId}` : "鍮꾨줈洹몄씤 ?먮뒗 ?ъ슜???뺣낫 ?놁쓬";
     return `
       <article class="feedbackCard">
         <div class="feedbackCardTop">
@@ -529,9 +593,9 @@ function renderFeedbackAdmin() {
           <em>${escapeXml(item.status || "open")}</em>
         </div>
         <div class="feedbackMeta">
-          <span>연락처: ${escapeXml(contact)}</span>
-          <span>관련 페이지: ${escapeXml(page)}</span>
-          <span>작성 계정: ${escapeXml(user)}</span>
+          <span>?곕씫泥? ${escapeXml(contact)}</span>
+          <span>愿???섏씠吏: ${escapeXml(page)}</span>
+          <span>?묒꽦 怨꾩젙: ${escapeXml(user)}</span>
         </div>
         <p>${escapeXml(item.message || "")}</p>
       </article>`;
@@ -542,7 +606,7 @@ function renderReleaseHistory() {
   const current = $("releaseCurrentVersion");
   const list = $("releaseHistoryList");
   if (!list) return;
-  if (current) current.textContent = `현재 버전 v${PORTAL_VERSION}`;
+  if (current) current.textContent = `?꾩옱 踰꾩쟾 v${PORTAL_VERSION}`;
   list.innerHTML = RELEASE_HISTORY.map((release) => `
     <article class="releaseHistoryCard">
       <div class="releaseHistoryCardHeader">
@@ -555,11 +619,11 @@ function renderReleaseHistory() {
 }
 
 async function deleteUser(id) {
-  if (!confirm(`${id} 사용자를 탈퇴시키고 이 사용자의 데이터를 삭제할까요?`)) return;
+  if (!confirm(`${id} ?ъ슜?먮? ?덊눜?쒗궎怨????ъ슜?먯쓽 ?곗씠?곕? ??젣?좉퉴??`)) return;
   const res = await fetch(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    setStatus(body.error || "사용자 삭제 실패");
+    setStatus(body.error || "?ъ슜????젣 ?ㅽ뙣");
     return;
   }
   setStatus(`${id} deleted`);
@@ -581,13 +645,13 @@ function splitCsvLine(line) {
 
 function parseCsv(text) {
   const lines = text.replace(/\r/g, "").split("\n").filter((x) => x.trim());
-  if (lines.length < 2) throw new Error("CSV에 데이터가 부족합니다.");
+  if (lines.length < 2) throw new Error("CSV???곗씠?곌? 遺議깊빀?덈떎.");
   const headers = splitCsvLine(lines[0]).map((x) => x.toLowerCase().replace(/[^a-z0-9]/g, ""));
   const find = (names) => headers.findIndex((h) => names.includes(h));
   const fi = find(["frequency", "freq", "f", "hz"]);
   const ri = find(["zreal", "real", "re", "zr", "zprime"]);
   const ii = find(["zimag", "imag", "im", "zi", "zdoubleprime"]);
-  if (fi < 0 || ri < 0 || ii < 0) throw new Error("frequency, zreal, zimag 컬럼을 찾지 못했습니다.");
+  if (fi < 0 || ri < 0 || ii < 0) throw new Error("frequency, zreal, zimag 而щ읆??李얠? 紐삵뻽?듬땲??");
   return lines.slice(1).map((line) => {
     const cols = splitCsvLine(line);
     const frequency = Number(cols[fi]);
@@ -612,19 +676,19 @@ function hasAnyTerm(key, terms) {
 }
 
 function isDischargeColumn(key) {
-  return hasAnyTerm(key, ["방전", "discharge", "dchg", "dch"]);
+  return hasAnyTerm(key, ["諛⑹쟾", "discharge", "dchg", "dch"]);
 }
 
 function isChargeOnlyColumn(key) {
-  return key.includes("충전") || key.startsWith("charge") || key.startsWith("chg");
+  return key.includes("異⑹쟾") || key.startsWith("charge") || key.startsWith("chg");
 }
 
 function isSpecificCapacityColumn(key) {
-  return hasAnyTerm(key, ["specificcapacity", "단위", "mahg", "ahg"]);
+  return hasAnyTerm(key, ["specificcapacity", "?⑥쐞", "mahg", "ahg"]);
 }
 
 function isCapacityColumn(key) {
-  return hasAnyTerm(key, ["capacity", "cap", "용량", "mah", "ah"]);
+  return hasAnyTerm(key, ["capacity", "cap", "?⑸웾", "mah", "ah"]);
 }
 
 function findBestCycColumn(columns, role) {
@@ -643,8 +707,8 @@ function findBestCycColumn(columns, role) {
 
     if (role.startsWith("discharge") && chargeOnly) score = 0;
     if (role.startsWith("charge") && discharge) score = 0;
-    if (key.includes("누적") || key.includes("energy") || key.includes("에너지")) score -= 40;
-    if (key.includes("final") || key.includes("최종") || key.includes("전압")) score -= 40;
+    if (key.includes("?꾩쟻") || key.includes("energy") || key.includes("?먮꼫吏")) score -= 40;
+    if (key.includes("final") || key.includes("理쒖쥌") || key.includes("?꾩븬")) score -= 40;
 
     return { col, score };
   }).filter((item) => item.score > 0);
@@ -699,15 +763,15 @@ function smartManagerEisColumns(columns, rows) {
 function canonicalRows(type, columns, rows) {
   const col = {
     frequency: findColumn(columns, ["frequency", "freq", "hz", "주파수"]),
-    zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "저항"]),
-    zimag: findColumn(columns, ["zimag", "imag", "im", "zi", "zdoubleprime"]),
+    zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "실수"]),
+    zimag: findColumn(columns, ["zimag", "imag", "im", "zi", "zdoubleprime", "허수"]),
     cycle: findColumn(columns, ["cycle", "사이클"]),
-    cRate: findColumn(columns, ["crate", "cratec", "ratec", "씨레이트", "c레이트"]),
-    specificCapacity: findBestCycColumn(columns, "dischargeSpecific") || findCycFallbackColumn(columns, "dischargeSpecific", ["방전용량ahg", "dischargecapacityahg", "specificcapacity", "mahg"]),
-    chargeSpecificCapacity: findBestCycColumn(columns, "chargeSpecific") || findCycFallbackColumn(columns, "chargeSpecific", ["충전용량ahg", "chargecapacityahg"]),
+    cRate: findColumn(columns, ["crate", "cratec", "ratec", "c-rate", "c rate", "c레이트"]),
+    specificCapacity: findBestCycColumn(columns, "dischargeSpecific") || findCycFallbackColumn(columns, "dischargeSpecific", ["dischargecapacityahg", "specificcapacity", "mahg", "방전용량ahg"]),
+    chargeSpecificCapacity: findBestCycColumn(columns, "chargeSpecific") || findCycFallbackColumn(columns, "chargeSpecific", ["chargecapacityahg", "충전용량ahg"]),
     capacity: findBestCycColumn(columns, "dischargeCapacity") || findCycFallbackColumn(columns, "dischargeCapacity", ["dischargecapacity", "dischargecap", "dchgcap", "dchcap", "방전용량", "방전"]),
     chargeCapacity: findBestCycColumn(columns, "chargeCapacity") || findCycFallbackColumn(columns, "chargeCapacity", ["chargecapacity", "chargecap", "chgcap", "충전용량", "충전"]),
-    efficiency: findColumn(columns, ["coulombicefficiency", "coulombefficiency", "쿨롱효율", "효율", "efficiency", "coulomb", "ce"]),
+    efficiency: findColumn(columns, ["coulombicefficiency", "coulombefficiency", "쿨롬효율", "효율", "efficiency", "coulomb", "ce"]),
     voltage: findColumn(columns, ["voltage", "potential", "전압"]),
     current: findColumn(columns, ["current", "전류"]),
     time: findColumn(columns, ["time", "시간"]),
@@ -794,7 +858,7 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FILE_INSPECT_
     return { res, body };
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error("파일 분석 시간이 너무 오래 걸려 중단했습니다. 큰 XLS 파일이면 Excel에서 .xlsx로 다시 저장한 뒤 넣어주세요.");
+      throw new Error("?뚯씪 遺꾩꽍 ?쒓컙???덈Т ?ㅻ옒 嫄몃젮 以묐떒?덉뒿?덈떎. ??XLS ?뚯씪?대㈃ Excel?먯꽌 .xlsx濡??ㅼ떆 ??ν븳 ???ｌ뼱二쇱꽭??");
     }
     throw error;
   } finally {
@@ -817,6 +881,19 @@ function selectedUploadFiles() {
   return Array.from($("smartFile")?.files || []);
 }
 
+// Browser file inputs do not fire a new change event when the same file list
+// stays selected. Clear only the picker after a batch has finished so the user
+// can immediately select another batch while keeping the result summary shown.
+function clearUploadSelectionAfterProcessing() {
+  const input = $("smartFile");
+  if (input) {
+    input.value = "";
+    input.disabled = false;
+  }
+  updateSelectedFileName();
+  updateBatchFigureControl();
+}
+
 function baseNameWithoutExtension(filename) {
   return String(filename || "").replace(/\.[^.]+$/, "").trim() || "batch-file";
 }
@@ -824,7 +901,7 @@ function baseNameWithoutExtension(filename) {
 async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
   const rows = canonicalRows(dataType, analysis.columns, analysis.rows);
   if (!rows.length) {
-    throw new Error("이 파일에서 Fig에 사용할 숫자 데이터를 찾지 못했습니다.");
+    throw new Error("???뚯씪?먯꽌 Fig???ъ슜???レ옄 ?곗씠?곕? 李얠? 紐삵뻽?듬땲??");
   }
   const { res, body: saved } = await fetchJsonWithTimeout("/api/datasets", {
     method: "POST",
@@ -845,7 +922,7 @@ async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
     }),
   });
   if (!res.ok) {
-    throw new Error(apiErrorMessage(saved, "Dataset 저장 중 서버 오류가 발생했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요."));
+    throw new Error(apiErrorMessage(saved, "Dataset ???以??쒕쾭 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?섏씠吏瑜??덈줈怨좎묠?????ㅼ떆 ?쒕룄??二쇱꽭??"));
   }
   return saved;
 }
@@ -863,7 +940,7 @@ async function saveFigureRecord(dataset) {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(apiErrorMessage(body, "Fig 기록을 저장하지 못했습니다."));
+    throw new Error(apiErrorMessage(body, "Fig 湲곕줉????ν븯吏 紐삵뻽?듬땲??"));
   }
   return body;
 }
@@ -880,14 +957,14 @@ function renderBatchFigureResults() {
   const completed = results.filter((item) => item.ok).length;
   panel.classList.remove("hidden");
   panel.innerHTML = `
-    <strong>일괄 Fig 생성 결과: ${completed}/${results.length}개 완료</strong>
-    <p>실패한 파일은 아래 사유를 확인한 뒤 단일 파일로 다시 분석할 수 있습니다.</p>
+    <strong>여러 파일 Fig 생성 결과: ${completed}/${results.length}개 완료</strong>
+    <p>파일은 순서대로 처리됩니다. 일부 파일이 실패해도 나머지 파일은 계속 분석합니다.</p>
     <ul>
       ${results.map((item) => `
         <li class="batchFigureResult ${item.ok ? "isOk" : "hasError"}">
           <div>
             <strong>${escapeXml(item.fileName)}</strong>
-            <span>${item.ok ? `${String(item.dataType || "").toUpperCase()} Dataset 및 Fig 기록 저장 완료` : escapeXml(item.message || "처리하지 못했습니다.")}</span>
+            <span>${item.ok ? `${String(item.dataType || "").toUpperCase()} Dataset 및 Fig 저장 완료${item.note ? ` · ${escapeXml(item.note)}` : ""}` : escapeXml(item.message || "처리하지 못했습니다.")}</span>
             ${item.note ? `<span>${escapeXml(item.note)}</span>` : ""}
           </div>
           ${item.ok ? `<button type="button" class="smallAction" data-open-batch-figure="${escapeAttr(item.datasetId)}">Fig 열기</button>` : ""}
@@ -899,47 +976,54 @@ function renderBatchFigureResults() {
 
 async function createBatchFigures() {
   const files = selectedUploadFiles();
+  if (state.batchInProgress) {
+    return setStatus("여러 파일 분석이 이미 진행 중입니다. 완료될 때까지 기다려주세요.");
+  }
   if (files.length < 2) {
-    return setStatus("일괄 Fig 생성에는 파일을 2개 이상 선택하세요.");
+    return setStatus("여러 파일 Fig 생성은 파일을 2개 이상 선택해야 합니다.");
   }
   if (files.length > BATCH_FIGURE_FILE_LIMIT) {
     return setStatus(`한 번에 최대 ${BATCH_FIGURE_FILE_LIMIT}개 파일까지 처리할 수 있습니다.`);
   }
-  const cell = collectCellForm();
-  if (!String(cell.cellId || "").trim()) {
-    $("datasetForm")?.elements?.cellId?.focus();
-    return setStatus("일괄 Fig 생성 전에 공통 셀 ID를 입력하세요.");
-  }
 
+  const cell = batchCellForUpload(collectCellForm());
+  // Use the selected hierarchy Cell when available. Without one, the backend creates the default Project/Campaign/Cell hierarchy from each file.
   state.inspectToken += 1;
   state.analysis = null;
   state.batchFigureResults = [];
+  state.batchInProgress = true;
+  const fileInput = $("smartFile");
+  const inspectButton = $("inspectFile");
+  if (fileInput) fileInput.disabled = true;
+  if (inspectButton) inspectButton.disabled = true;
   renderAnalysis();
   renderBatchFigureResults();
-  setBusy(true, `${files.length}개 파일을 순서대로 분석하고 Fig 기록을 만들고 있습니다.`, 0);
+  setStatus(`여러 파일 분석을 시작했습니다. ${files.length}개 파일을 순서대로 Dataset과 Fig로 저장합니다.`);
+  setBusy(true, `${files.length}개 파일을 분석하고 Dataset 및 Fig를 생성하고 있습니다.`, 0);
+
   try {
     for (const file of files) {
       try {
         setStatus(`${file.name} 분석 중...`);
         const { res, body } = await inspectFileUpload(file);
         if (!res.ok) {
-          throw new Error(apiErrorMessage(body, "파일을 불러오거나 분석하지 못했습니다."));
+          throw new Error(apiErrorMessage(body, "파일 분석을 시작하지 못했습니다."));
         }
         const dataType = body?.detection?.type;
         if (!BATCH_FIGURE_KIND_BY_TYPE[dataType]) {
-          throw new Error("CYC, CV, EIS로 자동 판별하지 못한 파일입니다.");
+          throw new Error("CYC, CV, EIS로 판별되지 않은 파일입니다.");
         }
         const fileCell = {
           ...cell,
           sampleName: cell.sampleName || baseNameWithoutExtension(file.name),
         };
         const saved = await saveDatasetFromInspection(body, dataType, fileCell, BATCH_FIGURE_KIND_BY_TYPE[dataType]);
-        state.datasets.unshift(saved);
-        let note = "";
+        if (!state.datasets.some((dataset) => dataset.id === saved.id)) state.datasets.unshift(saved);
+        let note = saved.reusedExistingSource ? "같은 원본 파일이라 기존 Dataset과 Fig를 재사용했습니다." : "";
         try {
           await saveFigureRecord(saved);
         } catch (error) {
-          note = `Dataset은 저장됐지만 Fig 기록은 저장하지 못했습니다: ${error.message}`;
+          note = `Dataset은 저장했지만 Fig 기록을 저장하지 못했습니다: ${error.message}`;
         }
         state.batchFigureResults.push({ ok: true, fileName: file.name, dataType, datasetId: saved.id, note });
       } catch (error) {
@@ -952,14 +1036,16 @@ async function createBatchFigures() {
       applyFilters();
     }
     const completed = state.batchFigureResults.filter((item) => item.ok).length;
-    setStatus(`일괄 Fig 생성 완료: ${completed}/${files.length}개`);
+    setStatus(`여러 파일 Fig 생성 완료: ${completed}/${files.length}개`);
   } catch (error) {
-    setStatus(`일괄 Fig 생성 중 오류: ${error.message}`);
+    setStatus(`여러 파일 Fig 생성 중 오류: ${error.message}`);
   } finally {
+    state.batchInProgress = false;
+    clearUploadSelectionAfterProcessing();
+    if (inspectButton) inspectButton.disabled = false;
     setBusy(false);
   }
 }
-
 function isExpiredLoginResponse(res, body) {
   if (Number(res?.status) !== 401 || !state.user?.token) return false;
   const message = apiErrorMessage(body, "");
@@ -979,12 +1065,8 @@ function clearExpiredLogin(res, body) {
 async function inspectSelectedFile() {
   const files = selectedUploadFiles();
   const file = files[0];
-  if (!file) return setStatus("먼저 파일을 선택하세요.");
-  if (files.length > 1) {
-    setStatus("여러 파일이 선택되었습니다. '여러 파일 일괄 Fig 생성'을 사용하세요.");
-    setAnalysisMessage("여러 파일은 한 번에 하나씩 분석하지 않습니다. 공통 셀 정보를 확인한 뒤 '여러 파일 일괄 Fig 생성'을 눌러주세요.");
-    return;
-  }
+  if (!file) return setStatus("먼저 파일을 선택해 주세요.");
+  if (files.length > 1) return createBatchFigures();
   const token = ++state.inspectToken;
   const inspectButton = $("inspectFile");
   if (inspectButton) {
@@ -1004,7 +1086,7 @@ async function inspectSelectedFile() {
     }
     state.analysis = body;
     renderAnalysis();
-    setStatus(`${body.detection.type.toUpperCase()} 추정`);
+    setStatus(`${body.detection.type.toUpperCase()} 異붿젙`);
   } catch (error) {
     if (token !== state.inspectToken) return;
     setStatus("파일 불러오기 실패");
@@ -1020,8 +1102,8 @@ async function inspectSelectedFile() {
 
 async function inspectManualFile() {
   const file = $("manualFile")?.files?.[0];
-  if (!file) return setStatus("먼저 매뉴얼 엑셀 파일을 선택하세요.");
-  setBusy(true, "매뉴얼 엑셀에서 전류와 로딩 정보를 읽고 있습니다.");
+  if (!file) return setStatus("癒쇱? 留ㅻ돱???묒? ?뚯씪???좏깮?섏꽭??");
+  setBusy(true, "留ㅻ돱???묒??먯꽌 ?꾨쪟? 濡쒕뵫 ?뺣낫瑜??쎄퀬 ?덉뒿?덈떎.");
   try {
     const { res, body } = await fetchJsonWithTimeout("/api/inspect-manual", {
       method: "POST",
@@ -1030,15 +1112,15 @@ async function inspectManualFile() {
     });
     if (!res.ok) {
       if (clearExpiredLogin(res, body)) return;
-      setStatus(body.error || "매뉴얼 분석 실패");
+      setStatus(body.error || "留ㅻ돱??遺꾩꽍 ?ㅽ뙣");
       return;
     }
     state.manualInfo = body;
     renderExperimentInfo(state.datasets.find((x) => x.id === state.selectedId));
-    setStatus("매뉴얼 실험 정보 분석 완료");
+    setStatus("留ㅻ돱???ㅽ뿕 ?뺣낫 遺꾩꽍 ?꾨즺");
     activateView("experimentInfo");
   } catch (error) {
-    setStatus(`매뉴얼 분석 실패: ${error.message}`);
+    setStatus(`留ㅻ돱??遺꾩꽍 ?ㅽ뙣: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -1047,7 +1129,37 @@ async function inspectManualFile() {
 function isBadText(text) {
   const s = String(text || "");
   if (!s.trim()) return true;
-  return /�|ì|ë|ê|í|Ã|Â|愿|由|鄭|怨|中|먯|븘|덈|뒿|쨌|좎|놁|/.test(s);
+  return s.includes("�");
+}
+
+function renderValidationSummaryLegacy(validation, quality = {}) {
+  if (!validation) return "";
+  const notes = Array.isArray(validation.notes) ? validation.notes : [];
+  const warnings = Array.isArray(validation.warnings) ? validation.warnings : [];
+  const stats = validation.stats || {};
+  const chips = [
+    stats.rowCount ? `${stats.rowCount} rows` : "",
+    Number.isFinite(stats.cycleMin) && Number.isFinite(stats.cycleMax) ? `cycle ${stats.cycleMin}-${stats.cycleMax}` : "",
+    Number.isFinite(stats.capacityMin) && Number.isFinite(stats.capacityMax) ? `${fmt(stats.capacityMin, 3)}-${fmt(stats.capacityMax, 3)} mAh g-1` : "",
+  ].filter(Boolean).map((item) => `<span>${escapeXml(item)}</span>`).join("");
+  const noteHtml = notes.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
+  const warningHtml = warnings.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
+  const qualityCounts = quality?.counts || {};
+  const qualityNote = quality?.status === "review"
+    ? `<p class="qualityReview">${Number(qualityCounts.review || 0)}媛??됱? 寃????遺꾩꽍???ы븿?????덉뒿?덈떎.</p>`
+    : quality?.status === "ok"
+      ? `<p class="qualityOk">?쒖? ?⑥쐞? 踰붿쐞 湲곗???湲곕낯 ?덉쭏 寃?좊? ?듦낵?덉뒿?덈떎.</p>`
+      : "";
+  return `
+    <div class="validationSummary ${warnings.length ? "hasWarning" : "isOk"}">
+      <div class="validationHead">
+        <strong>${warnings.length ? "?곗씠??寃???꾩슂" : "?곗씠??寃???꾨즺"}</strong>
+        <div class="validationChips">${chips}</div>
+      </div>
+      ${noteHtml ? `<ul>${noteHtml}</ul>` : ""}
+      ${warningHtml ? `<ul class="validationWarnings">${warningHtml}</ul>` : ""}
+      ${qualityNote}
+    </div>`;
 }
 
 function renderValidationSummary(validation, quality = {}) {
@@ -1064,7 +1176,7 @@ function renderValidationSummary(validation, quality = {}) {
   const warningHtml = warnings.slice(0, 4).map((item) => `<li>${escapeXml(item)}</li>`).join("");
   const qualityCounts = quality?.counts || {};
   const qualityNote = quality?.status === "review"
-    ? `<p class="qualityReview">${Number(qualityCounts.review || 0)}개 행은 검토 후 분석에 포함할 수 있습니다.</p>`
+    ? `<p class="qualityReview">추가 검토가 필요한 ${Number(qualityCounts.review || 0)}개 행이 있어 분석 결과를 확인해 주세요.</p>`
     : quality?.status === "ok"
       ? `<p class="qualityOk">표준 단위와 범위 기준의 기본 품질 검토를 통과했습니다.</p>`
       : "";
@@ -1113,65 +1225,164 @@ function renderAnalysis() {
     createBtn.classList.add("hidden");
     return;
   }
-  const typeLabel = { eis: "EIS", cyc: "CYC", cv: "CV", unknown: "알 수 없는" }[a.detection.type] || a.detection.type;
+  const typeLabel = { eis: "EIS", cyc: "CYC", cv: "CV", unknown: "?????녿뒗" }[a.detection.type] || a.detection.type;
   const shortName = a.filename.length > 42 ? `${a.filename.slice(0, 22)}...${a.filename.slice(-14)}` : a.filename;
   const readableColumns = a.columns.filter((c) => !isBadText(c));
   const badCount = a.columns.length - readableColumns.length;
   const columnPreview = readableColumns.length
     ? readableColumns.slice(0, 12).map((c) => `<span>${escapeXml(c)}</span>`).join("")
-    : `<span>컬럼명을 명확히 읽지 못했습니다.</span>`;
-  const badNotice = badCount > 0 ? `<p>읽기 어려운 컬럼명 ${badCount}개는 숨겼습니다. 데이터 종류가 틀리면 직접 선택해 주세요.</p>` : "";
+    : `<span>而щ읆紐낆쓣 紐낇솗???쎌? 紐삵뻽?듬땲??</span>`;
+  const badNotice = badCount > 0 ? `<p>?쎄린 ?대젮??而щ읆紐?${badCount}媛쒕뒗 ?④꼈?듬땲?? ?곗씠??醫낅쪟媛 ?由щ㈃ 吏곸젒 ?좏깮??二쇱꽭??</p>` : "";
   const detectedCRates = a.detection.type === "cyc" ? explicitCRateValues(a.canonicalRows || []) : [];
   const cRateNotice = detectedCRates.length
-    ? `<p class="columnPreviewHint"><strong>C-rate 열 감지:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. 저장 후 CYC Fig에서 이 값으로 cycle 구간을 구분합니다.</p>`
+    ? `<p class="columnPreviewHint"><strong>C-rate ??媛먯?:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. ?????CYC Fig?먯꽌 ??媛믪쑝濡?cycle 援ш컙??援щ텇?⑸땲??</p>`
     : "";
   const eisColumnGuide = a.detection.type === "eis" ? `
     <div class="eisColumnGuide">
-      <strong>EIS 열 안내</strong>
+      <strong>EIS ???덈궡</strong>
       <ul>
-        <li><code>sweep</code>: 반복 측정 회차, <code>point</code>: 회차 안의 측정 순서입니다.</li>
-        <li><code>frequency</code>: 인가한 교류 주파수(Hz)입니다.</li>
-        <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
-        <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
+        <li><code>sweep</code>: 諛섎났 痢≪젙 ?뚯감, <code>point</code>: ?뚯감 ?덉쓽 痢≪젙 ?쒖꽌?낅땲??</li>
+        <li><code>frequency</code>: ?멸???援먮쪟 二쇳뙆??Hz)?낅땲??</li>
+        <li><code>zreal</code>: ?꾪뵾?섏뒪???ㅼ닔遺 Z'(ohm), <code>zimag</code>: ?덉닔遺 Z''(ohm)?낅땲?? Nyquist 洹몃옒?꾨뒗 愿濡??<code>-Z''</code>瑜??몃줈異뺤뿉 ?쒖떆?⑸땲??</li>
+        <li><code>mag</code>: ?꾪뵾?섏뒪 ?ш린 |Z|(ohm), <code>phase</code>: ?꾩긽媛?degree)?낅땲??</li>
       </ul>
-      <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
+      <p>Fig ?앹꽦?먮뒗 二쇰줈 frequency, zreal, zimag瑜??ъ슜?⑸땲?? ?섎㉧吏 ?댁? 痢≪젙 ?쒖꽌 ?뺤씤怨?Bode 洹몃옒?꾩뿉 ?④퍡 ?곗엯?덈떎.</p>
     </div>` : "";
   const isUnknown = a.detection.type === "unknown" || a.detection.confidence < 0.35;
   const heading = isUnknown
-    ? "데이터 종류를 자동으로 판단하지 못했습니다."
-    : `${typeLabel} 데이터로 보입니다. 맞나요?`;
+    ? "?곗씠??醫낅쪟瑜??먮룞?쇰줈 ?먮떒?섏? 紐삵뻽?듬땲??"
+    : `${typeLabel} ?곗씠?곕줈 蹂댁엯?덈떎. 留욌굹??`;
   const confirmChoice = isUnknown
     ? ""
-    : `<label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="${a.detection.type}" checked /> 자동 선택됨: ${typeLabel} 데이터로 계속</label>`;
+    : `<label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="${a.detection.type}" checked /> ?먮룞 ?좏깮?? ${typeLabel} ?곗씠?곕줈 怨꾩냽</label>`;
   const typeSelectMarkup = `
-    <div class="typeSelect typeSelectProminent" role="group" aria-label="데이터 종류 선택">
-      <strong>데이터 종류 선택</strong>
+    <div class="typeSelect typeSelectProminent" role="group" aria-label="?곗씠??醫낅쪟 ?좏깮">
+      <strong>?곗씠??醫낅쪟 ?좏깮</strong>
       ${confirmChoice}
-      <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "데이터 종류를 직접 선택하겠습니다." : "아니오, 직접 선택하겠습니다."}</label>
+      <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" ${isUnknown ? "checked" : ""} /> ${isUnknown ? "?곗씠??醫낅쪟瑜?吏곸젒 ?좏깮?섍쿋?듬땲??" : "?꾨땲?? 吏곸젒 ?좏깮?섍쿋?듬땲??"}</label>
       <select id="manualType">
-        <option value="">데이터 종류 선택</option>
+        <option value="">?곗씠??醫낅쪟 ?좏깮</option>
         <option value="eis">EIS</option>
         <option value="cyc">CYC</option>
         <option value="cv">CV</option>
-        <option value="unknown">목록에 없는 데이터</option>
+        <option value="unknown">紐⑸줉???녿뒗 ?곗씠??/option>
       </select>
-      <span class="typeSelectHint">목록을 바로 고르면 직접 선택으로 바뀝니다.</span>
+      <span class="typeSelectHint">紐⑸줉??諛붾줈 怨좊Ⅴ硫?吏곸젒 ?좏깮?쇰줈 諛붾앸땲??</span>
     </div>`;
   panel.classList.remove("hidden");
   createBtn.classList.toggle("hidden", isUnknown);
+  if (a.detection.type === "eis") {
+    panel.innerHTML = `
+      <h3>EIS 데이터로 보입니다. 맞나요?</h3>
+      <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} · ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
+      <div class="typeSelect typeSelectProminent" role="group" aria-label="데이터 종류 선택">
+        <strong>데이터 종류 선택</strong>
+        <label class="detectedTypeChoice selected"><input type="radio" name="detectedType" value="eis" checked /> 자동 선택됨: EIS 데이터로 계속</label>
+        <label class="detectedTypeChoice"><input type="radio" name="detectedType" value="manual" /> 아니오, 직접 선택하겠습니다.</label>
+        <select id="manualType">
+          <option value="">데이터 종류 선택</option>
+          <option value="eis">EIS</option>
+          <option value="cyc">CYC</option>
+          <option value="cv">CV</option>
+          <option value="unknown">판단되지 않음</option>
+        </select>
+        <span class="typeSelectHint">목록을 바로 고르면 직접 선택으로 바뀝니다.</span>
+      </div>
+      <p class="columnPreviewHint">아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.</p>
+      <div class="columnPreview">${columnPreview}</div>
+      <div class="eisColumnGuide">
+        <strong>EIS 열 안내</strong>
+        <ul>
+          <li><code>sweep</code>: 반복 측정 회차, <code>point</code>: 회차 안의 측정 순서입니다.</li>
+          <li><code>frequency</code>: 인가한 교류 주파수(Hz)입니다.</li>
+          <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
+          <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
+        </ul>
+        <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
+      </div>
+      ${renderValidationSummary(a.validation, a.quality)}
+      <h3 id="figureQuestion">어떤 Fig를 만들어 드릴까요?</h3>
+      <div class="choiceGrid" id="figureChoices"></div>
+    `;
+    for (const radio of panel.querySelectorAll("input[name='detectedType']")) {
+      radio.addEventListener("change", updateFigureChoices);
+    }
+    const manualType = $("manualType");
+    manualType.addEventListener("change", () => {
+      const manualRadio = panel.querySelector("input[name='detectedType'][value='manual']");
+      if (manualType.value && manualRadio) manualRadio.checked = true;
+      updateFigureChoices();
+    });
+    updateFigureChoices();
+    return;
+  }
   panel.innerHTML = `
     <h3>${heading}</h3>
-    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} · ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
+    <p title="${escapeAttr(a.filename)}">${escapeXml(shortName)} 쨌 ${a.sheetName ? `sheet ${escapeXml(a.sheetName)} 쨌 ` : ""}${a.rowCount} rows 쨌 confidence ${(a.detection.confidence * 100).toFixed(0)}%</p>
     ${typeSelectMarkup}
-    <p class="columnPreviewHint">아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.</p>
+    <p class="columnPreviewHint">?꾨옒 ??ぉ? ?뚯씪?먯꽌 ?쎌? ???대쫫?낅땲?? ?좏깮???꾩슂媛 ?놁뒿?덈떎.</p>
     <div class="columnPreview">${columnPreview}</div>
     ${cRateNotice}
     ${eisColumnGuide}
     ${renderValidationSummary(a.validation, a.quality)}
     ${badNotice}
-    <h3 id="figureQuestion">${isUnknown ? "먼저 데이터 종류를 선택해 주세요." : "어떤 Fig를 만들어 드릴까요?"}</h3>
+    <h3 id="figureQuestion">${isUnknown ? "癒쇱? ?곗씠??醫낅쪟瑜??좏깮??二쇱꽭??" : "?대뼡 Fig瑜?留뚮뱾???쒕┫源뚯슂?"}</h3>
     <div class="choiceGrid" id="figureChoices"></div>
   `;
+  if (a.detection.type === "eis") {
+    const detectedHeading = panel.querySelector("h3:not(#figureQuestion)");
+    if (detectedHeading) detectedHeading.textContent = "EIS 데이터로 보입니다. 맞나요?";
+    const meta = panel.querySelector("p[title]");
+    if (meta) {
+      meta.textContent = `${shortName} · ${a.sheetName ? `sheet ${a.sheetName} · ` : ""}${a.rowCount} rows · confidence ${(a.detection.confidence * 100).toFixed(0)}%`;
+    }
+    const typeGroup = panel.querySelector(".typeSelectProminent");
+    if (typeGroup) {
+      const title = typeGroup.querySelector("strong");
+      if (title) title.textContent = "데이터 종류 선택";
+      const choices = typeGroup.querySelectorAll(".detectedTypeChoice");
+      if (choices[0]) choices[0].innerHTML = '<input type="radio" name="detectedType" value="eis" checked /> 자동 선택됨: EIS 데이터로 계속';
+      if (choices[1]) choices[1].innerHTML = '<input type="radio" name="detectedType" value="manual" /> 아니오, 직접 선택하겠습니다.';
+      const select = typeGroup.querySelector("#manualType");
+      if (select) {
+        select.innerHTML = `
+          <option value="">데이터 종류 선택</option>
+          <option value="eis">EIS</option>
+          <option value="cyc">CYC</option>
+          <option value="cv">CV</option>
+          <option value="unknown">판단되지 않음</option>`;
+      }
+      const hint = typeGroup.querySelector(".typeSelectHint");
+      if (hint) hint.textContent = "목록을 바로 고르면 직접 선택으로 바뀝니다.";
+    }
+    const previewHint = panel.querySelector(".columnPreviewHint");
+    if (previewHint) previewHint.textContent = "아래 항목은 파일에서 읽은 열 이름입니다. 선택할 필요가 없습니다.";
+    const guide = panel.querySelector(".eisColumnGuide");
+    if (guide) {
+      guide.outerHTML = `
+        <div class="eisColumnGuide">
+          <strong>EIS 열 안내</strong>
+          <ul>
+            <li><code>sweep</code>: 반복 측정 회차, <code>point</code>: 회차 안의 측정 순서입니다.</li>
+            <li><code>frequency</code>: 인가한 교류 주파수(Hz)입니다.</li>
+            <li><code>zreal</code>: 임피던스의 실수부 Z'(ohm), <code>zimag</code>: 허수부 Z''(ohm)입니다. Nyquist 그래프는 관례상 <code>-Z''</code>를 세로축에 표시합니다.</li>
+            <li><code>mag</code>: 임피던스 크기 |Z|(ohm), <code>phase</code>: 위상각(degree)입니다.</li>
+          </ul>
+          <p>Fig 생성에는 주로 frequency, zreal, zimag를 사용합니다. 나머지 열은 측정 순서 확인과 Bode 그래프에 함께 쓰입니다.</p>
+        </div>`;
+    }
+    const validation = panel.querySelector(".validationSummary");
+    if (validation) {
+      const validationTitle = validation.querySelector(".validationHead > strong");
+      if (validationTitle) validationTitle.textContent = validation.classList.contains("hasWarning") ? "데이터 검토 필요" : "데이터 검토 완료";
+      const qualityOk = validation.querySelector(".qualityOk");
+      if (qualityOk) qualityOk.textContent = "표준 단위와 범위 기준의 기본 품질 검토를 통과했습니다.";
+      const qualityReview = validation.querySelector(".qualityReview");
+      if (qualityReview) qualityReview.textContent = "추가 검토가 필요한 행이 있어 분석 결과를 확인해 주세요.";
+    }
+    const question = panel.querySelector("#figureQuestion");
+    if (question) question.textContent = "어떤 Fig를 만들어 드릴까요?";
+  }
   for (const radio of panel.querySelectorAll("input[name='detectedType']")) {
     radio.addEventListener("change", updateFigureChoices);
   }
@@ -1201,6 +1412,20 @@ function collectCellForm() {
   return cell;
 }
 
+function batchCellForUpload(cell) {
+  const selectedCell = selectedHierarchyCell();
+  if (!selectedCell?.cellId || String(cell?.cellId || "").trim()) return cell;
+  return {
+    ...cell,
+    cellId: selectedCell.cellId,
+    sampleName: cell.sampleName || selectedCell.sampleName || "",
+    material: cell.material || selectedCell.material || "",
+    electrolyte: cell.electrolyte || selectedCell.electrolyte || "",
+    condition: cell.condition || selectedCell.condition || "",
+    notes: cell.notes || selectedCell.notes || "",
+  };
+}
+
 function fillCellForm(d) {
   const form = $("datasetForm");
   if (!form || !d) return;
@@ -1216,7 +1441,7 @@ function updateSelectedFileName() {
   const label = $("selectedFileName");
   if (!label) return;
   if (!files.length) {
-    label.textContent = "선택된 파일 없음";
+    label.textContent = "선택한 파일 없음";
   } else if (files.length === 1) {
     label.textContent = files[0].name;
   } else {
@@ -1228,7 +1453,10 @@ function updateSelectedFileName() {
 function updateBatchFigureControl() {
   const button = $("batchCreateFigures");
   if (!button) return;
-  button.classList.toggle("hidden", selectedUploadFiles().length < 2);
+  const isBatch = selectedUploadFiles().length > 1;
+  button.classList.add("hidden");
+  const inspectButton = $("inspectFile");
+  if (inspectButton) inspectButton.textContent = isBatch ? "여러 파일 분석·Fig 생성" : "파일 분석";
 }
 
 function resetAnalysisForNewFile() {
@@ -1256,7 +1484,7 @@ function updateFigureChoices() {
   const question = $("figureQuestion");
   const createBtn = $("createFigure");
   if (!type || type === "unknown") {
-    $("figureChoices").innerHTML = `<p>현재 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 Fig를 추가하겠습니다.</p>`;
+    $("figureChoices").innerHTML = `<p>현재 지원하지 않는 데이터 형식입니다. 데이터 종류를 직접 선택하면 해당 메뉴와 Fig 옵션을 안내합니다.</p>`;
     if (question) question.textContent = type === "unknown" ? "지원 목록에 없는 데이터입니다." : "먼저 데이터 종류를 선택해 주세요.";
     if (createBtn) createBtn.classList.add("hidden");
     return;
@@ -1265,7 +1493,7 @@ function updateFigureChoices() {
   if (createBtn) createBtn.classList.remove("hidden");
   const options = {
     eis: [["eis-combined", "Nyquist + Bode 통합 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
-    cyc: [["cycling-performance", "셀 성능 테스트: capacity/efficiency vs cycle"], ["voltage-profile", "전압/전류 거동: voltage-capacity/time 또는 voltage/current vs cycle"], ["cyc-combined", "성능 + 전압/전류 통합 Fig"]],
+    cyc: [["cycling-performance", "셀 성능 테스트: capacity/efficiency vs cycle"], ["voltage-profile", "전압/전류 프로파일: voltage-capacity/time 또는 voltage/current vs cycle"], ["cyc-combined", "성능 + 전압/전류 통합 Fig"]],
     cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate 비교 Fig"]],
     unknown: [["table-preview", "표 형태로 미리보기"]],
   }[type] || [["table-preview", "표 형태로 미리보기"]];
@@ -1273,25 +1501,25 @@ function updateFigureChoices() {
 }
 
 async function createSmartFigure() {
-  if (!state.analysis) return setStatus("먼저 파일을 분석하세요.");
-  setBusy(true, "선택한 데이터로 Fig를 만들고 있습니다.");
+  if (!state.analysis) return setStatus("癒쇱? ?뚯씪??遺꾩꽍?섏꽭??");
+  setBusy(true, "?좏깮???곗씠?곕줈 Fig瑜?留뚮뱾怨??덉뒿?덈떎.");
   try {
     const dataType = selectedType();
     if (!dataType) {
-      setStatus("먼저 데이터 종류를 선택하세요.");
-      setAnalysisMessage("먼저 데이터 종류를 선택해 주세요.");
+      setStatus("癒쇱? ?곗씠??醫낅쪟瑜??좏깮?섏꽭??");
+      setAnalysisMessage("癒쇱? ?곗씠??醫낅쪟瑜??좏깮??二쇱꽭??");
       return;
     }
     if (dataType === "unknown") {
-      setStatus("없는 데이터 형식입니다.");
-      setAnalysisMessage("아직 지원하지 않는 데이터입니다. 어떤 데이터인지 알려주시면 메뉴와 Fig를 추가하겠습니다.");
+      setStatus("?녿뒗 ?곗씠???뺤떇?낅땲??");
+      setAnalysisMessage("?꾩쭅 吏?먰븯吏 ?딅뒗 ?곗씠?곗엯?덈떎. ?대뼡 ?곗씠?곗씤吏 ?뚮젮二쇱떆硫?硫붾돱? Fig瑜?異붽??섍쿋?듬땲??");
       return;
     }
     const figureKind = document.querySelector("input[name='figureKind']:checked")?.value || `${dataType}-combined`;
     const rows = canonicalRows(dataType, state.analysis.columns, state.analysis.rows);
     if (!rows.length) {
-      setStatus("숫자 컬럼을 찾지 못했습니다.");
-      setAnalysisMessage("선택한 데이터 타입에 맞는 숫자 컬럼을 찾지 못했습니다. 다른 데이터 종류를 선택하거나 컬럼명을 확인해 주세요.");
+      setStatus("?レ옄 而щ읆??李얠? 紐삵뻽?듬땲??");
+      setAnalysisMessage("?좏깮???곗씠????낆뿉 留욌뒗 ?レ옄 而щ읆??李얠? 紐삵뻽?듬땲?? ?ㅻⅨ ?곗씠??醫낅쪟瑜??좏깮?섍굅??而щ읆紐낆쓣 ?뺤씤??二쇱꽭??");
       return;
     }
     const cell = collectCellForm();
@@ -1314,21 +1542,21 @@ async function createSmartFigure() {
       }),
     });
     if (!res.ok) {
-      const message = apiErrorMessage(saved, "데이터셋 저장 중 서버 오류가 발생했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.");
+      const message = apiErrorMessage(saved, "?곗씠?곗뀑 ???以??쒕쾭 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?섏씠吏瑜??덈줈怨좎묠?????ㅼ떆 ?쒕룄??二쇱꽭??");
       setStatus(message);
       setAnalysisMessage(message);
       return;
     }
-    state.datasets.unshift(saved);
+    if (!state.datasets.some((dataset) => dataset.id === saved.id)) state.datasets.unshift(saved);
     await loadHierarchy();
     state.analysis = null;
     renderAnalysis();
     showDatasetImmediately(saved);
     showModule(["cyc", "cv", "eis"].includes(dataType) ? dataType : "figure");
-    setStatus(`${dataType.toUpperCase()} Fig 생성 완료`);
+    setStatus(`${dataType.toUpperCase()} Fig ?앹꽦 ?꾨즺`);
   } catch (error) {
-    setStatus("Fig 생성 실패");
-    setAnalysisMessage(`Fig 생성 중 오류가 발생했습니다: ${error.message}`);
+    setStatus("Fig ?앹꽦 ?ㅽ뙣");
+    setAnalysisMessage(`Fig ?앹꽦 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -1340,7 +1568,7 @@ async function loadData() {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "데이터를 불러오지 못했습니다.");
+    throw new Error(body.error || "?곗씠?곕? 遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   }
   state.datasets = await res.json();
   applyFilters();
@@ -1355,7 +1583,7 @@ async function loadHierarchy() {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "실험 계층을 불러오지 못했습니다.");
+    throw new Error(body.error || "?ㅽ뿕 怨꾩링??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   }
   state.hierarchy = await res.json();
   const current = state.datasets.find((item) => item.id === state.selectedId);
@@ -1378,7 +1606,7 @@ async function loadOrganizations() {
   const body = await res.json().catch(() => ([]));
   if (!res.ok) {
     if (clearExpiredLogin(res, body)) return;
-    throw new Error(body.error || "조직 목록을 불러오지 못했습니다.");
+    throw new Error(body.error || "議곗쭅 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   }
   state.organizations = Array.isArray(body) ? body : [];
   if (!state.organizations.some((item) => item.id === state.selectedOrganizationId)) {
@@ -1397,17 +1625,17 @@ function renderOrganizationSelectors() {
   const projectSelect = $("projectOrganizationSelect");
   const organizationSelect = $("organizationSelect");
   const optionMarkup = state.organizations
-    .map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.name)} · ${escapeXml(item.myRole || "member")}</option>`)
+    .map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.name)} 쨌 ${escapeXml(item.myRole || "member")}</option>`)
     .join("");
   if (projectSelect) {
     const previous = projectSelect.value;
-    projectSelect.innerHTML = `<option value="">개인 프로젝트 (나만 보기)</option>${optionMarkup}`;
+    projectSelect.innerHTML = `<option value="">媛쒖씤 ?꾨줈?앺듃 (?섎쭔 蹂닿린)</option>${optionMarkup}`;
     projectSelect.value = state.organizations.some((item) => item.id === previous) ? previous : "";
   }
   if (organizationSelect) {
     organizationSelect.innerHTML = state.organizations.length
       ? optionMarkup
-      : `<option value="">참여 중인 조직이 없습니다</option>`;
+      : `<option value="">李몄뿬 以묒씤 議곗쭅???놁뒿?덈떎</option>`;
     organizationSelect.value = state.selectedOrganizationId;
   }
 }
@@ -1428,23 +1656,23 @@ function renderOrganizationView() {
   const canManage = canManageSelectedOrganization();
   if (hint) {
     hint.textContent = organization
-      ? `${organization.name} · 내 역할: ${organization.myRole || "member"}`
-      : "새 조직을 만들거나, 조직 관리자에게 초대를 요청하세요.";
+      ? `${organization.name} 쨌 ????븷: ${organization.myRole || "member"}`
+      : "??議곗쭅??留뚮뱾嫄곕굹, 議곗쭅 愿由ъ옄?먭쾶 珥덈?瑜??붿껌?섏꽭??";
   }
   for (const element of [addButton, memberId, memberRole]) {
     if (element) element.disabled = !organization || !canManage;
   }
   if (!organization && list) {
-    list.innerHTML = `<p class="organizationEmpty">선택된 조직이 없습니다.</p>`;
+    list.innerHTML = `<p class="organizationEmpty">?좏깮??議곗쭅???놁뒿?덈떎.</p>`;
   } else if (organization && !state.organizationMembers.length && list) {
-    list.innerHTML = `<p class="organizationEmpty">멤버 정보를 불러오는 중이거나 등록된 멤버가 없습니다.</p>`;
+    list.innerHTML = `<p class="organizationEmpty">硫ㅻ쾭 ?뺣낫瑜?遺덈윭?ㅻ뒗 以묒씠嫄곕굹 ?깅줉??硫ㅻ쾭媛 ?놁뒿?덈떎.</p>`;
   } else if (list) {
     list.innerHTML = state.organizationMembers.map((member) => {
       const user = member.user || {};
       const remove = canManage && member.role !== "owner"
-        ? `<button type="button" class="smallDanger" data-remove-organization-member="${escapeAttr(user.id)}">제거</button>`
+        ? `<button type="button" class="smallDanger" data-remove-organization-member="${escapeAttr(user.id)}">?쒓굅</button>`
         : "";
-      return `<div class="organizationMemberRow"><div><strong>${escapeXml(user.name || user.id)}</strong><span>${escapeXml(user.id)} · ${escapeXml(member.role || "viewer")}</span></div>${remove}</div>`;
+      return `<div class="organizationMemberRow"><div><strong>${escapeXml(user.name || user.id)}</strong><span>${escapeXml(user.id)} 쨌 ${escapeXml(member.role || "viewer")}</span></div>${remove}</div>`;
     }).join("");
   }
 }
@@ -1458,7 +1686,7 @@ async function loadOrganizationMembers() {
   }
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members`, { headers: authHeaders() });
   const body = await res.json().catch(() => ([]));
-  if (!res.ok) throw new Error(body.error || "조직 멤버를 불러오지 못했습니다.");
+  if (!res.ok) throw new Error(body.error || "議곗쭅 硫ㅻ쾭瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   state.organizationMembers = Array.isArray(body) ? body : [];
   renderOrganizationView();
 }
@@ -1466,18 +1694,18 @@ async function loadOrganizationMembers() {
 async function createOrganizationFromInput() {
   const input = $("newOrganizationName");
   const name = input?.value.trim() || "";
-  if (!name) return setStatus("조직 이름을 입력해주세요.");
+  if (!name) return setStatus("議곗쭅 ?대쫫???낅젰?댁＜?몄슂.");
   const res = await fetch("/api/organizations", {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "조직 생성에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "議곗쭅 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
   input.value = "";
   state.selectedOrganizationId = body.id;
   await loadOrganizations();
-  setStatus(`조직 '${body.name}'을 만들었습니다.`);
+  setStatus(`議곗쭅 '${body.name}'??留뚮뱾?덉뒿?덈떎.`);
 }
 
 async function addOrganizationMember() {
@@ -1485,32 +1713,32 @@ async function addOrganizationMember() {
   const input = $("organizationMemberId");
   const memberUserId = input?.value.trim() || "";
   const role = $("organizationMemberRole")?.value || "researcher";
-  if (!organization) return setStatus("먼저 조직을 선택해주세요.");
-  if (!memberUserId) return setStatus("회원가입한 사용자 아이디를 입력해주세요.");
+  if (!organization) return setStatus("癒쇱? 議곗쭅???좏깮?댁＜?몄슂.");
+  if (!memberUserId) return setStatus("?뚯썝媛?낇븳 ?ъ슜???꾩씠?붾? ?낅젰?댁＜?몄슂.");
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members/${encodeURIComponent(memberUserId)}`, {
     method: "PUT",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ role }),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "멤버 저장에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "硫ㅻ쾭 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
   input.value = "";
   await loadOrganizationMembers();
-  setStatus(`${memberUserId} 계정에 ${role} 역할을 저장했습니다.`);
+  setStatus(`${memberUserId} 怨꾩젙??${role} ??븷????ν뻽?듬땲??`);
 }
 
 async function removeOrganizationMember(memberUserId) {
   const organization = selectedOrganization();
   if (!organization || !memberUserId) return;
-  if (!window.confirm(`${memberUserId} 계정을 조직에서 제거할까요?`)) return;
+  if (!window.confirm(`${memberUserId} 怨꾩젙??議곗쭅?먯꽌 ?쒓굅?좉퉴??`)) return;
   const res = await fetch(`/api/organizations/${encodeURIComponent(organization.id)}/members/${encodeURIComponent(memberUserId)}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return setStatus(body.error || "멤버 제거에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "硫ㅻ쾭 ?쒓굅???ㅽ뙣?덉뒿?덈떎.");
   await loadOrganizationMembers();
-  setStatus(`${memberUserId} 계정을 조직에서 제거했습니다.`);
+  setStatus(`${memberUserId} 怨꾩젙??議곗쭅?먯꽌 ?쒓굅?덉뒿?덈떎.`);
 }
 
 function selectedHierarchyCampaign(project = selectedHierarchyProject()) {
@@ -1552,7 +1780,7 @@ function renderHierarchyControls(preferred = {}) {
   if (!projectSelect || !campaignSelect || !cellSelect || !datasetGroupSelect) return;
 
   const previousProject = preferred.projectId ?? projectSelect.value;
-  projectSelect.innerHTML = `<option value="">프로젝트를 선택하거나 새로 만드세요</option>` + state.hierarchy
+  projectSelect.innerHTML = `<option value="">?꾨줈?앺듃瑜??좏깮?섍굅???덈줈 留뚮뱶?몄슂</option>` + state.hierarchy
     .map((project) => `<option value="${escapeAttr(project.id)}">${escapeXml(project.name)}</option>`)
     .join("");
   const project = state.hierarchy.find((item) => item.id === previousProject) || state.hierarchy[0] || null;
@@ -1560,7 +1788,7 @@ function renderHierarchyControls(preferred = {}) {
 
   const previousCampaign = preferred.campaignId ?? campaignSelect.value;
   const campaigns = project?.campaigns || [];
-  campaignSelect.innerHTML = `<option value="">실험 배치를 선택하거나 새로 만드세요</option>` + campaigns
+  campaignSelect.innerHTML = `<option value="">?ㅽ뿕 諛곗튂瑜??좏깮?섍굅???덈줈 留뚮뱶?몄슂</option>` + campaigns
     .map((campaign) => `<option value="${escapeAttr(campaign.id)}">${escapeXml(campaign.name)}</option>`)
     .join("");
   const campaign = campaigns.find((item) => item.id === previousCampaign) || campaigns[0] || null;
@@ -1568,15 +1796,15 @@ function renderHierarchyControls(preferred = {}) {
 
   const previousCell = preferred.cellRecordId ?? cellSelect.value;
   const cells = campaign?.cells || [];
-  cellSelect.innerHTML = `<option value="">셀 ID 입력 시 자동으로 새 셀이 등록됩니다</option>` + cells
-    .map((cell) => `<option value="${escapeAttr(cell.id)}">${escapeXml(cell.cellId)}${cell.sampleName ? ` · ${escapeXml(cell.sampleName)}` : ""}</option>`)
+  cellSelect.innerHTML = `<option value="">? ID ?낅젰 ???먮룞?쇰줈 ??????깅줉?⑸땲??/option>` + cells
+    .map((cell) => `<option value="${escapeAttr(cell.id)}">${escapeXml(cell.cellId)}${cell.sampleName ? ` 쨌 ${escapeXml(cell.sampleName)}` : ""}</option>`)
     .join("");
   cellSelect.value = cells.some((item) => item.id === previousCell) ? previousCell : "";
 
   const selectedCell = selectedHierarchyCell(campaign);
   const previousDatasetGroup = preferred.datasetGroupId ?? datasetGroupSelect.value;
   const datasetGroups = selectedCell?.datasetGroups || [];
-  datasetGroupSelect.innerHTML = `<option value="">새 이름을 입력하거나 기존 Dataset을 선택하세요</option>` + datasetGroups
+  datasetGroupSelect.innerHTML = `<option value="">???대쫫???낅젰?섍굅??湲곗〈 Dataset???좏깮?섏꽭??/option>` + datasetGroups
     .map((group) => `<option value="${escapeAttr(group.id)}">${escapeXml(group.name)}</option>`)
     .join("");
   datasetGroupSelect.value = datasetGroups.some((item) => item.id === previousDatasetGroup) ? previousDatasetGroup : "";
@@ -1584,7 +1812,7 @@ function renderHierarchyControls(preferred = {}) {
   const path = $("hierarchyPath");
   if (path) {
     const selectedGroup = selectedHierarchyDatasetGroup(selectedCell);
-    path.textContent = [project?.name, campaign?.name, selectedCell?.cellId || "새 셀", selectedGroup?.name || "새 Dataset"].filter(Boolean).join("  ›  ") || "프로젝트와 실험 배치를 먼저 만들어주세요.";
+    path.textContent = [project?.name, campaign?.name, selectedCell?.cellId || "???", selectedGroup?.name || "??Dataset"].filter(Boolean).join("  ?? ") || "?꾨줈?앺듃? ?ㅽ뿕 諛곗튂瑜?癒쇱? 留뚮뱾?댁＜?몄슂.";
   }
 }
 
@@ -1601,52 +1829,52 @@ function selectHierarchyForDataset(dataset) {
 async function createProjectFromInput() {
   const input = $("newProjectName");
   const name = input?.value.trim() || "";
-  if (!name) return setStatus("새 프로젝트 이름을 입력해주세요.");
+  if (!name) return setStatus("???꾨줈?앺듃 ?대쫫???낅젰?댁＜?몄슂.");
   const res = await fetch("/api/projects", {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name, organizationId: $("projectOrganizationSelect")?.value || "" }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "프로젝트 생성에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "?꾨줈?앺듃 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({ projectId: body.id });
-  setStatus(`프로젝트 '${body.name}'를 만들었습니다.`);
+  setStatus(`?꾨줈?앺듃 '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
 }
 
 async function createCampaignFromInput() {
   const project = selectedHierarchyProject();
   const input = $("newCampaignName");
   const name = input?.value.trim() || "";
-  if (!project) return setStatus("먼저 프로젝트를 선택하거나 새로 만들어주세요.");
-  if (!name) return setStatus("새 실험 배치 이름을 입력해주세요.");
+  if (!project) return setStatus("癒쇱? ?꾨줈?앺듃瑜??좏깮?섍굅???덈줈 留뚮뱾?댁＜?몄슂.");
+  if (!name) return setStatus("???ㅽ뿕 諛곗튂 ?대쫫???낅젰?댁＜?몄슂.");
   const res = await fetch(`/api/projects/${encodeURIComponent(project.id)}/campaigns`, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "실험 배치 생성에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "?ㅽ뿕 諛곗튂 ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({ projectId: project.id, campaignId: body.id });
-  setStatus(`실험 배치 '${body.name}'를 만들었습니다.`);
+  setStatus(`?ㅽ뿕 諛곗튂 '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
 }
 
 async function createDatasetGroupFromInput() {
   const cell = selectedHierarchyCell();
   const input = $("newDatasetGroupName");
   const name = input?.value.trim() || "";
-  if (!cell) return setStatus("먼저 기존 셀을 선택하거나, 새 셀은 데이터 저장 시 Dataset 이름과 함께 등록해주세요.");
-  if (!name) return setStatus("새 Dataset 이름을 입력해주세요.");
+  if (!cell) return setStatus("癒쇱? 湲곗〈 ????좏깮?섍굅?? ???? ?곗씠???????Dataset ?대쫫怨??④퍡 ?깅줉?댁＜?몄슂.");
+  if (!name) return setStatus("??Dataset ?대쫫???낅젰?댁＜?몄슂.");
   const res = await fetch(`/api/cells/${encodeURIComponent(cell.id)}/dataset-groups`, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ name }),
   });
   const body = await res.json();
-  if (!res.ok) return setStatus(body.error || "Dataset 생성에 실패했습니다.");
+  if (!res.ok) return setStatus(body.error || "Dataset ?앹꽦???ㅽ뙣?덉뒿?덈떎.");
   input.value = "";
   await loadHierarchy();
   renderHierarchyControls({
@@ -1655,7 +1883,7 @@ async function createDatasetGroupFromInput() {
     cellRecordId: cell.id,
     datasetGroupId: body.id,
   });
-  setStatus(`Dataset '${body.name}'를 만들었습니다.`);
+  setStatus(`Dataset '${body.name}'瑜?留뚮뱾?덉뒿?덈떎.`);
 }
 
 function applyFilters() {
@@ -1694,7 +1922,7 @@ function clearSearchFilters() {
 }
 
 function typeDisplay(type) {
-  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "전체" }[type || "all"] || "DATA";
+  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "?꾩껜" }[type || "all"] || "DATA";
 }
 
 function renderSearchResults() {
@@ -1710,8 +1938,8 @@ function renderSearchResults() {
   if (!state.filtered.length) {
     list.innerHTML = `
       <div class="searchEmpty">
-        <strong>검색 결과가 없습니다.</strong>
-        <span>날짜 범위를 넓히거나 소재/셀 ID 검색어를 줄여보세요.</span>
+        <strong>寃??寃곌낵媛 ?놁뒿?덈떎.</strong>
+        <span>?좎쭨 踰붿쐞瑜??볧엳嫄곕굹 ?뚯옱/? ID 寃?됱뼱瑜?以꾩뿬蹂댁꽭??</span>
       </div>`;
     return;
   }
@@ -1719,7 +1947,7 @@ function renderSearchResults() {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const meta = [cell.date || "날짜 없음", typeDisplay(d.dataType), `${d.rows?.length || 0} points`, displayUserName(d)].filter(Boolean).join(" · ");
+    const meta = [cell.date || "?좎쭨 ?놁쓬", typeDisplay(d.dataType), `${d.rows?.length || 0} points`, displayUserName(d)].filter(Boolean).join(" 쨌 ");
     const detail = [hierarchyLabel(d), cell.material, cell.sampleName, cell.condition, d.sourceName].filter(Boolean).join(" / ");
     return `
       <article class="searchResultCard${active}">
@@ -1730,8 +1958,8 @@ function renderSearchResults() {
           <p>${escapeXml(detail || "저장된 실험 데이터")}</p>
         </button>
         <div class="searchResultActions">
-          <button type="button" data-open-figure="${escapeAttr(d.id)}">Fig 열기</button>
-          <button type="button" class="secondaryAction" data-open-saved="${escapeAttr(d.id)}">모음에서 보기</button>
+          <button type="button" data-open-figure="${escapeAttr(d.id)}">Fig ?닿린</button>
+          <button type="button" class="secondaryAction" data-open-saved="${escapeAttr(d.id)}">紐⑥쓬?먯꽌 蹂닿린</button>
         </div>
       </article>`;
   }).join("");
@@ -1747,7 +1975,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("figure", state.activeFigureModule);
-      setStatus("검색 결과를 Fig로 열었습니다.");
+      setStatus("寃??寃곌낵瑜?Fig濡??댁뿀?듬땲??");
     });
   }
   for (const btn of list.querySelectorAll("[data-open-saved]")) {
@@ -1759,7 +1987,7 @@ function renderSearchResults() {
       renderSearchResults();
       renderCurrent();
       activateView("savedFigures");
-      setStatus("검색 결과를 Fig 모음에서 열었습니다.");
+      setStatus("寃??寃곌낵瑜?Fig 紐⑥쓬?먯꽌 ?댁뿀?듬땲??");
     });
   }
 }
@@ -1769,7 +1997,7 @@ function renderDateOptions() {
   if (!sel) return;
   const current = sel.value;
   const dates = [...new Set(state.datasets.map((d) => d.cell?.date).filter(Boolean))].sort().reverse();
-  sel.innerHTML = `<option value="">전체 날짜</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
+  sel.innerHTML = `<option value="">?꾩껜 ?좎쭨</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
   sel.value = dates.includes(current) ? current : "";
 }
 
@@ -1793,7 +2021,7 @@ function renderSelect() {
   if (!sel) return;
   sel.innerHTML = "";
   if (!state.filtered.length) {
-    sel.innerHTML = `<option>검색 결과 없음</option>`;
+    sel.innerHTML = `<option>寃??寃곌낵 ?놁쓬</option>`;
     return;
   }
   for (const d of state.filtered) {
@@ -1819,18 +2047,18 @@ function renderSavedList() {
   document.querySelectorAll("#savedCount").forEach((el) => { el.textContent = `${state.filtered.length}개`; });
   if (count) count.textContent = `${state.filtered.length}개`;
   if (!state.filtered.length) {
-    list.innerHTML = `<p class="emptySaved">저장된 데이터가 없습니다.</p>`;
+    list.innerHTML = `<p class="emptySaved">??λ맂 ?곗씠?곌? ?놁뒿?덈떎.</p>`;
     return;
   }
   list.innerHTML = state.filtered.map((d) => {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const sub = [d.dataType?.toUpperCase(), `${d.rows?.length || 0} points`, d.ownerName || d.ownerId].filter(Boolean).join(" · ");
+    const sub = [d.dataType?.toUpperCase(), `${d.rows?.length || 0} points`, d.ownerName || d.ownerId].filter(Boolean).join(" 쨌 ");
     return `
       <button type="button" class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
         <strong>${escapeXml(title)}</strong>
-        <span>${escapeXml(cell.date || "날짜 없음")} · ${escapeXml(sub)}</span>
+        <span>${escapeXml(cell.date || "?좎쭨 ?놁쓬")} 쨌 ${escapeXml(sub)}</span>
         <em>${escapeXml(d.sourceName || d.id)}</em>
       </button>`;
   }).join("");
@@ -1841,7 +2069,7 @@ function renderSavedList() {
       renderSelect();
       renderSavedList();
       renderCurrent();
-      setStatus("저장된 데이터를 불러왔습니다.");
+      setStatus("??λ맂 ?곗씠?곕? 遺덈윭?붿뒿?덈떎.");
     });
   }
 }
@@ -1960,11 +2188,66 @@ function renderSavedList() {
   }
 }
 
+// The saved-Fig comparison UI uses this readable Korean render path.
+// It overrides older generated labels that remain in legacy code above.
+function renderSavedList() {
+  const list = $("savedList");
+  const count = $("savedCount");
+  if (!list) return;
+  if (count) count.textContent = `${state.filtered.length}개`;
+  if (!state.filtered.length) {
+    list.innerHTML = `<p class="emptySaved">저장된 Fig가 없습니다.</p>`;
+    return;
+  }
+  list.innerHTML = state.filtered.map((d) => {
+    const cell = d.cell || {};
+    const active = d.id === state.selectedId ? " active" : "";
+    const title = datasetDisplayName(d);
+    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" · ");
+    const isCyc = String(d.dataType || "").toLowerCase() === "cyc";
+    return `
+      <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
+        <label class="compareCheck${isCyc ? "" : " disabled"}" title="${isCyc ? "CYC 비교 선택" : "CYC Fig만 비교할 수 있습니다."}">
+          <input type="checkbox" data-compare-id="${escapeAttr(d.id)}"${state.compareIds.includes(d.id) ? " checked" : ""}${isCyc ? "" : " disabled"} />
+          <span>비교</span>
+        </label>
+        <button type="button" class="savedOpen" data-dataset-id="${escapeAttr(d.id)}" title="Fig 열기">
+          ${figureThumb(d)}
+          <span class="savedInfo">
+            <strong>${escapeXml(title)}</strong>
+            <span>${escapeXml(cell.date || "날짜 없음")} · ${escapeXml(sub)}</span>
+            <em>${escapeXml(d.sourceName || d.id)}</em>
+          </span>
+        </button>
+        <button type="button" class="savedDelete" data-dataset-id="${escapeAttr(d.id)}" title="저장된 Fig 삭제">×</button>
+      </article>`;
+  }).join("");
+  for (const btn of list.querySelectorAll(".savedOpen")) {
+    btn.addEventListener("click", () => {
+      state.selectedId = btn.dataset.datasetId;
+      state.selectedAnnotation = null;
+      renderSelect();
+      renderSavedList();
+      renderCurrent();
+      state.activeFigureModule = state.datasets.find((d) => d.id === state.selectedId)?.dataType || state.activeFigureModule;
+      activateView("figure", state.activeFigureModule);
+      setStatus("저장된 Fig를 불러왔습니다.");
+    });
+  }
+  for (const btn of list.querySelectorAll(".savedDelete")) {
+    btn.addEventListener("click", (event) => deleteSavedFigure(btn.dataset.datasetId, event));
+  }
+  for (const input of list.querySelectorAll("input[data-compare-id]")) {
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("change", () => toggleCompareSelection(input.dataset.compareId, input.checked));
+  }
+}
+
 function toggleCompareSelection(id, checked) {
   if (!id) return;
   const target = state.datasets.find((d) => d.id === id);
   if (target?.dataType !== "cyc") {
-    setStatus("CYC Fig만 비교할 수 있습니다.");
+    setStatus("CYC Fig留?鍮꾧탳?????덉뒿?덈떎.");
     return;
   }
   if (checked && !state.compareIds.includes(id)) state.compareIds.push(id);
@@ -1980,7 +2263,7 @@ function clearCompareSelection() {
     preview.classList.add("hidden");
     preview.innerHTML = "";
   }
-  setStatus("비교 선택을 해제했습니다.");
+  setStatus("鍮꾧탳 ?좏깮???댁젣?덉뒿?덈떎.");
 }
 
 const comparisonPalette = ["#0f766e", "#ef476f", "#3b82f6", "#f59e0b", "#7c3aed", "#64748b", "#10b981", "#dc2626"];
@@ -2070,8 +2353,8 @@ function renderCycComparison() {
     .slice(0, 8);
   if (datasets.length < 2) {
     preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">비교하려면 CYC Fig를 2개 이상 선택하세요.</p>`;
-    setStatus("CYC Fig를 2개 이상 선택하세요.");
+    preview.innerHTML = `<p class="emptySaved">鍮꾧탳?섎젮硫?CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??</p>`;
+    setStatus("CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
     return;
   }
   const series = datasets.map((d) => ({
@@ -2081,8 +2364,8 @@ function renderCycComparison() {
   })).filter((s) => s.points.length);
   if (series.length < 2) {
     preview.classList.remove("hidden");
-    preview.innerHTML = `<p class="emptySaved">선택한 CYC Fig에서 비교 가능한 방전용량을 찾지 못했습니다.</p>`;
-    setStatus("비교 가능한 CYC 데이터가 부족합니다.");
+    preview.innerHTML = `<p class="emptySaved">?좏깮??CYC Fig?먯꽌 鍮꾧탳 媛?ν븳 諛⑹쟾?⑸웾??李얠? 紐삵뻽?듬땲??</p>`;
+    setStatus("鍮꾧탳 媛?ν븳 CYC ?곗씠?곌? 遺議깊빀?덈떎.");
     return;
   }
   const colors = ["#0f766e", "#ef476f", "#3b82f6", "#f59e0b", "#7c3aed", "#64748b", "#10b981", "#dc2626"];
@@ -2112,8 +2395,8 @@ function renderCycComparison() {
   preview.classList.remove("hidden");
   preview.innerHTML = `
     <div class="comparisonTitle">
-      <strong>CYC 비교 Fig</strong>
-      <span>${series.length}개 Fig 비교</span>
+      <strong>CYC 鍮꾧탳 Fig</strong>
+      <span>${series.length}媛?Fig 鍮꾧탳</span>
     </div>
     <svg id="comparisonFigure" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
       <style>
@@ -2131,18 +2414,18 @@ function renderCycComparison() {
       <text transform="translate(${plot.x - 56},${plot.y + plot.h / 2}) rotate(-90)" text-anchor="middle" class="cmpLabel">Specific capacity (mAh g-1)</text>
       ${legend}
     </svg>`;
-  setStatus("CYC 비교 Fig를 만들었습니다.");
+  setStatus("CYC 鍮꾧탳 Fig瑜?留뚮뱾?덉뒿?덈떎.");
 }
 
 async function deleteSavedFigure(id, event) {
   if (event) event.stopPropagation();
   const target = state.datasets.find((d) => d.id === id);
   const name = target ? datasetDisplayName(target) : id;
-  if (!id || !confirm(`저장된 Fig "${name}"를 삭제할까요?`)) return;
+  if (!id || !confirm(`??λ맂 Fig "${name}"瑜???젣?좉퉴??`)) return;
   const res = await fetch(`/api/datasets/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    setStatus(body.error || "Fig 삭제 실패");
+    setStatus(body.error || "Fig ??젣 ?ㅽ뙣");
     return;
   }
   state.datasets = state.datasets.filter((d) => d.id !== id);
@@ -2154,7 +2437,7 @@ async function deleteSavedFigure(id, event) {
   renderSelect();
   renderSavedList();
   renderCurrent();
-  setStatus("저장된 Fig를 삭제했습니다.");
+  setStatus("??λ맂 Fig瑜???젣?덉뒿?덈떎.");
 }
 
 function niceBounds(values) {
@@ -2236,8 +2519,8 @@ function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, lo
 function renderFigure(d) {
   if (!d) {
     $("figureCanvas").innerHTML = "";
-    $("figureTitle").textContent = "No dataset";
-    $("figureSubtitle").textContent = "데이터를 등록하거나 선택하세요.";
+    $("figureTitle").textContent = "선택한 Dataset 없음";
+    $("figureSubtitle").textContent = "파일을 분석하거나 저장된 Dataset을 선택하세요.";
     $("metaGrid").innerHTML = "";
     return;
   }
@@ -2282,9 +2565,9 @@ function renderFigure(d) {
   const fDomain = [Math.min(...rows.map((r) => r.frequency)), Math.max(...rows.map((r) => r.frequency))];
   const magDomain = positiveLogBounds(rows.map((r) => r.mag));
   const phaseDomain = niceBounds(bodePhase.map((p) => p.y));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "· " + d.cell.sampleName : ""}`;
+  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "· " + d.cell.material : ""} ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "쨌 " + d.cell.material : ""} ${d.rows.length} points`;
   $("metaGrid").innerHTML = [
     ["Material", d.cell.material],
     ["Electrolyte", d.cell.electrolyte],
@@ -2303,9 +2586,9 @@ function renderFigure(d) {
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
       <text x="72" y="74" class="caption">${escapeXml(d.cell.date || "")} ${escapeXml(d.cell.condition || "")}</text>
-      ${panel({ x: eisPlot.nyquist.x, y: eisPlot.nyquist.y, w: eisPlot.nyquist.w, h: eisPlot.nyquist.h, xlabel: "Z' / Ω", ylabel: "-Z'' / Ω", title: "Nyquist plot", xDomain: xNy, yDomain: yNy, points: ny, line: false })}
-      ${panel({ x: eisPlot.bodeX, y: eisPlot.nyquist.y, w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / Ω", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: false })}
-      ${panel({ x: eisPlot.bodeX, y: Math.round(svgSize.h * 0.58), w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -θ / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: false })}
+      ${panel({ x: eisPlot.nyquist.x, y: eisPlot.nyquist.y, w: eisPlot.nyquist.w, h: eisPlot.nyquist.h, xlabel: "Z' / 廓", ylabel: "-Z'' / 廓", title: "Nyquist plot", xDomain: xNy, yDomain: yNy, points: ny, line: false })}
+      ${panel({ x: eisPlot.bodeX, y: eisPlot.nyquist.y, w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / 廓", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: false })}
+      ${panel({ x: eisPlot.bodeX, y: Math.round(svgSize.h * 0.58), w: eisPlot.bodeW, h: eisPlot.bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -罐 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: false })}
     </svg>`;
   applyAnnotationsToSvg();
 }
@@ -2315,12 +2598,12 @@ function renderLegacyCycFigure(d) {
   syncFigureControls(style);
   const svgSize = figureSvgSize(style, "paper");
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "· " + d.cell.sampleName : ""}`;
+  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
   const capRows = rows.filter((r) => Number.isFinite(r.capacity));
   const effRows = rows.filter((r) => Number.isFinite(r.efficiency));
   const voltRows = rows.filter((r) => Number.isFinite(r.voltage) && (Number.isFinite(r.capacity) || Number.isFinite(r.time)));
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} · CYC · ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} 쨌 CYC 쨌 ${d.rows.length} points`;
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const panels = [];
   if (d.figureKind !== "voltage-profile" && capRows.length) {
@@ -2338,7 +2621,7 @@ function renderLegacyCycFigure(d) {
       <style>.axis{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}.label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}.panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}</style>
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
-      <text x="72" y="74" class="caption">CYC · ${escapeXml(d.cell.condition || "")}</text>
+      <text x="72" y="74" class="caption">CYC 쨌 ${escapeXml(d.cell.condition || "")}</text>
       ${panels.join("")}
     </svg>`;
 }
@@ -2467,6 +2750,14 @@ function parseCRateLabels(d) {
 
   for (const block of candidates) {
     let labels = tokenizeCRateBlock(block);
+    // WBCS names can put a cell/sample number between the electrode mass and
+    // the first rate, for example `0.0511392g_4_0.33_1_re0.33`.  When a
+    // fractional C-rate exists, values before it are identifiers, not rates.
+    const firstFractionalRate = labels.findIndex((label) => {
+      const value = Number(String(label).replace(/^re\s+/i, "").replace(/\s*C$/i, ""));
+      return Number.isFinite(value) && value > 0 && value < 1;
+    });
+    if (firstFractionalRate > 0) labels = labels.slice(firstFractionalRate);
     const start = labels.findIndex((label, idx) => {
       const next = labels[idx + 1];
       return label === "0.1 C" && next === "0.33 C";
@@ -2600,6 +2891,32 @@ function inferCRateSegments(d, rows, capPts) {
   return [];
 }
 
+// Only draw C-rate guide lines for complete, displayed cycle ranges.  A raw
+// cycler export can contain fractional/duplicate cycle records; using those
+// directly would pile guide lines and labels on top of the y-axis.
+function cRateFigureSegments(segments, capPts) {
+  const observedCycles = [...new Set((capPts || [])
+    .map((point) => Math.round(Number(point?.x)))
+    .filter((cycle) => Number.isFinite(cycle) && cycle >= 1))]
+    .sort((a, b) => a - b);
+  if (observedCycles.length < 2) return [];
+
+  const minCycle = observedCycles[0];
+  const maxCycle = observedCycles[observedCycles.length - 1];
+  const visibleSegments = [];
+  for (const segment of segments || []) {
+    const start = Math.max(minCycle, Math.ceil(Number(segment?.start)));
+    const end = Math.min(maxCycle, Math.floor(Number(segment?.end)));
+    const coveredCycles = observedCycles.filter((cycle) => cycle >= start && cycle <= end);
+    const previous = visibleSegments[visibleSegments.length - 1];
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start || coveredCycles.length < 2) continue;
+    if (previous && start <= previous.end) continue;
+    visibleSegments.push({ ...segment, start, end });
+    if (visibleSegments.length === 8) break;
+  }
+  return visibleSegments;
+}
+
 function rateAnnotations(segments, ax, xDomain, opts = {}) {
   const [plotMin, plotMax] = xDomain;
   const plotY = opts.plotY ?? 130;
@@ -2721,7 +3038,7 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ figureEdits }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "Fig 수정 저장 실패");
+    if (!res.ok) throw new Error(saved.error || "Fig ?섏젙 ????ㅽ뙣");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
     state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
@@ -2735,11 +3052,11 @@ async function saveFigureEdits(silent = true) {
       body: JSON.stringify({ datasetId: saved.id, name: `${sampleLabel(saved)} figure`, figureKind: saved.figureKind, edits: saved.figureEdits }),
     });
     const figureBody = await figureRes.json().catch(() => ({}));
-    if (!figureRes.ok) throw new Error(figureBody.error || "Fig 라이브러리 저장에 실패했습니다.");
+    if (!figureRes.ok) throw new Error(figureBody.error || "Fig ?쇱씠釉뚮윭由???μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
     if (state.cellWorkspace?.cell?.id === saved.cellRecordId) loadCellWorkspace(saved);
-    if (!silent) setStatus("Fig 수정 내용이 저장되었습니다.");
+    if (!silent) setStatus("Fig ?섏젙 ?댁슜????λ릺?덉뒿?덈떎.");
   } catch (error) {
-    setStatus(`Fig 수정 저장 실패: ${error.message}`);
+    setStatus(`Fig ?섏젙 ????ㅽ뙣: ${error.message}`);
   }
 }
 
@@ -2824,7 +3141,7 @@ function selectAnnotation(idx) {
   const ann = state.selectedAnnotation === null ? null : currentAnnotations()[state.selectedAnnotation];
   if (input && ann) input.value = ann.text;
   if (sizeInput) sizeInput.value = ann ? clampFontSize(ann.size) : clampFontSize(sizeInput.value);
-  if (button) button.textContent = ann ? "글 수정" : "글 추가";
+  if (button) button.textContent = ann ? "湲 ?섏젙" : "湲 異붽?";
   for (const el of document.querySelectorAll(".userAnnotation")) {
     const selected = Number(el.dataset.annotationIndex) === state.selectedAnnotation;
     el.classList.toggle("selected", selected);
@@ -2837,8 +3154,8 @@ function addOrUpdateAnnotation() {
   const input = $("annotationText");
   const text = input?.value.trim();
   const size = clampFontSize($("annotationSize")?.value);
-  if (!state.selectedId) return setStatus("먼저 파일 분석 후 Fig를 생성하거나, 기존 Fig를 선택하세요.");
-  if (!text) return setStatus("추가할 글을 입력하세요.");
+  if (!state.selectedId) return setStatus("癒쇱? ?뚯씪 遺꾩꽍 ??Fig瑜??앹꽦?섍굅?? 湲곗〈 Fig瑜??좏깮?섏꽭??");
+  if (!text) return setStatus("異붽???湲???낅젰?섏꽭??");
   const annotations = currentAnnotations();
   if (state.selectedAnnotation !== null && annotations[state.selectedAnnotation]) {
     annotations[state.selectedAnnotation].text = text;
@@ -2862,7 +3179,7 @@ function clearAnnotations() {
   const sizeInput = $("annotationSize");
   if (sizeInput) sizeInput.value = 13;
   const button = $("addAnnotation");
-  if (button) button.textContent = "글 추가";
+  if (button) button.textContent = "湲 異붽?";
   renderCurrent();
   saveFigureEdits(false);
 }
@@ -2880,7 +3197,7 @@ function changeAnnotationSize(delta) {
 }
 
 function changeFigureSeriesColor() {
-  if (!state.selectedId) return setStatus("먼저 파일 분석 후 Fig를 생성하거나, 기존 Fig를 선택하세요.");
+  if (!state.selectedId) return setStatus("癒쇱? ?뚯씪 遺꾩꽍 ??Fig瑜??앹꽦?섍굅?? 湲곗〈 Fig瑜??좏깮?섏꽭??");
   const input = $("figureSeriesColor");
   const style = currentFigureStyle();
   style.seriesColor = normalizeHexColor(input?.value, style.seriesColor);
@@ -2890,7 +3207,7 @@ function changeFigureSeriesColor() {
 }
 
 function changeFigureAspectRatio() {
-  if (!state.selectedId) return setStatus("먼저 Fig를 선택하세요.");
+  if (!state.selectedId) return setStatus("癒쇱? Fig瑜??좏깮?섏꽭??");
   const input = $("figureAspectRatio");
   const style = currentFigureStyle();
   style.aspectRatio = normalizeFigureAspectRatio(input?.value);
@@ -3039,8 +3356,8 @@ function formatCurrentForFigure(currentA) {
   return `Iavg ${fmt(currentA, 4)} A`;
 }
 
-// CYC 요약 파일에는 cycle마다 전압과 전류가 한 점씩만 있을 수 있습니다.
-// 이 경우 전압-용량 곡선으로 오해하지 않고, cycle별 평균 전압/전류 추세를 별도로 그립니다.
+// CYC ?붿빟 ?뚯씪?먮뒗 cycle留덈떎 ?꾩븬怨??꾨쪟媛 ???먯뵫留??덉쓣 ???덉뒿?덈떎.
+// ??寃쎌슦 ?꾩븬-?⑸웾 怨≪꽑?쇰줈 ?ㅽ빐?섏? ?딄퀬, cycle蹂??됯퇏 ?꾩븬/?꾨쪟 異붿꽭瑜?蹂꾨룄濡?洹몃┰?덈떎.
 function cycVoltageCurrentTrend(rows) {
   const byCycle = new Map();
   for (const row of rows || []) {
@@ -3058,7 +3375,7 @@ function cycVoltageCurrentTrend(rows) {
   const entries = [...byCycle.entries()].sort(([left], [right]) => left - right);
   return {
     voltage: entries.filter(([, group]) => group.voltages.length).map(([cycle, group]) => ({ x: cycle, y: average(group.voltages) })),
-    // BDF의 표준 current_a(A)를 사용자에게 읽기 쉬운 mA 축으로 변환합니다.
+    // BDF???쒖? current_a(A)瑜??ъ슜?먯뿉寃??쎄린 ?ъ슫 mA 異뺤쑝濡?蹂?섑빀?덈떎.
     current: entries.filter(([, group]) => group.currents.length).map(([cycle, group]) => ({ x: cycle, y: average(group.currents) * 1000 })),
   };
 }
@@ -3069,9 +3386,9 @@ function cycProfilePanel({ x, y, w, h, profile }) {
       <g>
         <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
         <rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/>
-        <text x="${x + w / 2}" y="${y + h / 2 - 16}" class="profileEmptyTitle" text-anchor="middle">전압 프로파일용 점이 부족합니다.</text>
-        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">현재 파일은 cycle별 요약값이라 전압-용량/시간 곡선을 만들 수 없습니다.</text>
-        <text x="${x + w / 2}" y="${y + h / 2 + 40}" class="profileEmptyText" text-anchor="middle">cycle 안에 여러 voltage와 capacity 또는 time 점이 있는 원본 데이터를 사용하세요.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 - 16}" class="profileEmptyTitle" text-anchor="middle">?꾩븬 ?꾨줈?뚯씪???먯씠 遺議깊빀?덈떎.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">?꾩옱 ?뚯씪? cycle蹂??붿빟媛믪씠???꾩븬-?⑸웾/?쒓컙 怨≪꽑??留뚮뱾 ???놁뒿?덈떎.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 40}" class="profileEmptyText" text-anchor="middle">cycle ?덉뿉 ?щ윭 voltage? capacity ?먮뒗 time ?먯씠 ?덈뒗 ?먮낯 ?곗씠?곕? ?ъ슜?섏꽭??</text>
       </g>`;
   }
   const allPoints = profile.series.flatMap((series) => series.points);
@@ -3111,7 +3428,7 @@ function cycProfilePanel({ x, y, w, h, profile }) {
 
 function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
   if (!trend.voltage.length) {
-    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Voltage/current behavior</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">Voltage 데이터가 없어 전압·전류 추세를 만들 수 없습니다.</text></g>`;
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Voltage/current behavior</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">Voltage ?곗씠?곌? ?놁뼱 ?꾩븬쨌?꾨쪟 異붿꽭瑜?留뚮뱾 ???놁뒿?덈떎.</text></g>`;
   }
   const allCycles = [...trend.voltage, ...trend.current].map((point) => point.x);
   const hasCurrent = trend.current.length > 0;
@@ -3125,7 +3442,7 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
     y2Domain: hasCurrent ? niceBounds(trend.current.map((point) => point.y)) : null,
     xlabel: "Cycle number",
     ylabel: "Voltage (V)",
-    // 오른쪽 전류 축 제목은 패널 폭에 맞춰 아래에서 직접 배치합니다.
+    // ?ㅻⅨ履??꾨쪟 異??쒕ぉ? ?⑤꼸 ??뿉 留욎떠 ?꾨옒?먯꽌 吏곸젒 諛곗튂?⑸땲??
     y2label: "",
     integerX: true,
     xlabelOffset: 48,
@@ -3150,7 +3467,7 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
 
 function cycPerformancePanel({ x, y, w, h, points }) {
   if (!points.length) {
-    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">용량 데이터를 찾지 못했습니다.</text></g>`;
+    return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">?⑸웾 ?곗씠?곕? 李얠? 紐삵뻽?듬땲??</text></g>`;
   }
   return panel({
     x,
@@ -3225,7 +3542,7 @@ function renderCycPerformanceFigure(d) {
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
   const title = `${d.cell.cellId || d.id}${d.cell.sampleName ? " - " + d.cell.sampleName : ""}`;
   const capPts = dischargeSeries(rows);
-  const rateSegments = inferCRateSegments(d, rows, capPts);
+  const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
   const isRateFigure = rateSegments.length >= 2;
   const detectedCRates = explicitCRateValues(rows);
   const cRateText = isRateFigure
@@ -3259,7 +3576,10 @@ function renderCycPerformanceFigure(d) {
   const sy = makeScale(capDomain, [plot.y + plot.h, plot.y]);
   const xTickStep = xTickMax <= 18 ? 3 : 5;
   const xTicks = Array.from({ length: Math.floor(xTickMax / xTickStep) + 1 }, (_, i) => i * xTickStep);
-  const yTickStep = 20;
+  // Keep the y-axis readable even if a malformed export contains an unusually
+  // large capacity value.  A fixed 20 mAh g-1 step can otherwise create a
+  // dense black stripe of overlapping tick labels.
+  const yTickStep = Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20);
   const yTicks = Array.from({ length: Math.floor(capDomain[1] / yTickStep) + 1 }, (_, i) => i * yTickStep);
   const rateSvg = isRateFigure ? rateSegments.map((s, idx) => {
     const left = s.start;
@@ -3310,16 +3630,16 @@ function renderCvFigure(d) {
     h: Math.max(300, Math.round(svgSize.h * 0.58)),
   };
   const rows = d.rows.filter((r) => Number.isFinite(r.voltage) && Number.isFinite(r.current));
-  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "· " + d.cell.sampleName : ""}`;
+  const title = `${d.cell.cellId || d.id} ${d.cell.sampleName ? "쨌 " + d.cell.sampleName : ""}`;
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} · CV · ${d.rows.length} points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} 쨌 CV 쨌 ${d.rows.length} points`;
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
       <style>.axis{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.seriesLine{fill:none;stroke:#0f766e;stroke-width:2.4}.points circle{fill:#fff;stroke:#0f766e;stroke-width:1.8}.label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}.panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}</style>
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
-      <text x="72" y="74" class="caption">CV · ${escapeXml(d.cell.condition || "")}</text>
+      <text x="72" y="74" class="caption">CV 쨌 ${escapeXml(d.cell.condition || "")}</text>
       ${panel({ x: cvPlot.x, y: cvPlot.y, w: cvPlot.w, h: cvPlot.h, xlabel: "Voltage (V)", ylabel: "Current", title: "Cyclic voltammetry", xDomain: niceBounds(rows.map((r) => r.voltage)), yDomain: niceBounds(rows.map((r) => r.current)), points: rows.map((r) => ({ x: r.voltage, y: r.current })) })}
     </svg>`;
   applyAnnotationsToSvg();
@@ -3374,15 +3694,15 @@ function renderExperimentInfo(d) {
     });
     blocks.push(`
       <section class="infoBlock">
-        <h3>현재 CYC 데이터 요약</h3>
+        <h3>?꾩옱 CYC ?곗씠???붿빟</h3>
         <div class="infoCards">
-          <div><strong>데이터</strong><span>${escapeXml(d.sourceName || d.id)}</span></div>
-          <div><strong>포인트</strong><span>${d.rows.length} rows</span></div>
+          <div><strong>?곗씠??/strong><span>${escapeXml(d.sourceName || d.id)}</span></div>
+          <div><strong>?ъ씤??/strong><span>${d.rows.length} rows</span></div>
           <div><strong>C-rate</strong><span>${segments.map((s) => s.label).join(" | ") || "-"}</span></div>
-          <div><strong>전극 계산</strong><span>${savedCalc ? `${escapeXml(savedCalc.profileName || "저장값")} · 1C ${fixed(oneC, 4)} mA` : (manual ? "매뉴얼 기준" : "-")}</span></div>
+          <div><strong>?꾧레 怨꾩궛</strong><span>${savedCalc ? `${escapeXml(savedCalc.profileName || "??κ컪")} 쨌 1C ${fixed(oneC, 4)} mA` : (manual ? "留ㅻ돱??湲곗?" : "-")}</span></div>
         </div>
         <table>
-          <thead><tr><th>C-rate</th><th>Cycle</th><th>평균 방전용량 (mAh g-1)</th><th>데이터 전류</th><th>저장/매뉴얼 기준 전류 (mA)</th></tr></thead>
+          <thead><tr><th>C-rate</th><th>Cycle</th><th>?됯퇏 諛⑹쟾?⑸웾 (mAh g-1)</th><th>?곗씠???꾨쪟</th><th>???留ㅻ돱??湲곗? ?꾨쪟 (mA)</th></tr></thead>
           <tbody>${segmentRows.map(([label, range, cap, current, estimated]) => `
             <tr>
               <td>${escapeXml(label)}</td>
@@ -3403,12 +3723,12 @@ function renderExperimentInfo(d) {
         <section class="infoBlock">
           <h3>${escapeXml(sheet.sheet)}</h3>
           <div class="infoCards">
-            <div><strong>활물질 이론용량</strong><span>${sheet.theoreticalCapacity_mAh_g || "-"} mAh g-1</span></div>
-            <div><strong>샘플 수</strong><span>${sheet.sampleCount || 0}</span></div>
-            <div><strong>조성</strong><span>${Object.entries(sheet.composition || {}).map(([k, v]) => `${k} ${v}`).join(" / ") || "-"}</span></div>
+            <div><strong>?쒕Ъ吏??대줎?⑸웾</strong><span>${sheet.theoreticalCapacity_mAh_g || "-"} mAh g-1</span></div>
+            <div><strong>?섑뵆 ??/strong><span>${sheet.sampleCount || 0}</span></div>
+            <div><strong>議곗꽦</strong><span>${Object.entries(sheet.composition || {}).map(([k, v]) => `${k} ${v}`).join(" / ") || "-"}</span></div>
           </div>
           <table>
-            <thead><tr><th>샘플</th><th>1C 전류 (mA)</th><th>전극 무게 (g)</th><th>두께 (mm)</th><th>NCM mass (g)</th><th>C-rate별 전류</th></tr></thead>
+            <thead><tr><th>?섑뵆</th><th>1C ?꾨쪟 (mA)</th><th>?꾧레 臾닿쾶 (g)</th><th>?먭퍡 (mm)</th><th>NCM mass (g)</th><th>C-rate蹂??꾨쪟</th></tr></thead>
             <tbody>${samples.map((s) => `
               <tr>
                 <td>${escapeXml(s.sample)}</td>
@@ -3423,14 +3743,14 @@ function renderExperimentInfo(d) {
     }).join("");
     blocks.push(`
       <section class="infoBlock">
-        <h3>매뉴얼 파일</h3>
-        <p>${escapeXml(state.manualInfo.filename)} · ${state.manualInfo.sheetCount} sheets</p>
+        <h3>留ㅻ돱???뚯씪</h3>
+        <p>${escapeXml(state.manualInfo.filename)} 쨌 ${state.manualInfo.sheetCount} sheets</p>
       </section>
       ${sheetCards}`);
   }
 
   if (!blocks.length) {
-    blocks.push(`<section class="infoBlock emptyInfo"><h3>실험 정보 없음</h3><p>CYC Fig를 선택하거나 매뉴얼 엑셀을 넣으면 C-rate와 전류 정보가 여기에 정리됩니다.</p></section>`);
+    blocks.push(`<section class="infoBlock emptyInfo"><h3>?ㅽ뿕 ?뺣낫 ?놁쓬</h3><p>CYC Fig瑜??좏깮?섍굅??留ㅻ돱???묒????ｌ쑝硫?C-rate? ?꾨쪟 ?뺣낫媛 ?ш린???뺣━?⑸땲??</p></section>`);
   }
   panel.innerHTML = blocks.join("");
 }
@@ -3447,10 +3767,10 @@ function renderCellWorkspace(d) {
   if (!title || !path || !tags || !groupList || !segmentList || !figureList || !reportList || !form) return;
 
   if (!d) {
-    title.textContent = "셀을 선택해주세요";
-    path.textContent = "Project → Campaign → Cell → Dataset";
+    title.textContent = "????좏깮?댁＜?몄슂";
+    path.textContent = "Project ??Campaign ??Cell ??Dataset";
     tags.innerHTML = "";
-    groupList.innerHTML = segmentList.innerHTML = figureList.innerHTML = reportList.innerHTML = `<span class="recordEmpty">선택한 셀의 기록이 여기에 표시됩니다.</span>`;
+    groupList.innerHTML = segmentList.innerHTML = figureList.innerHTML = reportList.innerHTML = `<span class="recordEmpty">?좏깮?????湲곕줉???ш린???쒖떆?⑸땲??</span>`;
     form.reset();
     return;
   }
@@ -3459,8 +3779,8 @@ function renderCellWorkspace(d) {
   const metadata = workspace?.metadata?.metadata || {};
   const savedTags = Array.isArray(workspace?.metadata?.tags) ? workspace.metadata.tags : [];
   title.textContent = workspace?.cell?.cellId || d.cell?.cellId || "Cell record";
-  path.textContent = hierarchyLabel(d) || "Project → Campaign → Cell → Dataset";
-  tags.innerHTML = savedTags.map((tag) => `<span>${escapeXml(tag)}</span>`).join("") || `<span class="recordChip">태그 없음</span>`;
+  path.textContent = hierarchyLabel(d) || "Project ??Campaign ??Cell ??Dataset";
+  tags.innerHTML = savedTags.map((tag) => `<span>${escapeXml(tag)}</span>`).join("") || `<span class="recordChip">?쒓렇 ?놁쓬</span>`;
   for (const key of ["cathode", "anode", "separator", "spacer", "cellFormat"]) {
     if (form.elements[key]) form.elements[key].value = metadata[key] || "";
   }
@@ -3468,32 +3788,32 @@ function renderCellWorkspace(d) {
 
   const groups = workspace?.datasetGroups || [];
   groupList.innerHTML = groups.length ? groups.map((group) => {
-    const typeText = Object.entries(group.dataTypes || {}).map(([type, count]) => `${String(type).toUpperCase()} ${count}`).join(" · ") || "아직 데이터 없음";
-    const current = group.id === d.datasetGroupId ? "현재 선택" : "선택";
+    const typeText = Object.entries(group.dataTypes || {}).map(([type, count]) => `${String(type).toUpperCase()} ${count}`).join(" 쨌 ") || "?꾩쭅 ?곗씠???놁쓬";
+    const current = group.id === d.datasetGroupId ? "?꾩옱 ?좏깮" : "?좏깮";
     return `<div class="recordListItem"><span><strong>${escapeXml(group.name)}</strong><br/><em>${escapeXml(typeText)}</em></span><button type="button" data-select-dataset-group="${escapeAttr(group.id)}">${current}</button></div>`;
-  }).join("") : `<span class="recordEmpty">Dataset 묶음이 없습니다.</span>`;
+  }).join("") : `<span class="recordEmpty">Dataset 臾띠쓬???놁뒿?덈떎.</span>`;
 
   const segments = workspace?.protocolSegments || [];
   segmentList.innerHTML = segments.length ? segments.map((segment) => {
     const rate = Number.isFinite(Number(segment.cRate)) ? `${segment.cRate} C` : "C-rate 미입력";
-    return `<div class="recordListItem"><span><strong>${escapeXml(segment.label)}</strong><br/><em>${segment.startCycle}-${segment.endCycle} cycle · ${escapeXml(rate)} · ${escapeXml(segment.mode || "other")}</em></span><button type="button" class="smallDanger" data-delete-segment="${escapeAttr(segment.id)}">삭제</button></div>`;
-  }).join("") : `<span class="recordEmpty">등록한 프로토콜 구간이 없습니다.</span>`;
+    return `<div class="recordListItem"><span><strong>${escapeXml(segment.label)}</strong><br/><em>${segment.startCycle}-${segment.endCycle} cycle 쨌 ${escapeXml(rate)} 쨌 ${escapeXml(segment.mode || "other")}</em></span><button type="button" class="smallDanger" data-delete-segment="${escapeAttr(segment.id)}">??젣</button></div>`;
+  }).join("") : `<span class="recordEmpty">?깅줉???꾨줈?좎퐳 援ш컙???놁뒿?덈떎.</span>`;
 
   const figures = workspace?.figures || [];
-  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">열기</button></div>`).join("") : `<span class="recordEmpty">저장한 Fig가 없습니다.</span>`;
+  figureList.innerHTML = figures.length ? figures.map((figure) => `<div class="recordListItem"><span><strong>${escapeXml(figure.name)}</strong><br/><em>${escapeXml(figure.figureKind || "figure")}</em></span><button type="button" data-open-figure-record="${escapeAttr(figure.datasetId)}">?닿린</button></div>`).join("") : `<span class="recordEmpty">??ν븳 Fig媛 ?놁뒿?덈떎.</span>`;
 
   const reports = workspace?.reports || [];
   reportList.innerHTML = reports.length ? reports.map((report) => {
     const lead = String(report.content?.main || report.content?.sections?.main || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").slice(0, 90);
-    return `<div class="recordListItem"><span><strong>${escapeXml(report.title)}</strong><br/><em>${escapeXml(lead || report.reportType || "report")}</em></span><button type="button" data-open-report-record="${escapeAttr(report.id)}">보기</button></div>`;
-  }).join("") : `<span class="recordEmpty">저장한 AI 보고서가 없습니다.</span>`;
+    return `<div class="recordListItem"><span><strong>${escapeXml(report.title)}</strong><br/><em>${escapeXml(lead || report.reportType || "report")}</em></span><button type="button" data-open-report-record="${escapeAttr(report.id)}">蹂닿린</button></div>`;
+  }).join("") : `<span class="recordEmpty">??ν븳 AI 蹂닿퀬?쒓? ?놁뒿?덈떎.</span>`;
 
   for (const button of groupList.querySelectorAll("[data-select-dataset-group]")) {
     button.addEventListener("click", () => {
       const select = $("datasetGroupSelect");
       if (select) select.value = button.dataset.selectDatasetGroup;
       renderHierarchyControls({ ...hierarchySelectionPayload(), datasetGroupId: button.dataset.selectDatasetGroup });
-      setStatus("선택한 Dataset 묶음을 다음 저장 위치로 설정했습니다.");
+      setStatus("?좏깮??Dataset 臾띠쓬???ㅼ쓬 ????꾩튂濡??ㅼ젙?덉뒿?덈떎.");
     });
   }
   for (const button of segmentList.querySelectorAll("[data-delete-segment]")) {
@@ -3517,20 +3837,20 @@ async function loadCellWorkspace(d = currentDataset()) {
   try {
     const res = await fetch(`/api/cells/${encodeURIComponent(d.cellRecordId)}/workspace`, { headers: authHeaders() });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "셀 기록을 불러오지 못했습니다.");
+    if (!res.ok) throw new Error(body.error || "? 湲곕줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
     if (requestId !== state.cellWorkspaceRequestId || currentDataset()?.cellRecordId !== d.cellRecordId) return;
     state.cellWorkspace = body;
     renderCellWorkspace(d);
   } catch (error) {
     if (requestId !== state.cellWorkspaceRequestId) return;
-    setStatus(error.message || "셀 기록을 불러오지 못했습니다.");
+    setStatus(error.message || "? 湲곕줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   }
 }
 
 async function saveCellMetadata(event) {
   event.preventDefault();
   const d = currentDataset();
-  if (!d?.cellRecordId) return setStatus("먼저 저장된 셀 데이터를 선택해주세요.");
+  if (!d?.cellRecordId) return setStatus("癒쇱? ??λ맂 ? ?곗씠?곕? ?좏깮?댁＜?몄슂.");
   const form = event.currentTarget;
   const values = Object.fromEntries(new FormData(form));
   const tags = String(values.tags || "").split(",").map((item) => item.trim()).filter(Boolean);
@@ -3542,19 +3862,19 @@ async function saveCellMetadata(event) {
       body: JSON.stringify({ metadata: values, tags }),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "셀 메타데이터 저장에 실패했습니다.");
+    if (!res.ok) throw new Error(body.error || "? 硫뷀??곗씠????μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
     state.cellWorkspace = { ...(state.cellWorkspace || {}), cell: state.cellWorkspace?.cell || { id: d.cellRecordId }, metadata: body };
     renderCellWorkspace(d);
-    setStatus("셀 메타데이터와 태그를 저장했습니다.");
+    setStatus("? 硫뷀??곗씠?곗? ?쒓렇瑜???ν뻽?듬땲??");
   } catch (error) {
-    setStatus(error.message || "셀 메타데이터 저장에 실패했습니다.");
+    setStatus(error.message || "? 硫뷀??곗씠????μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
   }
 }
 
 async function saveProtocolSegment(event) {
   event.preventDefault();
   const d = currentDataset();
-  if (!d?.cellRecordId) return setStatus("먼저 저장된 셀 데이터를 선택해주세요.");
+  if (!d?.cellRecordId) return setStatus("癒쇱? ??λ맂 ? ?곗씠?곕? ?좏깮?댁＜?몄슂.");
   const values = Object.fromEntries(new FormData(event.currentTarget));
   try {
     const res = await fetch(`/api/cells/${encodeURIComponent(d.cellRecordId)}/protocol-segments`, {
@@ -3563,32 +3883,32 @@ async function saveProtocolSegment(event) {
       body: JSON.stringify({ ...values, datasetGroupId: d.datasetGroupId || "" }),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "프로토콜 구간 저장에 실패했습니다.");
+    if (!res.ok) throw new Error(body.error || "?꾨줈?좎퐳 援ш컙 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
     event.currentTarget.reset();
     await loadCellWorkspace(d);
-    setStatus(`${body.label} 구간을 저장했습니다.`);
+    setStatus(`${body.label} 援ш컙????ν뻽?듬땲??`);
   } catch (error) {
-    setStatus(error.message || "프로토콜 구간 저장에 실패했습니다.");
+    setStatus(error.message || "?꾨줈?좎퐳 援ш컙 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
   }
 }
 
 async function deleteProtocolSegment(segmentId) {
   if (!segmentId) return;
-  if (!window.confirm("이 프로토콜 구간을 삭제할까요?")) return;
+  if (!window.confirm("???꾨줈?좎퐳 援ш컙????젣?좉퉴??")) return;
   try {
     const res = await fetch(`/api/protocol-segments/${encodeURIComponent(segmentId)}`, { method: "DELETE", headers: authHeaders() });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "프로토콜 구간 삭제에 실패했습니다.");
+    if (!res.ok) throw new Error(body.error || "?꾨줈?좎퐳 援ш컙 ??젣???ㅽ뙣?덉뒿?덈떎.");
     await loadCellWorkspace();
-    setStatus("프로토콜 구간을 삭제했습니다.");
+    setStatus("?꾨줈?좎퐳 援ш컙????젣?덉뒿?덈떎.");
   } catch (error) {
-    setStatus(error.message || "프로토콜 구간 삭제에 실패했습니다.");
+    setStatus(error.message || "?꾨줈?좎퐳 援ш컙 ??젣???ㅽ뙣?덉뒿?덈떎.");
   }
 }
 
 function openCellRecordDataset(datasetId) {
   const target = state.datasets.find((item) => item.id === datasetId);
-  if (!target) return setStatus("현재 목록에서 Fig 데이터셋을 찾을 수 없습니다.");
+  if (!target) return setStatus("?꾩옱 紐⑸줉?먯꽌 Fig ?곗씠?곗뀑??李얠쓣 ???놁뒿?덈떎.");
   state.selectedId = target.id;
   state.activeFigureModule = target.dataType || state.activeFigureModule;
   renderSelect();
@@ -3601,7 +3921,7 @@ function openCellReport(reportId) {
   const report = state.cellWorkspace?.reports?.find((item) => item.id === reportId);
   if (!report) return;
   const message = Object.values(report.content || {}).map((value) => String(value).replace(/<[^>]*>/g, " ")).join("\n\n").slice(0, 4000);
-  window.alert(`${report.title}\n\n${message || "저장된 내용이 없습니다."}`);
+  window.alert(`${report.title}\n\n${message || "??λ맂 ?댁슜???놁뒿?덈떎."}`);
 }
 
 function currentDataset() {
@@ -3616,7 +3936,7 @@ function analysisLabel(name) {
     eis: "EIS summary",
     "pulse-resistance": "Pulse resistance",
     "rate-capability": "Rate capability",
-  }[name] || name || "분석";
+  }[name] || name || "遺꾩꽍";
 }
 
 function analysisMetricLabel(key) {
@@ -3631,7 +3951,7 @@ function analysisMetricLabel(key) {
     initial_capacity_mah_g: "초기 용량 (mAh g-1)",
     final_capacity_mah_g: "마지막 용량 (mAh g-1)",
     final_retention_pct: "용량 유지율 (%)",
-    point_count: "분석 점 수",
+    point_count: "분석 포인트 수",
     pulse_count: "pulse 수",
     group_count: "C-rate 그룹 수",
   }[key] || key.replaceAll("_", " ");
@@ -3649,24 +3969,24 @@ function renderAnalysisResult(run) {
   if (!resultNode || !statusNode) return;
   const dataset = currentDataset();
   if (!dataset) {
-    statusNode.innerHTML = "<strong>분석할 데이터셋을 먼저 저장하거나 선택하세요.</strong>";
+    statusNode.innerHTML = "<strong>遺꾩꽍???곗씠?곗뀑??癒쇱? ??ν븯嫄곕굹 ?좏깮?섏꽭??</strong>";
     resultNode.innerHTML = "";
     return;
   }
   const provenance = run?.provenance || {};
   statusNode.innerHTML = `
     <strong>${escapeXml(datasetDisplayName(dataset))}</strong>
-    <span>${escapeXml((dataset.dataType || "data").toUpperCase())} · ${dataset.parsedArtifact?.objectKey ? "BDF 정규화 데이터 우선" : "기존 표 데이터"}</span>
-    ${run ? `<span>${escapeXml(analysisLabel(run.analysisName))} · ${escapeXml(run.createdAt || "")}</span>` : "<span>분석 방법을 선택하고 실행하세요.</span>"}
-    ${run?.provenance ? `<small>행 출처: ${escapeXml(provenance.rowSource || "dataset-rows")} · 품질 제외: ${Number(provenance.excludedQualityRowCount || 0)}행</small>` : ""}
+    <span>${escapeXml((dataset.dataType || "data").toUpperCase())} - ${dataset.parsedArtifact?.objectKey ? "BDF 정규화 데이터 우선" : "기존 데이터"}</span>
+    ${run ? `<span>${escapeXml(analysisLabel(run.analysisName))} - ${escapeXml(run.createdAt || "")}</span>` : "<span>분석 방법을 선택하고 실행해 주세요.</span>"}
+    ${run?.provenance ? `<small>데이터 출처: ${escapeXml(provenance.rowSource || "dataset-rows")} - 품질 제외 행: ${Number(provenance.excludedQualityRowCount || 0)}</small>` : ""}
   `;
   if (!run) {
-    resultNode.innerHTML = "<p class=\"analysisEmpty\">아직 선택한 데이터셋의 저장된 분석 결과가 없습니다.</p>";
+    resultNode.innerHTML = "<p class=\"analysisEmpty\">?꾩쭅 ?좏깮???곗씠?곗뀑????λ맂 遺꾩꽍 寃곌낵媛 ?놁뒿?덈떎.</p>";
     return;
   }
   const result = run.result || {};
   if (run.status !== "ok") {
-    resultNode.innerHTML = `<div class="analysisUnavailable"><strong>분석 결과를 만들 수 없습니다.</strong><span>${escapeXml(result.reason || "데이터 형식과 필요한 컬럼을 확인하세요.")}</span></div>`;
+    resultNode.innerHTML = `<div class="analysisUnavailable"><strong>遺꾩꽍 寃곌낵瑜?留뚮뱾 ???놁뒿?덈떎.</strong><span>${escapeXml(result.reason || "?곗씠???뺤떇怨??꾩슂??而щ읆???뺤씤?섏꽭??")}</span></div>`;
     return;
   }
   const metrics = Object.entries(result)
@@ -3684,8 +4004,8 @@ function renderAnalysisResult(run) {
   const pulseHtml = Array.isArray(result.pulses) && result.pulses.length
     ? `<div class="analysisDataTable"><h4>Pulse resistance</h4><table><thead><tr><th>time (s)</th><th>delta I (A)</th><th>R (ohm)</th></tr></thead><tbody>${result.pulses.slice(0, 12).map((pulse) => `<tr><td>${escapeXml(formatAnalysisMetric(pulse.time_s))}</td><td>${escapeXml(formatAnalysisMetric(pulse.delta_current_a))}</td><td>${escapeXml(formatAnalysisMetric(pulse.resistance_ohm))}</td></tr>`).join("")}</tbody></table></div>`
     : "";
-  const pointNote = Array.isArray(result.points) ? `<p class="analysisPointNote">곡선 산출 점: ${result.points.length}개. 결과 JSON 아티팩트에 전체 점이 보존됩니다.</p>` : "";
-  resultNode.innerHTML = `<div class="analysisResultTitle"><span class="analysisState ok">완료</span><h3>${escapeXml(analysisLabel(run.analysisName))}</h3></div>${metricHtml}${rangeHtml ? `<dl class="analysisMetricGrid">${rangeHtml}</dl>` : ""}${groupHtml}${pulseHtml}${pointNote}`;
+  const pointNote = Array.isArray(result.points) ? `<p class="analysisPointNote">怨≪꽑 ?곗텧 ?? ${result.points.length}媛? 寃곌낵 JSON ?꾪떚?⑺듃???꾩껜 ?먯씠 蹂댁〈?⑸땲??</p>` : "";
+  resultNode.innerHTML = `<div class="analysisResultTitle"><span class="analysisState ok">?꾨즺</span><h3>${escapeXml(analysisLabel(run.analysisName))}</h3></div>${metricHtml}${rangeHtml ? `<dl class="analysisMetricGrid">${rangeHtml}</dl>` : ""}${groupHtml}${pulseHtml}${pointNote}`;
 }
 
 function renderAnalysisLab() {
@@ -3696,8 +4016,8 @@ function renderAnalysisLab() {
   const selectedId = state.selectedId || state.datasets[0]?.id || "";
   if (selectedId && selectedId !== state.selectedId) state.selectedId = selectedId;
   select.innerHTML = state.datasets.length
-    ? state.datasets.map((dataset) => `<option value="${escapeAttr(dataset.id)}" ${dataset.id === state.selectedId ? "selected" : ""}>${escapeXml(datasetDisplayName(dataset))} · ${escapeXml((dataset.dataType || "data").toUpperCase())}</option>`).join("")
-    : "<option value=\"\">저장된 데이터셋이 없습니다.</option>";
+    ? state.datasets.map((dataset) => `<option value="${escapeAttr(dataset.id)}" ${dataset.id === state.selectedId ? "selected" : ""}>${escapeXml(datasetDisplayName(dataset))} 쨌 ${escapeXml((dataset.dataType || "data").toUpperCase())}</option>`).join("")
+    : "<option value=\"\">??λ맂 ?곗씠?곗뀑???놁뒿?덈떎.</option>";
   if (state.pendingAnalysisName) {
     typeSelect.value = state.pendingAnalysisName;
     state.pendingAnalysisName = "";
@@ -3711,8 +4031,8 @@ function renderAnalysisLab() {
   const list = $("analysisRunList");
   if (!list) return;
   list.innerHTML = state.analysisRuns.length
-    ? state.analysisRuns.map((run) => `<button type="button" class="analysisRunItem${run.id === state.selectedAnalysisRunId ? " active" : ""}" data-analysis-run-id="${escapeAttr(run.id)}"><strong>${escapeXml(analysisLabel(run.analysisName))}</strong><span>${escapeXml(run.status)} · ${escapeXml(run.createdAt || "")}</span></button>`).join("")
-    : "<p class=\"analysisEmpty\">이 데이터셋의 분석 이력이 없습니다.</p>";
+    ? state.analysisRuns.map((run) => `<button type="button" class="analysisRunItem${run.id === state.selectedAnalysisRunId ? " active" : ""}" data-analysis-run-id="${escapeAttr(run.id)}"><strong>${escapeXml(analysisLabel(run.analysisName))}</strong><span>${escapeXml(run.status)} 쨌 ${escapeXml(run.createdAt || "")}</span></button>`).join("")
+    : "<p class=\"analysisEmpty\">???곗씠?곗뀑??遺꾩꽍 ?대젰???놁뒿?덈떎.</p>";
   for (const button of list.querySelectorAll("[data-analysis-run-id]")) {
     button.addEventListener("click", () => {
       state.selectedAnalysisRunId = button.dataset.analysisRunId;
@@ -3731,7 +4051,7 @@ async function loadAnalysisRuns() {
   }
   const res = await fetch(`/api/datasets/${encodeURIComponent(dataset.id)}/analyses`, { headers: authHeaders() });
   const body = await res.json().catch(() => []);
-  if (!res.ok) throw new Error(body.detail || body.error || "분석 이력을 불러오지 못했습니다.");
+  if (!res.ok) throw new Error(body.detail || body.error || "遺꾩꽍 ?대젰??遺덈윭?ㅼ? 紐삵뻽?듬땲??");
   state.analysisRuns = Array.isArray(body) ? body : [];
   if (!state.analysisRuns.some((run) => run.id === state.selectedAnalysisRunId)) state.selectedAnalysisRunId = state.analysisRuns[0]?.id || null;
   renderAnalysisLab();
@@ -3740,14 +4060,14 @@ async function loadAnalysisRuns() {
 async function runSelectedDatasetAnalysis() {
   const datasetId = $("analysisLabDatasetSelect")?.value || state.selectedId;
   const analysisName = $("analysisType")?.value || "retention";
-  if (!datasetId) return setStatus("분석할 데이터셋이 없습니다.");
+  if (!datasetId) return setStatus("遺꾩꽍???곗씠?곗뀑???놁뒿?덈떎.");
   state.selectedId = datasetId;
   const parameters = { includeReviewRows: Boolean($("includeReviewRows")?.checked) };
   if (analysisName === "dqdv") parameters.voltageBinV = Number($("dqdvVoltageBin")?.value || 0.005);
   const button = $("runDatasetAnalysis");
   if (button) {
     button.disabled = true;
-    button.textContent = "분석 실행 중...";
+    button.textContent = "遺꾩꽍 ?ㅽ뻾 以?..";
   }
   try {
     const res = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/analyses`, {
@@ -3756,36 +4076,36 @@ async function runSelectedDatasetAnalysis() {
       body: JSON.stringify({ analysisName, parameters }),
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.detail || body.error || "분석 실행에 실패했습니다.");
+    if (!res.ok) throw new Error(body.detail || body.error || "遺꾩꽍 ?ㅽ뻾???ㅽ뙣?덉뒿?덈떎.");
     state.analysisRuns = [body, ...state.analysisRuns.filter((run) => run.id !== body.id)];
     state.selectedAnalysisRunId = body.id;
     renderAnalysisLab();
-    setStatus(`${analysisLabel(analysisName)} 분석을 저장했습니다.`);
+    setStatus(`${analysisLabel(analysisName)} 遺꾩꽍????ν뻽?듬땲??`);
   } catch (error) {
-    setStatus(error.message || "분석 실행에 실패했습니다.");
+    setStatus(error.message || "遺꾩꽍 ?ㅽ뻾???ㅽ뙣?덉뒿?덈떎.");
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "선택 분석 실행";
+      button.textContent = "?좏깮 遺꾩꽍 ?ㅽ뻾";
     }
   }
 }
 
 function sampleLabel(d) {
-  if (!d) return "선택 없음";
+  if (!d) return "?좏깮 ?놁쓬";
   const cell = d.cell || {};
   return cell.cellId || cell.sampleName || cell.material || d.sourceName || d.id || "데이터";
 }
 
-// 숫자 배열에서 최소/최대 범위를 구합니다.
-// CV 전압 범위, EIS 주파수 범위처럼 "요약 문장에 쓸 범위"를 만들 때 재사용합니다.
+// ?レ옄 諛곗뿴?먯꽌 理쒖냼/理쒕? 踰붿쐞瑜?援ы빀?덈떎.
+// CV ?꾩븬 踰붿쐞, EIS 二쇳뙆??踰붿쐞泥섎읆 "?붿빟 臾몄옣????踰붿쐞"瑜?留뚮뱾 ???ъ궗?⑺빀?덈떎.
 function rangeOf(nums) {
   const arr = nums.filter(Number.isFinite);
   return arr.length ? [Math.min(...arr), Math.max(...arr)] : [null, null];
 }
 
-// CYC 데이터 요약에 필요한 핵심 지표를 한 번에 계산합니다.
-// 초기/마지막 용량은 노이즈를 줄이려고 앞 3개, 뒤 3개의 평균을 사용합니다.
+// CYC ?곗씠???붿빟???꾩슂???듭떖 吏?쒕? ??踰덉뿉 怨꾩궛?⑸땲??
+// 珥덇린/留덉?留??⑸웾? ?몄씠利덈? 以꾩씠?ㅺ퀬 ??3媛? ??3媛쒖쓽 ?됯퇏???ъ슜?⑸땲??
 function cycStats(d) {
   const rows = (d?.rows || []).filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
   const capPts = dischargeSeries(rows).sort((a, b) => a.x - b.x);
@@ -3804,8 +4124,8 @@ function cycStats(d) {
   return { rows, capPts, firstCap, lastCap, maxCap, minCap, retention, fromBest, avgEfficiency, cycleMin, cycleMax, segments };
 }
 
-// cycle 사이에서 용량이 급격히 줄어든 구간을 찾습니다.
-// 기준은 2% 이상 감소 또는 5 mAh g-1 이상 감소이며, 큰 감소 순서대로 최대 5개만 보여줍니다.
+// cycle ?ъ씠?먯꽌 ?⑸웾??湲됯꺽??以꾩뼱??援ш컙??李얠뒿?덈떎.
+// 湲곗?? 2% ?댁긽 媛먯냼 ?먮뒗 5 mAh g-1 ?댁긽 媛먯냼?대ŉ, ??媛먯냼 ?쒖꽌?濡?理쒕? 5媛쒕쭔 蹂댁뿬以띾땲??
 function degradationSegments(stats) {
   const pts = stats.capPts || [];
   if (pts.length < 4) return [];
@@ -3823,27 +4143,27 @@ function degradationSegments(stats) {
   return drops.sort((a, b) => b.lossPct - a.lossPct).slice(0, 5);
 }
 
-// "이 데이터의 주요 결과 요약" 카드에 들어갈 HTML을 만듭니다.
-// 실제 외부 AI API를 호출하지 않고, 포탈에 있는 실험 데이터를 계산해서 설명형 문장으로 변환합니다.
+// "???곗씠?곗쓽 二쇱슂 寃곌낵 ?붿빟" 移대뱶???ㅼ뼱媛?HTML??留뚮벊?덈떎.
+// ?ㅼ젣 ?몃? AI API瑜??몄텧?섏? ?딄퀬, ?ы깉???덈뒗 ?ㅽ뿕 ?곗씠?곕? 怨꾩궛?댁꽌 ?ㅻ챸??臾몄옣?쇰줈 蹂?섑빀?덈떎.
 function aiMainSummaryHtml(d) {
-  if (!d) return `<p class="aiEmpty">요약할 데이터를 먼저 선택하세요. 왼쪽 데이터 목록이나 검색 결과에서 CYC/CV/EIS 데이터를 선택하면 여기에 자동 요약이 표시됩니다.</p>`;
+  if (!d) return `<p class="aiEmpty">?붿빟???곗씠?곕? 癒쇱? ?좏깮?섏꽭?? ?쇱そ ?곗씠??紐⑸줉?대굹 寃??寃곌낵?먯꽌 CYC/CV/EIS ?곗씠?곕? ?좏깮?섎㈃ ?ш린???먮룞 ?붿빟???쒖떆?⑸땲??</p>`;
   const type = String(d.dataType || "").toLowerCase();
   if (type === "cyc") {
     const s = cycStats(d);
-    const rateText = s.segments?.length ? s.segments.map((seg) => seg.label).join(" | ") : "자동 구간 없음";
-    const quality = s.retention == null ? "용량 유지율을 계산하기에는 데이터가 부족합니다." : (s.retention >= 95 ? "용량 유지가 매우 안정적입니다." : s.retention >= 85 ? "중간 수준의 용량 감소가 관찰됩니다." : "뚜렷한 성능 저하가 관찰됩니다.");
+    const rateText = s.segments?.length ? s.segments.map((seg) => seg.label).join(" | ") : "?먮룞 援ш컙 ?놁쓬";
+    const quality = s.retention == null ? "?⑸웾 ?좎??⑥쓣 怨꾩궛?섍린?먮뒗 ?곗씠?곌? 遺議깊빀?덈떎." : (s.retention >= 95 ? "?⑸웾 ?좎?媛 留ㅼ슦 ?덉젙?곸엯?덈떎." : s.retention >= 85 ? "以묎컙 ?섏????⑸웾 媛먯냼媛 愿李곕맗?덈떎." : "?쒕졆???깅뒫 ??섍? 愿李곕맗?덈떎.");
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle 범위의 CYC 데이터이며, ${quality}</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle 踰붿쐞??CYC ?곗씠?곗씠硫? ${quality}</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>초기 용량</strong><span>${s.firstCap == null ? "-" : `${fmt(s.firstCap, 5)} mAh g-1`}</span></div>
-        <div class="aiMetric"><strong>마지막 용량</strong><span>${s.lastCap == null ? "-" : `${fmt(s.lastCap, 5)} mAh g-1`}</span></div>
-        <div class="aiMetric"><strong>유지율</strong><span>${s.retention == null ? "-" : `${fmt(s.retention, 4)} %`}</span></div>
-        <div class="aiMetric"><strong>평균 효율</strong><span>${s.avgEfficiency == null ? "-" : `${fmt(s.avgEfficiency, 5)} %`}</span></div>
+        <div class="aiMetric"><strong>珥덇린 ?⑸웾</strong><span>${s.firstCap == null ? "-" : `${fmt(s.firstCap, 5)} mAh g-1`}</span></div>
+        <div class="aiMetric"><strong>留덉?留??⑸웾</strong><span>${s.lastCap == null ? "-" : `${fmt(s.lastCap, 5)} mAh g-1`}</span></div>
+        <div class="aiMetric"><strong>?좎???/strong><span>${s.retention == null ? "-" : `${fmt(s.retention, 4)} %`}</span></div>
+        <div class="aiMetric"><strong>?됯퇏 ?⑥쑉</strong><span>${s.avgEfficiency == null ? "-" : `${fmt(s.avgEfficiency, 5)} %`}</span></div>
       </div>
       <ul class="aiBulletList">
-        <li>가장 높은 방전 용량은 ${Number.isFinite(s.maxCap) ? `${fmt(s.maxCap, 5)} mAh g-1` : "-"} 수준입니다.</li>
-        <li>C-rate 추정 구간은 ${escapeXml(rateText)}입니다.</li>
-        <li>전극 계산값이 연결된 경우 loading caption과 기준 전류 설명에 함께 반영됩니다.</li>
+        <li>媛???믪? 諛⑹쟾 ?⑸웾? ${Number.isFinite(s.maxCap) ? `${fmt(s.maxCap, 5)} mAh g-1` : "-"} ?섏??낅땲??</li>
+        <li>C-rate 異붿젙 援ш컙? ${escapeXml(rateText)}?낅땲??</li>
+        <li>?꾧레 怨꾩궛媛믪씠 ?곌껐??寃쎌슦 loading caption怨?湲곗? ?꾨쪟 ?ㅻ챸???④퍡 諛섏쁺?⑸땲??</li>
       </ul>`;
   }
   if (type === "eis") {
@@ -3851,12 +4171,12 @@ function aiMainSummaryHtml(d) {
     const [fMin, fMax] = rangeOf(rows.map((r) => Number(r.frequency)));
     const [zrMin, zrMax] = rangeOf(rows.map((r) => Number(r.zreal)));
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${rows.length}개 포인트의 EIS 데이터입니다. 주파수와 임피던스 범위를 중심으로 Nyquist/Bode 해석에 사용할 수 있습니다.</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${rows.length}媛??ъ씤?몄쓽 EIS ?곗씠?곗엯?덈떎. 二쇳뙆?섏? ?꾪뵾?섏뒪 踰붿쐞瑜?以묒떖?쇰줈 Nyquist/Bode ?댁꽍???ъ슜?????덉뒿?덈떎.</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>포인트 수</strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>주파수 범위</strong><span>${fMin == null ? "-" : `${fmt(fMin, 3)}-${fmt(fMax, 3)}`}</span></div>
-        <div class="aiMetric"><strong>Z' 범위</strong><span>${zrMin == null ? "-" : `${fmt(zrMin, 4)}-${fmt(zrMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>데이터 타입</strong><span>EIS</span></div>
+        <div class="aiMetric"><strong>?ъ씤????/strong><span>${rows.length}</span></div>
+        <div class="aiMetric"><strong>二쇳뙆??踰붿쐞</strong><span>${fMin == null ? "-" : `${fmt(fMin, 3)}-${fmt(fMax, 3)}`}</span></div>
+        <div class="aiMetric"><strong>Z' 踰붿쐞</strong><span>${zrMin == null ? "-" : `${fmt(zrMin, 4)}-${fmt(zrMax, 4)}`}</span></div>
+        <div class="aiMetric"><strong>?곗씠?????/strong><span>EIS</span></div>
       </div>`;
   }
   if (type === "cv") {
@@ -3864,68 +4184,68 @@ function aiMainSummaryHtml(d) {
     const [vMin, vMax] = rangeOf(rows.map((r) => Number(r.voltage)));
     const [iMin, iMax] = rangeOf(rows.map((r) => Number(r.current)));
     return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${rows.length}개 포인트의 CV 데이터입니다. 전압-전류 범위와 peak 변화 비교에 사용할 수 있습니다.</p>
+      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}??${rows.length}媛??ъ씤?몄쓽 CV ?곗씠?곗엯?덈떎. ?꾩븬-?꾨쪟 踰붿쐞? peak 蹂??鍮꾧탳???ъ슜?????덉뒿?덈떎.</p>
       <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>포인트 수</strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>전압 범위</strong><span>${vMin == null ? "-" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V`}</span></div>
-        <div class="aiMetric"><strong>전류 범위</strong><span>${iMin == null ? "-" : `${fmt(iMin, 4)}-${fmt(iMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>데이터 타입</strong><span>CV</span></div>
+        <div class="aiMetric"><strong>?ъ씤????/strong><span>${rows.length}</span></div>
+        <div class="aiMetric"><strong>?꾩븬 踰붿쐞</strong><span>${vMin == null ? "-" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V`}</span></div>
+        <div class="aiMetric"><strong>?꾨쪟 踰붿쐞</strong><span>${iMin == null ? "-" : `${fmt(iMin, 4)}-${fmt(iMax, 4)}`}</span></div>
+        <div class="aiMetric"><strong>?곗씠?????/strong><span>CV</span></div>
       </div>`;
   }
-  return `<p class="aiEmpty">${escapeXml(typeDisplay(type))} 데이터는 현재 기본 요약만 지원합니다. CYC 데이터를 선택하면 성능 저하와 비교 설명까지 자동 계산됩니다.</p>`;
+  return `<p class="aiEmpty">${escapeXml(typeDisplay(type))} ?곗씠?곕뒗 ?꾩옱 湲곕낯 ?붿빟留?吏?먰빀?덈떎. CYC ?곗씠?곕? ?좏깮?섎㈃ ?깅뒫 ??섏? 鍮꾧탳 ?ㅻ챸源뚯? ?먮룞 怨꾩궛?⑸땲??</p>`;
 }
 
-// "성능 저하 구간 표시" 카드입니다.
-// CYC가 아닌 데이터는 아직 저하 구간 개념이 명확하지 않아 안내 문구만 보여줍니다.
+// "?깅뒫 ???援ш컙 ?쒖떆" 移대뱶?낅땲??
+// CYC媛 ?꾨땶 ?곗씠?곕뒗 ?꾩쭅 ???援ш컙 媛쒕뀗??紐낇솗?섏? ?딆븘 ?덈궡 臾멸뎄留?蹂댁뿬以띾땲??
 function aiDegradationHtml(d) {
-  if (!d) return `<p class="aiEmpty">데이터를 선택하면 성능 저하 구간을 계산합니다.</p>`;
-  if (String(d.dataType || "").toLowerCase() !== "cyc") return `<p class="aiEmpty">성능 저하 구간 표시는 CYC 데이터에서 우선 지원됩니다.</p>`;
+  if (!d) return `<p class="aiEmpty">?곗씠?곕? ?좏깮?섎㈃ ?깅뒫 ???援ш컙??怨꾩궛?⑸땲??</p>`;
+  if (String(d.dataType || "").toLowerCase() !== "cyc") return `<p class="aiEmpty">?깅뒫 ???援ш컙 ?쒖떆??CYC ?곗씠?곗뿉???곗꽑 吏?먮맗?덈떎.</p>`;
   const stats = cycStats(d);
   const drops = degradationSegments(stats);
   if (!drops.length) {
-    return `<p class="aiSummaryLead">2% 이상 급격한 cycle-to-cycle 용량 저하는 뚜렷하게 보이지 않습니다.</p>
+    return `<p class="aiSummaryLead">2% ?댁긽 湲됯꺽??cycle-to-cycle ?⑸웾 ??섎뒗 ?쒕졆?섍쾶 蹂댁씠吏 ?딆뒿?덈떎.</p>
       <ul class="aiBulletList">
-        <li>전체 유지율: ${stats.retention == null ? "-" : `${fmt(stats.retention, 4)} %`}</li>
-        <li>최고 용량 대비 마지막 용량: ${stats.fromBest == null ? "-" : `${fmt(stats.fromBest, 4)} %`}</li>
+        <li>?꾩껜 ?좎??? ${stats.retention == null ? "-" : `${fmt(stats.retention, 4)} %`}</li>
+        <li>理쒓퀬 ?⑸웾 ?鍮?留덉?留??⑸웾: ${stats.fromBest == null ? "-" : `${fmt(stats.fromBest, 4)} %`}</li>
       </ul>`;
   }
   return `<div class="aiDegradeList">${drops.map((drop) => `
     <div class="aiSegment">
       <strong>Cycle ${escapeXml(drop.start)} -> ${escapeXml(drop.end)}</strong>
-      <span>용량이 ${fmt(drop.from, 5)}에서 ${fmt(drop.to, 5)} mAh g-1로 감소했습니다. 감소폭은 ${fmt(drop.loss, 4)} mAh g-1, 약 ${fmt(drop.lossPct, 4)}%입니다.</span>
+      <span>?⑸웾??${fmt(drop.from, 5)}?먯꽌 ${fmt(drop.to, 5)} mAh g-1濡?媛먯냼?덉뒿?덈떎. 媛먯냼??? ${fmt(drop.loss, 4)} mAh g-1, ??${fmt(drop.lossPct, 4)}%?낅땲??</span>
     </div>`).join("")}</div>`;
 }
 
-// "비교 결과 설명" 카드입니다.
-// Fig 모음에서 체크한 CYC 데이터들을 비교 대상으로 사용합니다.
+// "鍮꾧탳 寃곌낵 ?ㅻ챸" 移대뱶?낅땲??
+// Fig 紐⑥쓬?먯꽌 泥댄겕??CYC ?곗씠?곕뱾??鍮꾧탳 ??곸쑝濡??ъ슜?⑸땲??
 function comparisonSummaryHtml() {
   const selected = state.compareIds
     .map((id) => state.datasets.find((d) => d.id === id))
     .filter((d) => d && d.dataType === "cyc");
   if (selected.length < 2) {
-    return `<p class="aiEmpty">비교 결과 설명을 보려면 Fig 모음에서 CYC 데이터를 2개 이상 체크한 뒤 이 페이지로 돌아오세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
+    return `<p class="aiEmpty">鍮꾧탳 寃곌낵 ?ㅻ챸??蹂대젮硫?Fig 紐⑥쓬?먯꽌 CYC ?곗씠?곕? 2媛??댁긽 泥댄겕???????섏씠吏濡??뚯븘?ㅼ꽭?? ?꾩옱 ?좏깮??鍮꾧탳 ??곸? ${selected.length}媛쒖엯?덈떎.</p>`;
   }
   const rows = selected.map((d) => ({ d, stats: cycStats(d) }));
   const ranked = [...rows].sort((a, b) => (b.stats.lastCap || 0) - (a.stats.lastCap || 0));
   const best = ranked[0];
   const stable = [...rows].filter((item) => item.stats.retention != null).sort((a, b) => b.stats.retention - a.stats.retention)[0];
   return `
-    <p class="aiSummaryLead">${selected.length}개 CYC 데이터를 비교했습니다. 마지막 용량 기준으로는 ${escapeXml(sampleLabel(best.d))}가 가장 높습니다.</p>
+    <p class="aiSummaryLead">${selected.length}媛?CYC ?곗씠?곕? 鍮꾧탳?덉뒿?덈떎. 留덉?留??⑸웾 湲곗??쇰줈??${escapeXml(sampleLabel(best.d))}媛 媛???믪뒿?덈떎.</p>
     <div class="aiCompareList">
       ${ranked.map((item, idx) => `
         <div class="aiCompareItem">
           <strong>${idx + 1}. ${escapeXml(sampleLabel(item.d))}</strong>
-          <span>마지막 용량 ${item.stats.lastCap == null ? "-" : `${fmt(item.stats.lastCap, 5)} mAh g-1`} · 유지율 ${item.stats.retention == null ? "-" : `${fmt(item.stats.retention, 4)} %`} · ${item.stats.cycleMin ?? "-"}-${item.stats.cycleMax ?? "-"} cycle</span>
+          <span>留덉?留??⑸웾 ${item.stats.lastCap == null ? "-" : `${fmt(item.stats.lastCap, 5)} mAh g-1`} 쨌 ?좎???${item.stats.retention == null ? "-" : `${fmt(item.stats.retention, 4)} %`} 쨌 ${item.stats.cycleMin ?? "-"}-${item.stats.cycleMax ?? "-"} cycle</span>
         </div>`).join("")}
     </div>
     <ul class="aiBulletList">
-      <li>용량 유지율 기준으로는 ${stable ? escapeXml(sampleLabel(stable.d)) : "-"}가 가장 안정적으로 보입니다.</li>
-      <li>논문용 비교 설명에서는 마지막 용량, 유지율, cycle 범위를 함께 제시하는 것이 좋습니다.</li>
+      <li>?⑸웾 ?좎???湲곗??쇰줈??${stable ? escapeXml(sampleLabel(stable.d)) : "-"}媛 媛???덉젙?곸쑝濡?蹂댁엯?덈떎.</li>
+      <li>?쇰Ц??鍮꾧탳 ?ㅻ챸?먯꽌??留덉?留??⑸웾, ?좎??? cycle 踰붿쐞瑜??④퍡 ?쒖떆?섎뒗 寃껋씠 醫뗭뒿?덈떎.</li>
     </ul>`;
 }
 
-// AI 요약 페이지 전체를 다시 그립니다.
-// 데이터 선택, 비교 체크, 새로고침 버튼이 눌릴 때 이 함수를 호출하면 최신 상태가 반영됩니다.
+// AI ?붿빟 ?섏씠吏 ?꾩껜瑜??ㅼ떆 洹몃┰?덈떎.
+// ?곗씠???좏깮, 鍮꾧탳 泥댄겕, ?덈줈怨좎묠 踰꾪듉???뚮┫ ?????⑥닔瑜??몄텧?섎㈃ 理쒖떊 ?곹깭媛 諛섏쁺?⑸땲??
 function aiValue(value, unit = "", digits = 5) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "-";
@@ -3939,295 +4259,25 @@ function aiPercent(value, digits = 4) {
 
 function aiStatusFromCyc(stats) {
   const retention = Number(stats?.retention);
-  const efficiency = Number(stats?.avgEfficiency);
-  const drops = degradationSegments(stats || {});
-  if (!Number.isFinite(retention)) return { label: "데이터 부족", tone: "neutral", text: "용량 유지율을 안정적으로 계산하기에는 데이터가 부족합니다." };
-  if (retention < 80 || drops.length >= 3) return { label: "강한 열화", tone: "danger", text: "용량 감소가 뚜렷해 원인 확인이 필요합니다." };
-  if (retention < 90 || (Number.isFinite(efficiency) && (efficiency < 97 || efficiency > 103))) return { label: "점검 필요", tone: "warning", text: "일부 구간에서 성능 변화가 관찰됩니다." };
-  if (retention >= 95) return { label: "안정", tone: "good", text: "현재 cycle 범위에서는 용량 유지가 비교적 안정적입니다." };
-  return { label: "보통", tone: "neutral", text: "완만한 용량 감소가 관찰됩니다." };
+  if (!Number.isFinite(retention)) return { label: "데이터 부족", tone: "neutral", text: "AI 요약 화면은 현재 비활성화되어 있습니다." };
+  return { label: retention >= 90 ? "안정" : "검토 필요", tone: retention >= 90 ? "good" : "warning", text: "AI 요약 화면은 현재 비활성화되어 있습니다." };
 }
 
-function aiMainSummaryV2Html(d) {
-  if (!d) return `<p class="aiEmpty">요약할 데이터를 먼저 선택하세요. CYC/CV/EIS 데이터를 선택하면 핵심 지표와 해석을 자동으로 정리합니다.</p>`;
-  const type = String(d.dataType || "").toLowerCase();
-  if (type === "cyc") {
-    const s = cycStats(d);
-    const status = aiStatusFromCyc(s);
-    const capLoss = Number.isFinite(s.firstCap) && Number.isFinite(s.lastCap) ? s.firstCap - s.lastCap : null;
-    const rateText = s.segments?.length ? s.segments.slice(0, 5).map((seg) => seg.label).join(" / ") : "자동 C-rate 구간 없음";
-    return `
-      <div class="aiStatus ${status.tone}"><strong>${escapeXml(status.label)}</strong><span>${escapeXml(status.text)}</span></div>
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle 범위의 CYC 데이터입니다. 초기 평균 용량 대비 마지막 평균 용량 변화를 기준으로 성능 유지 특성을 평가했습니다.</p>
-      <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>초기 평균 용량</strong><span>${aiValue(s.firstCap, "mAh g-1")}</span></div>
-        <div class="aiMetric"><strong>마지막 평균 용량</strong><span>${aiValue(s.lastCap, "mAh g-1")}</span></div>
-        <div class="aiMetric"><strong>용량 유지율</strong><span>${aiPercent(s.retention)}</span></div>
-        <div class="aiMetric"><strong>용량 감소량</strong><span>${aiValue(capLoss, "mAh g-1")}</span></div>
-        <div class="aiMetric"><strong>최고 방전용량</strong><span>${aiValue(s.maxCap, "mAh g-1")}</span></div>
-        <div class="aiMetric"><strong>최고 대비 마지막</strong><span>${aiPercent(s.fromBest)}</span></div>
-        <div class="aiMetric"><strong>평균 효율</strong><span>${aiPercent(s.avgEfficiency, 5)}</span></div>
-        <div class="aiMetric"><strong>C-rate 추정</strong><span>${escapeXml(rateText)}</span></div>
-      </div>`;
-  }
-  if (type === "eis") {
-    const rows = d.rows || [];
-    const [fMin, fMax] = rangeOf(rows.map((r) => Number(r.frequency)));
-    const [zrMin, zrMax] = rangeOf(rows.map((r) => Number(r.zreal)));
-    const [ziMin, ziMax] = rangeOf(rows.map((r) => Number(r.zimag)));
-    const rsGuess = rows.map((r) => Number(r.zreal)).filter(Number.isFinite).sort((a, b) => a - b)[0];
-    return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${rows.length}개 포인트의 EIS 데이터입니다. Nyquist/Bode 해석 전 주파수 범위와 임피던스 범위를 먼저 점검합니다.</p>
-      <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>포인트 수</strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>주파수 범위</strong><span>${fMin == null ? "-" : `${fmt(fMin, 3)}-${fmt(fMax, 3)}`}</span></div>
-        <div class="aiMetric"><strong>Z' 범위</strong><span>${zrMin == null ? "-" : `${fmt(zrMin, 4)}-${fmt(zrMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>Z'' 범위</strong><span>${ziMin == null ? "-" : `${fmt(ziMin, 4)}-${fmt(ziMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>Rs 후보</strong><span>${aiValue(rsGuess, "ohm", 4)}</span></div>
-        <div class="aiMetric"><strong>추천 해석</strong><span>Nyquist + Bode</span></div>
-      </div>`;
-  }
-  if (type === "cv") {
-    const rows = d.rows || [];
-    const [vMin, vMax] = rangeOf(rows.map((r) => Number(r.voltage)));
-    const [iMin, iMax] = rangeOf(rows.map((r) => Number(r.current)));
-    const peak = rows.map((r) => Math.abs(Number(r.current))).filter(Number.isFinite).sort((a, b) => b - a)[0];
-    return `
-      <p class="aiSummaryLead">${escapeXml(sampleLabel(d))}는 ${rows.length}개 포인트의 CV 데이터입니다. 전압 창, 전류 범위, peak 크기를 중심으로 비교 해석할 수 있습니다.</p>
-      <div class="aiMetricGrid">
-        <div class="aiMetric"><strong>포인트 수</strong><span>${rows.length}</span></div>
-        <div class="aiMetric"><strong>전압 범위</strong><span>${vMin == null ? "-" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V`}</span></div>
-        <div class="aiMetric"><strong>전류 범위</strong><span>${iMin == null ? "-" : `${fmt(iMin, 4)}-${fmt(iMax, 4)}`}</span></div>
-        <div class="aiMetric"><strong>최대 |전류|</strong><span>${aiValue(peak, "", 4)}</span></div>
-      </div>`;
-  }
-  return `<p class="aiEmpty">${escapeXml(typeDisplay(type))} 데이터는 현재 기본 요약만 지원합니다.</p>`;
-}
+function aiMainSummaryV2Html() { return ""; }
+function aiDegradationV2Html() { return ""; }
+function aiInsightSummaryHtml() { return ""; }
+function aiWritingSummaryHtml() { return ""; }
+function comparisonSummaryV2Html() { return ""; }
+function aiLoadingHtml() { return ""; }
+function aiApiNoticeHtml() { return ""; }
+function aiSectionFromApiHtml(_section, fallbackHtml) { return fallbackHtml || ""; }
 
-function aiDegradationV2Html(d) {
-  if (!d) return `<p class="aiEmpty">데이터를 선택하면 급격한 성능 저하 구간을 자동으로 찾습니다.</p>`;
-  if (String(d.dataType || "").toLowerCase() !== "cyc") return `<p class="aiEmpty">성능 저하 구간 분석은 CYC 데이터에서 우선 지원됩니다.</p>`;
-  const stats = cycStats(d);
-  const drops = degradationSegments(stats);
-  if (!drops.length) {
-    return `<p class="aiSummaryLead">2% 이상 급격한 cycle-to-cycle 용량 저하는 뚜렷하게 보이지 않습니다.</p>
-      <div class="aiSignalGrid">
-        <div class="aiSignal good"><strong>전체 유지율</strong><span>${aiPercent(stats.retention)}</span></div>
-        <div class="aiSignal neutral"><strong>최고 대비 마지막</strong><span>${aiPercent(stats.fromBest)}</span></div>
-      </div>`;
-  }
-  return `<div class="aiDegradeList">${drops.map((drop, idx) => `
-    <div class="aiSegment ${idx === 0 ? "critical" : ""}">
-      <strong>Cycle ${escapeXml(drop.start)} -> ${escapeXml(drop.end)}</strong>
-      <span>방전용량이 ${fmt(drop.from, 5)}에서 ${fmt(drop.to, 5)} mAh g-1로 감소했습니다. 감소량은 ${fmt(drop.loss, 4)} mAh g-1, 비율은 ${fmt(drop.lossPct, 4)}%입니다.</span>
-    </div>`).join("")}</div>`;
-}
-
-function aiInsightSummaryHtml(d) {
-  if (!d) return `<p class="aiEmpty">데이터를 선택하면 실험 해석과 확인 포인트를 제안합니다.</p>`;
-  const type = String(d.dataType || "").toLowerCase();
-  if (type === "cyc") {
-    const stats = cycStats(d);
-    const drops = degradationSegments(stats);
-    const checks = [];
-    if (stats.retention != null && stats.retention < 85) checks.push("용량 유지율이 낮으므로 전극 loading, cutoff voltage, 전류 조건을 우선 확인하세요.");
-    if (drops.length) checks.push(`가장 큰 감소는 cycle ${drops[0].start}->${drops[0].end} 구간입니다. 해당 구간 전후의 전압 프로파일을 같이 확인하는 것이 좋습니다.`);
-    if (stats.avgEfficiency != null && (stats.avgEfficiency < 97 || stats.avgEfficiency > 103)) checks.push("평균 coulombic efficiency가 일반적인 안정 범위를 벗어날 수 있어 원 데이터의 charge/discharge capacity 열을 확인하세요.");
-    if (stats.segments?.length) checks.push(`C-rate 구간이 ${stats.segments.length}개로 추정됩니다. rate test라면 cycle 구간별 전류 조건을 Fig caption에 같이 적는 것이 좋습니다.`);
-    if (d.cell?.electrodeCalc) checks.push("전극 계산 저장값이 연결되어 있으므로 loading, 1C 전류, C-rate별 전류를 함께 보고서에 넣을 수 있습니다.");
-    if (!checks.length) checks.push("현재 데이터에서는 큰 이상 신호가 뚜렷하지 않습니다. 반복 셀 데이터와 비교하면 신뢰도가 올라갑니다.");
-    return `<ul class="aiBulletList aiInsightList">${checks.map((text) => `<li>${escapeXml(text)}</li>`).join("")}</ul>`;
-  }
-  if (type === "eis") {
-    return `<ul class="aiBulletList aiInsightList">
-      <li>Nyquist 반원의 시작점은 Rs 후보로 보고, 반원 직경은 charge-transfer resistance 변화와 함께 비교하세요.</li>
-      <li>저주파 tail이 길게 나타나면 확산 지배 성분이 커졌을 가능성이 있으므로 Bode plot도 함께 확인하는 것이 좋습니다.</li>
-      <li>같은 셀의 cycling 전후 EIS를 비교하면 계면 저항 증가 여부를 더 명확히 설명할 수 있습니다.</li>
-    </ul>`;
-  }
-  if (type === "cv") {
-    return `<ul class="aiBulletList aiInsightList">
-      <li>산화/환원 peak 위치 이동은 분극 증가 또는 반응 속도 변화의 신호일 수 있습니다.</li>
-      <li>scan rate별 CV라면 peak current와 scan rate의 관계를 비교하면 확산 지배 여부를 설명하기 좋습니다.</li>
-      <li>전압 창이 실험 조건과 맞는지 먼저 확인한 뒤 peak 면적과 전류 응답을 비교하세요.</li>
-    </ul>`;
-  }
-  return `<p class="aiEmpty">이 데이터 타입은 아직 해석 포인트가 준비되지 않았습니다.</p>`;
-}
-
-function aiWritingSummaryHtml(d) {
-  if (!d) return `<p class="aiEmpty">데이터를 선택하면 논문/발표자료에 바로 옮길 수 있는 문장을 생성합니다.</p>`;
-  const label = sampleLabel(d);
-  const type = String(d.dataType || "").toLowerCase();
-  if (type === "cyc") {
-    const s = cycStats(d);
-    const ko = `${label} 시료는 ${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle 동안 초기 평균 방전용량 ${aiValue(s.firstCap, "mAh g-1")}에서 마지막 평균 방전용량 ${aiValue(s.lastCap, "mAh g-1")}로 변화했으며, 용량 유지율은 ${aiPercent(s.retention)}로 계산되었다.`;
-    const en = `The ${label} cell delivered an initial average discharge capacity of ${aiValue(s.firstCap, "mAh g-1")} and retained ${aiPercent(s.retention)} after ${s.cycleMax ?? "-"} cycles.`;
-    return `
-      <div class="aiWritingBlock"><strong>한국어 요약</strong><p>${escapeXml(ko)}</p></div>
-      <div class="aiWritingBlock"><strong>English draft</strong><p>${escapeXml(en)}</p></div>
-      <div class="aiWritingBlock"><strong>PPT 한 줄</strong><p>${escapeXml(`${label}: ${s.cycleMin ?? "-"}-${s.cycleMax ?? "-"} cycle, retention ${aiPercent(s.retention)}, final capacity ${aiValue(s.lastCap, "mAh g-1")}.`)}</p></div>`;
-  }
-  if (type === "eis") {
-    const rows = d.rows || [];
-    const [fMin, fMax] = rangeOf(rows.map((r) => Number(r.frequency)));
-    return `<div class="aiWritingBlock"><strong>한국어 요약</strong><p>${escapeXml(`${label}의 EIS 데이터는 ${rows.length}개 포인트로 구성되며, ${fMin == null ? "주파수 범위 확인이 필요" : `${fmt(fMin, 3)}-${fmt(fMax, 3)} 범위`}에서 임피던스 응답을 비교할 수 있다.`)}</p></div>`;
-  }
-  if (type === "cv") {
-    const rows = d.rows || [];
-    const [vMin, vMax] = rangeOf(rows.map((r) => Number(r.voltage)));
-    return `<div class="aiWritingBlock"><strong>한국어 요약</strong><p>${escapeXml(`${label}의 CV 데이터는 ${rows.length}개 포인트로 구성되며, ${vMin == null ? "전압 범위 확인이 필요" : `${fmt(vMin, 4)}-${fmt(vMax, 4)} V 전압 창`}에서 전류 응답과 peak 변화를 비교할 수 있다.`)}</p></div>`;
-  }
-  return `<p class="aiEmpty">논문/PPT 문장은 CYC, CV, EIS 데이터에서 우선 지원됩니다.</p>`;
-}
-
-function comparisonSummaryV2Html() {
-  const selected = state.compareIds
-    .map((id) => state.datasets.find((d) => d.id === id))
-    .filter((d) => d && d.dataType === "cyc");
-  if (selected.length < 2) {
-    return `<p class="aiEmpty">비교 설명을 만들려면 Fig 모음에서 CYC 데이터를 2개 이상 체크하세요. 현재 선택된 비교 대상은 ${selected.length}개입니다.</p>`;
-  }
-  const rows = selected.map((d) => ({ d, stats: cycStats(d) }));
-  const byCapacity = [...rows].sort((a, b) => (b.stats.lastCap || 0) - (a.stats.lastCap || 0));
-  const byRetention = [...rows].filter((item) => item.stats.retention != null).sort((a, b) => b.stats.retention - a.stats.retention);
-  const bestCap = byCapacity[0];
-  const bestStable = byRetention[0];
-  return `
-    <p class="aiSummaryLead">${selected.length}개 CYC 데이터를 비교했습니다. 마지막 용량 기준 최고 샘플은 ${escapeXml(sampleLabel(bestCap.d))}${bestStable ? `, 유지율 기준 최고 샘플은 ${escapeXml(sampleLabel(bestStable.d))}` : ""}입니다.</p>
-    <div class="aiCompareList">
-      ${byCapacity.map((item, idx) => `
-        <div class="aiCompareItem">
-          <strong>${idx + 1}. ${escapeXml(sampleLabel(item.d))}</strong>
-          <span>마지막 용량 ${aiValue(item.stats.lastCap, "mAh g-1")} / 유지율 ${aiPercent(item.stats.retention)} / ${item.stats.cycleMin ?? "-"}-${item.stats.cycleMax ?? "-"} cycle</span>
-        </div>`).join("")}
-    </div>
-    <ul class="aiBulletList">
-      <li>절대 용량이 중요한 비교에서는 마지막 방전용량 순위를 우선 제시하세요.</li>
-      <li>장기 안정성이 중요한 비교에서는 retention과 급락 구간 유무를 함께 설명하는 것이 좋습니다.</li>
-    </ul>`;
-}
-
-function aiLoadingHtml() {
-  return `<div class="aiLoading"><strong>AI 해석 생성 중</strong><span>Python 백엔드가 핵심값을 계산하고 모델 응답을 기다리고 있습니다.</span></div>`;
-}
-
-function aiApiNoticeHtml(mode, model, reason = "") {
-  if (mode === "openai") {
-    return `<div class="aiApiNotice live"><strong>실제 AI 해석</strong><span>Python 백엔드 → 핵심값 계산 → OpenAI ${escapeXml(model || "")} 응답으로 생성했습니다.</span></div>`;
-  }
-  return `<div class="aiApiNotice fallback"><strong>로컬 fallback</strong><span>${escapeXml(reason || "OPENAI_API_KEY가 없어서 기존 계산 기반 요약으로 표시합니다.")}</span></div>`;
-}
-
-function aiSectionFromApiHtml(section, fallbackHtml) {
-  if (!section || typeof section !== "object") return fallbackHtml;
-  const lead = String(section.lead || "").trim();
-  const bullets = Array.isArray(section.bullets) ? section.bullets.filter(Boolean) : [];
-  if (!lead && !bullets.length) return fallbackHtml;
-  return `
-    ${lead ? `<p class="aiSummaryLead">${escapeXml(lead)}</p>` : ""}
-    ${bullets.length ? `<ul class="aiBulletList">${bullets.map((item) => `<li>${escapeXml(item)}</li>`).join("")}</ul>` : ""}`;
-}
-
-function renderLocalAISummary(d, reason = "") {
-  const dataset = d || currentDataset();
-  const main = $("aiMainSummary");
-  const degrade = $("aiDegradationSummary");
-  const compare = $("aiCompareSummary");
-  const insight = $("aiInsightSummary");
-  const writing = $("aiWritingSummary");
-  if (main) main.innerHTML = `${reason ? aiApiNoticeHtml("local", "local", reason) : ""}${aiMainSummaryV2Html(dataset)}`;
-  if (degrade) degrade.innerHTML = aiDegradationV2Html(dataset);
-  if (compare) compare.innerHTML = comparisonSummaryV2Html();
-  if (insight) insight.innerHTML = aiInsightSummaryHtml(dataset);
-  if (writing) writing.innerHTML = aiWritingSummaryHtml(dataset);
-  state.lastAiSummary = dataset ? {
-    datasetId: dataset.id,
-    mode: "local",
-    content: {
-      main: main?.textContent || "",
-      degradation: degrade?.textContent || "",
-      comparison: compare?.textContent || "",
-      insight: insight?.textContent || "",
-      writing: writing?.textContent || "",
-    },
-  } : null;
-}
-
-async function renderAISummary() {
-  const d = currentDataset();
-  if (!d) {
-    renderLocalAISummary(d);
-    return;
-  }
-  const requestId = ++aiSummaryRequestId;
-  const main = $("aiMainSummary");
-  const degrade = $("aiDegradationSummary");
-  const compare = $("aiCompareSummary");
-  const insight = $("aiInsightSummary");
-  const writing = $("aiWritingSummary");
-  const loading = aiLoadingHtml();
-  if (main) main.innerHTML = loading;
-  if (degrade) degrade.innerHTML = loading;
-  if (compare) compare.innerHTML = loading;
-  if (insight) insight.innerHTML = loading;
-  if (writing) writing.innerHTML = loading;
-  setStatus("AI 요약 생성 중...");
-
-  try {
-    const res = await fetch("/api/ai-summary", {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ datasetId: d.id, compareIds: state.compareIds }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "AI 요약 생성 실패");
-    if (requestId !== aiSummaryRequestId) return;
-    const sections = body.sections || {};
-    const notice = aiApiNoticeHtml(body.mode, body.model, body.reason);
-    if (main) main.innerHTML = `${notice}${aiSectionFromApiHtml(sections.main, aiMainSummaryV2Html(d))}`;
-    if (degrade) degrade.innerHTML = aiSectionFromApiHtml(sections.degradation, aiDegradationV2Html(d));
-    if (compare) compare.innerHTML = aiSectionFromApiHtml(sections.comparison, comparisonSummaryV2Html());
-    if (insight) insight.innerHTML = aiSectionFromApiHtml(sections.insight, aiInsightSummaryHtml(d));
-    if (writing) writing.innerHTML = aiSectionFromApiHtml(sections.writing, aiWritingSummaryHtml(d));
-    state.lastAiSummary = { datasetId: d.id, mode: body.mode || "local", content: sections };
-    setStatus(body.mode === "openai" ? "OpenAI AI 요약 완료" : "로컬 요약 표시");
-  } catch (err) {
-    if (requestId !== aiSummaryRequestId) return;
-    renderLocalAISummary(d, err.message || "AI 요약 API 호출 실패");
-    setStatus("로컬 요약 표시");
-  }
-}
-
-async function saveAiReport() {
-  const d = currentDataset();
-  if (!d) return setStatus("먼저 보고서로 저장할 데이터를 선택해주세요.");
-  const fallback = {
-    main: $("aiMainSummary")?.textContent || "",
-    degradation: $("aiDegradationSummary")?.textContent || "",
-    comparison: $("aiCompareSummary")?.textContent || "",
-    insight: $("aiInsightSummary")?.textContent || "",
-    writing: $("aiWritingSummary")?.textContent || "",
-  };
-  const summary = state.lastAiSummary?.datasetId === d.id ? state.lastAiSummary : { datasetId: d.id, mode: "local", content: fallback };
-  try {
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({
-        datasetId: d.id,
-        reportType: "ai-summary",
-        title: `${sampleLabel(d)} AI 분석 보고서`,
-        content: { mode: summary.mode, ...summary.content },
-      }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "AI 보고서 저장에 실패했습니다.");
-    await loadCellWorkspace(d);
-    setStatus("AI 요약을 보고서로 저장했습니다.");
-  } catch (error) {
-    setStatus(error.message || "AI 보고서 저장에 실패했습니다.");
-  }
+function renderLocalAISummary() {
+  // AI Summary is intentionally hidden from the portal UI.
+  const status = $("aiSummaryStatus");
+  const content = $("aiSummaryContent");
+  if (status) status.textContent = "";
+  if (content) content.innerHTML = "";
 }
 
 function renderTable(d) {
@@ -4237,7 +4287,7 @@ function renderTable(d) {
   if (!body || !head) return;
   if (!d || !Array.isArray(d.rows) || !d.rows.length) {
     head.innerHTML = "";
-    body.innerHTML = `<tr><td>표시할 데이터가 없습니다.</td></tr>`;
+    body.innerHTML = `<tr><td>?쒖떆???곗씠?곌? ?놁뒿?덈떎.</td></tr>`;
     if (summary) summary.textContent = "0 rows";
     updateExcelUndoButton();
     return;
@@ -4257,7 +4307,7 @@ function renderTable(d) {
       ["zreal", "Z'"],
       ["zimag", "Z''"],
       ["mag", "|Z|"],
-      ["phase", "θ"],
+      ["phase", "罐"],
     ],
     cv: [
       ["voltage", "Voltage"],
@@ -4271,7 +4321,7 @@ function renderTable(d) {
   body.innerHTML = d.rows.map((r, i) => `<tr>${columns.map(([key]) => {
     const value = key === "__index" ? i + 1 : r[key];
     if (key === "__index") return `<td class="rowIndex">${escapeXml(value)}</td>`;
-    return `<td class="editableCell" contenteditable="true" data-row-index="${i}" data-key="${escapeAttr(key)}" title="클릭해서 수정">${typeof value === "number" ? escapeXml(fmt(value, 6)) : escapeXml(value ?? "")}</td>`;
+    return `<td class="editableCell" contenteditable="true" data-row-index="${i}" data-key="${escapeAttr(key)}" title="?대┃?댁꽌 ?섏젙">${typeof value === "number" ? escapeXml(fmt(value, 6)) : escapeXml(value ?? "")}</td>`;
   }).join("")}</tr>`).join("");
   if (summary) summary.textContent = `${d.rows.length} rows`;
   updateExcelUndoButton();
@@ -4285,7 +4335,7 @@ function bindEditableTable() {
     cell.addEventListener("focus", () => {
       cell.dataset.originalValue = cell.textContent || "";
       cell.classList.add("editing");
-      setStatus("표 수정 중...");
+      setStatus("???섏젙 以?..");
     });
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -4334,7 +4384,7 @@ function applyTableCellEdit(cell) {
 
 function scheduleRowsSave(d) {
   clearTimeout(state.tableSaveTimer);
-  setStatus("표 수정 반영 중...");
+  setStatus("???섏젙 諛섏쁺 以?..");
   state.tableSaveTimer = setTimeout(() => saveRowsEdit(d), 650);
 }
 
@@ -4346,17 +4396,17 @@ async function saveRowsEdit(d) {
       body: JSON.stringify({ rows: d.rows }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "표 저장 실패");
+    if (!res.ok) throw new Error(saved.error || "??????ㅽ뙣");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("표 수정이 Fig에 반영되고 저장됐습니다.");
+    setStatus("???섏젙??Fig??諛섏쁺?섍퀬 ??λ릱?듬땲??");
   } catch (error) {
-    setStatus(`표 저장 실패: ${error.message}`);
+    setStatus(`??????ㅽ뙣: ${error.message}`);
   }
 }
 
-// 하단 "엑셀 데이터" 표를 작은 스프레드시트처럼 다루는 기능입니다.
-// 셀 직접 수정, Tab/Enter 이동, 여러 칸 붙여넣기, 행 추가/삭제, 자동 저장을 이 묶음에서 처리합니다.
+// ?섎떒 "?묒? ?곗씠?? ?쒕? ?묒? ?ㅽ봽?덈뱶?쒗듃泥섎읆 ?ㅻ（??湲곕뒫?낅땲??
+// ? 吏곸젒 ?섏젙, Tab/Enter ?대룞, ?щ윭 移?遺숈뿬?ｊ린, ??異붽?/??젣, ?먮룞 ??μ쓣 ??臾띠쓬?먯꽌 泥섎━?⑸땲??
 function tableColumnDefs(d) {
   const preferred = {
     cyc: [
@@ -4373,7 +4423,7 @@ function tableColumnDefs(d) {
       ["zreal", "Z'"],
       ["zimag", "Z''"],
       ["mag", "|Z|"],
-      ["phase", "θ"],
+      ["phase", "罐"],
     ],
     cv: [
       ["voltage", "Voltage"],
@@ -4394,13 +4444,13 @@ function tableColumnDefs(d) {
   return columns.length ? columns : base.slice(0, Math.min(base.length, 5));
 }
 
-// 숫자는 보기 좋게 줄이고, 문자열은 그대로 보여주는 표 표시용 포맷터입니다.
+// ?レ옄??蹂닿린 醫뗪쾶 以꾩씠怨? 臾몄옄?댁? 洹몃?濡?蹂댁뿬二쇰뒗 ???쒖떆???щ㎎?곗엯?덈떎.
 function formatTableValue(value) {
   return typeof value === "number" ? fmt(value, 6) : (value ?? "");
 }
 
-// 선택된 데이터셋의 rows를 화면 표로 변환합니다.
-// contenteditable 셀을 만들어서 사용자가 바로 값을 고칠 수 있게 합니다.
+// ?좏깮???곗씠?곗뀑??rows瑜??붾㈃ ?쒕줈 蹂?섑빀?덈떎.
+// contenteditable ???留뚮뱾?댁꽌 ?ъ슜?먭? 諛붾줈 媛믪쓣 怨좎튌 ???덇쾶 ?⑸땲??
 function renderTable(d) {
   const body = $("dataTable");
   const head = $("excelTableHead");
@@ -4409,7 +4459,7 @@ function renderTable(d) {
   state.tableSelection = null;
   if (!d || !Array.isArray(d.rows) || !d.rows.length) {
     head.innerHTML = "";
-    body.innerHTML = `<tr><td class="emptyCell" colspan="99">표시할 데이터가 없습니다.</td></tr>`;
+    body.innerHTML = `<tr><td class="emptyCell" colspan="99">표시할 데이터가 없습니다. 파일을 분석하거나 저장된 Dataset을 선택하세요.</td></tr>`;
     if (summary) summary.textContent = "0 rows";
     updateExcelUndoButton();
     return;
@@ -4418,16 +4468,16 @@ function renderTable(d) {
   head.innerHTML = `<tr>${columns.map(([, label]) => `<th>${escapeXml(label)}</th>`).join("")}</tr>`;
   body.innerHTML = d.rows.map((row, i) => `<tr data-row-index="${i}">${columns.map(([key]) => {
     const value = key === "__index" ? i + 1 : row[key];
-    if (key === "__index") return `<td class="rowIndex" data-row-index="${i}" title="행 선택">${escapeXml(value)}</td>`;
-    return `<td class="editableCell" contenteditable="true" spellcheck="false" data-row-index="${i}" data-key="${escapeAttr(key)}" title="클릭해서 수정">${escapeXml(formatTableValue(value))}</td>`;
+    if (key === "__index") return `<td class="rowIndex" data-row-index="${i}" title="???좏깮">${escapeXml(value)}</td>`;
+    return `<td class="editableCell" contenteditable="true" spellcheck="false" data-row-index="${i}" data-key="${escapeAttr(key)}" title="?대┃?댁꽌 ?섏젙">${escapeXml(formatTableValue(value))}</td>`;
   }).join("")}</tr>`).join("");
-  if (summary) summary.textContent = `${d.rows.length} rows · editable`;
+  if (summary) summary.textContent = `${d.rows.length} rows · 편집 가능`;
   updateExcelUndoButton();
   bindEditableTable();
 }
 
-// 표 안의 각 셀에 클릭/키보드/붙여넣기 이벤트를 연결합니다.
-// 이 함수는 renderTable이 표를 새로 그린 직후마다 다시 호출되어야 합니다.
+// ???덉쓽 媛?????대┃/?ㅻ낫??遺숈뿬?ｊ린 ?대깽?몃? ?곌껐?⑸땲??
+// ???⑥닔??renderTable???쒕? ?덈줈 洹몃┛ 吏곹썑留덈떎 ?ㅼ떆 ?몄텧?섏뼱???⑸땲??
 function bindEditableTable() {
   const body = $("dataTable");
   if (!body) return;
@@ -4439,7 +4489,7 @@ function bindEditableTable() {
       cell.dataset.originalValue = cell.textContent || "";
       cell.classList.add("editing");
       selectTableCell(cell);
-      setStatus("표 수정 중...");
+      setStatus("???섏젙 以?..");
     });
     cell.addEventListener("click", () => selectTableCell(cell));
     cell.addEventListener("paste", (event) => handleTablePaste(event, cell));
@@ -4471,8 +4521,8 @@ function bindEditableTable() {
   }
 }
 
-// 행 번호를 누르면 해당 행을 선택합니다.
-// 선택 행 삭제 버튼이 이 선택 정보를 사용합니다.
+// ??踰덊샇瑜??꾨Ⅴ硫??대떦 ?됱쓣 ?좏깮?⑸땲??
+// ?좏깮 ????젣 踰꾪듉?????좏깮 ?뺣낫瑜??ъ슜?⑸땲??
 function selectTableRow(rowIndex) {
   const body = $("dataTable");
   if (!body || !Number.isInteger(rowIndex)) return;
@@ -4487,8 +4537,8 @@ function selectTableRow(rowIndex) {
   }
 }
 
-// 사용자가 클릭한 셀을 현재 선택 셀로 표시합니다.
-// 파란 테두리와 행 강조는 이 함수에서 붙는 CSS 클래스가 담당합니다.
+// ?ъ슜?먭? ?대┃??????꾩옱 ?좏깮 ?濡??쒖떆?⑸땲??
+// ?뚮? ?뚮몢由ъ? ??媛뺤“?????⑥닔?먯꽌 遺숇뒗 CSS ?대옒?ㅺ? ?대떦?⑸땲??
 function selectTableCell(cell) {
   const body = $("dataTable");
   if (!body || !cell) return;
@@ -4499,8 +4549,8 @@ function selectTableCell(cell) {
   state.tableSelection = { rowIndex, key: cell.dataset.key };
 }
 
-// Enter는 아래 행, Tab은 옆 셀로 이동합니다.
-// 일반 엑셀 조작 감각에 가깝게 만들기 위한 보조 함수입니다.
+// Enter???꾨옒 ?? Tab? ???濡??대룞?⑸땲??
+// ?쇰컲 ?묒? 議곗옉 媛먭컖??媛源앷쾶 留뚮뱾湲??꾪븳 蹂댁“ ?⑥닔?낅땲??
 function moveTableFocus(cell, rowStep, colStep) {
   const rowIndex = Number(cell.dataset.rowIndex);
   const cells = [...document.querySelectorAll("#dataTable .editableCell")];
@@ -4521,8 +4571,8 @@ function moveTableFocus(cell, rowStep, colStep) {
   }
 }
 
-// 사용자가 입력한 텍스트를 저장하기 전에 숫자인지 판단합니다.
-// "0.123"처럼 숫자로 해석 가능한 값은 number로 저장해야 그래프 계산에 바로 쓸 수 있습니다.
+// ?ъ슜?먭? ?낅젰???띿뒪?몃? ??ν븯湲??꾩뿉 ?レ옄?몄? ?먮떒?⑸땲??
+// "0.123"泥섎읆 ?レ옄濡??댁꽍 媛?ν븳 媛믪? number濡???ν빐??洹몃옒??怨꾩궛??諛붾줈 ?????덉뒿?덈떎.
 function coerceTableValue(text, previous) {
   const trimmed = String(text ?? "").trim();
   if (trimmed === "") return "";
@@ -4534,7 +4584,7 @@ function coerceTableValue(text, previous) {
   return trimmed;
 }
 
-// 표의 rows가 바뀌면 화면 상태, Fig, 실험 정보, 자동 저장 예약을 한 번에 갱신합니다.
+// ?쒖쓽 rows媛 諛붾뚮㈃ ?붾㈃ ?곹깭, Fig, ?ㅽ뿕 ?뺣낫, ?먮룞 ????덉빟????踰덉뿉 媛깆떊?⑸땲??
 function cloneTableRows(rows) {
   return JSON.parse(JSON.stringify(Array.isArray(rows) ? rows : []));
 }
@@ -4553,7 +4603,7 @@ function pushTableUndo(d) {
 
 function undoExcelEdit() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("되돌릴 데이터가 없습니다.");
+  if (!d) return setStatus("?섎룎由??곗씠?곌? ?놁뒿?덈떎.");
   let snapshot = null;
   while (state.tableUndoStack.length) {
     const candidate = state.tableUndoStack.pop();
@@ -4563,11 +4613,11 @@ function undoExcelEdit() {
     }
   }
   updateExcelUndoButton();
-  if (!snapshot) return setStatus("되돌릴 수정 내역이 없습니다.");
+  if (!snapshot) return setStatus("?섎룎由??섏젙 ?댁뿭???놁뒿?덈떎.");
   d.rows = cloneTableRows(snapshot.rows);
   updateDatasetRows(d);
   renderTable(d);
-  setStatus("표 수정을 이전 상태로 되돌렸습니다.");
+  setStatus("???섏젙???댁쟾 ?곹깭濡??섎룎?몄뒿?덈떎.");
 }
 
 function updateDatasetRows(d) {
@@ -4578,8 +4628,8 @@ function updateDatasetRows(d) {
   scheduleRowsSave(d);
 }
 
-// 셀 하나를 수정한 뒤 실제 데이터셋 rows에 반영합니다.
-// 이후 updateDatasetRows가 Fig 갱신과 서버 저장까지 이어줍니다.
+// ? ?섎굹瑜??섏젙?????ㅼ젣 ?곗씠?곗뀑 rows??諛섏쁺?⑸땲??
+// ?댄썑 updateDatasetRows媛 Fig 媛깆떊怨??쒕쾭 ??κ퉴吏 ?댁뼱以띾땲??
 function applyTableCellEdit(cell) {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return false;
@@ -4595,8 +4645,8 @@ function applyTableCellEdit(cell) {
   return true;
 }
 
-// 엑셀에서 복사한 여러 칸을 그대로 붙여넣을 수 있게 합니다.
-// 탭은 열, 줄바꿈은 행으로 해석해서 필요한 경우 행을 자동으로 늘립니다.
+// ?묒??먯꽌 蹂듭궗???щ윭 移몄쓣 洹몃?濡?遺숈뿬?ｌ쓣 ???덇쾶 ?⑸땲??
+// ??? ?? 以꾨컮轅덉? ?됱쑝濡??댁꽍?댁꽌 ?꾩슂??寃쎌슦 ?됱쓣 ?먮룞?쇰줈 ?섎┰?덈떎.
 function handleTablePaste(event, cell) {
   const text = event.clipboardData?.getData("text/plain") || "";
   if (!text) return;
@@ -4633,7 +4683,7 @@ function makeEmptyTableRow(d) {
 
 function addExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("먼저 데이터를 선택하세요.");
+  if (!d) return setStatus("癒쇱? ?곗씠?곕? ?좏깮?섏꽭??");
   d.rows = Array.isArray(d.rows) ? d.rows : [];
   pushTableUndo(d);
   d.rows.push(makeEmptyTableRow(d));
@@ -4646,26 +4696,26 @@ function addExcelRow() {
 
 function deleteSelectedExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d || !Array.isArray(d.rows) || !d.rows.length) return setStatus("삭제할 행이 없습니다.");
+  if (!d || !Array.isArray(d.rows) || !d.rows.length) return setStatus("??젣???됱씠 ?놁뒿?덈떎.");
   const rowIndex = Number(state.tableSelection?.rowIndex);
-  if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= d.rows.length) return setStatus("삭제할 행을 먼저 선택하세요.");
+  if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= d.rows.length) return setStatus("??젣???됱쓣 癒쇱? ?좏깮?섏꽭??");
   pushTableUndo(d);
   d.rows.splice(rowIndex, 1);
   updateDatasetRows(d);
   renderTable(d);
-  setStatus("선택한 행을 삭제했습니다.");
+  setStatus("?좏깮???됱쓣 ??젣?덉뒿?덈떎.");
 }
 
 function saveCurrentExcelRows() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("저장할 데이터가 없습니다.");
+  if (!d) return setStatus("??ν븷 ?곗씠?곌? ?놁뒿?덈떎.");
   clearTimeout(state.tableSaveTimer);
   return saveRowsEdit(d);
 }
 
 function scheduleRowsSave(d) {
   clearTimeout(state.tableSaveTimer);
-  setStatus("표 수정 내용을 저장 중...");
+  setStatus("???섏젙 ?댁슜?????以?..");
   state.tableSaveTimer = setTimeout(() => saveRowsEdit(d), 650);
 }
 
@@ -4677,12 +4727,12 @@ async function saveRowsEdit(d) {
       body: JSON.stringify({ rows: d.rows }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "표 저장 실패");
+    if (!res.ok) throw new Error(saved.error || "??????ㅽ뙣");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    setStatus("표 수정 내용이 Fig와 DB에 저장되었습니다.");
+    setStatus("???섏젙 ?댁슜??Fig? DB????λ릺?덉뒿?덈떎.");
   } catch (error) {
-    setStatus(`표 저장 실패: ${error.message}`);
+    setStatus(`??????ㅽ뙣: ${error.message}`);
   }
 }
 
@@ -4699,8 +4749,8 @@ function renderCurrent() {
 
 async function applyCellInfo() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("먼저 데이터를 선택하세요.");
-  setBusy(true, "입력한 정보를 현재 데이터에 적용하고 있습니다.");
+  if (!d) return setStatus("癒쇱? ?곗씠?곕? ?좏깮?섏꽭??");
+  setBusy(true, "?낅젰???뺣낫瑜??꾩옱 ?곗씠?곗뿉 ?곸슜?섍퀬 ?덉뒿?덈떎.");
   try {
     const hierarchy = hierarchySelectionPayload();
     delete hierarchy.datasetGroupName;
@@ -4711,7 +4761,7 @@ async function applyCellInfo() {
     });
     const saved = await res.json();
     if (!res.ok) {
-      setStatus(saved.error || "정보 저장 실패");
+      setStatus(saved.error || "?뺣낫 ????ㅽ뙣");
       return;
     }
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
@@ -4721,9 +4771,9 @@ async function applyCellInfo() {
     renderSelect();
     renderSavedList();
     renderCurrent();
-    setStatus("입력 정보가 현재 Fig에 적용되었습니다.");
+    setStatus("?낅젰 ?뺣낫媛 ?꾩옱 Fig???곸슜?섏뿀?듬땲??");
   } catch (error) {
-    setStatus(`정보 저장 실패: ${error.message}`);
+    setStatus(`?뺣낫 ????ㅽ뙣: ${error.message}`);
   } finally {
     setBusy(false);
   }
@@ -4745,7 +4795,7 @@ async function saveDataset(ev) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || "저장 실패");
+    throw new Error(body.error || "????ㅽ뙣");
   }
   const saved = await res.json();
   state.datasets.unshift(saved);
@@ -4778,7 +4828,7 @@ function exportPng() {
     a.download = "battery-figure.png";
     a.click();
     URL.revokeObjectURL(a.href);
-  }).catch((err) => setStatus(err.message || "PNG 변환 실패"));
+  }).catch((err) => setStatus(err.message || "PNG 蹂???ㅽ뙣"));
 }
 
 function svgToPngBlob(svg) {
@@ -4797,7 +4847,7 @@ function svgToPngBlob(svg) {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
           URL.revokeObjectURL(url);
-          blob ? resolve(blob) : reject(new Error("PNG 변환 실패"));
+          blob ? resolve(blob) : reject(new Error("PNG 蹂???ㅽ뙣"));
         }, "image/png");
       } catch (err) {
         URL.revokeObjectURL(url);
@@ -4806,7 +4856,7 @@ function svgToPngBlob(svg) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Fig 이미지를 변환하지 못했습니다."));
+      reject(new Error("Fig ?대?吏瑜?蹂?섑븯吏 紐삵뻽?듬땲??"));
     };
     img.src = url;
   });
@@ -4831,19 +4881,19 @@ function renderCycComparison() {
   const series = selectedComparisonSeries();
   preview.classList.remove("hidden");
   if (series.length < 2) {
-    preview.innerHTML = `<p class="emptySaved">CYC Fig를 2개 이상 선택하면 비교 그래프를 만들 수 있습니다.</p>`;
-    setStatus("CYC Fig를 2개 이상 선택하세요.");
+    preview.innerHTML = `<p class="emptySaved">CYC Fig瑜?2媛??댁긽 ?좏깮?섎㈃ 鍮꾧탳 洹몃옒?꾨? 留뚮뱾 ???덉뒿?덈떎.</p>`;
+    setStatus("CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
     return;
   }
   const colorMap = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   preview.innerHTML = `
     <div class="comparisonTitle">
       <div>
-        <strong>CYC 비교 Fig</strong>
-        <span>${series.length}개 Fig 비교</span>
+        <strong>CYC 鍮꾧탳 Fig</strong>
+        <span>${series.length}媛?Fig 鍮꾧탳</span>
       </div>
       <div class="comparisonActions">
-        <button type="button" id="saveComparisonFigure">비교 Fig 저장</button>
+        <button type="button" id="saveComparisonFigure">鍮꾧탳 Fig ???/button>
         <button type="button" id="exportComparisonSvg" class="secondaryAction">SVG</button>
         <button type="button" id="exportComparisonPng" class="secondaryAction">PNG</button>
       </div>
@@ -4866,12 +4916,12 @@ function renderCycComparison() {
   $("saveComparisonFigure")?.addEventListener("click", saveComparisonFigure);
   $("exportComparisonSvg")?.addEventListener("click", exportComparisonSvg);
   $("exportComparisonPng")?.addEventListener("click", exportComparisonPng);
-  setStatus("CYC 비교 Fig를 만들었습니다.");
+  setStatus("CYC 鍮꾧탳 Fig瑜?留뚮뱾?덉뒿?덈떎.");
 }
 
 async function saveComparisonFigure() {
   const series = selectedComparisonSeries();
-  if (series.length < 2) return setStatus("저장하려면 CYC Fig를 2개 이상 선택하세요.");
+  if (series.length < 2) return setStatus("??ν븯?ㅻ㈃ CYC Fig瑜?2媛??댁긽 ?좏깮?섏꽭??");
   const comparisonColors = Object.fromEntries(series.map((s, idx) => [s.d.id, comparisonColor(s.d.id, idx)]));
   const payload = {
     dataType: "cyc-comparison",
@@ -4896,31 +4946,31 @@ async function saveComparisonFigure() {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    return setStatus(body.error || "비교 Fig 저장 실패");
+    return setStatus(body.error || "鍮꾧탳 Fig ????ㅽ뙣");
   }
   const saved = await res.json();
   state.datasets.unshift(saved);
   showDatasetImmediately(saved);
   activateView("figure", "cyc");
-  setStatus("비교 C-rate Fig를 저장했습니다.");
+  setStatus("鍮꾧탳 C-rate Fig瑜???ν뻽?듬땲??");
 }
 
 function exportComparisonSvg() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("먼저 비교 Fig를 만들어주세요.");
+  if (!svg) return setStatus("癒쇱? 鍮꾧탳 Fig瑜?留뚮뱾?댁＜?몄슂.");
   download("cyc-comparison.svg", new XMLSerializer().serializeToString(svg), "image/svg+xml");
 }
 
 function exportComparisonPng() {
   const svg = $("comparisonFigure");
-  if (!svg) return setStatus("먼저 비교 Fig를 만들어주세요.");
+  if (!svg) return setStatus("癒쇱? 鍮꾧탳 Fig瑜?留뚮뱾?댁＜?몄슂.");
   svgToPngBlob(svg).then((blob) => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "cyc-comparison.png";
     a.click();
     URL.revokeObjectURL(a.href);
-  }).catch((err) => setStatus(err.message || "PNG 변환 실패"));
+  }).catch((err) => setStatus(err.message || "PNG 蹂???ㅽ뙣"));
 }
 
 function renderSavedCycComparison(d) {
@@ -4934,7 +4984,7 @@ function renderSavedCycComparison(d) {
     ["Source", d.sourceName],
   ].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   if (series.length < 1) {
-    $("figureCanvas").innerHTML = `<p class="emptySaved">저장된 비교 Fig 데이터가 없습니다.</p>`;
+    $("figureCanvas").innerHTML = `<p class="emptySaved">??λ맂 鍮꾧탳 Fig ?곗씠?곌? ?놁뒿?덈떎.</p>`;
     return;
   }
   const colorMap = Object.fromEntries(series.map((s) => [s.sourceId, s.color]));
@@ -5003,13 +5053,13 @@ function bytesToBase64(bytes) {
 
 async function exportPpt() {
   const svg = $("paperFigure");
-  if (!svg) return setStatus("먼저 Fig를 생성하거나 선택하세요.");
+  if (!svg) return setStatus("癒쇱? Fig瑜??앹꽦?섍굅???좏깮?섏꽭??");
   let pngBytes;
   try {
     const pngBlob = await svgToPngBlob(svg);
     pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
   } catch (err) {
-    return setStatus(err.message || "PPT 변환 실패");
+    return setStatus(err.message || "PPT 蹂???ㅽ뙣");
   }
   try {
     const res = await fetch("/api/export-ppt", {
@@ -5022,7 +5072,7 @@ async function exportPpt() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || "PPT 파일을 만들지 못했습니다.");
+      throw new Error(body.error || "PPT ?뚯씪??留뚮뱾吏 紐삵뻽?듬땲??");
     }
     const blob = await res.blob();
     const a = document.createElement("a");
@@ -5030,9 +5080,9 @@ async function exportPpt() {
     a.download = "battery-figure.pptx";
     a.click();
     URL.revokeObjectURL(a.href);
-    return setStatus("PPT 다운로드 완료");
+    return setStatus("PPT ?ㅼ슫濡쒕뱶 ?꾨즺");
   } catch (err) {
-    return setStatus(err.message || "PPT 다운로드 실패");
+    return setStatus(err.message || "PPT ?ㅼ슫濡쒕뱶 ?ㅽ뙣");
   }
   const files = [
     { name: "[Content_Types].xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -5116,7 +5166,7 @@ async function exportPpt() {
 </Relationships>` },
     { name: "ppt/theme/theme1.xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Battery Data Portal">
-<a:themeElements><a:clrScheme name="Office"><a:dk1><a:srgbClr val="000000"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1F2937"/></a:dk2><a:lt2><a:srgbClr val="F8FAFC"/></a:lt2><a:accent1><a:srgbClr val="0F766E"/></a:accent1><a:accent2><a:srgbClr val="EC4899"/></a:accent2><a:accent3><a:srgbClr val="64748B"/></a:accent3><a:accent4><a:srgbClr val="A78BFA"/></a:accent4><a:accent5><a:srgbClr val="14B8A6"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="2563EB"/></a:hlink><a:folHlink><a:srgbClr val="7C3AED"/></a:folHlink></a:clrScheme><a:fontScheme name="Office"><a:majorFont><a:latin typeface="Segoe UI"/><a:ea typeface="맑은 고딕"/><a:cs typeface="Segoe UI"/></a:majorFont><a:minorFont><a:latin typeface="Segoe UI"/><a:ea typeface="맑은 고딕"/><a:cs typeface="Segoe UI"/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements>
+<a:themeElements><a:clrScheme name="Office"><a:dk1><a:srgbClr val="000000"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1F2937"/></a:dk2><a:lt2><a:srgbClr val="F8FAFC"/></a:lt2><a:accent1><a:srgbClr val="0F766E"/></a:accent1><a:accent2><a:srgbClr val="EC4899"/></a:accent2><a:accent3><a:srgbClr val="64748B"/></a:accent3><a:accent4><a:srgbClr val="A78BFA"/></a:accent4><a:accent5><a:srgbClr val="14B8A6"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="2563EB"/></a:hlink><a:folHlink><a:srgbClr val="7C3AED"/></a:folHlink></a:clrScheme><a:fontScheme name="Office"><a:majorFont><a:latin typeface="Segoe UI"/><a:ea typeface="留묒? 怨좊뵓"/><a:cs typeface="Segoe UI"/></a:majorFont><a:minorFont><a:latin typeface="Segoe UI"/><a:ea typeface="留묒? 怨좊뵓"/><a:cs typeface="Segoe UI"/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements>
 </a:theme>` },
     { name: "ppt/media/battery-figure.png", bytes: pngBytes },
   ];
@@ -5125,11 +5175,11 @@ async function exportPpt() {
   a.download = "battery-figure.pptx";
   a.click();
   URL.revokeObjectURL(a.href);
-  setStatus("PPT 다운로드 완료");
+  setStatus("PPT ?ㅼ슫濡쒕뱶 ?꾨즺");
 }
 
 async function deleteCurrent() {
-  if (!state.selectedId || !confirm("선택한 데이터를 삭제할까요?")) return;
+  if (!state.selectedId || !confirm("?좏깮???곗씠?곕? ??젣?좉퉴??")) return;
   await fetch(`/api/datasets/${encodeURIComponent(state.selectedId)}`, { method: "DELETE", headers: authHeaders() });
   state.datasets = state.datasets.filter((d) => d.id !== state.selectedId);
   state.selectedId = null;
@@ -5195,9 +5245,9 @@ const electrodePresets = {
 };
 
 const ELECTRODE_PRESET_OPTIONS = [
-  { value: "ncm", label: "양극 / NCM" },
-  { value: "lfp", label: "양극 / LFP" },
-  { value: "graphite", label: "음극 / Graphite" },
+  { value: "ncm", label: "?묎레 / NCM" },
+  { value: "lfp", label: "?묎레 / LFP" },
+  { value: "graphite", label: "?뚭레 / Graphite" },
 ];
 
 function electrodePresetByKey(key) {
@@ -5236,8 +5286,8 @@ function applyElectrodePreset() {
 function updateElectrodeLabels() {
   const p = currentElectrodePreset();
   const labels = {
-    calcCollectorMass: `${p.collector} 무게 (g)`,
-    calcCollectorThickness: `${p.collector} 두께 (mm)`,
+    calcCollectorMass: `${p.collector} 臾닿쾶 (g)`,
+    calcCollectorThickness: `${p.collector} ?먭퍡 (mm)`,
     calcNcmRatio: `${p.active} (%)`,
     calcSuperRatio: `${p.conductor} (%)`,
     calcPtfeRatio: `${p.binder} (%)`,
@@ -5254,7 +5304,7 @@ function fixed(n, d = 6) {
 }
 
 function calcHelp(text) {
-  return `<button class="calcHelpButton" type="button" data-calc-help="${escapeAttr(text)}" aria-label="계산 설명 보기">?</button>`;
+  return `<button class="calcHelpButton" type="button" data-calc-help="${escapeAttr(text)}" aria-label="怨꾩궛 ?ㅻ챸 蹂닿린">?</button>`;
 }
 
 function calcHelpLabel(label, text) {
@@ -5302,8 +5352,8 @@ function electrodeInputSnapshot() {
   return Object.fromEntries(ELECTRODE_INPUT_IDS.map((id) => [id, $(id)?.value ?? ""]));
 }
 
-// 브라우저 localStorage에서 저장된 전극 C-rate 계산값 목록을 불러옵니다.
-// 서버 DB에 저장하기 전의 개인 작업 보관함 역할입니다.
+// 釉뚮씪?곗? localStorage?먯꽌 ??λ맂 ?꾧레 C-rate 怨꾩궛媛?紐⑸줉??遺덈윭?듬땲??
+// ?쒕쾭 DB????ν븯湲??꾩쓽 媛쒖씤 ?묒뾽 蹂닿?????븷?낅땲??
 function loadElectrodeProfiles() {
   try {
     const parsed = JSON.parse(localStorage.getItem(ELECTRODE_PROFILE_KEY) || "[]");
@@ -5316,22 +5366,22 @@ function loadElectrodeProfiles() {
   }
 }
 
-// 전극 저장소 목록을 localStorage에 저장하고 화면 목록도 다시 그립니다.
+// ?꾧레 ??μ냼 紐⑸줉??localStorage????ν븯怨??붾㈃ 紐⑸줉???ㅼ떆 洹몃┰?덈떎.
 function persistElectrodeProfiles() {
   localStorage.setItem(ELECTRODE_PROFILE_KEY, JSON.stringify(state.electrodeProfiles));
   renderElectrodeProfileStore();
   renderElectrodeCalcSlots();
 }
 
-// 이름을 비워두고 저장할 때 자동으로 붙는 이름입니다.
-// 날짜, active material, 1C 전류가 들어가면 나중에 찾기가 쉽습니다.
+// ?대쫫??鍮꾩썙?먭퀬 ??ν븷 ???먮룞?쇰줈 遺숇뒗 ?대쫫?낅땲??
+// ?좎쭨, active material, 1C ?꾨쪟媛 ?ㅼ뼱媛硫??섏쨷??李얘린媛 ?쎌뒿?덈떎.
 function defaultElectrodeProfileName(c) {
   const date = todayLocal().slice(5);
   return `${date} ${c.preset.active} 1C ${fixed(c.oneC, 3)} mA`;
 }
 
-// 현재 전극 계산 입력값과 계산 결과를 하나의 저장 객체로 묶습니다.
-// 이 객체가 저장소 카드가 되고, 나중에 CYC 데이터에 넣을 payload의 원본이 됩니다.
+// ?꾩옱 ?꾧레 怨꾩궛 ?낅젰媛믨낵 怨꾩궛 寃곌낵瑜??섎굹?????媛앹껜濡?臾띠뒿?덈떎.
+// ??媛앹껜媛 ??μ냼 移대뱶媛 ?섍퀬, ?섏쨷??CYC ?곗씠?곗뿉 ?ｌ쓣 payload???먮낯???⑸땲??
 function buildElectrodeProfileFromCalc(c, name, inputs, presetKey) {
   return {
     id: `electrode-${Date.now()}`,
@@ -5362,18 +5412,18 @@ function buildElectrodeProfile() {
   return buildElectrodeProfileFromCalc(c, name, inputs, presetKey);
 }
 
-// 현재 계산 결과를 저장소에 추가합니다.
-// 최근 저장값이 위에 오도록 unshift 형태로 넣고, 너무 커지지 않게 40개까지만 유지합니다.
+// ?꾩옱 怨꾩궛 寃곌낵瑜???μ냼??異붽??⑸땲??
+// 理쒓렐 ??κ컪???꾩뿉 ?ㅻ룄濡?unshift ?뺥깭濡??ｊ퀬, ?덈Т 而ㅼ?吏 ?딄쾶 40媛쒓퉴吏留??좎??⑸땲??
 function saveElectrodeProfile() {
   const profile = buildElectrodeProfile();
   state.electrodeProfiles = [profile, ...state.electrodeProfiles.filter((item) => item.id !== profile.id)].slice(0, 40);
   state.selectedElectrodeProfileId = profile.id;
   persistElectrodeProfiles();
   if ($("electrodeProfileName")) $("electrodeProfileName").value = "";
-  setStatus(`전극 C-rate 계산값을 저장했습니다: ${profile.name}`);
+  setStatus(`?꾧레 C-rate 怨꾩궛媛믪쓣 ??ν뻽?듬땲?? ${profile.name}`);
 }
 
-// 저장소에서 현재 선택된 계산 프로필을 찾습니다.
+// ??μ냼?먯꽌 ?꾩옱 ?좏깮??怨꾩궛 ?꾨줈?꾩쓣 李얠뒿?덈떎.
 function normalizedSlotInputs(inputs = {}, presetKey = "ncm") {
   return { ...defaultElectrodeInputs(presetKey), ...inputs, calcElectrodeType: presetKey };
 }
@@ -5381,7 +5431,7 @@ function normalizedSlotInputs(inputs = {}, presetKey = "ncm") {
 function defaultElectrodeSlot(index, presetKey = "ncm") {
   return {
     id: `electrode-slot-${index + 1}`,
-    name: `계산기 ${index + 1}`,
+    name: `怨꾩궛湲?${index + 1}`,
     presetKey,
     inputs: defaultElectrodeInputs(presetKey),
   };
@@ -5391,7 +5441,7 @@ function normalizeElectrodeSlot(slot, index) {
   const presetKey = slot?.presetKey || slot?.inputs?.calcElectrodeType || "ncm";
   return {
     id: slot?.id || `electrode-slot-${index + 1}`,
-    name: slot?.name || `계산기 ${index + 1}`,
+    name: slot?.name || `怨꾩궛湲?${index + 1}`,
     presetKey,
     inputs: normalizedSlotInputs(slot?.inputs || {}, presetKey),
   };
@@ -5422,8 +5472,8 @@ function electrodeSlotCalc(slot) {
 }
 
 function electrodeSlotFieldLabel(field, preset) {
-  if (field.id === "calcCollectorMass") return `${preset.collector} 무게 (g)`;
-  if (field.id === "calcCollectorThickness") return `${preset.collector} 두께 (mm)`;
+  if (field.id === "calcCollectorMass") return `${preset.collector} 臾닿쾶 (g)`;
+  if (field.id === "calcCollectorThickness") return `${preset.collector} ?먭퍡 (mm)`;
   if (field.id === "calcNcmRatio") return `${preset.active} (%)`;
   if (field.id === "calcSuperRatio") return `${preset.conductor} (%)`;
   if (field.id === "calcPtfeRatio") return `${preset.binder} (%)`;
@@ -5437,10 +5487,10 @@ function renderElectrodeCalcSlots() {
   box.innerHTML = `
     <div class="calcSlotHeader">
       <div>
-        <h3>전극 C-rate 계산기 8칸</h3>
-        <p>샘플별로 값을 따로 계산하고, 필요한 계산값은 메인 계산기나 C-rate 저장소로 바로 보낼 수 있습니다.</p>
+        <h3>?꾧레 C-rate 怨꾩궛湲?8移?/h3>
+        <p>?섑뵆蹂꾨줈 媛믪쓣 ?곕줈 怨꾩궛?섍퀬, ?꾩슂??怨꾩궛媛믪? 硫붿씤 怨꾩궛湲곕굹 C-rate ??μ냼濡?諛붾줈 蹂대궪 ???덉뒿?덈떎.</p>
       </div>
-      <span>아래로 스크롤해서 8개 계산기를 사용하세요</span>
+      <span>?꾨옒濡??ㅽ겕濡ㅽ빐??8媛?怨꾩궛湲곕? ?ъ슜?섏꽭??/span>
     </div>
     <div class="calcSlotList">
       ${state.electrodeCalcSlots.map((slot, index) => {
@@ -5456,28 +5506,28 @@ function renderElectrodeCalcSlots() {
           <article class="calcSlotCard" data-slot-index="${index}">
             <div class="calcSlotTop">
               <label>
-                계산 이름
+                怨꾩궛 ?대쫫
                 <input type="text" value="${escapeAttr(slot.name)}" data-slot-field="name" />
               </label>
               <label>
-                전극
+                ?꾧레
                 <select data-slot-field="calcElectrodeType">${options}</select>
               </label>
             </div>
             <div class="calcSlotGrid">${fields}</div>
             <div class="calcSlotSummary">
-              <div><small>1C 전류</small><b>${fixed(c.oneC, 4)} mA</b></div>
+              <div><small>1C ?꾨쪟</small><b>${fixed(c.oneC, 4)} mA</b></div>
               <div><small>${escapeXml(preset.active)} loading</small><b>${fixed(c.ncmLoadingArea, 8)} g cm-2</b></div>
-              <div><small>${escapeXml(preset.collector)} 제외 질량</small><b>${fixed(c.electrodeMass, 6)} g</b></div>
-              <div><small>${escapeXml(preset.collector)} 제외 두께</small><b>${fixed(c.electrodeThickness, 4)} mm</b></div>
+              <div><small>${escapeXml(preset.collector)} ?쒖쇅 吏덈웾</small><b>${fixed(c.electrodeMass, 6)} g</b></div>
+              <div><small>${escapeXml(preset.collector)} ?쒖쇅 ?먭퍡</small><b>${fixed(c.electrodeThickness, 4)} mm</b></div>
             </div>
             <div class="calcSlotRateGrid">
               ${c.rates.map((rate) => `<span><strong>${rate.rate} C</strong>${fixed(rate.current, 4)} mA</span>`).join("")}
             </div>
             <div class="calcSlotActions">
-              <button type="button" data-slot-action="calc">계산 새로고침</button>
-              <button type="button" data-slot-action="load" class="secondaryAction">메인에 불러오기</button>
-              <button type="button" data-slot-action="save" class="saveAction">저장소 저장</button>
+              <button type="button" data-slot-action="calc">怨꾩궛 ?덈줈怨좎묠</button>
+              <button type="button" data-slot-action="load" class="secondaryAction">硫붿씤??遺덈윭?ㅺ린</button>
+              <button type="button" data-slot-action="save" class="saveAction">??μ냼 ???/button>
             </div>
           </article>`;
       }).join("")}
@@ -5530,14 +5580,14 @@ function saveElectrodeSlotProfile(slot) {
   const inputs = normalizedSlotInputs(slot.inputs, slot.presetKey);
   const c = electrodeCalcFromInputs(inputs, slot.presetKey);
   const customName = String(slot.name || "").trim();
-  const genericName = /^계산기\s*\d+$/i.test(customName);
-  const name = customName && !genericName ? customName : `${customName || "계산기"} · ${defaultElectrodeProfileName(c)}`;
+  const genericName = /^계산기\\s*\\d+$/i.test(customName);
+  const name = customName && !genericName ? customName : `${customName || "계산기"} - ${defaultElectrodeProfileName(c)}`;
   const profile = buildElectrodeProfileFromCalc(c, name, inputs, slot.presetKey);
   state.electrodeProfiles = [profile, ...state.electrodeProfiles.filter((item) => item.id !== profile.id)].slice(0, 40);
   state.selectedElectrodeProfileId = profile.id;
   persistElectrodeProfiles();
   renderElectrodeCalcSlots();
-  setStatus(`계산기 값을 전극 C-rate 저장소에 저장했습니다: ${profile.name}`);
+  setStatus(`계산기 값을 전극 C-rate 저장소에 저장했습니다. ${profile.name}`);
 }
 
 function handleElectrodeSlotClick(event) {
@@ -5550,7 +5600,7 @@ function handleElectrodeSlotClick(event) {
   const action = button.dataset.slotAction;
   if (action === "calc") {
     renderElectrodeCalcSlots();
-    return setStatus(`${slot.name || "계산기"} C-rate 계산을 새로고침했습니다.`);
+    return setStatus(`${slot.name || "계산기"} C-rate 계산 결과를 갱신했습니다.`);
   }
   if (action === "load") return applyElectrodeSlotToMain(slot);
   if (action === "save") return saveElectrodeSlotProfile(slot);
@@ -5565,16 +5615,16 @@ function selectElectrodeProfile(id) {
   renderElectrodeProfileStore();
 }
 
-// 저장소 카드의 "불러오기" 버튼이 누르면 입력칸을 저장 당시 값으로 되돌립니다.
+// ??μ냼 移대뱶??"遺덈윭?ㅺ린" 踰꾪듉???꾨Ⅴ硫??낅젰移몄쓣 ????뱀떆 媛믪쑝濡??섎룎由쎈땲??
 function applyElectrodeProfileToInputs(id = state.selectedElectrodeProfileId) {
   const profile = selectedElectrodeProfile(id);
-  if (!profile) return setStatus("불러올 전극 계산값을 먼저 선택하세요.");
+  if (!profile) return setStatus("遺덈윭???꾧레 怨꾩궛媛믪쓣 癒쇱? ?좏깮?섏꽭??");
   for (const [inputId, value] of Object.entries(profile.inputs || {})) {
     if ($(inputId)) $(inputId).value = value;
   }
   updateElectrodeLabels();
   renderElectrodeCalc();
-  setStatus(`전극 계산값을 불러왔습니다: ${profile.name}`);
+  setStatus(`?꾧레 怨꾩궛媛믪쓣 遺덈윭?붿뒿?덈떎: ${profile.name}`);
 }
 
 function deleteElectrodeProfile(id) {
@@ -5583,11 +5633,11 @@ function deleteElectrodeProfile(id) {
     state.selectedElectrodeProfileId = state.electrodeProfiles[0]?.id || null;
   }
   persistElectrodeProfiles();
-  setStatus("저장된 전극 계산값을 삭제했습니다.");
+  setStatus("??λ맂 ?꾧레 怨꾩궛媛믪쓣 ??젣?덉뒿?덈떎.");
 }
 
-// 저장소 카드의 내용을 CYC 데이터 cell.electrodeCalc에 넣기 위한 형태로 정리합니다.
-// 이렇게 넣어두면 CYC Fig와 분석 화면에서 같은 계산값을 다시 사용할 수 있습니다.
+// ??μ냼 移대뱶???댁슜??CYC ?곗씠??cell.electrodeCalc???ｊ린 ?꾪븳 ?뺥깭濡??뺣━?⑸땲??
+// ?대젃寃??ｌ뼱?먮㈃ CYC Fig? 遺꾩꽍 ?붾㈃?먯꽌 媛숈? 怨꾩궛媛믪쓣 ?ㅼ떆 ?ъ슜?????덉뒿?덈떎.
 function electrodeProfileCellPayload(profile) {
   return {
     profileId: profile.id,
@@ -5609,14 +5659,14 @@ function electrodeProfileCellPayload(profile) {
   };
 }
 
-// 선택한 CYC 데이터에 저장된 전극 계산값을 적용합니다.
-// PATCH API를 호출하기 때문에 적용 후에는 SQLite DB에도 함께 저장됩니다.
+// ?좏깮??CYC ?곗씠?곗뿉 ??λ맂 ?꾧레 怨꾩궛媛믪쓣 ?곸슜?⑸땲??
+// PATCH API瑜??몄텧?섍린 ?뚮Ц???곸슜 ?꾩뿉??SQLite DB?먮룄 ?④퍡 ??λ맗?덈떎.
 async function applyElectrodeProfileToSelectedCyc(id = state.selectedElectrodeProfileId) {
   const profile = selectedElectrodeProfile(id);
-  if (!profile) return setStatus("CYC에 넣을 전극 계산값을 먼저 선택하세요.");
+  if (!profile) return setStatus("CYC???ｌ쓣 ?꾧레 怨꾩궛媛믪쓣 癒쇱? ?좏깮?섏꽭??");
   const d = state.datasets.find((x) => x.id === state.selectedId);
-  if (!d) return setStatus("먼저 CYC 데이터를 선택하세요.");
-  if (d.dataType !== "cyc") return setStatus("선택한 데이터가 CYC가 아닙니다. CYC 데이터를 선택한 뒤 적용하세요.");
+  if (!d) return setStatus("癒쇱? CYC ?곗씠?곕? ?좏깮?섏꽭??");
+  if (d.dataType !== "cyc") return setStatus("?좏깮???곗씠?곌? CYC媛 ?꾨떃?덈떎. CYC ?곗씠?곕? ?좏깮?????곸슜?섏꽭??");
   try {
     const nextCell = {
       ...(d.cell || {}),
@@ -5629,20 +5679,20 @@ async function applyElectrodeProfileToSelectedCyc(id = state.selectedElectrodePr
       body: JSON.stringify({ cell: nextCell }),
     });
     const saved = await res.json();
-    if (!res.ok) throw new Error(saved.error || "CYC 데이터 적용 실패");
+    if (!res.ok) throw new Error(saved.error || "CYC ?곗씠???곸슜 ?ㅽ뙣");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
     renderCurrent();
     renderSearchResults();
     renderSavedList();
-    setStatus(`전극 계산값을 CYC 데이터에 넣었습니다: ${profile.name}`);
+    setStatus(`?꾧레 怨꾩궛媛믪쓣 CYC ?곗씠?곗뿉 ?ｌ뿀?듬땲?? ${profile.name}`);
   } catch (error) {
-    setStatus(`CYC 적용 실패: ${error.message}`);
+    setStatus(`CYC ?곸슜 ?ㅽ뙣: ${error.message}`);
   }
 }
 
-// 저장소 카드 내부 버튼들을 한 곳에서 처리하는 이벤트 위임 함수입니다.
-// 카드가 새로 그려져도 부모 목록 하나에만 이벤트를 걸면 계속 작동합니다.
+// ??μ냼 移대뱶 ?대? 踰꾪듉?ㅼ쓣 ??怨녹뿉??泥섎━?섎뒗 ?대깽???꾩엫 ?⑥닔?낅땲??
+// 移대뱶媛 ?덈줈 洹몃젮?몃룄 遺紐?紐⑸줉 ?섎굹?먮쭔 ?대깽?몃? 嫄몃㈃ 怨꾩냽 ?묐룞?⑸땲??
 function handleElectrodeProfileListClick(event) {
   const button = event.target.closest("button[data-profile-action]");
   if (!button) return;
@@ -5654,16 +5704,16 @@ function handleElectrodeProfileListClick(event) {
   if (action === "delete") return deleteElectrodeProfile(id);
 }
 
-// 전극 C-rate 저장소 카드 목록을 화면에 그립니다.
-// 선택된 카드에는 active 클래스를 붙여 사용자가 현재 선택값을 알아보기 쉽게 합니다.
+// ?꾧레 C-rate ??μ냼 移대뱶 紐⑸줉???붾㈃??洹몃┰?덈떎.
+// ?좏깮??移대뱶?먮뒗 active ?대옒?ㅻ? 遺숈뿬 ?ъ슜?먭? ?꾩옱 ?좏깮媛믪쓣 ?뚯븘蹂닿린 ?쎄쾶 ?⑸땲??
 function renderElectrodeProfileStore() {
   const list = $("electrodeProfileList");
   const count = $("electrodeProfileCount");
   if (!list) return;
   const profiles = state.electrodeProfiles || [];
-  if (count) count.textContent = `${profiles.length}개 저장됨`;
+  if (count) count.textContent = `${profiles.length}媛???λ맖`;
   if (!profiles.length) {
-    list.innerHTML = `<p class="emptyProfileList">아직 저장된 전극 C-rate 계산값이 없습니다. 위 값을 계산한 뒤 "현재 계산 저장"을 누르세요.</p>`;
+    list.innerHTML = `<p class="emptyProfileList">?꾩쭅 ??λ맂 ?꾧레 C-rate 怨꾩궛媛믪씠 ?놁뒿?덈떎. ??媛믪쓣 怨꾩궛????"?꾩옱 怨꾩궛 ??????꾨Ⅴ?몄슂.</p>`;
     return;
   }
   list.innerHTML = profiles.map((profile) => {
@@ -5676,16 +5726,16 @@ function renderElectrodeProfileStore() {
           <span>${escapeXml(created)}</span>
         </div>
         <div class="electrodeProfileMeta">
-          <div><small>전극</small><b>${escapeXml(profile.preset?.active || "-")}</b></div>
+          <div><small>?꾧레</small><b>${escapeXml(profile.preset?.active || "-")}</b></div>
           <div><small>1C</small><b>${fixed(Number(profile.oneC_mA), 4)} mA</b></div>
           <div><small>loading</small><b>${fixed(Number(profile.activeLoading_g_cm2), 8)} g cm-2</b></div>
-          <div><small>질량</small><b>${fixed(Number(profile.electrodeMass_g), 6)} g</b></div>
+          <div><small>吏덈웾</small><b>${fixed(Number(profile.electrodeMass_g), 6)} g</b></div>
         </div>
         <div class="electrodeProfileButtons">
-          <button type="button" data-profile-action="select" data-profile-id="${escapeAttr(profile.id)}">선택</button>
-          <button type="button" data-profile-action="load" data-profile-id="${escapeAttr(profile.id)}">불러오기</button>
-          <button type="button" data-profile-action="apply" data-profile-id="${escapeAttr(profile.id)}" class="saveAction">CYC에 넣기</button>
-          <button type="button" data-profile-action="delete" data-profile-id="${escapeAttr(profile.id)}" class="secondaryAction">삭제</button>
+          <button type="button" data-profile-action="select" data-profile-id="${escapeAttr(profile.id)}">?좏깮</button>
+          <button type="button" data-profile-action="load" data-profile-id="${escapeAttr(profile.id)}">遺덈윭?ㅺ린</button>
+          <button type="button" data-profile-action="apply" data-profile-id="${escapeAttr(profile.id)}" class="saveAction">CYC???ｊ린</button>
+          <button type="button" data-profile-action="delete" data-profile-id="${escapeAttr(profile.id)}" class="secondaryAction">??젣</button>
         </div>
       </article>`;
   }).join("");
@@ -5701,25 +5751,25 @@ function renderElectrodeCalc() {
   const binderName = c.preset.binder;
   box.innerHTML = `
     <div class="calcCards">
-      <div class="calcCard"><strong>1C 전류 ${calcHelp(`1C 전류 = ${activeName} 질량 × 이론용량입니다. 지금은 ${fixed(c.ncmMass, 9)} g × ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA로 계산했습니다.`)}</strong><span>${fixed(c.oneC, 4)} mA</span></div>
-      <div class="calcCard"><strong>${collectorName} 제외 전극 무게 ${calcHelp(`${collectorName} 제외 전극 무게 = 전극 전체 무게 - ${collectorName} 무게입니다. ${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g입니다.`)}</strong><span>${fixed(c.electrodeMass, 6)} g</span></div>
-      <div class="calcCard"><strong>${collectorName} 제외 전극 두께 ${calcHelp(`${collectorName} 제외 전극 두께 = 전극 전체 두께 - ${collectorName} 두께입니다. ${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm입니다.`)}</strong><span>${fixed(c.electrodeThickness, 4)} mm</span></div>
-      <div class="calcCard"><strong>${activeName} loading ${calcHelp(`${activeName} loading = ${activeName} 질량 / 전극 면적입니다. 전극 면적은 지름 ${fixed(c.diameter, 4)} mm 기준 π × (지름/20)^2 = ${fixed(c.area, 6)} cm2이고, ${fixed(c.ncmMass, 9)} g / ${fixed(c.area, 6)} cm2 = ${fixed(c.ncmLoadingArea, 8)} g cm-2입니다.`)}</strong><span>${fixed(c.ncmLoadingArea, 8)} g cm-2</span></div>
+      <div class="calcCard"><strong>1C ?꾨쪟 ${calcHelp(`1C ?꾨쪟 = ${activeName} 吏덈웾 횞 ?대줎?⑸웾?낅땲?? 吏湲덉? ${fixed(c.ncmMass, 9)} g 횞 ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA濡?怨꾩궛?덉뒿?덈떎.`)}</strong><span>${fixed(c.oneC, 4)} mA</span></div>
+      <div class="calcCard"><strong>${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 ${calcHelp(`${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 = ?꾧레 ?꾩껜 臾닿쾶 - ${collectorName} 臾닿쾶?낅땲?? ${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g?낅땲??`)}</strong><span>${fixed(c.electrodeMass, 6)} g</span></div>
+      <div class="calcCard"><strong>${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 ${calcHelp(`${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 = ?꾧레 ?꾩껜 ?먭퍡 - ${collectorName} ?먭퍡?낅땲?? ${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm?낅땲??`)}</strong><span>${fixed(c.electrodeThickness, 4)} mm</span></div>
+      <div class="calcCard"><strong>${activeName} loading ${calcHelp(`${activeName} loading = ${activeName} 吏덈웾 / ?꾧레 硫댁쟻?낅땲?? ?꾧레 硫댁쟻? 吏由?${fixed(c.diameter, 4)} mm 湲곗? ? 횞 (吏由?20)^2 = ${fixed(c.area, 6)} cm2?닿퀬, ${fixed(c.ncmMass, 9)} g / ${fixed(c.area, 6)} cm2 = ${fixed(c.ncmLoadingArea, 8)} g cm-2?낅땲??`)}</strong><span>${fixed(c.ncmLoadingArea, 8)} g cm-2</span></div>
     </div>
     <section class="calcFormulaBox">
       <div>
-        <strong>무게 계산</strong>
+        <strong>臾닿쾶 怨꾩궛</strong>
         <span>${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g</span>
       </div>
       <div>
-        <strong>두께 계산</strong>
+        <strong>?먭퍡 怨꾩궛</strong>
         <span>${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm</span>
       </div>
     </section>
     <section class="rateCurrentBox">
       <div class="rateCurrentHeader">
-        <h3>C-rate별 전류 ${calcHelp(`각 C-rate 전류 = 1C 전류 × C-rate입니다. 예를 들어 0.33C는 ${fixed(c.oneC, 4)} mA × 0.33 = ${fixed(c.oneC * 0.33, 4)} mA입니다.`)}</h3>
-        <span>1C = ${fixed(c.oneC, 4)} mA 기준</span>
+        <h3>C-rate蹂??꾨쪟 ${calcHelp(`媛?C-rate ?꾨쪟 = 1C ?꾨쪟 횞 C-rate?낅땲?? ?덈? ?ㅼ뼱 0.33C??${fixed(c.oneC, 4)} mA 횞 0.33 = ${fixed(c.oneC * 0.33, 4)} mA?낅땲??`)}</h3>
+        <span>1C = ${fixed(c.oneC, 4)} mA 湲곗?</span>
       </div>
       <div class="rateCurrentGrid">
         ${c.rates.map((r) => `
@@ -5733,55 +5783,55 @@ function renderElectrodeCalc() {
       <table class="calcTable">
         <thead>
           <tr>
-            <th colspan="2">로딩 ${calcHelp(`로딩 계산에 필요한 기준값입니다. C-Al은 집전체 무게, 1C는 NCM 질량과 이론용량으로 계산한 기준 전류입니다.`)}</th>
-            <th colspan="3">전극 입력값 ${calcHelp(`전극 전체 입력값에서 C-coated Al 값을 빼고, 전극 지름으로 면적을 계산합니다.`)}</th>
-            <th colspan="3" class="sectionBlue">loading amount ${calcHelp(`각 성분 질량 = Al 제외 전극 무게 × 조성비입니다. NCM은 ${fixed(c.electrodeMass, 6)} g × ${fixed(c.ncmRatio * 100, 2)}% = ${fixed(c.ncmMass, 9)} g입니다.`)}</th>
-            <th colspan="2" class="sectionGreen">밀도 계산 ${calcHelp(`전체 밀도 = Al 제외 전극 무게 / 전극 부피입니다. 전극 부피 = 면적 × 두께(cm) = ${fixed(c.area, 6)} × ${fixed(c.electrodeThickness / 10, 6)} = ${fixed(c.volume, 8)} cm3입니다.`)}</th>
+            <th colspan="2">濡쒕뵫 ${calcHelp(`濡쒕뵫 怨꾩궛???꾩슂??湲곗?媛믪엯?덈떎. C-Al? 吏묒쟾泥?臾닿쾶, 1C??NCM 吏덈웾怨??대줎?⑸웾?쇰줈 怨꾩궛??湲곗? ?꾨쪟?낅땲??`)}</th>
+            <th colspan="3">?꾧레 ?낅젰媛?${calcHelp(`?꾧레 ?꾩껜 ?낅젰媛믪뿉??C-coated Al 媛믪쓣 鍮쇨퀬, ?꾧레 吏由꾩쑝濡?硫댁쟻??怨꾩궛?⑸땲??`)}</th>
+            <th colspan="3" class="sectionBlue">loading amount ${calcHelp(`媛??깅텇 吏덈웾 = Al ?쒖쇅 ?꾧레 臾닿쾶 횞 議곗꽦鍮꾩엯?덈떎. NCM? ${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ncmRatio * 100, 2)}% = ${fixed(c.ncmMass, 9)} g?낅땲??`)}</th>
+            <th colspan="2" class="sectionGreen">諛??怨꾩궛 ${calcHelp(`?꾩껜 諛??= Al ?쒖쇅 ?꾧레 臾닿쾶 / ?꾧레 遺?쇱엯?덈떎. ?꾧레 遺??= 硫댁쟻 횞 ?먭퍡(cm) = ${fixed(c.area, 6)} 횞 ${fixed(c.electrodeThickness / 10, 6)} = ${fixed(c.volume, 8)} cm3?낅땲??`)}</th>
           </tr>
           <tr>
-            <th>${calcHelpLabel(collectorName, `${collectorName} 집전체의 무게입니다. 전극 전체 무게에서 이 값을 빼서 활물질층 무게를 구합니다.`)}</th>
-            <th class="rateHead">${calcHelpLabel("1C", `1C 전류는 ${activeName} 질량 × 이론용량으로 계산한 기준 전류입니다.`)}</th>
-            <th>${calcHelpLabel(`${collectorName} 제외 전극 무게 (g)`, `전극 전체 무게에서 ${collectorName} 무게를 뺀 값입니다.`)}</th>
-            <th>${calcHelpLabel(`${collectorName} 제외 전극 두께 (mm)`, `전극 전체 두께에서 ${collectorName} 두께를 뺀 값입니다.`)}</th>
-            <th>${calcHelpLabel("Area (cm2)", "전극 지름으로 계산한 원형 전극 면적입니다. π × (지름/20)^2 입니다.")}</th>
-            <th>${calcHelpLabel(activeName, `${collectorName} 제외 전극 무게에 ${activeName} 조성비를 곱한 질량입니다.`)}</th>
-            <th>${calcHelpLabel(conductorName, `${collectorName} 제외 전극 무게에 ${conductorName} 조성비를 곱한 도전재 질량입니다.`)}</th>
-            <th>${calcHelpLabel(binderName, `${collectorName} 제외 전극 무게에 ${binderName} 조성비를 곱한 바인더 질량입니다.`)}</th>
+            <th>${calcHelpLabel(collectorName, `${collectorName} 吏묒쟾泥댁쓽 臾닿쾶?낅땲?? ?꾧레 ?꾩껜 臾닿쾶?먯꽌 ??媛믪쓣 鍮쇱꽌 ?쒕Ъ吏덉링 臾닿쾶瑜?援ы빀?덈떎.`)}</th>
+            <th class="rateHead">${calcHelpLabel("1C", `1C ?꾨쪟??${activeName} 吏덈웾 횞 ?대줎?⑸웾?쇰줈 怨꾩궛??湲곗? ?꾨쪟?낅땲??`)}</th>
+            <th>${calcHelpLabel(`${collectorName} ?쒖쇅 ?꾧레 臾닿쾶 (g)`, `?꾧레 ?꾩껜 臾닿쾶?먯꽌 ${collectorName} 臾닿쾶瑜?類 媛믪엯?덈떎.`)}</th>
+            <th>${calcHelpLabel(`${collectorName} ?쒖쇅 ?꾧레 ?먭퍡 (mm)`, `?꾧레 ?꾩껜 ?먭퍡?먯꽌 ${collectorName} ?먭퍡瑜?類 媛믪엯?덈떎.`)}</th>
+            <th>${calcHelpLabel("Area (cm2)", "?꾧레 吏由꾩쑝濡?怨꾩궛???먰삎 ?꾧레 硫댁쟻?낅땲?? ? 횞 (吏由?20)^2 ?낅땲??")}</th>
+            <th>${calcHelpLabel(activeName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${activeName} 議곗꽦鍮꾨? 怨깊븳 吏덈웾?낅땲??`)}</th>
+            <th>${calcHelpLabel(conductorName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${conductorName} 議곗꽦鍮꾨? 怨깊븳 ?꾩쟾??吏덈웾?낅땲??`)}</th>
+            <th>${calcHelpLabel(binderName, `${collectorName} ?쒖쇅 ?꾧레 臾닿쾶??${binderName} 議곗꽦鍮꾨? 怨깊븳 諛붿씤??吏덈웾?낅땲??`)}</th>
             <th>${calcHelpLabel("전체 밀도", "Al 제외 전극 무게를 전극 부피로 나눈 값입니다.")}</th>
-            <th>${calcHelpLabel(`${activeName} density`, `${activeName} 질량을 전극 부피로 나눈 값입니다.`)}</th>
+            <th>${calcHelpLabel(`${activeName} density`, `${activeName} 吏덈웾???꾧레 遺?쇰줈 ?섎늿 媛믪엯?덈떎.`)}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 무게 입력값입니다.`)}</td>
-            <td class="rateHead">${fixed(c.oneC, 4)} ${calcHelp(`${fixed(c.ncmMass, 9)} g × ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA`)}</td>
+            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 臾닿쾶 ?낅젰媛믪엯?덈떎.`)}</td>
+            <td class="rateHead">${fixed(c.oneC, 4)} ${calcHelp(`${fixed(c.ncmMass, 9)} g 횞 ${fixed(c.capacity, 4)} mAh g-1 = ${fixed(c.oneC, 4)} mA`)}</td>
             <td>${fixed(c.electrodeMass, 6)} ${calcHelp(`${fixed(c.totalMass, 6)} g - ${fixed(c.collectorMass, 6)} g = ${fixed(c.electrodeMass, 6)} g`)}</td>
             <td>${fixed(c.electrodeThickness, 4)} ${calcHelp(`${fixed(c.totalThickness, 4)} mm - ${fixed(c.collectorThickness, 4)} mm = ${fixed(c.electrodeThickness, 4)} mm`)}</td>
-            <td>${fixed(c.area, 6)} ${calcHelp(`지름 ${fixed(c.diameter, 4)} mm 기준 면적입니다.`)}</td>
-            <td>${fixed(c.ncmMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g × ${fixed(c.ncmRatio * 100, 2)}%`)}</td>
-            <td>${fixed(c.superMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g × ${fixed(c.superRatio * 100, 2)}%`)}</td>
-            <td>${fixed(c.ptfeMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g × ${fixed(c.ptfeRatio * 100, 2)}%`)}</td>
+            <td>${fixed(c.area, 6)} ${calcHelp(`吏由?${fixed(c.diameter, 4)} mm 湲곗? 硫댁쟻?낅땲??`)}</td>
+            <td>${fixed(c.ncmMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ncmRatio * 100, 2)}%`)}</td>
+            <td>${fixed(c.superMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.superRatio * 100, 2)}%`)}</td>
+            <td>${fixed(c.ptfeMass, 9)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g 횞 ${fixed(c.ptfeRatio * 100, 2)}%`)}</td>
             <td>${fixed(c.totalDensity, 8)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g / ${fixed(c.volume, 8)} cm3`)}</td>
             <td>${fixed(c.ncmLoadingVolume, 8)} ${calcHelp(`${fixed(c.ncmMass, 9)} g / ${fixed(c.volume, 8)} cm3`)}</td>
           </tr>
           <tr>
-            <th>${calcHelpLabel(collectorName, `${collectorName} 집전체 두께입니다.`)}</th>
-            <th>${calcHelpLabel(`${collectorName} 무게`, `${collectorName} 집전체 무게입니다.`)}</th>
-            <th>${calcHelpLabel("loading (g cm-2)", "Al 제외 전극 무게를 전극 면적으로 나눈 값입니다.")}</th>
-            ${c.rates.map((r) => `<th>${calcHelpLabel(`${r.rate} C 전류`, `1C 전류 ${fixed(c.oneC, 4)} mA × ${r.rate} = ${fixed(r.current, 4)} mA입니다.`)}</th>`).join("")}
-            <th colspan="2">${calcHelpLabel(`${activeName} loading (g cm-2)`, `${activeName} 질량을 전극 면적으로 나눈 값입니다.`)}</th>
+            <th>${calcHelpLabel(collectorName, `${collectorName} 吏묒쟾泥??먭퍡?낅땲??`)}</th>
+            <th>${calcHelpLabel(`${collectorName} 臾닿쾶`, `${collectorName} 吏묒쟾泥?臾닿쾶?낅땲??`)}</th>
+            <th>${calcHelpLabel("loading (g cm-2)", "Al ?쒖쇅 ?꾧레 臾닿쾶瑜??꾧레 硫댁쟻?쇰줈 ?섎늿 媛믪엯?덈떎.")}</th>
+            ${c.rates.map((r) => `<th>${calcHelpLabel(`${r.rate} C ?꾨쪟`, `1C ?꾨쪟 ${fixed(c.oneC, 4)} mA 횞 ${r.rate} = ${fixed(r.current, 4)} mA?낅땲??`)}</th>`).join("")}
+            <th colspan="2">${calcHelpLabel(`${activeName} loading (g cm-2)`, `${activeName} 吏덈웾???꾧레 硫댁쟻?쇰줈 ?섎늿 媛믪엯?덈떎.`)}</th>
           </tr>
           <tr>
-            <td>${fixed(c.collectorThickness, 4)} ${calcHelp(`C-coated Al 두께 입력값입니다.`)}</td>
-            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 무게 입력값입니다.`)}</td>
+            <td>${fixed(c.collectorThickness, 4)} ${calcHelp(`C-coated Al ?먭퍡 ?낅젰媛믪엯?덈떎.`)}</td>
+            <td>${fixed(c.collectorMass, 6)} ${calcHelp(`C-coated Al 臾닿쾶 ?낅젰媛믪엯?덈떎.`)}</td>
             <td>${fixed(c.loading, 8)} ${calcHelp(`${fixed(c.electrodeMass, 6)} g / ${fixed(c.area, 6)} cm2`)}</td>
-            ${c.rates.map((r) => `<td>${fixed(r.current, 4)} ${calcHelp(`${fixed(c.oneC, 4)} mA × ${r.rate}`)}</td>`).join("")}
+            ${c.rates.map((r) => `<td>${fixed(r.current, 4)} ${calcHelp(`${fixed(c.oneC, 4)} mA 횞 ${r.rate}`)}</td>`).join("")}
             <td colspan="2">${fixed(c.ncmLoadingArea, 8)} ${calcHelp(`${fixed(c.ncmMass, 9)} g / ${fixed(c.area, 6)} cm2`)}</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="copyNote">Al 제외 전극 무게/두께는 입력한 전극 전체값에서 C-coated Al 값을 뺀 값입니다. 전극 지름 기준 면적을 사용하므로 지름을 바꾸면 loading과 밀도가 같이 바뀝니다.</p>`;
+    <p class="copyNote">Al ?쒖쇅 ?꾧레 臾닿쾶/?먭퍡???낅젰???꾧레 ?꾩껜媛믪뿉??C-coated Al 媛믪쓣 類 媛믪엯?덈떎. ?꾧레 吏由?湲곗? 硫댁쟻???ъ슜?섎?濡?吏由꾩쓣 諛붽씀硫?loading怨?諛?꾧? 媛숈씠 諛붾앸땲??</p>`;
   renderElectrodeProfileStore();
   renderElectrodeCalcSlots();
 }
@@ -5790,11 +5840,11 @@ function runElectrodeCalc() {
   lastElectrodeCalcAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   renderElectrodeCalc();
   const box = $("electrodeCalcResult");
-  box?.insertAdjacentHTML("beforeend", `<p class="calcUpdated">계산 완료: ${escapeXml(lastElectrodeCalcAt)}</p>`);
+  box?.insertAdjacentHTML("beforeend", `<p class="calcUpdated">怨꾩궛 ?꾨즺: ${escapeXml(lastElectrodeCalcAt)}</p>`);
   box?.classList.remove("calcFlash");
   void box?.offsetWidth;
   box?.classList.add("calcFlash");
-  setStatus("전극 계산 완료");
+  setStatus("?꾧레 怨꾩궛 ?꾨즺");
 }
 
 function toggleCalcHelp(event) {
@@ -5822,23 +5872,23 @@ function copyElectrodeCalc() {
   const c = electrodeCalcData();
   const rows = [
     ["항목", "값", "단위"],
-    ["1C 전류", fixed(c.oneC, 6), "mA"],
-    ["전극 무게 except Al", fixed(c.electrodeMass, 9), "g"],
-    ["전극 두께 except Al", fixed(c.electrodeThickness, 6), "mm"],
-    ["면적", fixed(c.area, 9), "cm2"],
+    ["1C ?꾨쪟", fixed(c.oneC, 6), "mA"],
+    ["?꾧레 臾닿쾶 except Al", fixed(c.electrodeMass, 9), "g"],
+    ["?꾧레 ?먭퍡 except Al", fixed(c.electrodeThickness, 6), "mm"],
+    ["硫댁쟻", fixed(c.area, 9), "cm2"],
     ["loading", fixed(c.loading, 9), "g cm-2"],
-    ["NCM 질량", fixed(c.ncmMass, 9), "g"],
-    ["Super P 질량", fixed(c.superMass, 9), "g"],
-    ["PTFE 질량", fixed(c.ptfeMass, 9), "g"],
+    ["NCM 吏덈웾", fixed(c.ncmMass, 9), "g"],
+    ["Super P 吏덈웾", fixed(c.superMass, 9), "g"],
+    ["PTFE 吏덈웾", fixed(c.ptfeMass, 9), "g"],
     ["전체 밀도", fixed(c.totalDensity, 9), "g cm-3"],
     ["NCM loading", fixed(c.ncmLoadingArea, 9), "g cm-2"],
     ["NCM density", fixed(c.ncmLoadingVolume, 9), "g cm-3"],
-    ...c.rates.map((r) => [`${r.rate} C 전류`, fixed(r.current, 6), "mA"]),
+    ...c.rates.map((r) => [`${r.rate} C ?꾨쪟`, fixed(r.current, 6), "mA"]),
   ];
   const text = rows.map((row) => row.join("\t")).join("\n");
   navigator.clipboard?.writeText(text).then(
-    () => setStatus("전극 계산표를 복사했습니다."),
-    () => setStatus("복사 권한이 없어 표를 선택해서 복사해 주세요.")
+    () => setStatus("?꾧레 怨꾩궛?쒕? 蹂듭궗?덉뒿?덈떎."),
+    () => setStatus("蹂듭궗 沅뚰븳???놁뼱 ?쒕? ?좏깮?댁꽌 蹂듭궗??二쇱꽭??")
   );
 }
 
@@ -5850,7 +5900,7 @@ async function submitFeedback(event) {
   const message = String(fd.get("message") || "").trim();
   if (!message) {
     if (status) {
-      status.textContent = "수정 요청 내용을 먼저 적어주세요.";
+      status.textContent = "?섏젙 ?붿껌 ?댁슜??癒쇱? ?곸뼱二쇱꽭??";
       status.className = "error";
     }
     return;
@@ -5866,7 +5916,7 @@ async function submitFeedback(event) {
     selectedDatasetName: selected ? sampleLabel(selected) : "",
   };
   if (status) {
-    status.textContent = "의견을 저장하는 중입니다...";
+    status.textContent = "?섍껄????ν븯??以묒엯?덈떎...";
     status.className = "";
   }
   try {
@@ -5876,18 +5926,18 @@ async function submitFeedback(event) {
       body: JSON.stringify(payload),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "의견 저장 실패");
+    if (!res.ok) throw new Error(body.error || "?섍껄 ????ㅽ뙣");
     form.reset();
     if (status) {
       const when = new Date(body.createdAt || Date.now()).toLocaleString("ko-KR");
-      status.textContent = `저장됐습니다. 접수 시간: ${when}`;
+      status.textContent = `??λ릱?듬땲?? ?묒닔 ?쒓컙: ${when}`;
       status.className = "success";
     }
-    setStatus("수정 요청 저장 완료");
+    setStatus("?섏젙 ?붿껌 ????꾨즺");
     if (state.user?.role === "admin") loadFeedbacks().catch(() => {});
   } catch (err) {
     if (status) {
-      status.textContent = err.message || "의견을 저장하지 못했습니다.";
+      status.textContent = err.message || "?섍껄????ν븯吏 紐삵뻽?듬땲??";
       status.className = "error";
     }
   }
@@ -6013,7 +6063,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const button = event.target.closest("[data-open-batch-figure]");
     if (!button) return;
     const dataset = state.datasets.find((item) => item.id === button.dataset.openBatchFigure);
-    if (!dataset) return setStatus("저장된 Dataset을 찾지 못했습니다. 목록을 새로고침해 주세요.");
+    if (!dataset) return setStatus("??λ맂 Dataset??李얠? 紐삵뻽?듬땲?? 紐⑸줉???덈줈怨좎묠??二쇱꽭??");
     showDatasetImmediately(dataset);
     showModule(["cyc", "cv", "eis"].includes(dataset.dataType) ? dataset.dataType : "figure");
   });
@@ -6038,3 +6088,229 @@ document.addEventListener("DOMContentLoaded", () => {
   updateElectrodeLabels();
   renderElectrodeCalc();
 });
+
+// Authoritative saved-Fig labels. Unicode escapes keep this browser-facing
+// Korean text stable even when a Windows editor uses a non-UTF-8 code page.
+function savedFigText() {
+  return {
+    empty: "\uc800\uc7a5\ub41c Fig\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.",
+    open: "Fig \uc5f4\uae30",
+    remove: "\uc800\uc7a5\ub41c Fig \uc0ad\uc81c",
+    dateMissing: "\ub0a0\uc9dc \uc5c6\uc74c",
+    compare: "\ube44\uad50",
+    compareSelect: "CYC \ube44\uad50 \uc120\ud0dd",
+    cycOnly: "CYC Fig\ub9cc \ube44\uad50\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+    selected: "\uac1c CYC Fig \uc120\ud0dd\ub428",
+    cleared: "\ube44\uad50 \uc120\ud0dd\uc744 \ud574\uc81c\ud588\uc2b5\ub2c8\ub2e4.",
+    loaded: "\uc800\uc7a5\ub41c Fig\ub97c \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4.",
+    compareTitle: "CYC \ube44\uad50 Fig",
+    compareCount: "\uac1c Fig \ube44\uad50",
+    compareSave: "\ube44\uad50 Fig \uc800\uc7a5",
+    chooseTwo: "CYC Fig\ub97c 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud558\uba74 \ube44\uad50 \uadf8\ub798\ud504\ub97c \ub9cc\ub4e4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+    noSeries: "\uc120\ud0dd\ud55c CYC Fig\uc5d0 \ube44\uad50\ud560 \uc218 \uc788\ub294 \ubc29\uc804\uc6a9\ub7c9 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.",
+    compared: "CYC \ube44\uad50 Fig\ub97c \ub9cc\ub4e4\uc5c8\uc2b5\ub2c8\ub2e4.",
+    saveNeedsTwo: "\uc800\uc7a5\ud558\ub824\uba74 CYC Fig\ub97c 2\uac1c \uc774\uc0c1 \uc120\ud0dd\ud558\uc138\uc694.",
+    saveFailed: "\ube44\uad50 Fig \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
+    saved: "\ube44\uad50 Fig\ub97c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.",
+    exportMissing: "\uba3c\uc800 \ube44\uad50 Fig\ub97c \ub9cc\ub4e4\uc5b4\uc8fc\uc138\uc694.",
+  };
+}
+
+function figureLabel(d) {
+  const labels = {
+    "cycling-performance": "\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
+    "voltage-profile": "\uc804\uc555 \ud504\ub85c\ud30c\uc77c Fig",
+    "cyc-combined": "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 Fig",
+    "nyquist": "Nyquist Fig",
+    "bode": "Bode Fig",
+    "eis-combined": "Nyquist + Bode Fig",
+    "cv-curve": "CV Fig",
+    "cv-comparison": "CV \ube44\uad50 Fig",
+    "table-preview": "\ud45c \ubbf8\ub9ac\ubcf4\uae30",
+  };
+  return labels[d.figureKind] || String(d.dataType || "data").toUpperCase() + " Fig";
+}
+
+function renderSavedList() {
+  const list = $("savedList");
+  if (!list) return;
+  const text = savedFigText();
+  document.querySelectorAll("#savedCount").forEach((element) => {
+    element.textContent = String(state.filtered.length) + "\uac1c";
+  });
+  const heading = document.querySelector("#savedFiguresView .savedFigureHeader h2");
+  const description = document.querySelector("#savedFiguresView .savedFigureHeader p");
+  const compareButton = $("compareCycFigures");
+  const clearButton = $("clearCompareSelection");
+  if (heading) heading.textContent = "\uc800\uc7a5\ub41c Fig";
+  if (description) description.textContent = "\uc800\uc7a5\ud55c Fig\ub97c \uc120\ud0dd\ud574 \ub2e4\uc2dc \uc5f4\uac70\ub098 \uc0ad\uc81c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.";
+  if (compareButton) compareButton.textContent = "\uc120\ud0dd CYC \ube44\uad50";
+  if (clearButton) clearButton.textContent = "\uc120\ud0dd \ud574\uc81c";
+  if (!state.filtered.length) {
+    list.innerHTML = '<p class="emptySaved">' + text.empty + "</p>";
+    return;
+  }
+  list.innerHTML = state.filtered.map((dataset) => {
+    const cell = dataset.cell || {};
+    const active = dataset.id === state.selectedId ? " active" : "";
+    const title = datasetDisplayName(dataset);
+    const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
+    const isCyc = String(dataset.dataType || "").toLowerCase() === "cyc";
+    return [
+      '<article class="savedItem' + active + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
+      '<label class="compareCheck' + (isCyc ? "" : " disabled") + '" title="' + (isCyc ? text.compareSelect : text.cycOnly) + '">',
+      '<input type="checkbox" data-compare-id="' + escapeAttr(dataset.id) + '"' + (state.compareIds.includes(dataset.id) ? " checked" : "") + (isCyc ? "" : " disabled") + " />",
+      "<span>" + text.compare + "</span></label>",
+      '<button type="button" class="savedOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.open + '">',
+      figureThumb(dataset),
+      '<span class="savedInfo"><strong>' + escapeXml(title) + "</strong>",
+      "<span>" + escapeXml(cell.date || text.dateMissing) + " \u00b7 " + escapeXml(sub) + "</span>",
+      "<em>" + escapeXml(dataset.sourceName || dataset.id) + "</em></span></button>",
+      '<button type="button" class="savedDelete" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.remove + '">\u00d7</button>',
+      "</article>",
+    ].join("");
+  }).join("");
+  list.querySelectorAll(".savedOpen").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedId = button.dataset.datasetId;
+      state.selectedAnnotation = null;
+      renderSelect();
+      renderSavedList();
+      renderCurrent();
+      state.activeFigureModule = state.datasets.find((dataset) => dataset.id === state.selectedId)?.dataType || state.activeFigureModule;
+      activateView("figure", state.activeFigureModule);
+      setStatus(text.loaded);
+    });
+  });
+  list.querySelectorAll(".savedDelete").forEach((button) => {
+    button.addEventListener("click", (event) => deleteSavedFigure(button.dataset.datasetId, event));
+  });
+  list.querySelectorAll("input[data-compare-id]").forEach((input) => {
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("change", () => toggleCompareSelection(input.dataset.compareId, input.checked));
+  });
+}
+
+function toggleCompareSelection(id, checked) {
+  if (!id) return;
+  const text = savedFigText();
+  const target = state.datasets.find((dataset) => dataset.id === id);
+  if (target?.dataType !== "cyc") {
+    setStatus(text.cycOnly);
+    return;
+  }
+  if (checked && !state.compareIds.includes(id)) state.compareIds.push(id);
+  if (!checked) state.compareIds = state.compareIds.filter((item) => item !== id);
+  setStatus(String(state.compareIds.length) + text.selected);
+}
+
+function clearCompareSelection() {
+  state.compareIds = [];
+  renderSavedList();
+  const preview = $("comparisonPreview");
+  if (preview) {
+    preview.classList.add("hidden");
+    preview.innerHTML = "";
+  }
+  setStatus(savedFigText().cleared);
+}
+
+function renderCycComparison() {
+  const preview = $("comparisonPreview");
+  if (!preview) return;
+  const text = savedFigText();
+  const series = selectedComparisonSeries();
+  preview.classList.remove("hidden");
+  if (series.length < 2) {
+    preview.innerHTML = '<p class="emptySaved">' + text.chooseTwo + "</p>";
+    setStatus(text.chooseTwo);
+    return;
+  }
+  const colorMap = Object.fromEntries(series.map((item, index) => [item.d.id, comparisonColor(item.d.id, index)]));
+  preview.innerHTML = [
+    '<div class="comparisonTitle"><div><strong>' + text.compareTitle + "</strong>",
+    "<span>" + String(series.length) + text.compareCount + "</span></div>",
+    '<div class="comparisonActions">',
+    '<button type="button" id="saveComparisonFigure">' + text.compareSave + "</button>",
+    '<button type="button" id="exportComparisonSvg" class="secondaryAction">SVG</button>',
+    '<button type="button" id="exportComparisonPng" class="secondaryAction">PNG</button>',
+    "</div></div>",
+    '<div class="comparisonControls">',
+    series.map((item, index) => [
+      '<label class="comparisonColorItem"><input type="color" data-comparison-color="',
+      escapeAttr(item.d.id),
+      '" value="',
+      comparisonColor(item.d.id, index),
+      '" /><span>',
+      escapeXml(item.name),
+      "</span></label>",
+    ].join("")).join(""),
+    "</div>",
+    renderComparisonSvg(series, colorMap),
+  ].join("");
+  preview.querySelectorAll("[data-comparison-color]").forEach((input) => {
+    input.addEventListener("input", () => {
+      state.comparisonColors[input.dataset.comparisonColor] = normalizeHexColor(input.value, "#0f766e");
+      renderCycComparison();
+    });
+  });
+  $("saveComparisonFigure")?.addEventListener("click", saveComparisonFigure);
+  $("exportComparisonSvg")?.addEventListener("click", exportComparisonSvg);
+  $("exportComparisonPng")?.addEventListener("click", exportComparisonPng);
+  setStatus(text.compared);
+}
+
+async function saveComparisonFigure() {
+  const series = selectedComparisonSeries();
+  const text = savedFigText();
+  if (series.length < 2) return setStatus(text.saveNeedsTwo);
+  const comparisonColors = Object.fromEntries(series.map((item, index) => [item.d.id, comparisonColor(item.d.id, index)]));
+  const payload = {
+    dataType: "cyc-comparison",
+    figureKind: "cyc-comparison",
+    cell: {
+      date: todayLocal(),
+      cellId: "CYC comparison",
+      sampleName: String(series.length) + " CYC figures",
+      material: "CYC",
+      condition: "comparison",
+      notes: series.map((item) => item.name).join(" / "),
+    },
+    rows: comparisonRowsFromSeries(series),
+    columns: ["sourceId", "sourceName", "cycle", "capacity"],
+    sourceName: series.map((item) => item.name).join(" + "),
+    figureEdits: { comparisonColors },
+  };
+  const response = await fetch("/api/datasets", {
+    method: "POST",
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    return setStatus(body.error || text.saveFailed);
+  }
+  const saved = await response.json();
+  state.datasets.unshift(saved);
+  showDatasetImmediately(saved);
+  activateView("figure", "cyc");
+  setStatus(text.saved);
+}
+
+function exportComparisonSvg() {
+  const svg = $("comparisonFigure");
+  if (!svg) return setStatus(savedFigText().exportMissing);
+  download("cyc-comparison.svg", new XMLSerializer().serializeToString(svg), "image/svg+xml");
+}
+
+function exportComparisonPng() {
+  const svg = $("comparisonFigure");
+  if (!svg) return setStatus(savedFigText().exportMissing);
+  svgToPngBlob(svg).then((blob) => {
+    const anchor = document.createElement("a");
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = "cyc-comparison.png";
+    anchor.click();
+    URL.revokeObjectURL(anchor.href);
+  }).catch((error) => setStatus(error.message || "PNG \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4."));
+}

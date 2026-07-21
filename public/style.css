@@ -173,10 +173,13 @@ p { margin: 6px 0 0; color: var(--muted); }
   gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   margin-left: 8px;
 }
 .menuGroup {
   position: relative;
+  flex: 0 0 auto;
 }
 .menuGroup::after {
   content: "";
@@ -289,7 +292,7 @@ p { margin: 6px 0 0; color: var(--muted); }
 
 .layout {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: minmax(420px, 450px) minmax(0, 1fr);
   gap: 18px;
   min-height: calc(100vh - 89px);
   padding: 20px 24px 28px;

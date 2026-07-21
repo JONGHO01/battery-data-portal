@@ -9,7 +9,18 @@ from pathlib import Path
 
 
 def extract_wrd_mass_g(path: Path, blob: bytes) -> float | None:
-    text = path.name + "\n"
+    # The filename is the most dependable place for an electrode mass.  WBCS
+    # binary content can contain unrelated text such as "1g", which must not
+    # override a precise filename value like ``0.0475488g``.
+    filename_candidates = []
+    for match in re.finditer(r"(\d+(?:[._]\d+)?)\s*g", path.name, flags=re.IGNORECASE):
+        value = float(match.group(1).replace("_", "."))
+        if 0.001 <= value <= 1:
+            filename_candidates.append(value)
+    if filename_candidates:
+        return filename_candidates[-1]
+
+    text = ""
     for match in re.finditer(rb"[ -~]{8,}", blob[:200000]):
         text += "\n" + match.group().decode("ascii", errors="ignore")
     candidates = []

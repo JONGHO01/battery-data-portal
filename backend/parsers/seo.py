@@ -50,4 +50,5 @@ def read_seo(path: Path) -> tuple[list[list], str]:
             rows.append([sweep_number, point_number, frequency, zreal, zimag, math.hypot(zreal, zimag), math.degrees(math.atan2(zimag, zreal))])
     if len(rows) == 1:
         raise RuntimeError("The SEO file did not yield any complete impedance points.")
-    return rows, "SEO EIS binary"
+    source_format = path.suffix.lstrip(".").upper() or "SEO"
+    return rows, f"{source_format} EIS binary"

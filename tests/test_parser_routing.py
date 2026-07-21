@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 
-from backend.parsers.router import parser_key_for_path
+from backend.parsers.router import inspect_path, parser_key_for_path
 from backend.parsers.wrd import read_wrd
 
 
@@ -19,8 +19,29 @@ class ParserRoutingTests(unittest.TestCase):
     def test_routes_supported_extensions_to_dedicated_parsers(self):
         self.assertEqual(parser_key_for_path(Path("sample.wrd")), "wrd")
         self.assertEqual(parser_key_for_path(Path("sample.SEO")), "seo")
+        self.assertEqual(parser_key_for_path(Path("sample.SDE")), "seo")
         self.assertEqual(parser_key_for_path(Path("sample.xlsx")), "excel")
         self.assertEqual(parser_key_for_path(Path("sample.csv")), "csv")
+
+    def test_sde_uses_the_eis_binary_parser(self):
+        blob = bytearray(112 * 6)
+        for point, (frequency, zreal, zimag) in enumerate(
+            ((100000.0, 2.8, -0.4), (80000.0, 2.9, -0.5), (63000.0, 3.0, -0.6))
+        ):
+            offset = point * 112
+            struct.pack_into("<f", blob, offset, frequency)
+            struct.pack_into("<f", blob, offset + 28, zreal)
+            struct.pack_into("<f", blob, offset + 32, zimag)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "sample.SDE"
+            path.write_bytes(blob)
+            rows, sheet, key = inspect_path(path)
+
+        self.assertEqual(key, "seo")
+        self.assertEqual(sheet, "SDE EIS binary")
+        self.assertEqual(rows[0], ["sweep", "point", "frequency", "zreal", "zimag", "mag", "phase"])
+        self.assertEqual(len(rows) - 1, 3)
 
     def test_rejects_unknown_extensions(self):
         with self.assertRaises(ValueError):
@@ -42,6 +63,17 @@ class ParserRoutingTests(unittest.TestCase):
         self.assertEqual(rows[1][0], 1)
         self.assertGreater(rows[1][1], 0)
         self.assertEqual(rows[1][5], 3)
+
+    def test_wrd_prefers_precise_filename_mass_over_binary_text_noise(self):
+        """A filename mass must win over an unrelated binary ``1g`` marker."""
+        header = b"WbcsFile example DISCHARGE Q metadata 1g "
+        points = self._wrd_segment((0.00250, 0.00252, 0.00254))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "NCM622_0.0500000g.cyc_001.wrd"
+            path.write_bytes(header + points)
+            rows, _ = read_wrd(path)
+
+        self.assertAlmostEqual(rows[1][1], 50.8, places=3)
 
     def test_wrd_discards_a_short_partial_segment_before_full_cycles(self):
         """A brief aborted pre-step must not become a false low-capacity cycle."""

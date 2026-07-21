@@ -126,7 +126,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.25", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.38", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -2004,6 +2004,45 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
     }
 
 
+def find_dataset_by_source_hash(conn, owner_id: str, data_type: str, source_sha256: str) -> dict | None:
+    """Find one saved Dataset created from the same raw file for this owner.
+
+    Upload sessions are intentionally short-lived, so retrying a freshly
+    inspected copy of the same file used to create another Dataset and another
+    Fig card. The immutable raw-file SHA-256 stored in provenance is the
+    durable identity for this check. The data type remains part of the match
+    so an intentionally reclassified file is not silently changed.
+    """
+
+    if not source_sha256:
+        return None
+    rows = execute(
+        conn,
+        "SELECT * FROM datasets WHERE owner_id = ? AND data_type = ? ORDER BY created_at DESC",
+        (owner_id, data_type),
+    ).fetchall()
+    for row in rows:
+        dataset = dataset_from_row(row)
+        provenance = dataset.get("analysisProvenance") if isinstance(dataset.get("analysisProvenance"), dict) else {}
+        if str(provenance.get("sourceSha256") or "") == source_sha256:
+            return dataset
+    return None
+
+
+def consume_duplicate_upload_session(conn, session, dataset_id: str) -> None:
+    """Remove a duplicate staging copy after linking it to the saved Dataset."""
+
+    delete_local_upload_path(str(session["local_path"] or ""))
+    staging_key = object_key_from_storage_url(str(session["storage_url"] or ""))
+    if staging_key:
+        delete_from_object_storage(staging_key)
+    execute(
+        conn,
+        "UPDATE upload_sessions SET local_path = '', storage_url = '', consumed_dataset_id = ?, consumed_at = ? WHERE id = ?",
+        (dataset_id, now_iso(), session["id"]),
+    )
+
+
 def load_analysis_rows(item: dict, include_review_rows: bool = False) -> tuple[list[dict], dict]:
     """Prefer the immutable normalized artifact over legacy editable table rows."""
 
@@ -2770,6 +2809,32 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
     payload["createdAt"] = current
     payload["updatedAt"] = current
     with connect() as conn:
+        if upload_id:
+            session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (upload_id,)).fetchone()
+            if not session or session["owner_id"] != user["id"]:
+                raise HTTPException(status_code=404, detail="The upload session was not found for this user.")
+            if session["consumed_dataset_id"]:
+                existing = execute(
+                    conn,
+                    "SELECT * FROM datasets WHERE id = ?",
+                    (session["consumed_dataset_id"],),
+                ).fetchone()
+                if existing and can_view_row(conn, user, existing):
+                    reused = dataset_from_row(existing)
+                    reused["reusedExistingSource"] = True
+                    return reused
+
+            existing_source = find_dataset_by_source_hash(
+                conn,
+                user["id"],
+                str(payload.get("dataType") or "").strip().lower(),
+                str(session["sha256"] or ""),
+            )
+            # The lookup already restricts the match to this authenticated owner.
+            if existing_source:
+                consume_duplicate_upload_session(conn, session, existing_source["id"])
+                existing_source["reusedExistingSource"] = True
+                return existing_source
         item = save_dataset(conn, payload, actor_user=user)
         if upload_id:
             item.update(persist_upload_session_artifacts(conn, item, upload_id, user))

@@ -18,7 +18,7 @@ def parser_key_for_path(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".wrd":
         return "wrd"
-    if suffix == ".seo":
+    if suffix in {".seo", ".sde"}:
         return "seo"
     if suffix in {".xlsx", ".xlsm", ".xls", ".xlsb"}:
         return "excel"
