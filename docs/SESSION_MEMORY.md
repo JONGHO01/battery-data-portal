@@ -20,6 +20,7 @@ Maintain the Battery Portal with project-local skills, semantic version `v0.1.40
 - Render no longer exits with status 3 only because durable object-storage settings are incomplete. It starts, `/api/health` lists only missing setting names, and Dataset writes remain refused until storage is configured.
 - Render deployment diagnostics now expose only durable-storage configuration names through `/api/health` (`storageMissingVariables`) and Dataset-save errors. They never expose credential values. `docs/RENDER_STORAGE_CHECKLIST.md` contains the required Render environment setup and post-deploy check.
 - Release commit `30c9259 Release Battery Portal v0.1.39` was pushed to `origin/main` on 2026-07-21, but Render exited with status 3 before serving it because the durable-storage startup validation blocked the web process. v0.1.40 is prepared to keep the service online for safe health diagnostics while still refusing Dataset writes until storage is configured.
+- Release commit `8bbf987 Keep Render online when storage is unconfigured` was pushed to `origin/main` on 2026-07-21. Render must build this commit before the production health endpoint and storage diagnostics can be checked.
 - GitHub remote `origin` is `https://github.com/JONGHO01/battery-data-portal.git`; local `main` tracks `origin/main`. The v0.1.38 release commit `1e7c54c` was pushed to GitHub on 2026-07-21. Local runtime data, uploads, and secrets remain excluded from Git.
 - Frontend: static HTML, CSS, and JavaScript in `public/`.
 - Backend: FastAPI in `python_backend.py`.
