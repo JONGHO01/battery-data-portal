@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.46 - 2026-07-22
+- Add a project-local Battery Data Portal v2 launcher that reuses a healthy local portal or starts it safely on port 4174.
+- Add a Codex/PowerShell startup guide and a VS Code task without changing the legacy port-4173 task.
+
 ## v0.1.45 - 2026-07-21
 - Apply the saved Fig series color to EIS Nyquist and Bode traces as well as CYC and CV traces.
 

@@ -25,6 +25,27 @@
       "problemMatcher": []
     },
     {
+      "label": "Start Battery Data Portal v2 (4174)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts\\start_battery_portal_v2.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Check JavaScript Syntax",
       "type": "process",
       "command": "${env:USERPROFILE}\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",

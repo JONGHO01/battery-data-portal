@@ -20,8 +20,14 @@ This repository is the Battery Data Portal project.
 ## Project-Local Skills
 
 - Prefer the Battery Portal skills in `.agents/skills/` for Battery Portal work.
-- The portal-local skill set is `battery-portal-session-memory`, `battery-portal-versioning`, `battery-portal-cellpy`, and `battery-portal-impedance`.
+- The portal-local skill set is `battery-portal-session-memory`, `battery-portal-versioning`, `battery-portal-cellpy`, `battery-portal-impedance`, and `battery-portal-launcher`.
 - The matching files in `C:\\Users\\user\\.codex\\skills\\` are personal source skills. Keep them intact; do not delete or modify them when maintaining this repository.
+
+## Local v2 Launch
+
+- For a request to run or open Battery Data Portal v2 locally, apply `.agents/skills/battery-portal-launcher/SKILL.md`.
+- Use `scripts/start_battery_portal_v2.ps1` and the health endpoint on port `4174`.
+- Do not use port `4173` for the v2 workflow and do not terminate an unknown process that already owns a port.
 
 ## Versioning And Releases
 

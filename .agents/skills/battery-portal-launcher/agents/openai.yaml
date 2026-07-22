@@ -1,0 +1,4 @@
+interface:
+  display_name: "Battery Portal Launcher"
+  short_description: "Start and verify Battery Data Portal v2 locally"
+  default_prompt: "Battery Data Portal(v2) Ω««‡«ÿ"

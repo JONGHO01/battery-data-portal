@@ -1,9 +1,16 @@
-const PORTAL_VERSION = "0.1.45";
+const PORTAL_VERSION = "0.1.46";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // README?\u0080 CHANGELOG??\uf9e4\uc496\ub58a ?\uc10e? ?\ub348\ub497 \u8e42\u0080\u5bc3\uc38c\uc4e3 \u613f\u0080\u7531\u044a\uc604 ?\ubdbe\u3203?\uba2f\uaf4c??\u936e\uc88a\u2164\u5bc3??\ubea4\uc524?\u2478\ub572??
 // ?\uafa9\uaedc \u6028\uc1e8\uad45 ?\ub300\uc830?\u0080 ?\u0080?\u03bc\ub0fc??CHANGELOG.md\u5a9b\u0080 \u6e72\uacd7??\ub300\u0149, ??\uf9cf\u2478\uc909?\u0080 ?\ub301\uc07a?\uba2d? \u8e42\ub300\ub497 ?\ubdbf\ube5f?\ub085\ub572??
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.46",
+    "date": "2026-07-22",
+    "changes": [
+      "Add a project-local launcher that safely starts or reuses Battery Data Portal v2 on localhost port 4174."
+    ]
+  },
   {
     "version": "0.1.45",
     "date": "2026-07-21",
