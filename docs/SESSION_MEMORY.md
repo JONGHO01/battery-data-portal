@@ -32,6 +32,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Current Status
 
+- 2026-07-31: `v0.1.62` source, documentation, project-local launch tooling, and regression tests were committed as `78fe1fe` (`Release Battery Portal v0.1.62`) and pushed successfully to `origin/main` at `JONGHO01/battery-data-portal`. The complete local unittest discovery suite passed 159 tests, and `http://127.0.0.1:4174/api/health` reported a healthy local SQLite development instance at version `0.1.62`. Temporary browser-upload fixtures and copied laboratory files remain untracked and must stay out of Git.
+
 - 2026-07-30: Completed an isolated, real-browser end-to-end CYC check using the supplied laboratory WBCS WRD source copied as `tmp-real-cyc_029.wrd` (33,221 raw rows, 35 cycles, both charge and discharge directions). The same source produced a 35-point performance Fig, a voltage-capacity Fig with 6 rendered traces and 613 points, and a dQ/dV Fig with 70 raw traces and 5,853 plotted points. The browser screenshot showed readable Korean UI text and real charge/discharge dQ/dV curves; no blank chart or browser crash occurred in this isolated run. A repeat upload of the same raw source changes the selected Fig kind on the existing Dataset/Fig record instead of creating duplicate source records.
 
 - 2026-07-30: `public/app.js` now contains ASCII source only, using Unicode escapes for the few Korean strings introduced in the CYC data-recovery path. This is required to prevent Windows legacy-code-page corruption. The browser still renders those messages in Korean.
