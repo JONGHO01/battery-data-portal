@@ -1,16 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.46-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.62-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.46** - Add a project-local launcher that safely starts or reuses Battery Data Portal v2 on localhost port 4174.
+> Current release: **v0.1.62** - Neutral WBCS WRD specific-capacity headers and legacy empty capacity rows are restored when saved CYC Figs reopen.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.40**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
+현재 버전은 **v0.1.57**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +22,22 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.62 | 2026-07-23 | Recover neutral WBCS WRD specific-capacity columns and legacy empty capacity rows for saved CYC Figs |
+| v0.1.61 | 2026-07-23 | Page editable tables at 250 rows while preserving every raw point for CYC and dQ/dV analysis |
+| v0.1.60 | 2026-07-23 | Preserve complete WRD traces; rebuild legacy 5,000-row datasets and retain the selected CYC Fig type during refresh |
+| v0.1.59 | 2026-07-23 | Normalize saved raw CYC rows for performance, voltage/current, and dQ/dV rendering; show precise dQ/dV data-availability reasons |
+| v0.1.58 | 2026-07-23 | Make normal CYC Fig output single-panel; legacy combined records render as performance Figs |
+| v0.1.57 | 2026-07-23 | Preserve point-level WBCS WRD discharge traces for dQ/dV and refresh older saved WRD datasets from raw artifacts |
+| v0.1.56 | 2026-07-23 | Block dQ/dV for cycle-summary CYC data and require genuine within-cycle voltage-capacity traces |
+| v0.1.55 | 2026-07-22 | Add raw-trace-only CYC dQ/dV Fig generation and separate charge/discharge voltage-profile traces when available |
+| v0.1.54 | 2026-07-22 | Require PostgreSQL for hosted account persistence, verify registrations through a fresh connection, and show actionable sign-up errors |
+| v0.1.53 | 2026-07-22 | Run a separate local verification instance with an explicit port and port-specific logs without stopping an existing portal |
+| v0.1.52 | 2026-07-22 | Add administrator-only temporary password reset; existing passwords remain hashed and are never displayed or returned |
+| v0.1.51 | 2026-07-22 | Refresh older SDE EIS parser output from the preserved raw artifact so Nyquist and Bode axes use measured impedance |
+| v0.1.50 | 2026-07-22 | Add a role-linked organization chart that automatically groups the selected organization's actual members |
+| v0.1.49 | 2026-07-22 | Add an administrator-only registered-member directory with signup dates, organization memberships, and account management |
+| v0.1.48 | 2026-07-22 | Export CYC comparison Figs to a PowerPoint slide with the current chart, legend, and selected colors |
+| v0.1.47 | 2026-07-22 | Add CYC Fig grid, point-connection, and marker-size controls while preserving missing-cycle gaps |
 | v0.1.46 | 2026-07-22 | Add a project-local launcher for safe local v2 startup and health checks on port 4174 |
 | v0.1.45 | 2026-07-21 | Apply saved Fig series colors consistently to EIS Nyquist/Bode traces |
 | v0.1.44 | 2026-07-21 | Use linked Dataset type and source filename for Fig names; normalize legacy EIS/CYC record labels safely |

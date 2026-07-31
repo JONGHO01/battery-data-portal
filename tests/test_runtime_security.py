@@ -50,6 +50,7 @@ class RuntimeSecurityTests(unittest.TestCase):
         with patch.multiple(
             portal,
             APP_ENV="production",
+            USE_POSTGRES=True,
             ALLOW_LEGACY_USER_HEADER=False,
             JWT_SECRET="test-secret-for-production-123",
             CORS_ALLOW_ORIGINS=["*"],
@@ -62,6 +63,7 @@ class RuntimeSecurityTests(unittest.TestCase):
         with patch.multiple(
             portal,
             APP_ENV="production",
+            USE_POSTGRES=True,
             ALLOW_LEGACY_USER_HEADER=False,
             JWT_SECRET="test-secret-for-production-123",
             CORS_ALLOW_ORIGINS=["https://portal.example"],
@@ -74,10 +76,27 @@ class RuntimeSecurityTests(unittest.TestCase):
             self.assertIn("Dataset uploads will be refused", stderr.getvalue())
             self.assertIn("STORAGE_BACKEND", stderr.getvalue())
 
+    def test_production_requires_postgresql_for_persistent_account_logins(self):
+        """A hosted portal must not create accounts in an ephemeral SQLite file."""
+
+        with patch.multiple(
+            portal,
+            APP_ENV="production",
+            USE_POSTGRES=False,
+            ALLOW_LEGACY_USER_HEADER=False,
+            JWT_SECRET="test-secret-for-production-123",
+            CORS_ALLOW_ORIGINS=["https://portal.example"],
+            STORAGE_BACKEND="s3",
+            REQUIRE_DURABLE_STORAGE=True,
+        ), patch.object(portal, "storage_ready", return_value=True):
+            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL"):
+                portal.validate_runtime_configuration()
+
     def test_production_accepts_configured_object_storage(self):
         with patch.multiple(
             portal,
             APP_ENV="production",
+            USE_POSTGRES=True,
             ALLOW_LEGACY_USER_HEADER=False,
             JWT_SECRET="test-secret-for-production-123",
             CORS_ALLOW_ORIGINS=["https://portal.example"],
@@ -117,6 +136,7 @@ class RuntimeSecurityTests(unittest.TestCase):
         with patch.multiple(
             portal,
             APP_ENV="production",
+            USE_POSTGRES=True,
             ALLOW_LEGACY_USER_HEADER=False,
             JWT_SECRET="test-secret-for-production-123",
             CORS_ALLOW_ORIGINS=["https://portal.example"],
@@ -130,6 +150,27 @@ class RuntimeSecurityTests(unittest.TestCase):
             with redirect_stderr(stderr):
                 portal.validate_runtime_configuration()
             self.assertIn("S3_BUCKET", stderr.getvalue())
+
+    def test_production_signup_refuses_an_ephemeral_account_database(self):
+        """The portal must not promise a reusable account stored only in /tmp."""
+
+        with patch.multiple(portal, APP_ENV="production", USE_POSTGRES=False):
+            with self.assertRaises(portal.HTTPException) as rejected:
+                portal.register({"id": "new-researcher", "password": "safe-test-password-123"})
+        self.assertEqual(rejected.exception.status_code, 503)
+        self.assertIn("DATABASE_URL", rejected.exception.detail)
+
+    def test_render_signup_requires_postgresql_even_without_app_env(self):
+        """Render's built-in runtime marker protects manual service setup."""
+
+        with patch.dict(portal.os.environ, {"RENDER": "true"}), patch.multiple(
+            portal,
+            APP_ENV="local",
+            USE_POSTGRES=False,
+        ):
+            with self.assertRaises(portal.HTTPException) as rejected:
+                portal.register({"id": "render-user", "password": "safe-test-password-123"})
+        self.assertEqual(rejected.exception.status_code, 503)
 
     def test_production_never_falls_back_to_local_artifacts_when_storage_is_missing(self):
         with patch.multiple(

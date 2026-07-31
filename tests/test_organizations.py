@@ -164,6 +164,55 @@ class OrganizationRoleTests(unittest.TestCase):
             self.assertEqual(portal.organization_role(conn, researcher_row, organization["id"]), "researcher")
             self.assertTrue(portal.can_edit_row(conn, researcher_row, project_row))
 
+    def test_admin_user_directory_includes_signup_date_and_organization_memberships(self):
+        """Administrators need a safe, complete view of registered accounts."""
+
+        administrator = {"id": "portal-admin", "name": "Portal Admin", "role": "admin"}
+        member = {"id": "directory-member", "name": "Directory Member", "role": "user"}
+        with portal.connect() as conn:
+            for item in (administrator, member):
+                portal.execute(
+                    conn,
+                    "INSERT INTO users(id, name, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, role = excluded.role",
+                    (item["id"], item["name"], portal.hash_password("password"), item["role"], "2026-07-22T09:00:00+00:00"),
+                )
+            organization = portal.create_organization_record(conn, administrator, {"name": "Directory Lab"})
+            portal.upsert_organization_member(conn, organization["id"], member["id"], "researcher", administrator)
+
+        users = portal.list_users(administrator)
+        directory_member = next(item for item in users if item["id"] == member["id"])
+        self.assertEqual(directory_member["createdAt"], "2026-07-22T09:00:00+00:00")
+        self.assertEqual(directory_member["organizations"], [{"id": organization["id"], "name": "Directory Lab", "role": "researcher"}])
+
+    def test_admin_can_reset_a_member_password_without_exposing_any_password_value(self):
+        """Admins may issue a replacement password, never read an existing one."""
+
+        administrator = {"id": "password-reset-admin", "name": "Password Reset Admin", "role": "admin"}
+        member = {"id": "password-reset-member", "name": "Password Reset Member", "role": "user"}
+        with portal.connect() as conn:
+            for item in (administrator, member):
+                portal.execute(
+                    conn,
+                    "INSERT INTO users(id, name, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET password_hash = excluded.password_hash, role = excluded.role",
+                    (item["id"], item["name"], portal.hash_password("old-password-123"), item["role"], portal.now_iso()),
+                )
+
+        result = portal.reset_user_password(member["id"], "new-temporary-password-456", administrator)
+        self.assertEqual(result, {"ok": True, "userId": member["id"]})
+
+        with portal.connect() as conn:
+            stored = portal.get_user_by_id(member["id"], conn)
+        self.assertTrue(portal.verify_password("new-temporary-password-456", stored["password_hash"]))
+        self.assertFalse(portal.verify_password("old-password-123", stored["password_hash"]))
+
+        directory_member = next(item for item in portal.list_users(administrator) if item["id"] == member["id"])
+        self.assertNotIn("password", directory_member)
+        self.assertNotIn("hash", directory_member)
+
+        with self.assertRaises(portal.HTTPException) as denied:
+            portal.reset_user_password(member["id"], "another-temporary-password-789", member)
+        self.assertEqual(denied.exception.status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()

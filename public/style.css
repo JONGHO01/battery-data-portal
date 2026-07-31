@@ -520,6 +520,16 @@ textarea { resize: vertical; }
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
+.figureChoiceBody {
+  min-width: 0;
+}
+.figureChoiceLabel {
+  display: block;
+}
+.figureChoiceBody small {
+  display: block;
+  margin-top: 3px;
+}
 .typeSelect {
   display: grid;
   grid-template-columns: 1fr;
@@ -1269,6 +1279,80 @@ button.danger { background: var(--danger); }
   color: var(--muted);
   font-size: 12px;
 }
+.organizationChartPanel {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #d8eaee;
+}
+.organizationChartHeader h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.organizationChartHeader p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.organizationChart {
+  display: grid;
+  gap: 10px;
+}
+.organizationChartGroup {
+  overflow: hidden;
+  border: 1px solid #d8eaee;
+  border-radius: 10px;
+  background: #f8fcfd;
+}
+.organizationChartGroupHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #edf9fa;
+  color: #0f6d72;
+  font-size: 12px;
+  font-weight: 800;
+}
+.organizationChartMembers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+}
+.organizationChartMember {
+  display: grid;
+  min-width: 154px;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 1px solid #d8eaee;
+  border-radius: 8px;
+  background: #fff;
+}
+.organizationChartMember strong {
+  color: #172536;
+  font-size: 13px;
+}
+.organizationChartMember span,
+.organizationChartMember em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+.organizationChartMember em {
+  color: #0f6d72;
+  font-weight: 800;
+}
+.organizationChartEmpty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed #b9dfe5;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 .uploadWorkspaceHeader {
   display: flex;
   justify-content: space-between;
@@ -1506,7 +1590,7 @@ button.danger { background: var(--danger); }
 
 .annotationTools {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 96px auto auto auto minmax(132px, auto) auto auto auto;
+  grid-template-columns: minmax(180px, 1fr) 96px auto auto auto minmax(132px, auto) auto auto minmax(96px, auto) auto auto;
   gap: 8px;
   align-items: center;
   margin-bottom: 14px;
@@ -1576,6 +1660,36 @@ button.danger { background: var(--danger); }
 }
 .annotationTools input {
   min-height: 38px;
+}
+.annotationTools .figureToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 1px solid #cfe4e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #29445c;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.annotationTools .figureToggle input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--teal);
+}
+.annotationTools .figureMarkerControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  white-space: nowrap;
+}
+.annotationTools .figureMarkerControl input {
+  width: 54px;
 }
 .annotationTools button {
   min-height: 38px;
@@ -2173,6 +2287,21 @@ th:first-child, td:first-child { text-align: left; }
   min-height: 340px;
   max-height: 560px;
   overflow: auto;
+}
+.excelTablePagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.excelTablePagination button {
+  min-width: 88px;
+  padding: 7px 10px;
 }
 #excelTable th {
   position: sticky;
@@ -3030,6 +3159,17 @@ body.isAdmin .tab.adminOnly { display: inline-flex; }
   gap: 16px;
   margin-bottom: 14px;
 }
+
+.usersSummary {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: #f8fcfd;
+  color: var(--muted);
+  font-size: 13px;
+}
 .feedbackAdminSummary {
   display: grid;
   grid-template-columns: repeat(3, minmax(160px, 1fr));
@@ -3159,6 +3299,12 @@ body.isAdmin .tab.adminOnly { display: inline-flex; }
   padding: 7px 10px;
   font-size: 12px;
 }
+.smallReset {
+  padding: 7px 10px;
+  font-size: 12px;
+  margin-right: 6px;
+  background: var(--teal);
+}
 .mutedText {
   color: var(--muted);
   font-size: 12px;
@@ -3257,4 +3403,14 @@ pre {
     align-items: stretch;
     flex-direction: column;
   }
+}
+.figureChoiceDisabled {
+  color: #738096;
+  cursor: not-allowed;
+}
+
+.figureChoiceDisabled small {
+  display: block;
+  margin: 3px 0 0 24px;
+  font-size: 0.78em;
 }

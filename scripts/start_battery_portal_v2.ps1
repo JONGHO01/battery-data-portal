@@ -40,8 +40,10 @@ if ($null -ne $existingHealth) {
 }
 
 # Never terminate an unknown process that happens to own the selected port.
-$listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
-    Select-Object -First 1
+# Get-NetTCPConnection can hang or be denied in restricted Windows sessions,
+# while netstat remains available for this simple listen-state check.
+$listenerPattern = "^\s*TCP\s+\S+:$Port\s+\S+\s+LISTENING\s+\d+\s*$"
+$listener = & netstat -ano | Select-String -Pattern $listenerPattern | Select-Object -First 1
 if ($null -ne $listener) {
     throw "Port $Port is already in use by another process. It was not stopped. Check $baseUrl in the browser or choose a different port."
 }
@@ -61,14 +63,7 @@ if (-not $python) {
     throw "Python was not found. Install Python or create the project .venv before starting the portal."
 }
 
-$previousPort = $env:PORT
-$env:PORT = "$Port"
-try {
-    $process = Start-Process -FilePath $python -ArgumentList "start_local_server.py" -WorkingDirectory $root -WindowStyle Hidden -PassThru
-}
-finally {
-    $env:PORT = $previousPort
-}
+$process = Start-Process -FilePath $python -ArgumentList @("start_local_server.py", "--port", "$Port") -WorkingDirectory $root -WindowStyle Hidden -PassThru
 
 $deadline = (Get-Date).AddSeconds($StartupTimeoutSeconds)
 do {
@@ -80,4 +75,4 @@ do {
     }
 } while ((Get-Date) -lt $deadline)
 
-throw "Battery Data Portal did not become healthy within $StartupTimeoutSeconds seconds. Check $root\\fastapi.err.log (PID $($process.Id))."
+throw "Battery Data Portal did not become healthy within $StartupTimeoutSeconds seconds. Check $root\\fastapi-$Port.err.log (PID $($process.Id))."

@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from backend.parsers.wrd import MAX_POINTS_PER_TRACE
+
 
 _TEMP_DIR = tempfile.mkdtemp(prefix="battery-portal-artifact-test-")
 os.environ["DATA_DIR"] = _TEMP_DIR
@@ -64,6 +66,66 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertEqual(saved["quality"]["status"], "ok")
         self.assertEqual(saved["analysisProvenance"]["sourceUploadId"], upload_id)
 
+    def test_raw_upload_finalization_streams_the_source_file_without_reading_it_all(self):
+        """Large CYC files must be copied into artifacts without a full RAM-sized read."""
+
+        source = b"cycle,discharge capacity\n1,160\n2,155\n"
+        source_path, _ = portal.save_upload_bytes(source, "large-cycle.csv", "raw")
+        parsed = {
+            "parser": {"name": "csv", "version": "parser-2"},
+            "columnMapping": {"cycle_index": {"source": "cycle"}},
+            "quality": {"status": "ok"},
+            "canonicalRows": [
+                {"record_index": 1, "cycle_index": 1, "discharge_capacity_mAh": 160.0},
+                {"record_index": 2, "cycle_index": 2, "discharge_capacity_mAh": 155.0},
+            ],
+        }
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        with portal.connect() as conn:
+            upload_id = portal.create_upload_session(conn, user, "large-cycle.csv", source_path, None, source, parsed)
+            item = portal.save_dataset(
+                conn,
+                {
+                    "id": "DATA-STREAMING-RAW-TEST",
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "figureKind": "cycling-performance",
+                    "cell": {"cellId": "CELL-STREAM"},
+                    "columns": ["cycle", "discharge capacity"],
+                    "rows": [{"cycle": 1, "discharge capacity": 160.0}],
+                },
+            )
+            # A full Path.read_bytes() of the staged source would be exactly the
+            # memory spike that crashes the browser/server for large WRD files.
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("raw upload was read into memory")):
+                result = portal.persist_upload_session_artifacts(conn, item, upload_id, user)
+
+        raw_path = portal.DATA_DIR / result["rawArtifact"]["localPath"]
+        self.assertEqual(raw_path.read_bytes(), source)
+        self.assertEqual(result["rawArtifact"]["sizeBytes"], len(source))
+
+    def test_public_inspection_response_keeps_canonical_rows_server_side(self):
+        """The browser must not receive a duplicate normalized copy of a large upload."""
+
+        parsed = {
+            "filename": "large.wrd",
+            "rows": [{"cycle": 1, "voltage": 3.7}],
+            "canonicalRows": [{"cycle": 1, "voltage": 3.7, "capacity": 120.0}],
+        }
+        response = portal.public_inspection_response(
+            parsed,
+            upload_id="upload-public-response-test",
+            filename="large.wrd",
+            content=b"raw",
+            storage_url=None,
+        )
+
+        self.assertNotIn("canonicalRows", response)
+        self.assertEqual(response["uploadId"], "upload-public-response-test")
+        self.assertIn("canonicalRows", parsed)
+        self.assertEqual(response["rawArtifact"]["sizeBytes"], 3)
+
     def test_stale_sde_dataset_is_reparsed_from_its_raw_artifact(self):
         """Legacy SDE rows must not keep frequency values in the Z' column."""
 
@@ -116,6 +178,169 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertNotEqual(saved["rows"][0]["frequency"], saved["rows"][0]["zreal"])
         self.assertEqual(saved["parser"]["version"], portal.INSTRUMENT_PARSER_VERSION)
         self.assertTrue((portal.DATA_DIR / saved["parsedArtifact"]["localPath"]).exists())
+
+    def test_outdated_sde_parser_version_is_reparsed_even_without_exact_frequency_copy(self):
+        """A parser-version migration must replace any older SDE interpretation."""
+
+        source = bytearray(112 * 6)
+        expected_rows = ((100000.0, 2.8, -0.4), (80000.0, 2.9, -0.5), (63000.0, 3.0, -0.6))
+        for point, (frequency, zreal, zimag) in enumerate(expected_rows):
+            offset = point * 112
+            struct.pack_into("<f", source, offset, frequency)
+            struct.pack_into("<f", source, offset + 28, zreal)
+            struct.pack_into("<f", source, offset + 32, zimag)
+
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-SDE-PARSER-VERSION-REPAIR-TEST"
+        raw_artifact = portal.write_dataset_artifact(
+            bytes(source),
+            f"projects/repair/cells/repair/datasets/{dataset_id}/raw/legacy.SDE",
+            "application/octet-stream",
+        )
+        old_parser_rows = [
+            {
+                "sweep": 1,
+                "point": index + 1,
+                "frequency": frequency,
+                # This is intentionally wrong but is not an exact frequency copy.
+                "zreal": frequency * 0.9,
+                "zimag": zimag,
+            }
+            for index, (frequency, _zreal, zimag) in enumerate(expected_rows)
+        ]
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "eis",
+                    "sourceName": "legacy.SDE",
+                    "cell": {"cellId": "CELL-SDE-PARSER-VERSION"},
+                    "columns": ["sweep", "point", "frequency", "zreal", "zimag"],
+                    "rows": old_parser_rows,
+                    "rawArtifact": raw_artifact,
+                    "parser": {"name": "seo", "version": "parser-3", "mappingVersion": "bdf-map-2"},
+                },
+                actor_user=user,
+            )
+            repaired = portal.repair_stale_sde_datasets(conn)
+            saved = portal.dataset_from_row(
+                portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+            )
+
+        self.assertGreaterEqual(repaired, 1)
+        self.assertAlmostEqual(float(saved["rows"][0]["zreal"]), 2.8, places=4)
+        self.assertEqual(saved["parser"]["version"], portal.INSTRUMENT_PARSER_VERSION)
+
+    def test_stale_wrd_dataset_is_refreshed_to_a_point_level_trace(self):
+        """Old one-row-per-cycle WRD summaries must regain their raw trace points."""
+
+        source = b"WbcsFile example DISCHARGE Q 0.0500000g " + b"".join(
+            b"10mA" + struct.pack("<6d", 4.1 - point * 0.06, -0.003, 0.0, (point + 1) * 0.0004, 0.0, 0.0)
+            for point in range(10)
+        )
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-STALE-WRD-TRACE-REPAIR-TEST"
+        raw_artifact = portal.write_dataset_artifact(
+            source,
+            f"projects/repair/cells/repair/datasets/{dataset_id}/raw/legacy.wrd",
+            "application/octet-stream",
+        )
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "sourceName": "legacy.wrd",
+                    "cell": {"cellId": "CELL-WRD-REPAIR"},
+                    "columns": ["cycle", "specific capacity (mAh g-1)", "voltage (V)"],
+                    "rows": [{"cycle": 1, "specific capacity (mAh g-1)": 80.0, "voltage (V)": 3.5}],
+                    "rawArtifact": raw_artifact,
+                    "parser": {"name": "wrd", "version": "parser-4", "mappingVersion": "bdf-map-2"},
+                },
+                actor_user=user,
+            )
+            repaired = portal.repair_stale_wrd_datasets(conn)
+            saved = portal.dataset_from_row(
+                portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+            )
+
+        self.assertGreaterEqual(repaired, 1)
+        self.assertEqual(len(saved["rows"]), 10)
+        self.assertEqual(saved["rows"][0]["point"], 1)
+        self.assertEqual(saved["rows"][-1]["point"], 10)
+        self.assertEqual(saved["parser"]["version"], portal.INSTRUMENT_PARSER_VERSION)
+        self.assertTrue((portal.DATA_DIR / saved["parsedArtifact"]["localPath"]).exists())
+
+    def test_wrd_dataset_from_an_older_parser_is_refreshed(self):
+        """An older parser marker, not a display-row count, triggers repair."""
+
+        point_count = 5001
+        source = b"WbcsFile example DISCHARGE Q 0.0500000g " + b"".join(
+            b"10mA" + struct.pack("<6d", 4.2 - point * 0.0001, -0.003, 0.0, (point + 1) * 0.00001, 0.0, 0.0)
+            for point in range(point_count)
+        )
+        user = {"id": "tester", "name": "Tester", "role": "user"}
+        dataset_id = "DATA-WRD-5000-ROW-CAP-REPAIR-TEST"
+        raw_artifact = portal.write_dataset_artifact(
+            source,
+            f"projects/repair/cells/repair/datasets/{dataset_id}/raw/legacy-capped.wrd",
+            "application/octet-stream",
+        )
+        legacy_rows = [{"cycle": 1, "point": point + 1} for point in range(5000)]
+        with portal.connect() as conn:
+            portal.save_dataset(
+                conn,
+                {
+                    "id": dataset_id,
+                    "ownerId": user["id"],
+                    "ownerName": user["name"],
+                    "dataType": "cyc",
+                    "sourceName": "legacy-capped.wrd",
+                    "cell": {"cellId": "CELL-WRD-5000-REPAIR"},
+                    "columns": ["cycle", "point"],
+                    "rows": legacy_rows,
+                    "rawArtifact": raw_artifact,
+                    "parser": {
+                        "name": "wrd",
+                        "version": "parser-5",
+                        "mappingVersion": portal.BDF_MAPPING_VERSION,
+                    },
+                },
+                actor_user=user,
+            )
+            repaired = portal.repair_stale_wrd_datasets(conn)
+            saved = portal.dataset_from_row(
+                portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+            )
+
+        self.assertGreaterEqual(repaired, 1)
+        self.assertEqual(len(saved["rows"]), min(point_count, MAX_POINTS_PER_TRACE))
+        self.assertEqual(saved["rows"][0]["point"], 1)
+        # Trace point numbers are renumbered after downsampling, but the final
+        # physical capacity must still come from the last raw acquisition point.
+        self.assertEqual(saved["rows"][-1]["point"], MAX_POINTS_PER_TRACE)
+        self.assertAlmostEqual(
+            float(saved["rows"][-1]["specific capacity (mAh g-1)"]),
+            point_count * 0.00001 * 1000 / 0.05,
+            places=3,
+        )
+        self.assertEqual(saved["parser"]["version"], portal.INSTRUMENT_PARSER_VERSION)
+
+    def test_current_wrd_display_sample_at_5000_rows_is_not_reparsed(self):
+        """Current uploads use 5,000 representative display rows by design."""
+
+        dataset = {
+            "sourceName": "current-sampled.wrd",
+            "rows": [{"cycle": 1, "point": point + 1} for point in range(5000)],
+            "parser": {"name": "wrd", "version": portal.INSTRUMENT_PARSER_VERSION},
+        }
+        self.assertFalse(portal.needs_wrd_parser_refresh(dataset))
 
     def test_retrying_a_completed_upload_returns_the_existing_dataset(self):
         """A browser retry must not turn an already saved upload into an error."""
@@ -187,8 +412,12 @@ class DatasetArtifactTests(unittest.TestCase):
             }
             with patch.object(
                 portal,
+                "write_dataset_artifact_from_path",
+                return_value=raw_artifact,
+            ), patch.object(
+                portal,
                 "write_dataset_artifact",
-                side_effect=[raw_artifact, RuntimeError("parsed artifact failed")],
+                side_effect=RuntimeError("parsed artifact failed"),
             ), patch.object(portal, "delete_from_object_storage") as delete_remote:
                 with self.assertRaisesRegex(RuntimeError, "parsed artifact failed"):
                     portal.persist_upload_session_artifacts(conn, item, upload_id, user)

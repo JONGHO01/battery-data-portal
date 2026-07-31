@@ -98,7 +98,7 @@ class DuplicateFigureHttpE2ETests(unittest.TestCase):
             b"2,155,3.65,0.010\n"
         )
 
-        def inspect_and_save():
+        def inspect_and_save(figure_kind="cycling-performance"):
             inspect_status, inspection = self.request_json(
                 "/api/inspect-upload",
                 method="POST",
@@ -113,7 +113,7 @@ class DuplicateFigureHttpE2ETests(unittest.TestCase):
                 headers=headers,
                 payload={
                     "dataType": "cyc",
-                    "figureKind": "cycling-performance",
+                    "figureKind": figure_kind,
                     "sourceName": inspection["filename"],
                     "uploadId": inspection["uploadId"],
                     "cell": {"cellId": "E2E-DUPLICATE-CELL", "sampleName": "same source"},
@@ -137,9 +137,10 @@ class DuplicateFigureHttpE2ETests(unittest.TestCase):
         )
         self.assertEqual(figure_status, 201)
 
-        second = inspect_and_save()
+        second = inspect_and_save("voltage-profile")
         self.assertEqual(second["id"], first["id"])
         self.assertTrue(second["reusedExistingSource"])
+        self.assertEqual(second["figureKind"], "voltage-profile")
 
         workspace_status, workspace = self.request_json(
             f"/api/cells/{first['cellRecordId']}/workspace",
@@ -149,11 +150,22 @@ class DuplicateFigureHttpE2ETests(unittest.TestCase):
         matching_figures = [item for item in workspace["figures"] if item["datasetId"] == first["id"]]
         self.assertEqual(len(matching_figures), 1)
         self.assertEqual(matching_figures[0]["id"], first_figure["id"])
+        self.assertEqual(matching_figures[0]["figureKind"], "voltage-profile")
 
         datasets_status, datasets = self.request_json("/api/datasets", headers=headers)
         self.assertEqual(datasets_status, 200)
         matching_datasets = [item for item in datasets if item["id"] == first["id"]]
         self.assertEqual(len(matching_datasets), 1)
+        # The saved-list response must remain lightweight even when the source
+        # file contains tens of thousands of raw CYC points.  Full rows load
+        # only after the user opens a Dataset.
+        self.assertFalse(matching_datasets[0]["rowsLoaded"])
+        self.assertEqual(matching_datasets[0]["rows"], [])
+
+        detail_status, detail = self.request_json(f"/api/datasets/{first['id']}", headers=headers)
+        self.assertEqual(detail_status, 200)
+        self.assertTrue(detail["rowsLoaded"])
+        self.assertEqual(len(detail["rows"]), len(first["rows"]))
 
 
 if __name__ == "__main__":

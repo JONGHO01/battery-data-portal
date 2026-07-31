@@ -1,9 +1,123 @@
-const PORTAL_VERSION = "0.1.46";
+const PORTAL_VERSION = "0.1.62";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
-// README?\u0080 CHANGELOG??\uf9e4\uc496\ub58a ?\uc10e? ?\ub348\ub497 \u8e42\u0080\u5bc3\uc38c\uc4e3 \u613f\u0080\u7531\u044a\uc604 ?\ubdbe\u3203?\uba2f\uaf4c??\u936e\uc88a\u2164\u5bc3??\ubea4\uc524?\u2478\ub572??
-// ?\uafa9\uaedc \u6028\uc1e8\uad45 ?\ub300\uc830?\u0080 ?\u0080?\u03bc\ub0fc??CHANGELOG.md\u5a9b\u0080 \u6e72\uacd7??\ub300\u0149, ??\uf9cf\u2478\uc909?\u0080 ?\ub301\uc07a?\uba2d? \u8e42\ub300\ub497 ?\ubdbf\ube5f?\ub085\ub572??
+// Keep this short in-app release list aligned with README and CHANGELOG.md.
+// CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.62",
+    "date": "2026-07-23",
+    "changes": [
+      "Recognize neutral WBCS WRD specific-capacity headers as discharge capacity and rebuild legacy rows whose empty capacity field previously hid valid saved CYC performance, voltage/current, and dQ/dV Figs."
+    ]
+  },
+  {
+    "version": "0.1.61",
+    "date": "2026-07-23",
+    "changes": [
+      "Keep complete raw CYC traces in the Dataset while paging the editable table at 250 rows, so large files remain responsive without losing later cycles or dQ/dV source points."
+    ]
+  },
+  {
+    "version": "0.1.60",
+    "date": "2026-07-23",
+    "changes": [
+      "Keep complete WBCS WRD point traces instead of retaining only the first 5,000 rows, so every stored cycle remains available for CYC and dQ/dV analysis.",
+      "Automatically rebuild legacy WRD datasets saved at the former 5,000-row cap from their immutable raw artifact, and preserve an explicitly selected CYC Fig type during inspection refresh."
+    ]
+  },
+  {
+    "version": "0.1.59",
+    "date": "2026-07-23",
+    "changes": [
+      "Normalize raw CYC rows when saved datasets reopen, so valid voltage-capacity traces render as performance, voltage/current, and dQ/dV Figs instead of blank charts.",
+      "Explain whether dQ/dV is unavailable because source voltage-capacity points are missing, too few distinct points exist within a cycle, or no valid derivative segment remains."
+    ]
+  },
+  {
+    "version": "0.1.58",
+    "date": "2026-07-23",
+    "changes": [
+      "Make normal CYC Fig output single-panel only. Capacity performance, voltage/current behavior, and dQ/dV remain separate Fig choices; legacy combined records open as the performance Fig."
+    ]
+  },
+  {
+    "version": "0.1.57",
+    "date": "2026-07-23",
+    "changes": [
+      "Preserve point-level WBCS WRD voltage-capacity traces, refresh older saved WRD datasets from their raw artifacts, and use those traces for valid dQ/dV analysis."
+    ]
+  },
+  {
+    "version": "0.1.56",
+    "date": "2026-07-23",
+    "changes": [
+      "Prevent dQ/dV from differentiating cycle-summary rows in both the Fig workflow and Analysis Lab. Only a real within-cycle voltage-capacity trace can create a dQ/dV result."
+    ]
+  },
+  {
+    "version": "0.1.55",
+    "date": "2026-07-22",
+    "changes": [
+      "Add a CYC dQ/dV Fig that uses only raw within-cycle voltage-capacity traces, and keep summary-only CYC tables from being shown as invented electrochemical curves."
+    ]
+  },
+  {
+    "version": "0.1.54",
+    "date": "2026-07-22",
+    "changes": [
+      "Prevent hosted sign-up from using an ephemeral SQLite account store, verify registration through a fresh database connection, and show the server's specific sign-up error."
+    ]
+  },
+  {
+    "version": "0.1.53",
+    "date": "2026-07-22",
+    "changes": [
+      "Allow a second local portal instance to use an explicit port and port-specific logs, so it can be verified without stopping an already running portal."
+    ]
+  },
+  {
+    "version": "0.1.52",
+    "date": "2026-07-22",
+    "changes": [
+      "Administrators can issue a replacement temporary password from the member directory. Existing passwords remain hashed and are never displayed or returned."
+    ]
+  },
+  {
+    "version": "0.1.51",
+    "date": "2026-07-22",
+    "changes": [
+      "SDE EIS datasets saved by an older parser version are automatically rebuilt from their preserved raw artifact, preventing frequency values from being reused as the Nyquist real-impedance axis."
+    ]
+  },
+  {
+    "version": "0.1.50",
+    "date": "2026-07-22",
+    "changes": [
+      "The Organization workspace now renders a role-linked organization chart from the selected organization's actual owner, admin, researcher, and viewer memberships."
+    ]
+  },
+  {
+    "version": "0.1.49",
+    "date": "2026-07-22",
+    "changes": [
+      "Administrators can review registered account IDs, display names, signup dates, organization memberships, and roles from the dedicated member-management screen."
+    ]
+  },
+  {
+    "version": "0.1.48",
+    "date": "2026-07-22",
+    "changes": [
+      "CYC comparison Figs can now be exported as a one-slide PowerPoint file while preserving the current chart, legend, and selected series colors."
+    ]
+  },
+  {
+    "version": "0.1.47",
+    "date": "2026-07-22",
+    "changes": [
+      "CYC performance Fig now supports an aligned grid toggle, point-connection toggle, and adjustable marker size while preserving gaps between missing cycles."
+    ]
+  },
   {
     "version": "0.1.46",
     "date": "2026-07-22",
@@ -275,7 +389,8 @@ const RELEASE_HISTORY = [
 // ?\u044b\uae49 ?\uafa9\uaedc?\uba2f\uaf4c \u6028\ub4ed\uc440?\uc10e\ub497 ?\ubdbe\u3203 ?\uacf9\uae6d?\ub085\ub572??
 // ?\uc495\ucfad\\u003f\\u003f\\u003f\u0080?\u03bb\ub9ba\\u003f\\u003f\\u003f\uacd7\uc520?\uacd5\ub497 datasets\\u003f\\u003f\\u003f\u317c\ubf31?\u317a\ud02c, ?\ubdbe\u3203 ?\uafaa\uaf63 \u5bc3\uaccc\ub0b5??filtered\\u003f\\u003f\\u003f\uacd5\uc908 ?\u3013\ub572??
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [] };
+const TABLE_PAGE_SIZE = 250;
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map() };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -630,7 +745,7 @@ async function safeLogin(ev) {
       body: JSON.stringify({ id: fd.get("id"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "\ub85c\uadf8\uc778 \uc2e4\ud328");
+    if (!res.ok) return setLoginError(body.detail || body.error || "\ub85c\uadf8\uc778 \uc2e4\ud328");
     form.reset();
     applyUser(body.user);
   } catch (error) {
@@ -654,7 +769,7 @@ async function safeRegister(ev) {
       body: JSON.stringify({ id: fd.get("id"), name: fd.get("name"), password: fd.get("password") }),
     });
     const body = await res.json();
-    if (!res.ok) return setLoginError(body.error || "\uc544\uc774\ub514 \uc0dd\uc131 \uc2e4\ud328");
+    if (!res.ok) return setLoginError(body.detail || body.error || "\uc544\uc774\ub514 \uc0dd\uc131 \uc2e4\ud328");
     form.reset();
     setLoginSuccess(`${body.user.id} \uc544\uc774\ub514\uac00 \uc0dd\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     applyUser(body.user);
@@ -672,23 +787,75 @@ async function loadUsers() {
   renderUsers();
 }
 
+function formatUserCreatedAt(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function organizationRoleLabel(role) {
+  return {
+    owner: "\uc18c\uc720\uc790",
+    admin: "\uc870\uc9c1 \uad00\ub9ac\uc790",
+    researcher: "\uc5f0\uad6c\uc6d0",
+    viewer: "\uc5f4\ub78c\uc790",
+  }[role] || "\uba64\ubc84";
+}
+
 function renderUsers() {
   const body = $("usersTable");
+  const summary = $("usersSummary");
   if (!body) return;
   if (!state.user || state.user.role !== "admin") {
     body.innerHTML = "";
+    if (summary) summary.textContent = "";
     return;
   }
-  body.innerHTML = state.users.map((user) => {
+  const users = Array.isArray(state.users) ? state.users : [];
+  const organizationMemberCount = users.filter((user) => Array.isArray(user.organizations) && user.organizations.length).length;
+  if (summary) {
+    summary.textContent = `${users.length}\uba85\uc758 \uac00\uc785 \ud68c\uc6d0 \uc911 ${organizationMemberCount}\uba85\uc774 \ud558\ub098 \uc774\uc0c1\uc758 \uc870\uc9c1\uc5d0 \uc18c\uc18d\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.`;
+  }
+  body.innerHTML = users.map((user) => {
     const isSelf = user.id === state.user.id;
+    const resetAction = `<button class="smallReset" data-reset-user="${escapeAttr(user.id)}">\uc784\uc2dc \ube44\ubc00\ubc88\ud638 \uc7ac\uc124\uc815</button>`;
     const action = isSelf
-      ? `<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
-      : `<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
-    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${user.role === "admin" ? "\uad00\ub9ac\uc790" : "\uc77c\ubc18"}</td><td>${action}</td></tr>`;
+      ? `${resetAction}<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
+      : `${resetAction}<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
+    const organizations = Array.isArray(user.organizations) ? user.organizations : [];
+    const organizationText = organizations.length
+      ? organizations.map((organization) => `${organization.name} (${organizationRoleLabel(organization.role)})`).join(", ")
+      : "\uc18c\uc18d \uc870\uc9c1 \uc5c6\uc74c";
+    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${escapeXml(formatUserCreatedAt(user.createdAt))}</td><td>${escapeXml(organizationText)}</td><td>${user.role === "admin" ? "\uad00\ub9ac\uc790" : "\uc77c\ubc18"}</td><td>${action}</td></tr>`;
   }).join("");
   for (const btn of body.querySelectorAll("[data-delete-user]")) {
     btn.addEventListener("click", () => deleteUser(btn.dataset.deleteUser));
   }
+  for (const btn of body.querySelectorAll("[data-reset-user]")) {
+    btn.addEventListener("click", () => resetUserPassword(btn.dataset.resetUser));
+  }
+}
+
+function nextBrowserPaint() {
+  // Let the browser visibly remove a completed-analysis overlay before the
+  // result panel builds its preview. The fallback also resolves in throttled
+  // background tabs where requestAnimationFrame may be delayed indefinitely.
+  return new Promise((resolve) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(fallback);
+      resolve();
+    };
+    const fallback = window.setTimeout(finish, 120);
+    if (typeof window.requestAnimationFrame !== "function") {
+      finish();
+      return;
+    }
+    window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+  });
 }
 
 function formatFeedbackTime(value) {
@@ -784,6 +951,32 @@ async function deleteUser(id) {
   await Promise.all([loadUsers(), loadData()]);
 }
 
+async function resetUserPassword(id) {
+  const password = window.prompt(`${id} \uc0ac\uc6a9\uc790\uc5d0\uac8c \uc804\ub2ec\ud560 \uc0c8 \uc784\uc2dc \ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud558\uc138\uc694. (8~128\uc790)`);
+  if (password === null) return;
+  if (password.length < 8 || password.length > 128) {
+    setStatus("\uc784\uc2dc \ube44\ubc00\ubc88\ud638\ub294 8~128\uc790\ub85c \uc785\ub825\ud574 \uc8fc\uc138\uc694.");
+    return;
+  }
+  const confirmation = window.prompt("\uc784\uc2dc \ube44\ubc00\ubc88\ud638\ub97c \ud55c \ubc88 \ub354 \uc785\ub825\ud558\uc138\uc694.");
+  if (confirmation === null) return;
+  if (password !== confirmation) {
+    setStatus("\uc784\uc2dc \ube44\ubc00\ubc88\ud638\uac00 \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.");
+    return;
+  }
+  const res = await fetch(`/api/users/${encodeURIComponent(id)}/password`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    setStatus(body.error || "\ube44\ubc00\ubc88\ud638 \uc7ac\uc124\uc815\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.");
+    return;
+  }
+  setStatus(`${id} \uc0ac\uc6a9\uc790\uc758 \uc784\uc2dc \ube44\ubc00\ubc88\ud638\ub97c \uc7ac\uc124\uc815\ud588\uc2b5\ub2c8\ub2e4. \uc0c8 \ube44\ubc00\ubc88\ud638\ub97c \uc0ac\uc6a9\uc790\uc5d0\uac8c \uc548\uc804\ud558\uac8c \uc804\ub2ec\ud558\uc138\uc694.`);
+}
+
 function splitCsvLine(line) {
   const out = [];
   let cur = "";
@@ -854,7 +1047,10 @@ function findBestCycColumn(columns, role) {
     const capacity = isCapacityColumn(key);
     let score = 0;
 
-    if (role === "dischargeSpecific" && discharge && capacity && specific) score = 120;
+    // WBCS WRD exports use the neutral header "specific capacity (mAh g-1)"
+    // for a discharge trace. Prefer an explicit discharge label, but accept the
+    // neutral form when it is not marked as a charge-only column.
+    if (role === "dischargeSpecific" && !chargeOnly && capacity && specific) score = discharge ? 120 : 110;
     if (role === "chargeSpecific" && chargeOnly && capacity && specific) score = 120;
     if (role === "dischargeCapacity" && discharge && capacity) score = specific ? 70 : 100;
     if (role === "chargeCapacity" && chargeOnly && capacity) score = specific ? 70 : 100;
@@ -902,6 +1098,17 @@ function parseCRateValue(value) {
   return Number.isFinite(rate) && rate > 0 && rate <= 20 ? rate : null;
 }
 
+// Prefer the parser's explicit direction. Current sign remains a fallback for
+// older CSV/XLSX files that do not expose an instrument step direction.
+function cycDirectionFromValue(value, current = NaN) {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (text.includes("discharge") || text.includes("dchg") || text.includes("\ubc29\uc804")) return "discharge";
+  if (text.includes("charge") || text.includes("chg") || text.includes("\ucda9\uc804")) return "charge";
+  if (Number.isFinite(current) && current > 1e-9) return "charge";
+  if (Number.isFinite(current) && current < -1e-9) return "discharge";
+  return "trace";
+}
+
 function smartManagerEisColumns(columns, rows) {
   if (!columns.includes("8") || !columns.includes("11") || !columns.includes("12")) return null;
   const sample = rows.slice(0, 80);
@@ -929,6 +1136,7 @@ function canonicalRows(type, columns, rows) {
     voltage: findColumn(columns, ["voltage", "potential", "\uc804\uc555"]),
     current: findColumn(columns, ["current", "\uc804\ub958"]),
     time: findColumn(columns, ["time", "\uc2dc\uac04"]),
+    direction: findColumn(columns, ["direction", "step direction", "mode", "state"]),
   };
   if (type === "eis") {
     const smartCols = smartManagerEisColumns(columns, rows);
@@ -950,16 +1158,22 @@ function canonicalRows(type, columns, rows) {
     return rows.map((r, i) => {
       const dischargeCapacity = scaledCycValue(r, col.specificCapacity) ?? scaledCycValue(r, col.capacity);
       const chargeCapacity = scaledCycValue(r, col.chargeSpecificCapacity) ?? scaledCycValue(r, col.chargeCapacity);
+      const dischargeUnit = cycCapacityUnitFromColumn(col.specificCapacity || col.capacity);
+      const chargeUnit = cycCapacityUnitFromColumn(col.chargeSpecificCapacity || col.chargeCapacity);
+      const current = numberValue(r[col.current]);
       return {
         index: i + 1,
         cycle: numberValue(r[col.cycle]) ?? i + 1,
         capacity: dischargeCapacity,
         chargeCapacity,
+        capacityUnit: dischargeUnit,
+        chargeCapacityUnit: chargeUnit,
         efficiency: numberValue(r[col.efficiency]),
         voltage: numberValue(r[col.voltage]),
-        current: numberValue(r[col.current]),
+        current,
         time: numberValue(r[col.time]),
         cRate: parseCRateValue(r[col.cRate]),
+        direction: cycDirectionFromValue(r[col.direction], current),
       };
     }).filter((r) => [r.capacity, r.chargeCapacity, r.efficiency, r.voltage].some((v) => Number.isFinite(v)));
   }
@@ -974,6 +1188,16 @@ function canonicalRows(type, columns, rows) {
   return rows;
 }
 
+function inspectionCanonicalRows(type) {
+  const analysis = state.analysis;
+  if (!analysis || analysis.detection?.type !== type) return [];
+  const cache = analysis._inspectionCanonicalRows || (analysis._inspectionCanonicalRows = {});
+  if (!Array.isArray(cache[type])) {
+    cache[type] = canonicalRows(type, analysis.columns || [], analysis.rows || []);
+  }
+  return cache[type];
+}
+
 function scaleCycCapacity(value, columnName = "") {
   if (!Number.isFinite(value)) return value;
   const key = keyOf(columnName);
@@ -981,9 +1205,35 @@ function scaleCycCapacity(value, columnName = "") {
   return value;
 }
 
+function cycCapacityUnitFromColumn(columnName = "") {
+  const key = keyOf(columnName);
+  if (!key) return "reported unit";
+  if (key.includes("mahg") || key.includes("specificcapacity") || (key.includes("ahg") && !key.includes("mah"))) return "mAh g-1";
+  if (key.includes("mah")) return "mAh";
+  if (key.includes("ah")) return "Ah";
+  return "reported unit";
+}
+
+function cycCapacityUnit(rows) {
+  return (rows || [])
+    .map((row) => String(row?.capacityUnit || "").trim())
+    .find((unit) => unit && unit !== "reported unit") || "reported unit";
+}
+
+function cycCapacityAxisLabel(rows) {
+  const unit = cycCapacityUnit(rows);
+  if (unit === "mAh g-1") return "Specific capacity (mAh g-1)";
+  return unit === "reported unit" ? "Discharge capacity (reported unit)" : `Discharge capacity (${unit})`;
+}
+
+function dqdvAxisLabel(unit) {
+  return unit && unit !== "reported unit" ? `dQ/dV (${unit} / V)` : "dQ/dV (reported capacity / V)";
+}
+
 function scaledCycValue(row, columnName) {
   if (!columnName) return null;
-  return scaleCycCapacity(numberValue(row[columnName]), columnName);
+  const value = numberValue(row[columnName]);
+  return Number.isFinite(value) ? scaleCycCapacity(value, columnName) : null;
 }
 
 function fileToBase64(file) {
@@ -1238,6 +1488,11 @@ async function inspectSelectedFile() {
       setAnalysisMessage(body.detail || body.error || "\ud30c\uc77c\uc744 \ubd88\ub7ec\uc624\uac70\ub098 \ubd84\uc11d\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", "\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
       return;
     }
+    // The upload response is complete. Hide the overlay before rendering the
+    // preview so dense WRD previews cannot look as if analysis is still stuck.
+    setBusy(false);
+    await nextBrowserPaint();
+    if (token !== state.inspectToken) return;
     state.analysis = body;
     renderAnalysis();
     setStatus(`${body.detection.type.toUpperCase()} \ub370\uc774\ud130 \ud655\uc778 \uc644\ub8cc`);
@@ -1362,7 +1617,9 @@ function renderAnalysis() {
     ? readableColumns.slice(0, 12).map((c) => `<span>${escapeXml(c)}</span>`).join("")
     : `<span>\uceec\ub7fc\uba85\uc744 \uba85\ud655\ud788 \uc77d\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</span>`;
   const badNotice = badCount > 0 ? `<p>\uc77d\uae30 \uc5b4\ub824\uc6b4 \uceec\ub7fc\uba85 ${badCount}\uac1c\ub294 \uc228\uacbc\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc885\ub958\uac00 \ud2c0\ub9ac\uba74 \uc9c1\uc811 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.</p>` : "";
-  const detectedCRates = a.detection.type === "cyc" ? explicitCRateValues(a.canonicalRows || []) : [];
+  const detectedCRates = a.detection.type === "cyc"
+    ? explicitCRateValues(inspectionCanonicalRows("cyc"))
+    : [];
   const cRateNotice = detectedCRates.length
     ? `<p class="columnPreviewHint"><strong>C-rate \uc5f4 \uac10\uc9c0:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. \uc800\uc7a5 \ud6c4 CYC Fig\uc5d0\uc11c \uc774 \uac12\uc73c\ub85c cycle \uad6c\uac04\uc744 \uad6c\ubd84\ud569\ub2c8\ub2e4.</p>`
     : "";
@@ -1520,11 +1777,56 @@ function updateFigureChoices() {
   if (createBtn) createBtn.classList.remove("hidden");
   const options = {
     eis: [["eis-combined", "Nyquist + Bode \ud1b5\ud569 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
-    cyc: [["cycling-performance", "\uc140 \uc131\ub2a5 \ud14c\uc2a4\ud2b8: capacity/efficiency vs cycle"], ["voltage-profile", "\uc804\uc555/\uc804\ub958 \uac70\ub3d9: voltage-capacity/time \ub610\ub294 voltage/current vs cycle"], ["cyc-combined", "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 \ud1b5\ud569 Fig"]],
+    cyc: [["cycling-performance", "\uc140 \uc131\ub2a5 \ud14c\uc2a4\ud2b8: capacity/efficiency vs cycle"], ["voltage-profile", "\uc804\uc555/\uc804\ub958 \uac70\ub3d9: voltage-capacity/time \ub610\ub294 voltage/current vs cycle"], ["dqdv", "dQ/dV \ud53c\ud06c: \uc804\uc555\uc5d0 \ub530\ub978 \uc6a9\ub7c9 \ubcc0\ud654"]],
     cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate \ube44\uad50 Fig"]],
     unknown: [["table-preview", "\ud45c \ud615\ud0dc\ub85c \ubbf8\ub9ac\ubcf4\uae30"]],
   }[type] || [["table-preview", "\ud45c \ud615\ud0dc\ub85c \ubbf8\ub9ac\ubcf4\uae30"]];
-  $("figureChoices").innerHTML = options.map(([id, label], idx) => `<label><input type="radio" name="figureKind" value="${id}" ${idx === 0 ? "checked" : ""}/> ${label}</label>`).join("");
+  const cycRows = type === "cyc" ? inspectionCanonicalRows("cyc") : [];
+  // Inspection uses only a sampled browser payload. Do not sort and
+  // differentiate every trace here; the full dQ/dV calculation happens only
+  // after the user explicitly creates that Fig from the saved Dataset.
+  const dqdvAnalysis = type === "cyc" ? cycDqdvReadiness(cycRows) : null;
+  const hasDqdvTrace = type !== "cyc" || dqdvAnalysis.hasRawTrace;
+  // Preserve a deliberate choice while cell metadata or inspection details refresh.
+  // Otherwise selecting dQ/dV could silently jump back to the default performance Fig.
+  const selectedFigureKind = document.querySelector("input[name='figureKind']:checked")?.value || "";
+  const hasSelectedFigureKind = options.some(([id]) => id === selectedFigureKind && !(id === "dqdv" && !hasDqdvTrace));
+  $("figureChoices").innerHTML = options.map(([id, label], idx) => {
+    const disabled = id === "dqdv" && !hasDqdvTrace;
+    const help = disabled ? ` <small>(${dqdvUnavailableMessage(cycRows)})</small>` : "";
+    const hint = id === "cycling-performance"
+      ? " <small class=\"figureChoiceHint\">CYC performance Fig: one point per cycle</small>"
+      : id === "dqdv" && hasDqdvTrace
+        ? ` <small class=\"figureChoiceHint\">${dqdvReadinessSummary(dqdvAnalysis)}</small>`
+        : "";
+    const checked = hasSelectedFigureKind ? id === selectedFigureKind : idx === 0;
+    return `<label data-figure-kind="${id}"${disabled ? " class=\"figureChoiceDisabled\"" : ""}><input type="radio" name="figureKind" value="${id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/><span class="figureChoiceBody"><span class="figureChoiceLabel">${label}</span>${hint}${help}</span></label>`;
+  }).join("");
+  // Keep the command text aligned with the radio choice so dQ/dV is not mistaken for the default performance Fig.
+  $("figureChoices").onchange = updateCreateFigureButton;
+  const applyButton = $("applyCellInfo");
+  if (applyButton) {
+    applyButton.textContent = "\uc140 \uc815\ubcf4\ub9cc \uc801\uc6a9";
+    applyButton.title = "Fig\ub97c \ub9cc\ub4e4\uc9c0 \uc54a\uace0 \uc785\ub825\ud55c \uc140 \uc815\ubcf4\ub9cc \uc801\uc6a9\ud569\ub2c8\ub2e4.";
+  }
+  updateCreateFigureButton();
+}
+
+function updateCreateFigureButton() {
+  const button = $("createFigure");
+  if (!button) return;
+  const kind = document.querySelector("input[name='figureKind']:checked")?.value;
+  const labels = {
+    "cycling-performance": "\uc131\ub2a5 Fig \uc0dd\uc131",
+    "voltage-profile": "\uc804\uc555/\uc804\ub958 Fig \uc0dd\uc131",
+    dqdv: "dQ/dV Fig \uc0dd\uc131",
+    "eis-combined": "Nyquist + Bode Fig \uc0dd\uc131",
+    nyquist: "Nyquist Fig \uc0dd\uc131",
+    bode: "Bode Fig \uc0dd\uc131",
+    "cv-curve": "CV Fig \uc0dd\uc131",
+    "cv-comparison": "CV \ube44\uad50 Fig \uc0dd\uc131",
+  };
+  button.textContent = labels[kind] || "\uc120\ud0dd\ud55c Fig \uc0dd\uc131";
 }
 
 async function createSmartFigure() {
@@ -1547,6 +1849,14 @@ async function createSmartFigure() {
     if (!rows.length) {
       setStatus("\uc22b\uc790 \uceec\ub7fc\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
       setAnalysisMessage("\uc120\ud0dd\ud55c \ub370\uc774\ud130 \ud0c0\uc785\uc5d0 \ub9de\ub294 \uc22b\uc790 \uceec\ub7fc\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\ub978 \ub370\uc774\ud130 \uc885\ub958\ub97c \uc120\ud0dd\ud558\uac70\ub098 \uceec\ub7fc\uba85\uc744 \ud655\uc778\ud574 \uc8fc\uc138\uc694.");
+      return;
+    }
+    // dQ/dV requires a genuine voltage-capacity trace within a cycle. Do not
+    // save a blank Fig when the selected CYC table contains summary rows only.
+    if (figureKind === "dqdv" && !cycDqdvSeries(rows).hasRawTrace) {
+      const message = dqdvUnavailableMessage(rows);
+      setStatus(message);
+      setAnalysisMessage(message);
       return;
     }
     const cell = collectCellForm();
@@ -1574,7 +1884,7 @@ async function createSmartFigure() {
       setAnalysisMessage(message);
       return;
     }
-    state.datasets.unshift(saved);
+    state.datasets = [saved, ...state.datasets.filter((dataset) => dataset.id !== saved.id)];
     await loadHierarchy();
     state.analysis = null;
     renderAnalysis();
@@ -1589,6 +1899,39 @@ async function createSmartFigure() {
   }
 }
 
+// Saved datasets preserve raw source columns for traceability. Convert older CYC
+// rows back to the same rendering shape used immediately after file analysis.
+function normalizeSavedCycDataset(item) {
+  if (!item || String(item.dataType || "").toLowerCase() !== "cyc" || !Array.isArray(item.rows) || !item.rows.length) return item;
+  // Older portal versions saved frontend-normalized rows with `capacity: null`.
+  // Treat those rows as unresolved, not as a usable CYC series. The server adds
+  // `renderRows` from its immutable parser artifact when it can repair them.
+  // Do not coerce null or an empty string here: Number(null) is 0, which made
+  // legacy rows with an unresolved capacity look like valid CYC data and left
+  // their plot blank. A usable cycle summary needs a real, positive number.
+  const sourceRows = Array.isArray(item.renderRows) && item.renderRows.length ? item.renderRows : item.rows;
+  const columns = Array.isArray(item.columns) && item.columns.length ? item.columns : Object.keys(sourceRows[0] || {});
+  const normalizedRows = canonicalRows("cyc", columns, sourceRows.map((row) => ({
+    ...(row?._raw && typeof row._raw === "object" ? row._raw : {}),
+    ...row,
+  })));
+  const hasNormalizedCapacity = normalizedRows.some((row) => (
+    typeof row?.capacity === "number" && Number.isFinite(row.capacity) && row.capacity > 0
+  ));
+  if (hasNormalizedCapacity) return { ...item, rows: normalizedRows };
+
+  const hasUsableCapacity = item.rows.some((row) => (
+    typeof row?.capacity === "number" && Number.isFinite(row.capacity) && row.capacity > 0
+  ));
+  if (!hasUsableCapacity) return item;
+  const savedCapacityColumn = findBestCycColumn(columns, "dischargeSpecific") || findBestCycColumn(columns, "dischargeCapacity");
+  const capacityUnit = cycCapacityUnitFromColumn(savedCapacityColumn);
+  return {
+    ...item,
+    rows: item.rows.map((row) => ({ ...row, capacityUnit: row?.capacityUnit || capacityUnit })),
+  };
+}
+
 async function loadData() {
   if (!state.user) return;
   const res = await fetch("/api/datasets", { headers: authHeaders() });
@@ -1597,7 +1940,8 @@ async function loadData() {
     if (clearExpiredLogin(res, body)) return;
     throw new Error(body.error || "\ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
-  state.datasets = await res.json();
+  const savedDatasets = await res.json();
+  state.datasets = savedDatasets.map(normalizeSavedCycDataset);
   applyFilters();
   setStatus(`${state.datasets.length} datasets`);
 }
@@ -1672,6 +2016,66 @@ function canManageSelectedOrganization() {
   return state.user?.role === "admin" || role === "owner" || role === "admin";
 }
 
+// The dataset list contains metadata only.  Raw rows are fetched once, only
+// for the selected Dataset, so a large WRD cannot freeze the saved-list page.
+async function hydrateDatasetRows(datasetId) {
+  const existing = state.datasets.find((item) => item.id === datasetId);
+  if (!existing || existing.rowsLoaded !== false) return existing;
+  if (state.datasetDetailRequests.has(datasetId)) return state.datasetDetailRequests.get(datasetId);
+
+  const request = (async () => {
+    const res = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}`, { headers: authHeaders() });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (clearExpiredLogin(res, body)) return null;
+      throw new Error(body.error || "Dataset \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
+    }
+    const hydrated = normalizeSavedCycDataset({ ...body, rowsLoaded: true });
+    state.datasets = state.datasets.map((item) => item.id === datasetId ? hydrated : item);
+    state.filtered = state.filtered.map((item) => item.id === datasetId ? hydrated : item);
+    return hydrated;
+  })();
+  state.datasetDetailRequests.set(datasetId, request);
+  try {
+    return await request;
+  } finally {
+    state.datasetDetailRequests.delete(datasetId);
+  }
+}
+
+function renderOrganizationChart(organization) {
+  const chart = $("organizationChart");
+  if (!chart) return;
+  if (!organization) {
+    chart.innerHTML = `<p class="organizationChartEmpty">\uc870\uc9c1\uc744 \uc120\ud0dd\ud558\uba74 \uc2e4\uc81c \uba64\ubc84\uc640 \uad8c\ud55c \uad6c\uc870\ub97c \uc870\uc9c1\ub3c4\ub85c \ud655\uc778\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p>`;
+    return;
+  }
+  const members = Array.isArray(state.organizationMembers) ? state.organizationMembers : [];
+  if (!members.length) {
+    chart.innerHTML = `<p class="organizationChartEmpty">\ub4f1\ub85d\ub41c \uba64\ubc84\uac00 \uc5c6\uac70\ub098 \uba64\ubc84 \uc815\ubcf4\ub97c \ubd88\ub7ec\uc624\ub294 \uc911\uc785\ub2c8\ub2e4.</p>`;
+    return;
+  }
+  const roleGroups = [
+    { role: "owner", label: "\uc870\uc9c1 \ucc45\uc784\uc790" },
+    { role: "admin", label: "\uc870\uc9c1 \uad00\ub9ac\uc790" },
+    { role: "researcher", label: "\uc5f0\uad6c\uc6d0" },
+    { role: "viewer", label: "\uc5f4\ub78c\uc790" },
+  ];
+  const groups = roleGroups.map(({ role, label }) => {
+    const roleMembers = members.filter((member) => (member.role || "viewer") === role);
+    if (!roleMembers.length) return "";
+    const cards = roleMembers.map((member) => {
+      const user = member.user || {};
+      const systemAdmin = user.role === "admin"
+        ? `<em>\uc2dc\uc2a4\ud15c \uad00\ub9ac\uc790</em>`
+        : "";
+      return `<article class="organizationChartMember"><strong>${escapeXml(user.name || user.id || "-")}</strong><span>${escapeXml(user.id || "-")}</span>${systemAdmin}</article>`;
+    }).join("");
+    return `<section class="organizationChartGroup" data-organization-role="${role}"><div class="organizationChartGroupHeader"><span>${label}</span><span>${roleMembers.length}\uba85</span></div><div class="organizationChartMembers">${cards}</div></section>`;
+  }).filter(Boolean).join("");
+  chart.innerHTML = groups || `<p class="organizationChartEmpty">\ud45c\uc2dc\ud560 \uba64\ubc84 \uc815\ubcf4\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
+}
+
 function renderOrganizationView() {
   renderOrganizationSelectors();
   const hint = $("organizationRoleHint");
@@ -1702,6 +2106,7 @@ function renderOrganizationView() {
       return `<div class="organizationMemberRow"><div><strong>${escapeXml(user.name || user.id)}</strong><span>${escapeXml(user.id)} \u00b7 ${escapeXml(member.role || "viewer")}</span></div>${remove}</div>`;
     }).join("");
   }
+  renderOrganizationChart(organization);
 }
 
 async function loadOrganizationMembers() {
@@ -2087,7 +2492,8 @@ function figureLabel(d) {
   const labels = {
     "cycling-performance": "\uc6a9\ub7c9 \uc720\uc9c0\uc728 Fig",
     "voltage-profile": "\uc804\uc555/\uc804\ub958 Fig",
-    "cyc-combined": "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 Fig",
+    "dqdv": "dQ/dV Fig",
+    "cyc-combined": "\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
     "nyquist": "Nyquist Fig",
     "bode": "Bode Fig",
     "eis-combined": "EIS \ud1b5\ud569 Fig",
@@ -2576,8 +2982,19 @@ function renderFigure(d) {
     $("metaGrid").innerHTML = "";
     return;
   }
+  if (d.rowsLoaded === false) {
+    $("figureCanvas").innerHTML = `<p class="emptySaved">\uc120\ud0dd\ud55c Dataset\uc758 \uc6d0\uc2dc \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\ub294 \uc911\uc785\ub2c8\ub2e4.</p>`;
+    $("figureTitle").textContent = figureDatasetLabel(d);
+    $("figureSubtitle").textContent = "\uc6d0\uc2dc \ub370\uc774\ud130 \ub85c\ub529 \uc911";
+    $("metaGrid").innerHTML = "";
+    return;
+  }
   if (d.dataType === "cyc-comparison") return renderSavedCycComparison(d);
-  if (d.dataType === "cyc") return renderCycFigure(d);
+
+  // Saved API responses keep their editable raw columns. Rebuild a temporary
+  // CYC view at render time so a figure setting or cell edit cannot erase the
+  // capacity series from an already parsed WRD file.
+  if (d.dataType === "cyc") return renderCycFigure(normalizeSavedCycDataset(d));
   if (d.dataType === "cv") return renderCvFigure(d);
   if (d.dataType === "eis") return renderEisFigure(d);
   const style = currentFigureStyle();
@@ -2737,13 +3154,12 @@ function dischargeSeries(rows) {
     if (!previous || point.y > previous.y) finalCapacityByCycle.set(wholeCycle, point);
   }
   const raw = [...finalCapacityByCycle.values()].sort((a, b) => a.x - b.x);
-  const medRaw = median(raw.map((p) => Math.abs(p.y)).filter((v) => v > 0));
-  const factor = Number.isFinite(medRaw) && medRaw < 10 ? 1000 : 1;
-  const scaled = raw.map((p) => ({ x: p.x, y: p.y * factor }));
-  const med = median(scaled.map((p) => Math.abs(p.y)).filter((v) => v > 0));
+  // Capacity already has the unit declared by its source column. Do not use
+  // its magnitude as a unit guess: a valid Ah trace is often below 10.
+  const med = median(raw.map((p) => Math.abs(p.y)).filter((v) => v > 0));
   const upper = Number.isFinite(med) ? Math.max(250, med * 2.2) : Infinity;
   const lower = Number.isFinite(med) ? med * 0.05 : 0;
-  return scaled.filter((p) => p.y >= lower && p.y <= upper);
+  return raw.filter((p) => p.y >= lower && p.y <= upper);
 }
 
 function formatCRateLabel(token) {
@@ -3032,6 +3448,12 @@ function normalizeFigureAspectRatio(value) {
   return ["journal", "wide", "square", "portrait"].includes(value) ? value : "journal";
 }
 
+function normalizeFigureMarkerSize(value) {
+  const size = Number(value);
+  if (!Number.isFinite(size)) return 4;
+  return Math.max(2, Math.min(10, Math.round(size)));
+}
+
 function figureSvgSize(style, kind = "paper") {
   const ratio = normalizeFigureAspectRatio(style?.aspectRatio);
   const presets = kind === "rate"
@@ -3053,18 +3475,27 @@ function figureSvgSize(style, kind = "paper") {
 function syncFigureControls(style = currentFigureStyle()) {
   const colorInput = $("figureSeriesColor");
   const ratioInput = $("figureAspectRatio");
+  const gridInput = $("figureShowGrid");
+  const connectInput = $("figureConnectPoints");
+  const markerInput = $("figureMarkerSize");
   if (colorInput) colorInput.value = normalizeHexColor(style.seriesColor || "#0f766e");
   if (ratioInput) ratioInput.value = normalizeFigureAspectRatio(style.aspectRatio);
+  if (gridInput) gridInput.checked = style.showGrid !== false;
+  if (connectInput) connectInput.checked = style.connectPoints !== false;
+  if (markerInput) markerInput.value = normalizeFigureMarkerSize(style.markerSize);
 }
 
 function currentFigureStyle() {
-  if (!state.selectedId) return { seriesColor: "#0f766e", aspectRatio: "journal" };
+  if (!state.selectedId) return { seriesColor: "#0f766e", aspectRatio: "journal", showGrid: true, connectPoints: true, markerSize: 4 };
   const d = state.datasets.find((x) => x.id === state.selectedId);
   const saved = d?.figureEdits?.style;
   if (!state.figureStyles[state.selectedId]) {
     state.figureStyles[state.selectedId] = {
       seriesColor: normalizeHexColor(saved?.seriesColor || "#0f766e"),
       aspectRatio: normalizeFigureAspectRatio(saved?.aspectRatio),
+      showGrid: saved?.showGrid !== false,
+      connectPoints: saved?.connectPoints !== false,
+      markerSize: normalizeFigureMarkerSize(saved?.markerSize),
     };
   }
   return state.figureStyles[state.selectedId];
@@ -3098,6 +3529,9 @@ async function saveFigureEdits(silent = true) {
     state.figureStyles[saved.id] = {
       seriesColor: normalizeHexColor(saved.figureEdits?.style?.seriesColor),
       aspectRatio: normalizeFigureAspectRatio(saved.figureEdits?.style?.aspectRatio),
+      showGrid: saved.figureEdits?.style?.showGrid !== false,
+      connectPoints: saved.figureEdits?.style?.connectPoints !== false,
+      markerSize: normalizeFigureMarkerSize(saved.figureEdits?.style?.markerSize),
     };
     const figureRes = await fetch("/api/figures", {
       method: "POST",
@@ -3269,6 +3703,34 @@ function changeFigureAspectRatio() {
   saveFigureEdits(false);
 }
 
+function changeFigureGridVisibility() {
+  if (!state.selectedId) return setStatus("\uBA3C\uC800 Fig\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
+  const input = $("figureShowGrid");
+  const style = currentFigureStyle();
+  style.showGrid = input?.checked !== false;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function changeFigureConnectionVisibility() {
+  if (!state.selectedId) return setStatus("\uBA3C\uC800 Fig\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
+  const input = $("figureConnectPoints");
+  const style = currentFigureStyle();
+  style.connectPoints = input?.checked !== false;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function changeFigureMarkerSize() {
+  if (!state.selectedId) return setStatus("\uBA3C\uC800 Fig\uB97C \uC120\uD0DD\uD558\uC138\uC694.");
+  const input = $("figureMarkerSize");
+  const style = currentFigureStyle();
+  style.markerSize = normalizeFigureMarkerSize(input?.value);
+  if (input) input.value = style.markerSize;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
 function attachAnnotationDrag() {
   const svg = document.getElementById("paperFigure");
   if (!svg) return;
@@ -3307,12 +3769,12 @@ function attachAnnotationDrag() {
   selectAnnotation(state.selectedAnnotation);
 }
 
-function cycStyle(seriesColor = "#0f766e") {
+function cycStyle(seriesColor = "#0f766e", showGrid = true) {
   const stroke = normalizeHexColor(seriesColor);
   const fill = lightenHexColor(stroke, 0.72);
   return `
     <style>
-      .axis{stroke:#111;stroke-width:1;shape-rendering:crispEdges}.grid{stroke:#e5e9ee;stroke-width:.5}
+      .axis{stroke:#111;stroke-width:1;shape-rendering:crispEdges}.grid{stroke:#e5e9ee;stroke-width:.5;opacity:${showGrid ? 1 : 0}}
       .capLine{fill:none;stroke:${stroke};stroke-width:1.35}.capPt{fill:${fill};stroke:${stroke};stroke-width:1.45}
       .tick{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.label{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.panelTitle{font:700 14px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
       .legend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.caption{font:8px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.panelLetter{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
@@ -3357,48 +3819,123 @@ function loadingCaption(d) {
 }
 
 function renderCycFigure(d) {
-  const kind = ["cycling-performance", "voltage-profile", "cyc-combined"].includes(d.figureKind)
+  // Legacy combined records stay available, but now open as one performance Fig.
+  const kind = ["cycling-performance", "voltage-profile", "dqdv"].includes(d.figureKind)
     ? d.figureKind
     : "cycling-performance";
   if (kind === "voltage-profile") return renderCycVoltageProfileFigure(d);
-  if (kind === "cyc-combined") return renderCycCombinedFigure(d);
+  if (kind === "dqdv") return renderCycDqdvFigure(d);
   return renderCycPerformanceFigure(d);
 }
 
-function cycVoltageProfileSeries(rows) {
+function evenlySpacedItems(items, maxItems) {
+  if (!Array.isArray(items) || !items.length || maxItems < 1) return [];
+  const count = Math.min(items.length, Math.max(1, Math.floor(maxItems)));
+  if (count === items.length) return [...items];
+  if (count === 1) return [items[0]];
+  const indices = new Set();
+  for (let index = 0; index < count; index += 1) {
+    indices.add(Math.round(index * (items.length - 1) / (count - 1)));
+  }
+  return [...indices].map((index) => items[index]);
+}
+
+// Keep the charge/discharge pair from the same representative C-rate cycle.
+function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGroups = 5) {
+  if (!Array.isArray(candidates) || !candidates.length) return [];
+  const byCycle = new Map();
+  for (const candidate of candidates) {
+    const cycle = Number(candidate?.cycle);
+    if (!Number.isFinite(cycle)) continue;
+    const group = byCycle.get(cycle) || [];
+    group.push(candidate);
+    byCycle.set(cycle, group);
+  }
+  const cycles = [...byCycle.keys()].sort((left, right) => left - right);
+  const tracesForCycle = (cycle, rateLabel = "") => (byCycle.get(cycle) || []).map((candidate) => ({
+    ...candidate,
+    rateLabel: rateLabel || candidate.rateLabel || "",
+  }));
+  const usableSegments = (rateSegments || []).filter((segment) => {
+    const start = Number(segment?.start);
+    const end = Number(segment?.end);
+    return Number.isFinite(start) && Number.isFinite(end) && end >= start;
+  });
+  const selected = [];
+  const usedCycles = new Set();
+  for (const segment of evenlySpacedItems(usableSegments, maxRateGroups)) {
+    const start = Number(segment.start);
+    const end = Number(segment.end);
+    const segmentCycles = cycles.filter((cycle) => cycle >= start && cycle <= end);
+    if (!segmentCycles.length) continue;
+    const midpoint = (start + end) / 2;
+    const cycle = segmentCycles.reduce((best, current) => (
+      Math.abs(current - midpoint) < Math.abs(best - midpoint) ? current : best
+    ));
+    if (usedCycles.has(cycle)) continue;
+    usedCycles.add(cycle);
+    selected.push(...tracesForCycle(cycle, String(segment.label || "")));
+  }
+  if (selected.length) return selected;
+  return evenlySpacedItems(cycles, 3).flatMap((cycle) => tracesForCycle(cycle));
+}
+
+function figureTraceLabel(series) {
+  const basis = series.rateLabel || `cycle ${series.cycle}`;
+  return series.direction === "trace" ? basis : `${basis} ${series.direction}`;
+}
+
+function traceStyleByRate(series, allSeries, colors) {
+  const keys = [...new Set(allSeries.map((item) => item.rateLabel || `cycle-${item.cycle}`))];
+  const key = series.rateLabel || `cycle-${series.cycle}`;
+  const index = Math.max(0, keys.indexOf(key));
+  return {
+    color: colors[index % colors.length],
+    dash: series.direction === "discharge" ? "6 3" : "",
+  };
+}
+
+function cycVoltageProfileSeries(rows, rateSegments = []) {
   const sourceRows = (rows || []).map((row) => ({
     cycle: Number(row?.cycle),
     voltage: Number(row?.voltage),
-    capacity: Number(row?.capacity),
+    capacity: Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity),
     time: Number(row?.time),
     current: Number(row?.current),
+    direction: cycDirectionFromValue(row?.direction, Number(row?.current)),
   })).filter((row) => Number.isFinite(row.cycle) && row.cycle >= 1 && Number.isFinite(row.voltage));
-  const useCapacity = sourceRows.some((row) => Number.isFinite(row.capacity));
+  const useCapacity = sourceRows.filter((row) => Number.isFinite(row.capacity)).length >= 8;
   const byCycle = new Map();
   for (const row of sourceRows) {
     const x = useCapacity ? row.capacity : row.time;
     if (!Number.isFinite(x)) continue;
     const cycle = Math.round(row.cycle);
     const points = byCycle.get(cycle) || [];
-    points.push({ x, y: row.voltage, current: row.current });
+    points.push({ x, y: row.voltage, current: row.current, direction: row.direction });
     byCycle.set(cycle, points);
   }
-  const usable = [...byCycle.entries()].map(([cycle, points]) => {
-    const sortedPoints = points.sort((a, b) => a.x - b.x);
-    const currentValues = sortedPoints.map((point) => point.current).filter(Number.isFinite);
-    return {
-      cycle,
-      points: sortedPoints,
-      currentA: currentValues.length ? currentValues.reduce((sum, value) => sum + value, 0) / currentValues.length : null,
-    };
-  }).filter(({ points }) => {
-    const xValues = new Set(points.map((point) => point.x.toFixed(8)));
-    return points.length >= 2 && xValues.size >= 2;
-  }).sort((a, b) => a.cycle - b.cycle);
-  const indices = [...new Set([0, Math.floor((usable.length - 1) / 2), usable.length - 1])].filter((index) => index >= 0);
+  const usable = [];
+  for (const [cycle, points] of [...byCycle.entries()].sort(([left], [right]) => left - right)) {
+    const charge = points.filter((point) => point.direction === "charge");
+    const discharge = points.filter((point) => point.direction === "discharge");
+    const directional = [["charge", charge], ["discharge", discharge]].filter(([, group]) => group.length >= 6);
+    const groups = directional.length ? directional : [["trace", points]];
+    for (const [direction, group] of groups) {
+      const sortedPoints = [...group].sort((a, b) => a.x - b.x);
+      const xValues = new Set(sortedPoints.map((point) => point.x.toFixed(8)));
+      if (sortedPoints.length < 6 || xValues.size < 6) continue;
+      const currentValues = sortedPoints.map((point) => point.current).filter(Number.isFinite);
+      usable.push({
+        cycle,
+        direction,
+        points: sortedPoints,
+        currentA: currentValues.length ? currentValues.reduce((sum, value) => sum + value, 0) / currentValues.length : null,
+      });
+    }
+  }
   return {
-    xLabel: useCapacity ? "Capacity (reported unit)" : "Time (reported unit)",
-    series: indices.map((index) => usable[index]).filter(Boolean),
+    xLabel: useCapacity ? cycCapacityAxisLabel(rows) : "Time (reported unit)",
+    series: selectRepresentativeCycTraces(usable, rateSegments),
   };
 }
 
@@ -3459,15 +3996,19 @@ function cycProfilePanel({ x, y, w, h, profile }) {
     xlabelOffset: 48,
     ylabelOffset: 64,
   });
-  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309"];
+  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"];
   const lines = profile.series.map((series, index) => {
-    const color = colors[index % colors.length];
-    return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
+    const { color, dash } = traceStyleByRate(series, profile.series, colors);
+    const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
+    return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"${dashAttribute}/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
   }).join("");
   const legend = profile.series.map((series, index) => {
-    const color = colors[index % colors.length];
-    const lx = x + 10 + index * Math.max(84, Math.floor((w - 24) / Math.max(profile.series.length, 1)));
-    return `<line x1="${lx}" x2="${lx + 16}" y1="${y + 18}" y2="${y + 18}" class="profileLegendLine" stroke="${color}"/><text x="${lx + 22}" y="${y + 22}" class="profileLegend">cycle ${series.cycle}</text><text x="${lx + 22}" y="${y + 35}" class="profileLegend">${formatCurrentForFigure(series.currentA)}</text>`;
+    const { color, dash } = traceStyleByRate(series, profile.series, colors);
+    const columns = Math.min(3, Math.max(1, profile.series.length));
+    const lx = x + 10 + (index % columns) * Math.max(112, Math.floor((w - 24) / columns));
+    const ly = y + 18 + Math.floor(index / columns) * 32;
+    const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
+    return `<line x1="${lx}" x2="${lx + 16}" y1="${ly}" y2="${ly}" class="profileLegendLine" stroke="${color}"${dashAttribute}/><text x="${lx + 22}" y="${ly + 4}" class="profileLegend">${figureTraceLabel(series)}</text><text x="${lx + 22}" y="${ly + 16}" class="profileLegend">${formatCurrentForFigure(series.currentA)}</text>`;
   }).join("");
   return `
     <g>
@@ -3508,7 +4049,7 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
   return `
     <g>
       <text x="${x}" y="${y - 32}" class="panelTitle">Voltage/current behavior</text>
-      <text x="${x}" y="${y - 17}" class="caption">Summary trend: mean voltage and current by cycle</text>
+      <text x="${x}" y="${y - 17}" class="caption">Cycle-summary only: mean voltage and current by cycle</text>
       <rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>
       ${axes.svg}
       ${voltageLine}
@@ -3518,7 +4059,203 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
     </g>`;
 }
 
-function cycPerformancePanel({ x, y, w, h, points }) {
+function dqdvCurveFromPoints(points) {
+  if (points.length < 8) return [];
+  const ordered = [...points].sort((left, right) => {
+    if (Number.isFinite(left.time) && Number.isFinite(right.time) && left.time !== right.time) return left.time - right.time;
+    return left.index - right.index;
+  });
+  const unique = [];
+  for (const point of ordered) {
+    const previous = unique[unique.length - 1];
+    if (!previous || Math.abs(point.voltage - previous.voltage) > 1e-7 || Math.abs(point.capacity - previous.capacity) > 1e-7) unique.push(point);
+  }
+  if (unique.length < 8) return [];
+  const raw = [];
+  for (let index = 1; index < unique.length - 1; index += 1) {
+    const left = unique[index - 1];
+    const right = unique[index + 1];
+    const deltaVoltage = right.voltage - left.voltage;
+    const deltaCapacity = right.capacity - left.capacity;
+    if (!Number.isFinite(deltaVoltage) || !Number.isFinite(deltaCapacity) || Math.abs(deltaVoltage) < 1e-5) continue;
+    const value = deltaCapacity / deltaVoltage;
+    if (Number.isFinite(value)) raw.push({ x: (left.voltage + right.voltage) / 2, y: value });
+  }
+  if (raw.length < 4) return [];
+  const bins = new Map();
+  for (const point of raw) {
+    const key = Math.round(point.x / 0.005);
+    const values = bins.get(key) || [];
+    values.push(point.y);
+    bins.set(key, values);
+  }
+  return [...bins.entries()].map(([key, values]) => ({
+    x: key * 0.005,
+    y: values.reduce((sum, value) => sum + value, 0) / values.length,
+  })).sort((left, right) => left.x - right.x);
+}
+
+function orientDqdvCurve(curve, direction) {
+  if (!curve.length || direction === "trace") return curve;
+  const values = curve.map((point) => point.y).filter(Number.isFinite).sort((left, right) => left - right);
+  const median = values.length ? values[Math.floor(values.length / 2)] : 0;
+  const shouldFlip = (direction === "charge" && median < 0) || (direction === "discharge" && median > 0);
+  return shouldFlip ? curve.map((point) => ({ ...point, y: -point.y })) : curve;
+}
+
+function cycDqdvReadiness(rows) {
+  const traces = new Map();
+  (rows || []).forEach((row) => {
+    const rawCycle = Number(row?.cycle);
+    const cycle = Math.round(rawCycle);
+    const voltage = Number(row?.voltage);
+    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
+    if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6 || !Number.isFinite(voltage) || !Number.isFinite(capacity)) return;
+
+    const current = Number(row?.current);
+    const direction = cycDirectionFromValue(row?.direction, current);
+    const key = String(cycle) + ":" + direction;
+    const trace = traces.get(key) || { count: 0, voltages: new Set(), capacities: new Set() };
+    trace.count += 1;
+    // Only distinct-count evidence is needed at inspection time. Capping the
+    // sets avoids unnecessary allocations for dense cycler exports.
+    if (trace.voltages.size < 8) trace.voltages.add(voltage.toFixed(6));
+    if (trace.capacities.size < 8) trace.capacities.add(capacity.toFixed(6));
+    traces.set(key, trace);
+  });
+
+  const traceCount = [...traces.values()].filter((trace) =>
+    trace.count >= 8 && trace.voltages.size >= 6 && trace.capacities.size >= 6
+  ).length;
+  return {
+    hasRawTrace: traceCount > 0,
+    traceCount,
+    plottedPointCount: 0,
+    previewOnly: true,
+  };
+}
+
+function cycDqdvSeries(rows, rateSegments = []) {
+  const byCycle = new Map();
+  (rows || []).forEach((row, index) => {
+    const rawCycle = Number(row?.cycle);
+    const cycle = Math.round(rawCycle);
+    const voltage = Number(row?.voltage);
+    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
+    if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6 || !Number.isFinite(voltage) || !Number.isFinite(capacity)) return;
+    const points = byCycle.get(cycle) || [];
+    const current = Number(row?.current);
+    points.push({
+      index,
+      voltage,
+      capacity,
+      time: Number(row?.time),
+      current,
+      direction: cycDirectionFromValue(row?.direction, current),
+    });
+    byCycle.set(cycle, points);
+  });
+  const candidates = [];
+  for (const [cycle, points] of [...byCycle.entries()].sort(([left], [right]) => left - right)) {
+    const charge = points.filter((point) => point.direction === "charge");
+    const discharge = points.filter((point) => point.direction === "discharge");
+    const directional = [["charge", charge], ["discharge", discharge]].filter(([, group]) => group.length >= 8);
+    const groups = directional.length ? directional : [["trace", points]];
+    for (const [direction, group] of groups) {
+      const voltageValues = new Set(group.map((point) => point.voltage.toFixed(6)));
+      const capacityValues = new Set(group.map((point) => point.capacity.toFixed(6)));
+      if (group.length < 8 || voltageValues.size < 6 || capacityValues.size < 6) continue;
+      const curve = orientDqdvCurve(dqdvCurveFromPoints(group), direction);
+      if (curve.length >= 4) candidates.push({ cycle, direction, points: curve });
+    }
+  }
+  return {
+    series: selectRepresentativeCycTraces(candidates, rateSegments),
+    hasRawTrace: candidates.length > 0,
+    traceCount: candidates.length,
+    plottedPointCount: candidates.reduce((count, candidate) => count + candidate.points.length, 0),
+    capacityUnit: cycCapacityUnit(rows),
+  };
+}
+
+function dqdvReadinessSummary(analysis) {
+  if (!analysis?.hasRawTrace) return "dQ/dV unavailable";
+  if (analysis.previewOnly) {
+    return "dQ/dV raw trace detected: " + analysis.traceCount + " trace" + (analysis.traceCount === 1 ? "" : "s");
+  }
+  return `dQ/dV ready: ${analysis.traceCount} raw trace${analysis.traceCount === 1 ? "" : "s"}, ${analysis.plottedPointCount} plotted points`;
+}
+
+function dqdvUnavailableMessage(rows) {
+  const sourcePoints = (rows || []).filter((row) => {
+    const cycle = Number(row?.cycle);
+    const voltage = Number(row?.voltage);
+    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
+    return Number.isFinite(cycle) && cycle >= 1 && Number.isFinite(voltage) && Number.isFinite(capacity);
+  });
+  if (!sourcePoints.length) {
+    return "dQ/dV Fig\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. cycle \ub0b4\ubd80\uc758 \uc804\uc555\uacfc \uc6a9\ub7c9\uc744 \ud568\uaed8 \uac00\uc9c4 \uc6d0\ubcf8 \ud3ec\uc778\ud2b8\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.";
+  }
+  const byCycle = new Map();
+  sourcePoints.forEach((point) => {
+    const cycle = Math.round(Number(point.cycle));
+    const values = byCycle.get(cycle) || [];
+    values.push(point);
+    byCycle.set(cycle, values);
+  });
+  const usableCycleCount = [...byCycle.values()].filter((points) => {
+    const voltages = new Set(points.map((point) => Number(point.voltage).toFixed(6)));
+    const capacities = new Set(points.map((point) => (Number.isFinite(Number(point.capacity)) ? Number(point.capacity) : Number(point.chargeCapacity)).toFixed(6)));
+    return points.length >= 8 && voltages.size >= 6 && capacities.size >= 6;
+  }).length;
+  if (!usableCycleCount) {
+    return `dQ/dV Fig\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \ud3ec\uc778\ud2b8\ub294 ${sourcePoints.length}\uac1c\uc774\uc9c0\ub9cc, \ud558\ub098\uc758 cycle \uc548\uc5d0 \uc11c\ub85c \ub2e4\ub978 \uc804\uc555\u00b7\uc6a9\ub7c9 \ud3ec\uc778\ud2b8\uac00 \ucd5c\uc18c 8\uac1c \ud544\uc694\ud569\ub2c8\ub2e4.`;
+  }
+  return "dQ/dV Fig\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \ud3ec\uc778\ud2b8\ub294 \uc788\uc9c0\ub9cc \uc720\ud6a8\ud55c \uc804\uc555-\uc6a9\ub7c9 \ubbf8\ubd84 \uad6c\uac04\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.";
+}
+
+function cycDqdvPanel({ x, y, w, h, analysis, seriesColor }) {
+  if (!analysis.series.length) {
+    return `
+      <g>
+        <text x="${x}" y="${y - 18}" class="panelTitle">dQ/dV</text>
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/>
+        <text x="${x + w / 2}" y="${y + h / 2 - 14}" class="profileEmptyTitle" text-anchor="middle">dQ/dV\uc6a9 \uc6d0\ubcf8 \uc804\uc555-\uc6a9\ub7c9 \ud2b8\ub808\uc774\uc2a4\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 14}" class="profileEmptyText" text-anchor="middle">cycle \ub0b4 8\uac1c \uc774\uc0c1\uc758 \uc11c\ub85c \ub2e4\ub978 voltage\uc640 capacity \ud3ec\uc778\ud2b8\uac00 \ud544\uc694\ud569\ub2c8\ub2e4.</text>
+        <text x="${x + w / 2}" y="${y + h / 2 + 38}" class="profileEmptyText" text-anchor="middle">\uc694\uc57d \ud14c\uc774\ube14\uc5d0\uc11c\ub294 \uc778\uc704\uc801\uc778 dQ/dV \uace1\uc120\uc744 \ub9cc\ub4e4\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.</text>
+      </g>`;
+  }
+  const points = analysis.series.flatMap((series) => series.points);
+  const axes = drawPaperAxes({
+    x,
+    y,
+    w,
+    h,
+    xDomain: niceBounds(points.map((point) => point.x)),
+    yDomain: niceBounds(points.map((point) => point.y)),
+    xlabel: "Voltage (V)",
+    ylabel: dqdvAxisLabel(analysis.capacityUnit),
+    xlabelOffset: 48,
+    ylabelOffset: 64,
+  });
+  const colors = [normalizeHexColor(seriesColor), "#2563eb", "#db2777", "#b45309", "#7c3aed"];
+  const lines = analysis.series.map((series, index) => {
+    const { color, dash } = traceStyleByRate(series, analysis.series, colors);
+    const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
+    return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"${dashAttribute}/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
+  }).join("");
+  const legend = analysis.series.map((series, index) => {
+    const { color, dash } = traceStyleByRate(series, analysis.series, colors);
+    const columns = Math.min(4, Math.max(1, analysis.series.length));
+    const lx = x + 12 + (index % columns) * Math.max(106, Math.floor((w - 24) / columns));
+    const ly = y + 18 + Math.floor(index / columns) * 18;
+    const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
+    return `<line x1="${lx}" x2="${lx + 16}" y1="${ly}" y2="${ly}" class="profileLegendLine" stroke="${color}"${dashAttribute}/><text x="${lx + 22}" y="${ly + 4}" class="profileLegend">${figureTraceLabel(series)}</text>`;
+  }).join("");
+  return `<g><text x="${x}" y="${y - 32}" class="panelTitle">dQ/dV</text><text x="${x}" y="${y - 17}" class="caption">Raw within-cycle voltage-capacity trace only</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>${axes.svg}${lines}${legend}</g>`;
+}
+
+function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific capacity (mAh g-1)" }) {
   if (!points.length) {
     return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">\uc6a9\ub7c9 \ub370\uc774\ud130\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</text></g>`;
   }
@@ -3528,7 +4265,7 @@ function cycPerformancePanel({ x, y, w, h, points }) {
     w,
     h,
     xlabel: "Cycle number",
-    ylabel: "Specific capacity (mAh g-1)",
+    ylabel: capacityAxisLabel,
     title: "Cycling performance",
     xDomain: niceBounds(points.map((point) => point.x)),
     yDomain: niceBounds(points.map((point) => point.y)),
@@ -3541,11 +4278,13 @@ function renderCycAlternativeFigure(d, mode) {
   syncFigureControls(style);
   const rows = (d.rows || []).filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle);
   const title = figureDatasetLabel(d);
-  const profile = cycVoltageProfileSeries(rows);
+  const capPts = dischargeSeries(rows);
+  const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
+  const profile = cycVoltageProfileSeries(rows, rateSegments);
   const electricalTrend = cycVoltageCurrentTrend(rows);
   const hasRawVoltageProfile = profile.series.length > 0;
-  const electricalTitle = hasRawVoltageProfile ? "Voltage profile + current" : "Voltage/current trend (cycle summary)";
-  const capPts = dischargeSeries(rows);
+  const electricalTitle = hasRawVoltageProfile ? "Voltage-capacity profiles" : "Voltage/current trend (cycle summary)";
+  const capacityAxisLabel = cycCapacityAxisLabel(rows);
   const svgSize = figureSvgSize(style, "paper");
   const combined = mode === "combined";
   const padX = Math.max(72, Math.round(svgSize.w * 0.08));
@@ -3554,18 +4293,19 @@ function renderCycAlternativeFigure(d, mode) {
   const plotH = Math.max(280, Math.round(svgSize.h * 0.56));
   const gap = combined ? Math.max(68, Math.round(svgSize.w * 0.06)) : 0;
   const panelW = combined ? Math.max(280, Math.floor((svgSize.w - padX - rightAxisPad - gap) / 2)) : Math.max(360, svgSize.w - padX - rightAxisPad);
-  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", combined ? `Performance + ${electricalTitle}` : electricalTitle], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  const rateText = rateSegments.map((segment) => segment.label).join(" | ");
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", combined ? `Performance + ${electricalTitle}` : electricalTitle], ["C-rate traces", rateText || "Representative cycles"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - ${combined ? `Performance + ${electricalTitle} Fig` : `${electricalTitle} Fig`}`;
   $("metaGrid").innerHTML = metaRows.map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
-  const performance = combined ? cycPerformancePanel({ x: padX, y: plotY, w: panelW, h: plotH, points: capPts }) : "";
+  const performance = combined ? cycPerformancePanel({ x: padX, y: plotY, w: panelW, h: plotH, points: capPts, capacityAxisLabel }) : "";
   const electricalX = combined ? padX + panelW + gap : padX;
   const profilePanel = hasRawVoltageProfile
     ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: plotH, profile })
     : cycVoltageCurrentTrendPanel({ x: electricalX, y: plotY, w: panelW, h: plotH, trend: electricalTrend });
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
-      ${cycStyle(style.seriesColor)}
+      ${cycStyle(style.seriesColor, style.showGrid)}
       <style>
         .seriesLine{fill:none;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:2.1}.points circle{fill:#fff;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:1.6}
         .profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}
@@ -3585,6 +4325,35 @@ function renderCycVoltageProfileFigure(d) {
   renderCycAlternativeFigure(d, "voltage-profile");
 }
 
+function renderCycDqdvFigure(d) {
+  const style = currentFigureStyle();
+  syncFigureControls(style);
+  const rows = (d.rows || []).filter((row) => Number.isFinite(row.cycle));
+  const title = figureDatasetLabel(d);
+  const capPts = dischargeSeries(rows);
+  const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
+  const analysis = cycDqdvSeries(rows, rateSegments);
+  const svgSize = figureSvgSize(style, "paper");
+  const padX = Math.max(72, Math.round(svgSize.w * 0.1));
+  const plotY = Math.max(118, Math.round(svgSize.h * 0.2));
+  const plotW = Math.max(380, svgSize.w - padX * 2);
+  const plotH = Math.max(300, Math.round(svgSize.h * 0.58));
+  $("figureTitle").textContent = title;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - dQ/dV Fig - ${dqdvReadinessSummary(analysis)}`;
+  const rateText = rateSegments.map((segment) => segment.label).join(" | ");
+  $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "dQ/dV (raw trace only)"], ["C-rate traces", rateText || "Representative cycles"], ["Trace status", dqdvReadinessSummary(analysis)], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
+  $("figureCanvas").innerHTML = `
+    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
+      ${cycStyle(style.seriesColor, style.showGrid)}
+      <style>.profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}.profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}</style>
+      <rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
+      <text x="${padX}" y="48" class="panelTitle">${escapeXml(title)}</text>
+      <text x="${padX}" y="72" class="caption">dQ/dV is calculated only from raw within-cycle voltage-capacity traces</text>
+      ${cycDqdvPanel({ x: padX, y: plotY, w: plotW, h: plotH, analysis, seriesColor: style.seriesColor })}
+    </svg>`;
+  applyAnnotationsToSvg();
+}
+
 function renderCycCombinedFigure(d) {
   renderCycAlternativeFigure(d, "combined");
 }
@@ -3595,6 +4364,9 @@ function renderCycPerformanceFigure(d) {
   const rows = d.rows.filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle);
   const title = figureDatasetLabel(d);
   const capPts = dischargeSeries(rows);
+  const capacityAxisLabel = cycCapacityAxisLabel(rows);
+  const capacityUnit = cycCapacityUnit(rows);
+  const isSpecificCapacity = capacityUnit === "mAh g-1";
   const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
   const isRateFigure = rateSegments.length >= 2;
   const detectedCRates = explicitCRateValues(rows);
@@ -3602,8 +4374,10 @@ function renderCycPerformanceFigure(d) {
     ? rateSegments.map((segment) => segment.label).join(" | ")
     : detectedCRates.map(formatExplicitCRate).join(" | ");
   $("figureTitle").textContent = title;
-  $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - ${d.rows.length} points`;
-  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], [cRateText ? "C-rate" : "Mode", cRateText || "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  const cycleCount = new Set(capPts.map((point) => point.x)).size;
+  const traceSummary = `Detected ${cycleCount} discharge cycle${cycleCount === 1 ? "" : "s"} from ${d.rows.length.toLocaleString()} raw points`;
+  $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC performance Fig - ${traceSummary}`;
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "CYC performance (one point per cycle)"], [cRateText ? "C-rate" : "Mode", cRateText || "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
   $("metaGrid").innerHTML = metaRows.map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const cycleValues = capPts.length ? capPts.map((r) => r.x) : rows.map((r) => r.cycle);
   const maxRateCycle = Math.max(...rateSegments.map((s) => s.end).filter(Number.isFinite), Math.max(...cycleValues));
@@ -3611,7 +4385,9 @@ function renderCycPerformanceFigure(d) {
   const xMax = xTickMax + Math.max(1, xTickMax * 0.025);
   const xDomain = [0, xMax];
   const maxCap = Math.max(...capPts.map((p) => p.y).filter(Number.isFinite), 1);
-  const capDomain = [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20];
+  const capDomain = isSpecificCapacity
+    ? [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20]
+    : [0, maxCap * 1.08];
   const svgSize = figureSvgSize(style, "rate");
   const margin = {
     left: Math.max(58, Math.round(svgSize.w * 0.14)),
@@ -3632,8 +4408,15 @@ function renderCycPerformanceFigure(d) {
   // Keep the y-axis readable even if a malformed export contains an unusually
   // large capacity value.  A fixed 20 mAh g-1 step can otherwise create a
   // dense black stripe of overlapping tick labels.
-  const yTickStep = Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20);
-  const yTicks = Array.from({ length: Math.floor(capDomain[1] / yTickStep) + 1 }, (_, i) => i * yTickStep);
+  const yTickStep = isSpecificCapacity
+    ? Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20)
+    : capDomain[1] / 5;
+  const yTicks = isSpecificCapacity
+    ? Array.from({ length: Math.floor(capDomain[1] / yTickStep) + 1 }, (_, i) => i * yTickStep)
+    : Array.from({ length: 6 }, (_, i) => i * yTickStep);
+  const capacityTickLabel = (value) => isSpecificCapacity
+    ? String(value)
+    : Number(value).toPrecision(3).replace(/\.0+$/, "");
   const rateSvg = isRateFigure ? rateSegments.map((s, idx) => {
     const left = s.start;
     const right = s.end;
@@ -3650,22 +4433,26 @@ function renderCycPerformanceFigure(d) {
     const command = !prev || Math.abs(p.x - prev.x) > 1.5 ? "M" : "L";
     return `${command}${sx(p.x).toFixed(2)} ${sy(p.y).toFixed(2)}`;
   }).join(" ");
+  const gridSvg = style.showGrid ? `
+    ${xTicks.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${plot.y}" y2="${plot.y + plot.h}" class="grid"/>`).join("")}
+    ${yTicks.map((v) => `<line x1="${plot.x}" x2="${plot.x + plot.w}" y1="${sy(v)}" y2="${sy(v)}" class="grid"/>`).join("")}` : "";
   const axesSvg = `
     <rect x="${plot.x}" y="${plot.y}" width="${plot.w}" height="${plot.h}" class="frame"/>
+    ${gridSvg}
     ${xTicks.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${plot.y + plot.h}" y2="${plot.y + plot.h - 7}" class="axis"/><text x="${sx(v)}" y="${plot.y + plot.h + 18}" class="tick" text-anchor="middle">${v}</text>`).join("")}
-    ${yTicks.map((v) => `<line x1="${plot.x}" x2="${plot.x + 7}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/><text x="${plot.x - 9}" y="${sy(v) + 4}" class="tick" text-anchor="end">${v}</text>`).join("")}
+    ${yTicks.map((v) => `<line x1="${plot.x}" x2="${plot.x + 7}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/><text x="${plot.x - 9}" y="${sy(v) + 4}" class="tick" text-anchor="end">${capacityTickLabel(v)}</text>`).join("")}
     <text x="${plot.x + plot.w / 2}" y="${plot.y + plot.h + 40}" class="label" text-anchor="middle">Cycle number</text>
-    <text transform="translate(${plot.x - 48},${plot.y + plot.h / 2}) rotate(-90)" class="label" text-anchor="middle">Specific capacity (mAh g-1)</text>`;
+    <text transform="translate(${plot.x - 48},${plot.y + plot.h / 2}) rotate(-90)" class="label" text-anchor="middle">${escapeXml(capacityAxisLabel)}</text>`;
   const loading = loadingCaption(d);
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" class="rateFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
-      ${cycStyle(style.seriesColor)}<rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
+      ${cycStyle(style.seriesColor, style.showGrid)}<rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
       ${rateSvg}
       ${axesSvg}
-      ${!isRateFigure && capPath ? `<path d="${capPath}" class="capLine"/>` : ""}
-      ${markerPoints(capPts, sx, sy, "capPt", 4)}
+      ${style.connectPoints && capPath ? `<path d="${capPath}" class="capLine"/>` : ""}
+      ${markerPoints(capPts, sx, sy, "capPt", style.markerSize)}
       ${movableWrap("legend", plot.x + 24, plot.y + plot.h - 44, `
-        <circle class="capPt" cx="0" cy="0" r="3.4"/><text class="legend" x="10" y="3.4">Discharge capacity</text>
+        <circle class="capPt" cx="0" cy="0" r="${Math.max(2.4, style.markerSize * 0.85)}"/><text class="legend" x="10" y="3.4">Discharge capacity</text>
       `)}
       ${loading ? movableWrap("loading-caption", plot.x + plot.w - 10, plot.y + plot.h - 22, `<text class="caption" text-anchor="end">${escapeXml(loading)}</text>`) : ""}
     </svg>`;
@@ -4434,25 +5221,64 @@ function renderTable(d) {
   const body = $("dataTable");
   const head = $("excelTableHead");
   const summary = $("excelSummary");
+  const pagination = $("excelTablePagination");
+  const pageLabel = $("excelTablePageLabel");
+  const previousPage = $("excelTablePreviousPage");
+  const nextPage = $("excelTableNextPage");
   if (!body || !head) return;
   state.tableSelection = null;
+  if (d && d.rowsLoaded === false) {
+    head.innerHTML = "";
+    body.innerHTML = `<tr><td class="emptyCell" colspan="99">\uc120\ud0dd\ud55c Dataset\uc758 \uc6d0\uc2dc \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\ub294 \uc911\uc785\ub2c8\ub2e4.</td></tr>`;
+    if (summary) summary.textContent = "loading rows";
+    if (pagination) pagination.hidden = true;
+    updateExcelUndoButton();
+    return;
+  }
   if (!d || !Array.isArray(d.rows) || !d.rows.length) {
     head.innerHTML = "";
     body.innerHTML = `<tr><td class="emptyCell" colspan="99">\ud45c\uc2dc\ud560 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</td></tr>`;
     if (summary) summary.textContent = "0 rows";
+    if (pagination) pagination.hidden = true;
     updateExcelUndoButton();
     return;
   }
+  const previewOnly = datasetRowsArePreview(d);
+  const pageCount = Math.max(1, Math.ceil(d.rows.length / TABLE_PAGE_SIZE));
+  state.tablePage = Math.max(0, Math.min(state.tablePage || 0, pageCount - 1));
+  const rowStart = state.tablePage * TABLE_PAGE_SIZE;
+  const rowEnd = Math.min(rowStart + TABLE_PAGE_SIZE, d.rows.length);
+  const visibleRows = d.rows.slice(rowStart, rowEnd);
   const columns = [["__index", "#"], ...tableColumnDefs(d)];
   head.innerHTML = `<tr>${columns.map(([, label]) => `<th>${escapeXml(label)}</th>`).join("")}</tr>`;
-  body.innerHTML = d.rows.map((row, i) => `<tr data-row-index="${i}">${columns.map(([key]) => {
-    const value = key === "__index" ? i + 1 : row[key];
-    if (key === "__index") return `<td class="rowIndex" data-row-index="${i}" title="\ud589 \uc120\ud0dd">${escapeXml(value)}</td>`;
-    return `<td class="editableCell" contenteditable="true" spellcheck="false" data-row-index="${i}" data-key="${escapeAttr(key)}" title="\ud074\ub9ad\ud574\uc11c \uc218\uc815">${escapeXml(formatTableValue(value))}</td>`;
-  }).join("")}</tr>`).join("");
-  if (summary) summary.textContent = `${d.rows.length} rows \u00b7 editable`;
+  body.innerHTML = visibleRows.map((row, visibleIndex) => {
+    const rowIndex = rowStart + visibleIndex;
+    return `<tr data-row-index="${rowIndex}">${columns.map(([key]) => {
+      const value = key === "__index" ? rowIndex + 1 : row[key];
+      if (key === "__index") return `<td class="rowIndex" data-row-index="${rowIndex}" title="\ud589 \uc120\ud0dd">${escapeXml(value)}</td>`;
+      return `<td class="editableCell${previewOnly ? " previewCell" : ""}"${previewOnly ? "" : " contenteditable=\"true\""} spellcheck="false" data-row-index="${rowIndex}" data-key="${escapeAttr(key)}" title="${previewOnly ? escapeAttr(previewRowsMessage()) : "\ud074\ub9ad\ud574\uc11c \uc218\uc815"}">${escapeXml(formatTableValue(value))}</td>`;
+    }).join("")}</tr>`;
+  }).join("");
+  if (summary) summary.textContent = previewOnly
+    ? `${d.rows.length.toLocaleString()} rows \u00b7 ${rowStart + 1}-${rowEnd} \ud45c\uc2dc \u00b7 \ubbf8\ub9ac\ubcf4\uae30(\uc6d0\ubcf8 ${Number(d.rowCount || d.rows.length).toLocaleString()} rows)`
+    : `${d.rows.length.toLocaleString()} rows \u00b7 ${rowStart + 1}-${rowEnd} \ud45c\uc2dc \u00b7 editable`;
+  if (pagination) pagination.hidden = pageCount <= 1;
+  if (pageLabel) pageLabel.textContent = `${state.tablePage + 1} / ${pageCount} page`;
+  if (previousPage) previousPage.disabled = state.tablePage === 0;
+  if (nextPage) nextPage.disabled = state.tablePage >= pageCount - 1;
+  updateExcelEditControls(d);
   updateExcelUndoButton();
   bindEditableTable();
+}
+
+// Keep every raw point for analysis while rendering only one editable page.
+// This prevents 40k+ cells from freezing the browser or looking truncated.
+function changeExcelTablePage(delta) {
+  const d = state.datasets.find((x) => x.id === state.selectedId);
+  if (!d?.rows?.length) return;
+  const pageCount = Math.max(1, Math.ceil(d.rows.length / TABLE_PAGE_SIZE));
+  state.tablePage = Math.max(0, Math.min((state.tablePage || 0) + delta, pageCount - 1));
+  renderTable(d);
 }
 
 // \\u003f\\u003f\\u003f\ub349\uc4fd \u5a9b??\u0080\\u003f\\u003f\\u003f\ub300\u2503/?\u317b\ub0ab??\u907a\uc208\ubfec?\uff4a\ub9b0 ?\ub300\uae7d?\uba83? ?\uaccc\uaed0?\u2478\ub572??
@@ -4460,6 +5286,8 @@ function renderTable(d) {
 function bindEditableTable() {
   const body = $("dataTable");
   if (!body) return;
+  const d = state.datasets.find((item) => item.id === state.selectedId);
+  if (datasetRowsArePreview(d)) return;
   for (const indexCell of body.querySelectorAll(".rowIndex")) {
     indexCell.addEventListener("click", () => selectTableRow(Number(indexCell.dataset.rowIndex)));
   }
@@ -4568,9 +5396,34 @@ function cloneTableRows(rows) {
   return JSON.parse(JSON.stringify(Array.isArray(rows) ? rows : []));
 }
 
+function datasetRowsArePreview(d) {
+  if (!d || !Array.isArray(d.rows)) return false;
+  const total = Number(d.rowCount ?? d.fullRowCount ?? d.rows.length);
+  return Boolean(d.rowsTruncated) || (Number.isFinite(total) && total > d.rows.length);
+}
+
+function previewRowsMessage() {
+  return "\ub300\uc6a9\ub7c9 \uc6d0\ubcf8\uc740 \uc548\uc804\ud558\uac8c \ubcf4\uad00\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \ud45c\ub294 \ubbf8\ub9ac\ubcf4\uae30\uc774\ubbc0\ub85c \uc218\uc815\u00b7\uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \uc804\uccb4\ub97c \ubc14\uafb8\ub824\uba74 \ud30c\uc77c\uc744 \ub2e4\uc2dc \ubd88\ub7ec\uc624\uc138\uc694.";
+}
+
+function updateExcelEditControls(d = state.datasets.find((item) => item.id === state.selectedId)) {
+  const previewOnly = datasetRowsArePreview(d);
+  const controls = ["addExcelRow", "deleteExcelRow", "saveExcelRows"];
+  for (const id of controls) {
+    const button = $(id);
+    if (!button) continue;
+    button.disabled = previewOnly || !d?.rowsLoaded;
+    button.title = previewOnly ? previewRowsMessage() : "";
+  }
+}
+
 function updateExcelUndoButton() {
   const btn = $("undoExcelEdit");
-  if (btn) btn.disabled = !state.tableUndoStack.length;
+  const d = state.datasets.find((item) => item.id === state.selectedId);
+  if (btn) {
+    btn.disabled = datasetRowsArePreview(d) || !state.tableUndoStack.length;
+    btn.title = datasetRowsArePreview(d) ? previewRowsMessage() : "";
+  }
 }
 
 function pushTableUndo(d) {
@@ -4583,6 +5436,7 @@ function pushTableUndo(d) {
 function undoExcelEdit() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return setStatus("\ub418\ub3cc\ub9b4 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.");
+  if (datasetRowsArePreview(d)) return setStatus(previewRowsMessage());
   let snapshot = null;
   while (state.tableUndoStack.length) {
     const candidate = state.tableUndoStack.pop();
@@ -4600,6 +5454,7 @@ function undoExcelEdit() {
 }
 
 function updateDatasetRows(d) {
+  if (datasetRowsArePreview(d)) return setStatus(previewRowsMessage());
   state.datasets = state.datasets.map((item) => item.id === d.id ? d : item);
   state.filtered = state.filtered.map((item) => item.id === d.id ? d : item);
   renderFigure(d);
@@ -4612,6 +5467,10 @@ function updateDatasetRows(d) {
 function applyTableCellEdit(cell) {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return false;
+  if (datasetRowsArePreview(d)) {
+    setStatus(previewRowsMessage());
+    return false;
+  }
   const rowIndex = Number(cell.dataset.rowIndex);
   const key = cell.dataset.key;
   if (!Number.isInteger(rowIndex) || !key || !d.rows[rowIndex]) return false;
@@ -4632,6 +5491,10 @@ function handleTablePaste(event, cell) {
   event.preventDefault();
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return;
+  if (datasetRowsArePreview(d)) {
+    setStatus(previewRowsMessage());
+    return;
+  }
   const columns = tableColumnDefs(d).map(([key]) => key);
   const startRow = Number(cell.dataset.rowIndex);
   const startCol = Math.max(0, columns.indexOf(cell.dataset.key));
@@ -4663,10 +5526,12 @@ function makeEmptyTableRow(d) {
 function addExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return setStatus("\uba3c\uc800 \ub370\uc774\ud130\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  if (datasetRowsArePreview(d)) return setStatus(previewRowsMessage());
   d.rows = Array.isArray(d.rows) ? d.rows : [];
   pushTableUndo(d);
   d.rows.push(makeEmptyTableRow(d));
   updateDatasetRows(d);
+  state.tablePage = Math.floor((d.rows.length - 1) / TABLE_PAGE_SIZE);
   renderTable(d);
   const rowIndex = d.rows.length - 1;
   const firstCell = document.querySelector(`#dataTable .editableCell[data-row-index="${rowIndex}"]`);
@@ -4676,11 +5541,13 @@ function addExcelRow() {
 function deleteSelectedExcelRow() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d || !Array.isArray(d.rows) || !d.rows.length) return setStatus("\uc0ad\uc81c\ud560 \ud589\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
+  if (datasetRowsArePreview(d)) return setStatus(previewRowsMessage());
   const rowIndex = Number(state.tableSelection?.rowIndex);
   if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= d.rows.length) return setStatus("\uc0ad\uc81c\ud560 \ud589\uc744 \uba3c\uc800 \uc120\ud0dd\ud558\uc138\uc694.");
   pushTableUndo(d);
   d.rows.splice(rowIndex, 1);
   updateDatasetRows(d);
+  state.tablePage = Math.min(state.tablePage || 0, Math.max(0, Math.ceil(d.rows.length / TABLE_PAGE_SIZE) - 1));
   renderTable(d);
   setStatus("\uc120\ud0dd\ud55c \ud589\uc744 \uc0ad\uc81c\ud588\uc2b5\ub2c8\ub2e4.");
 }
@@ -4688,17 +5555,23 @@ function deleteSelectedExcelRow() {
 function saveCurrentExcelRows() {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return setStatus("\uc800\uc7a5\ud560 \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.");
+  if (datasetRowsArePreview(d)) return setStatus(previewRowsMessage());
   clearTimeout(state.tableSaveTimer);
   return saveRowsEdit(d);
 }
 
 function scheduleRowsSave(d) {
+  if (datasetRowsArePreview(d)) return;
   clearTimeout(state.tableSaveTimer);
   setStatus("\ud45c \uc218\uc815 \ub0b4\uc6a9\uc744 \uc800\uc7a5 \uc911...");
   state.tableSaveTimer = setTimeout(() => saveRowsEdit(d), 650);
 }
 
 async function saveRowsEdit(d) {
+  if (datasetRowsArePreview(d)) {
+    setStatus(previewRowsMessage());
+    return;
+  }
   try {
     const res = await fetch(`/api/datasets/${encodeURIComponent(d.id)}`, {
       method: "PATCH",
@@ -4724,6 +5597,13 @@ function renderCurrent() {
   renderExperimentInfo(d);
   renderCellWorkspace(d);
   loadCellWorkspace(d);
+  if (d && d.rowsLoaded === false) {
+    hydrateDatasetRows(d.id)
+      .then((hydrated) => {
+        if (hydrated && state.selectedId === hydrated.id) renderCurrent();
+      })
+      .catch((error) => setStatus(`Dataset \ub370\uc774\ud130 \ub85c\ub529 \uc2e4\ud328: ${error.message}`));
+  }
 }
 
 async function applyCellInfo() {
@@ -5021,6 +5901,10 @@ function makeZip(files) {
   return new Blob(chunks, { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
 }
 
+function exportComparisonPpt() {
+  return exportSvgAsPpt($("comparisonFigure"), "cyc-comparison.pptx", savedFigText().exportMissing);
+}
+
 function bytesToBase64(bytes) {
   let binary = "";
   const chunkSize = 0x8000;
@@ -5030,9 +5914,12 @@ function bytesToBase64(bytes) {
   return btoa(binary);
 }
 
-async function exportPpt() {
-  const svg = $("paperFigure");
-  if (!svg) return setStatus("\uba3c\uc800 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098 \uc120\ud0dd\ud558\uc138\uc694.");
+function exportPpt() {
+  return exportSvgAsPpt($("paperFigure"), "battery-figure.pptx", "\uba3c\uc800 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098 \uc120\ud0dd\ud558\uc138\uc694.");
+}
+
+async function exportSvgAsPpt(svg, fileName, missingMessage) {
+  if (!svg) return setStatus(missingMessage);
   let pngBytes;
   try {
     const pngBlob = await svgToPngBlob(svg);
@@ -5056,7 +5943,7 @@ async function exportPpt() {
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "battery-figure.pptx";
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(a.href);
     return setStatus("PPT \ub2e4\uc6b4\ub85c\ub4dc \uc644\ub8cc");
@@ -5896,6 +6783,8 @@ document.addEventListener("DOMContentLoaded", () => {
   on("addExcelRow", "click", addExcelRow);
   on("deleteExcelRow", "click", deleteSelectedExcelRow);
   on("saveExcelRows", "click", saveCurrentExcelRows);
+  on("excelTablePreviousPage", "click", () => changeExcelTablePage(-1));
+  on("excelTableNextPage", "click", () => changeExcelTablePage(1));
   on("saveFigureEdits", "click", () => saveFigureEdits(false));
   on("compareCycFigures", "click", renderCycComparison);
   on("clearCompareSelection", "click", clearCompareSelection);
@@ -5905,6 +6794,9 @@ document.addEventListener("DOMContentLoaded", () => {
   on("annotationSize", "change", () => changeAnnotationSize(0));
   on("figureSeriesColor", "input", changeFigureSeriesColor);
   on("figureAspectRatio", "change", changeFigureAspectRatio);
+  on("figureShowGrid", "change", changeFigureGridVisibility);
+  on("figureConnectPoints", "change", changeFigureConnectionVisibility);
+  on("figureMarkerSize", "change", changeFigureMarkerSize);
   on("clearAnnotations", "click", clearAnnotations);
   on("annotationText", "keydown", (event) => { if (event.key === "Enter") addOrUpdateAnnotation(); });
   on("smartFile", "change", () => resetAnalysisForNewFile());
@@ -5991,7 +6883,8 @@ function figureLabel(d) {
   const labels = {
     "cycling-performance": "\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
     "voltage-profile": "\uc804\uc555 \ud504\ub85c\ud30c\uc77c Fig",
-    "cyc-combined": "\uc131\ub2a5 + \uc804\uc555/\uc804\ub958 Fig",
+    "dqdv": "dQ/dV Fig",
+    "cyc-combined": "\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
     "nyquist": "Nyquist Fig",
     "bode": "Bode Fig",
     "eis-combined": "Nyquist + Bode Fig",
@@ -6105,6 +6998,7 @@ function renderCycComparison() {
     '<button type="button" id="saveComparisonFigure">' + text.compareSave + "</button>",
     '<button type="button" id="exportComparisonSvg" class="secondaryAction">SVG</button>',
     '<button type="button" id="exportComparisonPng" class="secondaryAction">PNG</button>',
+    '<button type="button" id="exportComparisonPpt" class="secondaryAction">PPT</button>',
     "</div></div>",
     '<div class="comparisonControls">',
     series.map((item, index) => [
@@ -6128,6 +7022,7 @@ function renderCycComparison() {
   $("saveComparisonFigure")?.addEventListener("click", saveComparisonFigure);
   $("exportComparisonSvg")?.addEventListener("click", exportComparisonSvg);
   $("exportComparisonPng")?.addEventListener("click", exportComparisonPng);
+  $("exportComparisonPpt")?.addEventListener("click", exportComparisonPpt);
   setStatus(text.compared);
 }
 

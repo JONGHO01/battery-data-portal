@@ -1,4 +1,5 @@
 import csv
+import argparse
 import json
 import math
 import re
@@ -13,6 +14,86 @@ for dep_dir in (APP_ROOT / "wheeldeps", APP_ROOT / "xlsbdeps", APP_ROOT / "pydep
         sys.path.insert(0, str(dep_dir))
 
 from backend.parsers import PARSER_VERSION, inspect_path
+
+
+# This response is parsed and rendered by the browser before a Dataset is saved.
+# Keep it small enough for large WBCS WRD files while the upload session retains
+# the full canonical source for durable storage and later server-side analysis.
+MAX_INSPECTION_ROWS = 1_500
+
+
+def _evenly_sample(items, maximum):
+    """Keep ordered endpoints while reducing one continuous trace."""
+
+    if len(items) <= maximum:
+        return list(items)
+    if maximum <= 1:
+        return [items[0]]
+    indexes = {
+        round(index * (len(items) - 1) / (maximum - 1))
+        for index in range(maximum)
+    }
+    return [item for index, item in enumerate(items) if index in indexes]
+
+
+def _inspection_trace_key(row, cycle_column, direction_column, current_column):
+    """Return a stable CYC trace key, or ``None`` for non-CYC tables."""
+
+    try:
+        cycle_value = float(row.get(cycle_column, ""))
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(cycle_value) or cycle_value < 1:
+        return None
+    cycle = int(round(cycle_value)) if abs(cycle_value - round(cycle_value)) < 1e-6 else round(cycle_value, 6)
+
+    direction = str(row.get(direction_column, "")).strip().lower() if direction_column else ""
+    if "discharge" in direction or "방전" in direction:
+        direction = "discharge"
+    elif "charge" in direction or "충전" in direction:
+        direction = "charge"
+    else:
+        try:
+            current = float(row.get(current_column, "")) if current_column else 0.0
+        except (TypeError, ValueError):
+            current = 0.0
+        direction = "charge" if current > 0 else "discharge" if current < 0 else "trace"
+    return cycle, direction
+
+
+def limit_inspection_rows(rows, columns, maximum=MAX_INSPECTION_ROWS):
+    """Limit browser output without dropping later CYC charge/discharge traces.
+
+    A plain ``rows[:5000]`` can contain only the start of a long WBCS file.
+    For CYC tables, split the payload into ordered cycle/direction traces and
+    give every trace an equal share of the response budget. Other formats use
+    an endpoint-preserving global sample.
+    """
+
+    if len(rows) <= maximum:
+        return rows
+
+    cycle_column = find_column(columns, ["cycle", "cycle number", "cycle index", "cycle no", "cycle #"])
+    if not cycle_column:
+        return _evenly_sample(rows, maximum)
+    direction_column = find_column(columns, ["direction", "mode", "step type"])
+    current_column = find_column(columns, ["current (a)", "current", "avg current", "i (a)"])
+    traces = {}
+    for row in rows:
+        key = _inspection_trace_key(row, cycle_column, direction_column, current_column)
+        if key is None:
+            return _evenly_sample(rows, maximum)
+        traces.setdefault(key, []).append(row)
+
+    if len(traces) <= 1:
+        return _evenly_sample(rows, maximum)
+
+    base, remainder = divmod(maximum, len(traces))
+    sampled = []
+    for trace_index, trace in enumerate(traces.values()):
+        budget = base + (1 if trace_index < remainder else 0)
+        sampled.extend(_evenly_sample(trace, max(1, budget)))
+    return sampled
 
 
 def read_csv(path: Path):
@@ -531,7 +612,17 @@ def build_validation(columns, rows, sheet_name):
 
 
 def main():
-    path = Path(sys.argv[1])
+    argument_parser = argparse.ArgumentParser(
+        description="Inspect an instrument file and return normalized rows."
+    )
+    argument_parser.add_argument("path", help="Path to the instrument export")
+    argument_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Return every parsed row for server-side analysis instead of a browser preview.",
+    )
+    args = argument_parser.parse_args()
+    path = Path(args.path)
     try:
         raw_rows, sheet_name, parser_name = inspect_path(path)
     except Exception as exc:
@@ -545,8 +636,8 @@ def main():
 
     header_idx = choose_header_row(raw_rows)
     columns = [normalize_header(x) or f"col_{idx + 1}" for idx, x in enumerate(raw_rows[header_idx])]
-    rows = []
-    for raw in raw_rows[header_idx + 1:5001]:
+    parsed_rows = []
+    for raw in raw_rows[header_idx + 1:]:
         item = {}
         for idx, col in enumerate(columns):
             value = raw[idx] if idx < len(raw) else ""
@@ -558,11 +649,16 @@ def main():
                     item[col] = float(text) if text else ""
                 except ValueError:
                     item[col] = text
-        rows.append(item)
-    validation = build_validation(columns, rows, sheet_name)
+        parsed_rows.append(item)
+    # The browser must receive a compact preview, but the API needs the complete
+    # within-cycle trace for capacity/voltage and dQ/dV calculations.  The
+    # backend explicitly requests --full and trims only its outgoing response.
+    rows = parsed_rows if args.full else limit_inspection_rows(parsed_rows, columns)
+    validation = build_validation(columns, parsed_rows, sheet_name)
     print(json.dumps({
         "columns": columns,
         "rows": rows,
+        "rowCount": len(parsed_rows),
         "headerRow": header_idx + 1,
         "sheetName": sheet_name,
         "validation": validation,

@@ -38,22 +38,207 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts)", self.app_js)
 
     def test_cyc_capacity_axis_limits_dense_ticks_for_bad_outliers(self):
-        self.assertIn("const yTickStep = Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20);", self.app_js)
+        # Specific capacity retains the safe 20 mAh g-1 tick logic, while a
+        # raw Ah column needs its own numeric scale rather than that unit.
+        self.assertIn("const isSpecificCapacity = capacityUnit === \"mAh g-1\";", self.app_js)
+        self.assertIn("Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20)", self.app_js)
+        self.assertIn(": capDomain[1] / 5;", self.app_js)
+
+    def test_cyc_figure_style_controls_support_grid_line_and_marker_size(self):
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="figureShowGrid"', html)
+        self.assertIn('id="figureConnectPoints"', html)
+        self.assertIn('id="figureMarkerSize"', html)
+        self.assertIn("function normalizeFigureMarkerSize", self.app_js)
+        self.assertIn("style.showGrid", self.app_js)
+        self.assertIn("style.connectPoints", self.app_js)
+        self.assertIn('markerPoints(capPts, sx, sy, "capPt", style.markerSize)', self.app_js)
+
+    def test_cyc_connection_line_keeps_gaps_between_missing_cycles(self):
+        self.assertIn('Math.abs(p.x - prev.x) > 1.5 ? "M" : "L"', self.app_js)
+        self.assertIn('style.connectPoints && capPath ? `<path d="${capPath}" class="capLine"/>` : ""', self.app_js)
 
     def test_cyc_fig_choice_uses_distinct_rendering_paths(self):
-        self.assertIn('const kind = ["cycling-performance", "voltage-profile", "cyc-combined"].includes(d.figureKind)', self.app_js)
+        self.assertIn('const kind = ["cycling-performance", "voltage-profile", "dqdv"].includes(d.figureKind)', self.app_js)
         self.assertIn('if (kind === "voltage-profile") return renderCycVoltageProfileFigure(d);', self.app_js)
-        self.assertIn('if (kind === "cyc-combined") return renderCycCombinedFigure(d);', self.app_js)
+        self.assertIn('if (kind === "dqdv") return renderCycDqdvFigure(d);', self.app_js)
+        self.assertNotIn('if (kind === "cyc-combined") return renderCycCombinedFigure(d);', self.app_js)
+
+    def test_cyc_fig_choices_are_single_panel_only(self):
+        self.assertNotIn('["cyc-combined",', self.app_js)
+        self.assertIn('["cycling-performance",', self.app_js)
+        self.assertIn('["voltage-profile",', self.app_js)
+        self.assertIn('["dqdv",', self.app_js)
+
+    def test_cyc_fig_choices_include_dqdv(self):
+        self.assertIn('["dqdv", "dQ/dV', self.app_js)
+        self.assertIn('"dqdv": "dQ/dV Fig"', self.app_js)
+
+    def test_dqdv_requires_real_within_cycle_voltage_capacity_traces(self):
+        self.assertIn("function cycDqdvSeries(rows, rateSegments = [])", self.app_js)
+        self.assertIn("function dqdvCurveFromPoints(points)", self.app_js)
+        self.assertIn("points.length < 8", self.app_js)
+        self.assertIn("voltageValues.size < 6 || capacityValues.size < 6", self.app_js)
+        self.assertIn("function cycDqdvPanel", self.app_js)
+        self.assertIn(r"dQ/dV\uc6a9 \uc6d0\ubcf8 \uc804\uc555-\uc6a9\ub7c9 \ud2b8\ub808\uc774\uc2a4", self.app_js)
+
+    def test_summary_only_cyc_data_cannot_save_a_blank_dqdv_figure(self):
+        self.assertIn('id === "dqdv" && !hasDqdvTrace', self.app_js)
+        self.assertIn('figureKind === "dqdv" && !cycDqdvSeries(rows).hasRawTrace', self.app_js)
+
+    def test_saved_raw_cyc_rows_are_normalized_for_saved_figure_rendering(self):
+        self.assertIn("function normalizeSavedCycDataset", self.app_js)
+        self.assertIn('canonicalRows("cyc", columns, sourceRows.map', self.app_js)
+        self.assertIn("state.datasets = savedDatasets.map(normalizeSavedCycDataset);", self.app_js)
+
+    def test_saved_list_hydrates_raw_rows_only_for_the_selected_dataset(self):
+        """Large WRD files must not be duplicated into the initial list response."""
+
+        self.assertIn("async function hydrateDatasetRows(datasetId)", self.app_js)
+        self.assertIn("d.rowsLoaded === false", self.app_js)
+        self.assertIn("datasetDetailRequests: new Map()", self.app_js)
+
+    def test_raw_ah_capacity_keeps_its_real_unit_for_cyc_figures(self):
+        """A raw discharge-Q column must not be labeled as specific capacity."""
+
+        self.assertIn("function cycCapacityUnitFromColumn", self.app_js)
+        self.assertIn("function cycCapacityAxisLabel(rows)", self.app_js)
+        self.assertIn("capacityUnit: dischargeUnit", self.app_js)
+        self.assertIn("ylabel: dqdvAxisLabel(analysis.capacityUnit)", self.app_js)
+        self.assertIn("const capacityAxisLabel = cycCapacityAxisLabel(rows);", self.app_js)
+        self.assertNotIn("point.y * factor", self.app_js)
+
+    def test_figure_choice_copy_keeps_the_full_option_width(self):
+        """Radio labels and readiness hints must share the wide second grid column."""
+
+        style_css = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+        self.assertIn('class="figureChoiceBody"', self.app_js)
+        self.assertIn('class="figureChoiceLabel"', self.app_js)
+        self.assertIn(".figureChoiceBody", style_css)
+        self.assertIn(".figureChoiceLabel", style_css)
+
+    def test_render_figure_rebuilds_raw_cyc_rows_after_a_saved_edit(self):
+        """CYC drawing must not depend on a prior page reload to restore capacity."""
+
+        self.assertIn(
+            'if (d.dataType === "cyc") return renderCycFigure(normalizeSavedCycDataset(d));',
+            self.app_js,
+        )
+
+    def test_generic_specific_capacity_header_is_accepted_for_wrd_discharge_traces(self):
+        """WBCS WRD exports label the discharge trace as generic specific capacity."""
+
+        self.assertIn(
+            'role === "dischargeSpecific" && !chargeOnly && capacity && specific',
+            self.app_js,
+        )
+
+    def test_legacy_null_capacity_rows_are_rebuilt_from_parser_rows(self):
+        """Saved pre-fix CYC rows must not block parser-artifact recovery."""
+
+        self.assertIn("const hasUsableCapacity = item.rows.some", self.app_js)
+        self.assertIn('typeof row?.capacity === "number" && Number.isFinite(row.capacity) && row.capacity > 0', self.app_js)
+        self.assertIn("Array.isArray(item.renderRows) && item.renderRows.length", self.app_js)
+
+    def test_dqdv_unavailable_state_has_a_specific_data_reason(self):
+        self.assertIn("function dqdvUnavailableMessage(rows)", self.app_js)
+
+    def test_cyc_fig_choices_explain_which_result_will_be_created(self):
+        self.assertIn("function dqdvReadinessSummary(analysis)", self.app_js)
+        self.assertIn("function cycDqdvReadiness(rows)", self.app_js)
+        self.assertIn('data-figure-kind="${id}"', self.app_js)
+        self.assertIn("CYC performance Fig: one point per cycle", self.app_js)
+        self.assertIn("dQ/dV ready:", self.app_js)
+
+    def test_inspection_does_not_depend_on_a_duplicate_canonical_response_payload(self):
+        """Large WRD inspections should derive preview-only C-rate data from sampled rows."""
+
+        self.assertIn('explicitCRateValues(inspectionCanonicalRows("cyc"))', self.app_js)
+        self.assertNotIn("explicitCRateValues(a.canonicalRows || [])", self.app_js)
+
+    def test_large_inspection_releases_the_busy_overlay_before_rendering_results(self):
+        """A heavy preview must not leave the browser behind a completed-analysis modal."""
+
+        self.assertIn("function nextBrowserPaint()", self.app_js)
+        self.assertIn("setBusy(false);\n    await nextBrowserPaint();", self.app_js)
+        self.assertLess(
+            self.app_js.index("await nextBrowserPaint();"),
+            self.app_js.index("state.analysis = body;"),
+        )
+
+    def test_inspection_reuses_one_canonical_cyc_preview(self):
+        """Initial CYC rendering must not normalize the same preview twice."""
+
+        self.assertIn("function inspectionCanonicalRows(type)", self.app_js)
+        self.assertIn('explicitCRateValues(inspectionCanonicalRows("cyc"))', self.app_js)
+        self.assertIn('const cycRows = type === "cyc" ? inspectionCanonicalRows("cyc") : [];', self.app_js)
+
+    def test_refresh_keeps_the_user_selected_cyc_figure_kind(self):
+        """Inspection refresh must not silently reset dQ/dV back to performance."""
+
+        self.assertIn('const selectedFigureKind = document.querySelector("input[name=\'figureKind\']:checked")?.value || "";', self.app_js)
+        self.assertIn("const hasSelectedFigureKind = options.some", self.app_js)
+        self.assertIn("const checked = hasSelectedFigureKind ? id === selectedFigureKind : idx === 0;", self.app_js)
+
+    def test_large_tables_are_paginated_without_reindexing_raw_rows(self):
+        index_html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("const TABLE_PAGE_SIZE = 250", self.app_js)
+        self.assertIn("const visibleRows = d.rows.slice(rowStart, rowEnd)", self.app_js)
+        self.assertIn("const rowIndex = rowStart + visibleIndex", self.app_js)
+        self.assertIn("function changeExcelTablePage(delta)", self.app_js)
+        self.assertIn('id="excelTablePagination"', index_html)
+
+    def test_large_tables_are_paginated_without_reindexing_raw_rows(self):
+        index_html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("const TABLE_PAGE_SIZE = 250", self.app_js)
+        self.assertIn("const visibleRows = d.rows.slice(rowStart, rowEnd)", self.app_js)
+        self.assertIn("const rowIndex = rowStart + visibleIndex", self.app_js)
+        self.assertIn("function changeExcelTablePage(delta)", self.app_js)
+        self.assertIn('id="excelTablePagination"', index_html)
+
+    def test_selected_cyc_figure_updates_the_create_action_label(self):
+        """A dQ/dV selection must never still look like a performance-Fig action."""
+
+        self.assertIn('$("figureChoices").onchange = updateCreateFigureButton;', self.app_js)
+        self.assertIn('dqdv: "dQ/dV Fig \\uc0dd\\uc131"', self.app_js)
+
+    def test_cell_information_action_does_not_claim_to_create_a_figure(self):
+        """The metadata action is separate from the selected Fig creation action."""
+
+        self.assertIn('applyButton.textContent = "\\uc140 \\uc815\\ubcf4\\ub9cc \\uc801\\uc6a9";', self.app_js)
 
     def test_voltage_profile_requires_real_curve_points(self):
-        self.assertIn("function cycVoltageProfileSeries(rows)", self.app_js)
-        self.assertIn("points.length >= 2", self.app_js)
+        self.assertIn("function cycVoltageProfileSeries(rows, rateSegments = [])", self.app_js)
+        self.assertIn("Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity)", self.app_js)
+        self.assertIn('[["charge", charge], ["discharge", discharge]]', self.app_js)
+        self.assertIn("sortedPoints.length < 6 || xValues.size < 6", self.app_js)
+
+    def test_raw_trace_figures_keep_charge_discharge_pairs_per_c_rate(self):
+        """A representative C-rate must retain its matching charge/discharge pair."""
+
+        self.assertIn("function selectRepresentativeCycTraces", self.app_js)
+        self.assertIn("selected.push(...tracesForCycle(cycle, String(segment.label || \"\")));", self.app_js)
+        self.assertIn("function orientDqdvCurve", self.app_js)
+        self.assertIn("series: selectRepresentativeCycTraces(usable, rateSegments)", self.app_js)
+        self.assertIn("series: selectRepresentativeCycTraces(candidates, rateSegments)", self.app_js)
+        self.assertIn("cycVoltageProfileSeries(rows, rateSegments)", self.app_js)
+        self.assertIn("cycDqdvSeries(rows, rateSegments)", self.app_js)
+        self.assertIn('series.direction === "discharge" ? "6 3" : ""', self.app_js)
+
+    def test_raw_cyc_direction_is_preserved_before_current_sign_fallback(self):
+        """WBCS rows explicitly label charge/discharge even when current is rounded."""
+
+        self.assertIn('direction: findColumn(columns, ["direction", "step direction", "mode", "state"])', self.app_js)
+        self.assertIn("function cycDirectionFromValue(value, current = NaN)", self.app_js)
+        self.assertIn("direction: cycDirectionFromValue(r[col.direction], current)", self.app_js)
+        self.assertIn('point.direction === "charge"', self.app_js)
+        self.assertIn('point.direction === "discharge"', self.app_js)
 
     def test_summary_only_cyc_data_has_a_voltage_and_current_fallback(self):
         self.assertIn("function cycVoltageCurrentTrend(rows)", self.app_js)
         self.assertIn("function cycVoltageCurrentTrendPanel", self.app_js)
         self.assertIn("Current (mA, +charge / -discharge)", self.app_js)
-        self.assertIn("Summary trend: mean voltage and current by cycle", self.app_js)
+        self.assertIn("Cycle-summary only: mean voltage and current by cycle", self.app_js)
 
     def test_raw_voltage_profile_legend_includes_current(self):
         self.assertIn("function formatCurrentForFigure", self.app_js)
@@ -80,6 +265,15 @@ class CycFigureUiTests(unittest.TestCase):
             self.assertIn(escaped_label, saved_fig_ui)
         self.assertIn("function renderCycComparison()", saved_fig_ui)
         self.assertIn("function saveComparisonFigure()", saved_fig_ui)
+
+    def test_cyc_comparison_can_export_to_ppt(self):
+        start = self.app_js.rindex("// Authoritative saved-Fig labels.")
+        saved_fig_ui = self.app_js[start:]
+        self.assertIn('id="exportComparisonPpt"', saved_fig_ui)
+        self.assertIn('$("exportComparisonPpt")?.addEventListener("click", exportComparisonPpt);', saved_fig_ui)
+        self.assertIn("function exportComparisonPpt()", self.app_js)
+        self.assertIn('exportSvgAsPpt($("comparisonFigure"), "cyc-comparison.pptx", savedFigText().exportMissing)', self.app_js)
+        self.assertIn("async function exportSvgAsPpt(svg, fileName, missingMessage)", self.app_js)
 
     def test_saved_fig_list_uses_the_authoritative_readable_renderer(self):
         start = self.app_js.rindex("// Authoritative saved-Fig labels.")

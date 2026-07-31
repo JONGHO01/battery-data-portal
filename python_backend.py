@@ -51,6 +51,7 @@ from backend.analysis.eis import summarize_eis
 from backend.analysis.pulse_resistance import summarize_pulse_resistance
 from backend.analysis.rate_capability import summarize_rate_capability
 from backend.analysis.retention import capacity_series, summarize_retention
+from scripts.inspect_file import limit_inspection_rows
 
 
 ORGANIZATION_ROLES = {"owner", "admin", "researcher", "viewer"}
@@ -77,6 +78,14 @@ PORT = int(os.environ.get("PORT", "4173"))
 DEFAULT_MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_BODY = int(os.environ.get("MAX_UPLOAD_BYTES", str(DEFAULT_MAX_UPLOAD_BYTES)))
 MAX_BASE64_CHARS = ((MAX_BODY + 2) // 3) * 4
+# Keep complete WBCS point-level traces for CYC and dQ/dV. This is bounded to
+# prevent a malformed file from turning a single Dataset into an unbounded DB
+# record, but it is intentionally far above the old 5,000-row display-era cap.
+MAX_PARSED_ROWS = int(os.environ.get("MAX_PARSED_ROWS", "250000"))
+# The browser needs complete-looking traces, but it does not need every raw
+# instrument point.  Keep a bounded, cycle-aware detail payload so opening a
+# 40,000+ point WRD cannot exhaust the Chrome renderer.
+MAX_BROWSER_DATASET_ROWS = int(os.environ.get("MAX_BROWSER_DATASET_ROWS", "7000"))
 DEFAULT_JWT_SECRET = "dev-change-this-secret-before-deploy"
 APP_ENV = os.environ.get("APP_ENV", "local").strip().lower()
 JWT_SECRET = os.environ.get("JWT_SECRET", DEFAULT_JWT_SECRET)
@@ -127,7 +136,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.46", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.62", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -336,6 +345,9 @@ def public_user(row, token: str | None = None) -> dict | None:
     if not row:
         return None
     user = {"id": row["id"], "name": row["name"], "role": row["role"]}
+    keys = row.keys() if hasattr(row, "keys") else ()
+    if "created_at" in keys and row["created_at"]:
+        user["createdAt"] = row["created_at"]
     if token:
         user["token"] = token
     return user
@@ -581,8 +593,81 @@ def can_see(user, dataset_row, conn=None) -> bool:
         return can_view_row(owned, user, dataset_row)
 
 
-def dataset_from_row(row) -> dict:
+def _spread_sample(rows: list[dict], limit: int) -> list[dict]:
+    """Return evenly spaced rows while retaining the first and last row."""
+
+    if limit <= 0 or not rows:
+        return []
+    if len(rows) <= limit:
+        return rows
+    if limit == 1:
+        return [rows[0]]
+    positions = {
+        round(index * (len(rows) - 1) / (limit - 1))
+        for index in range(limit)
+    }
+    return [row for index, row in enumerate(rows) if index in positions]
+
+
+def browser_safe_dataset_rows(rows: list[dict], data_type: str, limit: int = MAX_BROWSER_DATASET_ROWS) -> tuple[list[dict], bool]:
+    """Downsample a detail response without deleting the stored experiment data.
+
+    Cycling data is sampled per cycle and charge/discharge direction.  A global
+    first-N slice made later C-rate steps vanish and made dQ/dV look as though
+    the source did not contain a usable voltage trace.
+    """
+
+    clean_rows = [row for row in rows if isinstance(row, dict)]
+    if len(clean_rows) <= limit:
+        return clean_rows, False
+    if str(data_type or "").lower() != "cyc":
+        return _spread_sample(clean_rows, limit), True
+
+    traces: dict[tuple[str, str], list[tuple[int, dict]]] = {}
+    for index, row in enumerate(clean_rows):
+        cycle = str(row.get("cycle") if row.get("cycle") is not None else "unknown")
+        direction = str(row.get("direction") or "").strip().lower()
+        if direction not in {"charge", "discharge"}:
+            try:
+                current = float(row.get("current"))
+            except (TypeError, ValueError):
+                current = 0.0
+            direction = "charge" if current > 0 else "discharge" if current < 0 else "unknown"
+        traces.setdefault((cycle, direction), []).append((index, row))
+
+    # A small minimum preserves derivatives for every trace.  If a malformed
+    # file has more traces than the budget permits, the final global sampling
+    # below still enforces the hard response limit.
+    per_trace = max(8, limit // max(len(traces), 1))
+    sampled: list[tuple[int, dict]] = []
+    for trace_rows in traces.values():
+        kept = _spread_sample([row for _, row in trace_rows], per_trace)
+        wanted = {id(row) for row in kept}
+        sampled.extend((index, row) for index, row in trace_rows if id(row) in wanted)
+    sampled.sort(key=lambda item: item[0])
+    if len(sampled) > limit:
+        sampled = list(enumerate(_spread_sample([row for _, row in sampled], limit)))
+    return [row for _, row in sampled], True
+
+
+def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False) -> dict:
+    """Return the browser dataset shape without always serializing raw points.
+
+    A single WBCS cycling file can contain tens of thousands of points.  Sending
+    every saved dataset's raw table in ``GET /api/datasets`` made the first page
+    load consume excessive browser memory and could close the renderer.  The
+    list endpoint therefore returns metadata only; the selected dataset is
+    hydrated through ``GET /api/datasets/{dataset_id}``.
+    """
+
     keys = row.keys()
+    stored_rows = json_loads(row["rows_json"], []) if include_rows else []
+    if not isinstance(stored_rows, list):
+        stored_rows = []
+    all_row_count = len(stored_rows)
+    rows_truncated = False
+    if include_rows and browser_safe:
+        stored_rows, rows_truncated = browser_safe_dataset_rows(stored_rows, row["data_type"])
     return {
         "id": row["id"],
         "ownerId": row["owner_id"],
@@ -592,7 +677,14 @@ def dataset_from_row(row) -> dict:
         "createdAt": row["created_at"],
         "updatedAt": row["updated_at"],
         "cell": json_loads(row["cell_json"], {}),
-        "rows": json_loads(row["rows_json"], []),
+        "rows": stored_rows,
+        "rowsLoaded": include_rows,
+        # The compact list deliberately does not parse the potentially large
+        # rows_json field merely to count it.  The detail response has the exact
+        # count after its rows are loaded.
+        "rowCount": all_row_count if include_rows else None,
+        "loadedRowCount": len(stored_rows) if include_rows else 0,
+        "rowsTruncated": rows_truncated,
         "columns": json_loads(row["columns_json"], []),
         "sourceName": row["source_name"],
         "figureEdits": json_loads(row["figure_edits_json"], {}),
@@ -610,6 +702,45 @@ def dataset_from_row(row) -> dict:
         "parser": json_loads(row["parser_json"], {}) if "parser_json" in keys else {},
         "analysisProvenance": json_loads(row["analysis_provenance_json"], {}) if "analysis_provenance_json" in keys else {},
     }
+
+
+def dataset_detail_from_row(row) -> dict:
+    """Build a hydrated dataset and repair legacy CYC rows when possible."""
+
+    full_item = dataset_from_row(row, include_rows=True)
+    item = dataset_from_row(row, include_rows=True, browser_safe=True)
+    # Older browser saves can have a null front-end ``capacity`` field.  Keep
+    # their editable rows intact but attach parser-normalized rows only after a
+    # user explicitly opens that dataset for a Figure.
+    if item["dataType"].lower() == "cyc":
+        saved_rows = full_item.get("rows") if isinstance(full_item.get("rows"), list) else []
+        has_usable_capacity = any(
+            isinstance(saved, dict)
+            and isinstance(saved.get("capacity"), (int, float))
+            for saved in saved_rows
+        )
+        if not has_usable_capacity:
+            render_rows, provenance = load_analysis_rows(full_item)
+            if provenance["rowSource"] == "parsed-artifact" and render_rows:
+                display_rows, truncated = browser_safe_dataset_rows(render_rows, "cyc")
+                item["renderRows"] = display_rows
+                item["renderRowsTruncated"] = truncated
+    return item
+
+
+def browser_dataset_detail(conn, dataset_id: str) -> dict:
+    """Return one saved Dataset without sending every raw instrument point.
+
+    The database and parsed artifact retain the full normalized source.  This
+    helper is intentionally used after create/update operations as well as the
+    detail endpoint so a successful save cannot immediately send a 30k+ row
+    JSON response back to the browser and freeze the tab.
+    """
+
+    row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Dataset not found after save.")
+    return dataset_detail_from_row(row)
 
 
 def feedback_from_row(row) -> dict:
@@ -1496,6 +1627,10 @@ def init_db() -> None:
         # A former SDE import mapped Z' to frequency. Rebuild only the clearly
         # affected EIS datasets when their immutable local raw artifact exists.
         repair_stale_sde_datasets(conn)
+        # WRD parser v5 retains point-level voltage-capacity traces so a real
+        # dQ/dV can be calculated. Refresh older summary-only WRD datasets
+        # only when their immutable raw artifact is available.
+        repair_stale_wrd_datasets(conn)
         # Figure records created before source-first labels could inherit a
         # cell ID from a different data type in the same experiment. Keep the
         # stored record aligned with its actual Dataset before the UI reads it.
@@ -1753,7 +1888,34 @@ def has_stale_sde_zreal_mapping(rows: list[dict]) -> bool:
     return copied / len(comparable) >= 0.95
 
 
-def parse_instrument_rows(path: Path) -> dict:
+def needs_sde_parser_refresh(dataset: dict) -> bool:
+    """Reparse an SDE when it was saved by an older interpretation version."""
+
+    if Path(str(dataset.get("sourceName") or "")).suffix.lower() != ".sde":
+        return False
+    parser = dataset.get("parser") if isinstance(dataset.get("parser"), dict) else {}
+    saved_version = str(parser.get("version") or "").strip()
+    # Parser versions identify the binary-offset interpretation used for SDE.
+    # Rebuilding from the immutable raw artifact is safer than reusing any
+    # earlier decoded columns, including malformed rows that are not an exact
+    # frequency-to-Z' copy.
+    return saved_version != INSTRUMENT_PARSER_VERSION or has_stale_sde_zreal_mapping(dataset.get("rows") or [])
+
+
+def needs_wrd_parser_refresh(dataset: dict) -> bool:
+    """Reparse only WRD datasets decoded by an older instrument parser."""
+
+    if Path(str(dataset.get("sourceName") or "")).suffix.lower() != ".wrd":
+        return False
+    parser = dataset.get("parser") if isinstance(dataset.get("parser"), dict) else {}
+    # parser-6 preserves paired charge/discharge traces. Newer uploads may
+    # deliberately contain exactly 5,000 *display* rows, sampled across every
+    # cycle and direction for the browser. Row count is therefore not a legacy
+    # signal; only an older parser version should trigger a raw-artifact rebuild.
+    return str(parser.get("version") or "").strip() != INSTRUMENT_PARSER_VERSION
+
+
+def parse_instrument_rows(path: Path, expected_type: str = "eis") -> dict:
     """Apply the same parser, BDF mapping, and quality checks used by uploads."""
 
     raw_rows, _sheet_name, parser_name = inspect_path(path)
@@ -1761,18 +1923,24 @@ def parse_instrument_rows(path: Path) -> dict:
     if len(raw_rows) < 2:
         raise RuntimeError("The raw instrument file does not contain a table.")
     columns = [str(cell).strip() or f"col_{index + 1}" for index, cell in enumerate(raw_rows[0])]
+    data_rows = raw_rows[1:]
+    if len(data_rows) > MAX_PARSED_ROWS:
+        raise RuntimeError(
+            f"The raw instrument file contains {len(data_rows):,} rows, which exceeds "
+            f"the configured parsed-row limit of {MAX_PARSED_ROWS:,}."
+        )
     rows = []
-    for raw in raw_rows[1:5001]:
+    for raw in data_rows:
         rows.append({column: raw[index] if index < len(raw) else "" for index, column in enumerate(columns)})
     detection = detect_data_type(columns, rows, path.name)
-    if detection["type"] != "eis":
-        raise RuntimeError("The raw artifact no longer parses as EIS data.")
-    canonical_rows = canonicalize_rows("eis", columns, rows)
-    quality = evaluate_quality("eis", canonical_rows)
+    if detection["type"] != expected_type:
+        raise RuntimeError(f"The raw artifact no longer parses as {expected_type.upper()} data.")
+    canonical_rows = canonicalize_rows(expected_type, columns, rows)
+    quality = evaluate_quality(expected_type, canonical_rows)
     return {
         "columns": columns,
         "rows": rows,
-        "columnMapping": build_column_mapping("eis", columns),
+        "columnMapping": build_column_mapping(expected_type, columns),
         "quality": quality["summary"],
         "canonicalRows": quality["rows"],
         "parser": {
@@ -1783,27 +1951,25 @@ def parse_instrument_rows(path: Path) -> dict:
     }
 
 
-def repair_stale_sde_datasets(conn) -> int:
-    """Repair pre-parser-3 SDE datasets while preserving their source identity."""
+def _repair_stale_instrument_datasets(conn, data_type: str, label: str, refresh_reason: str, needs_refresh) -> int:
+    """Refresh parser output from an immutable raw artifact without changing identity."""
 
     repaired = 0
-    rows = execute(conn, "SELECT * FROM datasets WHERE data_type = ?", ("eis",)).fetchall()
+    rows = execute(conn, "SELECT * FROM datasets WHERE data_type = ?", (data_type,)).fetchall()
     for row in rows:
         dataset = dataset_from_row(row)
-        if Path(str(dataset.get("sourceName") or "")).suffix.lower() != ".sde":
-            continue
-        if not has_stale_sde_zreal_mapping(dataset.get("rows") or []):
+        if not needs_refresh(dataset):
             continue
         raw_path = _artifact_local_path(dataset.get("rawArtifact") or {})
         if raw_path is None:
-            print(f"SDE parser repair skipped for {dataset['id']}: raw artifact is unavailable.", file=sys.stderr)
+            print(f"{label} parser repair skipped for {dataset['id']}: raw artifact is unavailable.", file=sys.stderr)
             continue
         owner = public_user(get_user_by_id(str(dataset.get("ownerId") or ""), conn))
         if owner is None:
-            print(f"SDE parser repair skipped for {dataset['id']}: dataset owner is unavailable.", file=sys.stderr)
+            print(f"{label} parser repair skipped for {dataset['id']}: dataset owner is unavailable.", file=sys.stderr)
             continue
         try:
-            parsed = parse_instrument_rows(raw_path)
+            parsed = parse_instrument_rows(raw_path, expected_type=data_type)
             dataset.update({key: parsed[key] for key in ("columns", "rows", "columnMapping", "quality", "parser")})
             cell_key = dataset.get("cellRecordId") or dataset.get("cell", {}).get("cellId") or "unassigned"
             parsed_key = artifact_key(dataset.get("projectId", ""), cell_key, dataset["id"], "parsed", "normalized.json")
@@ -1821,7 +1987,7 @@ def repair_stale_sde_datasets(conn) -> int:
             )
             provenance = dict(dataset.get("analysisProvenance") or {})
             provenance["parserRefresh"] = {
-                "reason": "repair_stale_sde_zreal_mapping",
+                "reason": refresh_reason,
                 "parserVersion": INSTRUMENT_PARSER_VERSION,
                 "reparsedAt": now_iso(),
             }
@@ -1830,11 +1996,35 @@ def repair_stale_sde_datasets(conn) -> int:
             save_dataset(conn, dataset, actor_user=owner)
             repaired += 1
         except Exception as exc:
-            print(f"SDE parser repair skipped for {dataset['id']}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            print(f"{label} parser repair skipped for {dataset['id']}: {type(exc).__name__}: {exc}", file=sys.stderr)
     return repaired
 
 
-def upload_to_object_storage(data: bytes, object_name: str, content_type: str = "application/octet-stream") -> str | None:
+def repair_stale_sde_datasets(conn) -> int:
+    """Refresh older SDE parser output while preserving source identity."""
+
+    return _repair_stale_instrument_datasets(
+        conn,
+        data_type="eis",
+        label="SDE",
+        refresh_reason="sde_parser_version_refresh",
+        needs_refresh=needs_sde_parser_refresh,
+    )
+
+
+def repair_stale_wrd_datasets(conn) -> int:
+    """Refresh summary-only WRD datasets into point-level CYC traces."""
+
+    return _repair_stale_instrument_datasets(
+        conn,
+        data_type="cyc",
+        label="WRD",
+        refresh_reason="wrd_parser_trace_refresh",
+        needs_refresh=needs_wrd_parser_refresh,
+    )
+
+
+def upload_to_object_storage(data: bytes | Path, object_name: str, content_type: str = "application/octet-stream") -> str | None:
     configuration_issues = storage_configuration_issues()
     if configuration_issues:
         if REQUIRE_DURABLE_STORAGE:
@@ -1880,7 +2070,17 @@ def upload_to_object_storage(data: bytes, object_name: str, content_type: str = 
         config=client_config,
     )
     try:
-        client.put_object(Bucket=S3_BUCKET, Key=object_name, Body=data, ContentType=content_type)
+        if isinstance(data, Path):
+            # boto3 streams from disk here. Do not turn a large WBCS export
+            # back into a second process-memory copy during finalization.
+            client.upload_file(
+                str(data),
+                S3_BUCKET,
+                object_name,
+                ExtraArgs={"ContentType": content_type},
+            )
+        else:
+            client.put_object(Bucket=S3_BUCKET, Key=object_name, Body=data, ContentType=content_type)
     except Exception as exc:
         if REQUIRE_DURABLE_STORAGE:
             print(
@@ -1964,7 +2164,18 @@ def save_upload_bytes(data: bytes, filename: str, prefix: str = "uploads") -> tu
     return local_path, None
 
 
-def create_upload_session(conn, user: dict, filename: str, local_path: Path, storage_url: str | None, content: bytes, parsed: dict) -> str:
+def create_upload_session(
+    conn,
+    user: dict,
+    filename: str,
+    local_path: Path,
+    storage_url: str | None,
+    content: bytes | None,
+    parsed: dict,
+    *,
+    content_size: int | None = None,
+    content_sha256: str | None = None,
+) -> str:
     """Keep upload details on the server until the user saves the dataset."""
 
     upload_id = make_id("upload")
@@ -1983,8 +2194,8 @@ def create_upload_session(conn, user: dict, filename: str, local_path: Path, sto
             filename,
             str(local_path),
             storage_url or "",
-            hashlib.sha256(content).hexdigest(),
-            len(content),
+            content_sha256 or hashlib.sha256(content or b"").hexdigest(),
+            content_size if content_size is not None else len(content or b""),
             json_dumps(parsed.get("parser") or {}),
             json_dumps(parsed.get("columnMapping") or {}),
             json_dumps(parsed.get("quality") or {}),
@@ -2014,6 +2225,58 @@ def write_dataset_artifact(data: bytes, object_name: str, content_type: str) -> 
         "storageUrl": storage_url,
         "sha256": hashlib.sha256(data).hexdigest(),
         "sizeBytes": len(data),
+        "contentType": content_type,
+    }
+
+
+def write_dataset_artifact_from_path(
+    source_path: Path,
+    object_name: str,
+    content_type: str,
+    *,
+    sha256: str = "",
+    size_bytes: int | None = None,
+) -> dict:
+    """Finalize a staged source file without loading the whole file into RAM.
+
+    CYC WRD exports can contain more than one hundred thousand point-level
+    records. The upload endpoint already streams these files into ``UPLOAD_DIR``;
+    this companion writer keeps that guarantee while moving the raw file into the
+    immutable artifact layout and while mirroring it to S3/Supabase.
+    """
+
+    source_path = Path(source_path).resolve()
+    if not source_path.is_file():
+        raise HTTPException(status_code=410, detail="The temporary uploaded file is no longer available. Please inspect it again.")
+
+    local_path = (ARTIFACT_DIR / Path(object_name)).resolve()
+    try:
+        local_path.relative_to(ARTIFACT_DIR.resolve())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid artifact storage path.") from exc
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+
+    digest = hashlib.sha256()
+    copied_size = 0
+    try:
+        with source_path.open("rb") as source_handle, local_path.open("wb") as target_handle:
+            # A 1 MiB buffer limits the peak memory used for a 46 MiB WRD file
+            # to one small chunk instead of a complete duplicate of the upload.
+            while chunk := source_handle.read(1024 * 1024):
+                target_handle.write(chunk)
+                digest.update(chunk)
+                copied_size += len(chunk)
+        storage_url = upload_to_object_storage(local_path, object_name, content_type)
+    except Exception:
+        local_path.unlink(missing_ok=True)
+        raise
+
+    return {
+        "objectKey": object_name,
+        "localPath": str(local_path.relative_to(DATA_DIR)),
+        "storageUrl": storage_url,
+        "sha256": sha256 or digest.hexdigest(),
+        "sizeBytes": int(size_bytes) if size_bytes is not None else copied_size,
         "contentType": content_type,
     }
 
@@ -2106,15 +2369,16 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
     if not source_path.exists():
         raise HTTPException(status_code=410, detail="The temporary uploaded file is no longer available. Please inspect it again.")
 
-    raw_bytes = source_path.read_bytes()
     cell_key = item["cellRecordId"] or item.get("cell", {}).get("cellId") or "unassigned"
     raw_key = artifact_key(item["projectId"], cell_key, item["id"], "raw", session["filename"])
     stored_artifacts: list[dict] = []
     try:
-        raw_artifact = write_dataset_artifact(
-            raw_bytes,
+        raw_artifact = write_dataset_artifact_from_path(
+            source_path,
             raw_key,
             mimetypes.guess_type(session["filename"])[0] or "application/octet-stream",
+            sha256=str(session["sha256"] or ""),
+            size_bytes=int(session["size_bytes"] or 0) or None,
         )
         stored_artifacts.append(raw_artifact)
         canonical_rows = json_loads(session["canonical_rows_json"], [])
@@ -2207,6 +2471,34 @@ def consume_duplicate_upload_session(conn, session, dataset_id: str) -> None:
         "UPDATE upload_sessions SET local_path = '', storage_url = '', consumed_dataset_id = ?, consumed_at = ? WHERE id = ?",
         (dataset_id, now_iso(), session["id"]),
     )
+
+
+def reuse_dataset_for_requested_figure(conn, dataset: dict, payload: dict, user: dict) -> dict:
+    """Reuse one raw-source Dataset while honoring a newly selected Fig kind.
+
+    A raw upload is the durable identity of a Dataset, so a retry must not add
+    duplicate Dataset/Fig cards.  It must still be possible to inspect the
+    same source as a performance, voltage-profile, or dQ/dV Fig.  In that
+    case the single Dataset is reused and its active Fig selection is updated.
+    """
+
+    requested_kind = str(payload.get("figureKind") or "").strip()
+    if requested_kind and requested_kind != str(dataset.get("figureKind") or ""):
+        dataset["figureKind"] = requested_kind
+        dataset["updatedAt"] = now_iso()
+        save_dataset(conn, dataset, actor_user=user)
+
+        # A user may already have saved this Dataset to the Fig collection.
+        # Keep that one card in sync instead of leaving an outdated label/kind.
+        figure = execute(conn, "SELECT id FROM figures WHERE dataset_id = ?", (dataset["id"],)).fetchone()
+        if figure:
+            execute(
+                conn,
+                "UPDATE figures SET name = ?, figure_kind = ?, updated_at = ? WHERE id = ?",
+                (figure_record_label(dataset)[:160], requested_kind, dataset["updatedAt"], figure["id"]),
+            )
+
+    return browser_dataset_detail(conn, dataset["id"])
 
 
 def load_analysis_rows(item: dict, include_review_rows: bool = False) -> tuple[list[dict], dict]:
@@ -2352,6 +2644,41 @@ def storage_ready() -> bool:
     return not storage_configuration_issues()
 
 
+def is_hosted_runtime() -> bool:
+    """Detect a deployed service without treating a local laptop as production."""
+
+    if APP_ENV in {"production", "staging"}:
+        return True
+    return any(
+        bool(os.environ.get(name))
+        for name in ("RENDER", "RENDER_SERVICE_ID", "RAILWAY_ENVIRONMENT", "FLY_APP_NAME")
+    )
+
+
+def account_store_is_persistent() -> bool:
+    """Return whether registered accounts survive a hosted-service restart.
+
+    SQLite remains useful for a local laptop workflow. A hosted portal must use
+    PostgreSQL because a container's local filesystem, including /tmp, can be
+    replaced whenever the provider restarts or redeploys the service.
+    """
+
+    return USE_POSTGRES or not is_hosted_runtime()
+
+
+def require_persistent_account_store() -> None:
+    """Reject hosted sign-up when the durable account database is missing."""
+
+    if not account_store_is_persistent():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "\uc6b4\uc601 \uc0ac\uc774\ud2b8\uc758 \uacc4\uc815 \ub370\uc774\ud130\ubca0\uc774\uc2a4\uac00 \uc544\uc9c1 \uc5f0\uacb0\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. "
+                "\uad00\ub9ac\uc790\uac00 PostgreSQL DATABASE_URL\uc744 \uc124\uc815\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694."
+            ),
+        )
+
+
 def validate_runtime_configuration() -> None:
     """Fail closed for production authentication and artifact persistence settings."""
 
@@ -2363,6 +2690,8 @@ def validate_runtime_configuration() -> None:
         raise RuntimeError("JWT_SECRET must be a non-default value of at least 24 characters in production.")
     if "*" in CORS_ALLOW_ORIGINS:
         raise RuntimeError("CORS_ALLOW_ORIGINS must not use '*' in production.")
+    if not USE_POSTGRES:
+        raise RuntimeError("DATABASE_URL must point to PostgreSQL in production so portal accounts persist.")
     if REQUIRE_DURABLE_STORAGE and not storage_ready():
         missing = ", ".join(storage_configuration_issues())
         print(
@@ -2378,6 +2707,7 @@ def health():
         "ok": True,
         "environment": os.environ.get("APP_ENV", "local"),
         "database": "postgresql" if USE_POSTGRES else "sqlite",
+        "accountStorePersistent": account_store_is_persistent(),
         "storage": STORAGE_BACKEND,
         "storageConfigured": storage_ready(),
         "storageMissingVariables": storage_configuration_issues(),
@@ -2427,6 +2757,7 @@ def register(payload: dict = Body(default_factory=dict)):
         raise HTTPException(status_code=400, detail="아이디는 영문/숫자/_/- 조합 3~32자로 입력하세요.")
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="비밀번호는 운영용 기준으로 8자 이상 입력하세요.")
+    require_persistent_account_store()
 
     with connect() as conn:
         exists = execute(conn, "SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
@@ -2437,7 +2768,14 @@ def register(payload: dict = Body(default_factory=dict)):
             "INSERT INTO users(id, name, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)",
             (user_id, name, hash_password(password), "user", now_iso()),
         )
+
+    # Read through a fresh connection before issuing a token. This proves the
+    # signup commit is durable enough for the next login request, instead of
+    # treating an uncommitted in-memory row as a successful registration.
+    with connect() as conn:
         user = execute(conn, "SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not user or not verify_password(password, user["password_hash"]):
+        raise HTTPException(status_code=503, detail="계정 저장을 확인하지 못했습니다. 잠시 후 다시 시도하세요.")
     token = create_token(public_user(user))
     return {"user": public_user(user, token), "token": token}
 
@@ -2447,7 +2785,51 @@ def list_users(user=Depends(get_current_user)):
     ensure_admin(user)
     with connect() as conn:
         rows = execute(conn, "SELECT * FROM users ORDER BY created_at DESC").fetchall()
-    return [public_user(row) for row in rows]
+        membership_rows = execute(
+            conn,
+            """
+            SELECT organization_members.user_id, organization_members.role, organizations.id, organizations.name
+            FROM organization_members JOIN organizations ON organizations.id = organization_members.organization_id
+            ORDER BY organization_members.user_id, organizations.name
+            """,
+        ).fetchall()
+    organizations_by_user: dict[str, list[dict]] = {}
+    for membership in membership_rows:
+        organizations_by_user.setdefault(str(membership["user_id"]), []).append(
+            {"id": membership["id"], "name": membership["name"], "role": membership["role"]}
+        )
+    items = []
+    for row in rows:
+        item = public_user(row)
+        item["organizations"] = organizations_by_user.get(str(row["id"]), [])
+        items.append(item)
+    return items
+
+
+def reset_user_password(user_id: str, password: str, actor: dict) -> dict:
+    """Replace a password for an administrator without exposing its old value."""
+
+    ensure_admin(actor)
+    target_id = str(user_id or "").strip()
+    new_password = str(password or "")
+    if not target_id:
+        raise HTTPException(status_code=400, detail="User id is required.")
+    if len(new_password) < 8 or len(new_password) > 128:
+        raise HTTPException(status_code=400, detail="Password must contain 8 to 128 characters.")
+
+    with connect() as conn:
+        existing = get_user_by_id(target_id, conn)
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found.")
+        execute(conn, "UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), target_id))
+    return {"ok": True, "userId": target_id}
+
+
+@app.post("/api/users/{user_id}/password")
+def reset_user_password_api(user_id: str, payload: dict = Body(default_factory=dict), user=Depends(get_current_user)):
+    """Allow an administrator to issue a new password without reading the old one."""
+
+    return reset_user_password(user_id, str(payload.get("password") or ""), user)
 
 
 @app.delete("/api/users/{user_id}")
@@ -2951,7 +3333,9 @@ def list_datasets(user=Depends(get_current_user)):
             row for row in execute(conn, "SELECT * FROM datasets ORDER BY created_at DESC").fetchall()
             if can_view_row(conn, user, row)
         ]
-    return [dataset_from_row(row) for row in rows]
+    # Do not send every raw CYC/EIS/CV table to the browser just to draw the
+    # saved-dataset list.  The client fetches one selected dataset on demand.
+    return [dataset_from_row(row, include_rows=False) for row in rows]
 
 
 @app.get("/api/datasets/{dataset_id}")
@@ -2962,7 +3346,7 @@ def get_dataset(dataset_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="데이터를 찾을 수 없습니다.")
     if not can_see(user, row):
         raise HTTPException(status_code=403, detail="조회 권한이 없습니다.")
-    return dataset_from_row(row)
+    return dataset_detail_from_row(row)
 
 
 @app.get("/api/datasets/{dataset_id}/analyses")
@@ -3005,6 +3389,16 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                 session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (upload_id,)).fetchone()
                 if not session or session["owner_id"] != user["id"]:
                     raise HTTPException(status_code=404, detail="The upload session was not found for this user.")
+
+                # The browser receives only a small inspection preview.  The
+                # verified upload session owns the complete normalized rows,
+                # which must win over the preview when the Dataset is saved.
+                # Otherwise a 30k-point CYC trace is silently replaced by a
+                # 1,500-point preview and voltage-profile/dQdV figures lose
+                # most of their charge/discharge data.
+                session_rows = json_loads(session["canonical_rows_json"], [])
+                if isinstance(session_rows, list) and session_rows:
+                    payload["rows"] = session_rows
                 if session["consumed_dataset_id"]:
                     existing = execute(
                         conn,
@@ -3012,7 +3406,9 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                         (session["consumed_dataset_id"],),
                     ).fetchone()
                     if existing and can_view_row(conn, user, existing):
-                        reused = dataset_from_row(existing)
+                        reused = reuse_dataset_for_requested_figure(
+                            conn, dataset_from_row(existing), payload, user
+                        )
                         reused["reusedExistingSource"] = True
                         return reused
 
@@ -3024,24 +3420,28 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                 )
                 # The lookup already restricts the match to this authenticated owner.
                 if existing_source:
-                    if has_stale_sde_zreal_mapping(existing_source.get("rows") or []):
-                        # A retry after the parser repair must replace the old bad
-                        # normalized data instead of silently returning its Fig.
-                        existing_source["rows"] = payload.get("rows") if isinstance(payload.get("rows"), list) else existing_source["rows"]
-                        existing_source["columns"] = payload.get("columns") if isinstance(payload.get("columns"), list) else existing_source["columns"]
+                    if needs_sde_parser_refresh(existing_source) or needs_wrd_parser_refresh(existing_source):
+                        # A retry after an instrument-parser refresh must replace
+                        # stale normalized rows instead of silently reusing a Fig.
+                        for key in ("rows", "columns", "columnMapping", "quality", "parser"):
+                            if isinstance(payload.get(key), type(existing_source.get(key))):
+                                existing_source[key] = payload[key]
                         existing_source.update(persist_upload_session_artifacts(conn, existing_source, upload_id, user))
                         existing_source["updatedAt"] = now_iso()
                         save_dataset(conn, existing_source, actor_user=user)
-                        existing_source["reparsedExistingSource"] = True
-                        return existing_source
+                        refreshed = browser_dataset_detail(conn, existing_source["id"])
+                        refreshed["reparsedExistingSource"] = True
+                        return refreshed
                     consume_duplicate_upload_session(conn, session, existing_source["id"])
-                    existing_source["reusedExistingSource"] = True
-                    return existing_source
+                    reused = reuse_dataset_for_requested_figure(conn, existing_source, payload, user)
+                    reused["reusedExistingSource"] = True
+                    return reused
             item = save_dataset(conn, payload, actor_user=user)
             if upload_id:
                 item.update(persist_upload_session_artifacts(conn, item, upload_id, user))
                 item["updatedAt"] = now_iso()
                 save_dataset(conn, item, actor_user=user)
+            item = browser_dataset_detail(conn, item["id"])
     except HTTPException:
         raise
     except Exception as exc:
@@ -3070,6 +3470,19 @@ def update_dataset(dataset_id: str, payload: dict = Body(default_factory=dict), 
         if isinstance(payload.get("cell"), dict):
             item["cell"] = {**item.get("cell", {}), **payload["cell"]}
         if isinstance(payload.get("rows"), list):
+            # A browser detail response can be a deliberately sampled preview.
+            # Reject a preview-sized write rather than letting an ordinary table
+            # edit erase the immutable large raw trace from the Dataset record.
+            current_rows = item.get("rows") if isinstance(item.get("rows"), list) else []
+            if (
+                len(current_rows) > MAX_BROWSER_DATASET_ROWS
+                and len(payload["rows"]) < len(current_rows)
+                and not bool(payload.get("replaceFullRows"))
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="This large Dataset is displayed as a preview and cannot be saved as a partial table. Re-import the source file to replace all rows.",
+                )
             item["rows"] = payload["rows"]
         if isinstance(payload.get("columns"), list):
             item["columns"] = payload["columns"]
@@ -3082,7 +3495,7 @@ def update_dataset(dataset_id: str, payload: dict = Body(default_factory=dict), 
             item["figureKind"] = str(payload["figureKind"])
         item["updatedAt"] = now_iso()
         save_dataset(conn, item, actor_user=user)
-    return item
+        return browser_dataset_detail(conn, dataset_id)
 
 
 @app.delete("/api/datasets/{dataset_id}")
@@ -3521,6 +3934,80 @@ def create_ai_summary(payload: dict = Body(default_factory=dict), user=Depends(g
         }
 
 
+def public_inspection_response(
+    parsed: dict,
+    *,
+    upload_id: str,
+    filename: str,
+    content: bytes | None,
+    storage_url: str | None,
+    content_size: int | None = None,
+    content_sha256: str | None = None,
+) -> dict:
+    """Return a compact inspection payload without duplicating canonical rows.
+
+    The upload session already persists canonicalRows for the eventual Dataset
+    save. Sending that second full copy back to the browser is unnecessary and
+    can make large WRD inspections exhaust the browser tab.
+    """
+
+    response = {key: value for key, value in parsed.items() if key != "canonicalRows"}
+    response["uploadId"] = upload_id
+    response["rawArtifact"] = {
+        "filename": filename,
+        "sha256": content_sha256 or hashlib.sha256(content or b"").hexdigest(),
+        "sizeBytes": content_size if content_size is not None else len(content or b""),
+        "storageUrl": storage_url,
+    }
+    return response
+
+
+def inspection_script_arguments(script_name: str, target: Path) -> list[str]:
+    """Request complete CYC traces for server analysis, never for the browser."""
+
+    if script_name == "inspect_file.py":
+        return [str(target), "--full"]
+    return [str(target)]
+
+
+def finalize_instrument_inspection(parsed: dict, filename: str) -> dict:
+    """Persist complete canonical rows while returning a compact inspection preview.
+
+    Large WBCS WRD exports contain many points for every charge/discharge trace.
+    Truncating those points before canonicalization makes a CYC summary look
+    plausible while invalidating voltage profiles and dQ/dV.  This boundary
+    keeps all bounded source rows for analysis and only samples the display copy.
+    """
+
+    columns = parsed.get("columns") or []
+    source_rows = parsed.get("rows") or []
+    if not isinstance(source_rows, list):
+        raise HTTPException(status_code=400, detail="The instrument parser did not return tabular rows.")
+    if len(source_rows) > MAX_PARSED_ROWS:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"The file contains {len(source_rows):,} parsed rows, exceeding the "
+                f"configured analysis limit of {MAX_PARSED_ROWS:,}."
+            ),
+        )
+
+    parsed["filename"] = filename
+    parsed["columns"] = columns
+    parsed["rowCount"] = len(source_rows)
+    parsed["previewRowCount"] = min(len(source_rows), 1_500)
+    detection = detect_data_type(columns, source_rows, filename)
+    canonical_rows = canonicalize_rows(detection["type"], columns, source_rows)
+    quality = evaluate_quality(detection["type"], canonical_rows)
+    parsed["detection"] = detection
+    parsed["columnMapping"] = build_column_mapping(detection["type"], columns)
+    parsed["canonicalRows"] = quality["rows"]
+    parsed["quality"] = quality["summary"]
+    parsed["parser"] = {**(parsed.get("parser") or {}), "mappingVersion": BDF_MAPPING_VERSION}
+    parsed["rows"] = limit_inspection_rows(source_rows, columns)
+    return parsed
+
+
 def inspect_file_common(payload: dict, script_name: str, user: dict):
     filename = clean_name(payload.get("filename"))
     encoded = str(payload.get("contentBase64") or "")
@@ -3532,7 +4019,7 @@ def inspect_file_common(payload: dict, script_name: str, user: dict):
         raise HTTPException(status_code=400, detail="업로드 파일 내용을 읽지 못했습니다. 파일을 다시 선택해 주세요.") from exc
     target, storage_url = save_upload_bytes(content, filename, "raw")
     try:
-        result = run_script(script_name, [str(target)])
+        result = run_script(script_name, inspection_script_arguments(script_name, target))
     except subprocess.TimeoutExpired as exc:
         target.unlink(missing_ok=True)
         # Parsing did not complete, so this staged upload must not remain on disk.
@@ -3550,29 +4037,16 @@ def inspect_file_common(payload: dict, script_name: str, user: dict):
         return result.stdout
     parsed["storageUrl"] = storage_url
     if script_name == "inspect_file.py":
-        columns = parsed.get("columns") or []
-        rows = parsed.get("rows") or []
-        parsed["filename"] = filename
-        parsed["columns"] = columns
-        parsed["rows"] = rows
-        parsed["rowCount"] = len(rows)
-        detection = detect_data_type(columns, rows, filename)
-        canonical_rows = canonicalize_rows(detection["type"], columns, rows)
-        quality = evaluate_quality(detection["type"], canonical_rows)
-        parsed["detection"] = detection
-        parsed["columnMapping"] = build_column_mapping(detection["type"], columns)
-        parsed["canonicalRows"] = quality["rows"]
-        parsed["quality"] = quality["summary"]
-        parsed["parser"] = {**(parsed.get("parser") or {}), "mappingVersion": BDF_MAPPING_VERSION}
+        parsed = finalize_instrument_inspection(parsed, filename)
         with connect() as conn:
             upload_id = create_upload_session(conn, user, filename, target, storage_url, content, parsed)
-        parsed["uploadId"] = upload_id
-        parsed["rawArtifact"] = {
-            "filename": filename,
-            "sha256": hashlib.sha256(content).hexdigest(),
-            "sizeBytes": len(content),
-            "storageUrl": storage_url,
-        }
+        return public_inspection_response(
+            parsed,
+            upload_id=upload_id,
+            filename=filename,
+            content=content,
+            storage_url=storage_url,
+        )
     return parsed
 
 
@@ -3596,6 +4070,102 @@ async def read_request_body_limited(request: Request) -> bytes:
     return b"".join(chunks)
 
 
+async def stage_request_upload(request: Request, filename: str, prefix: str = "raw") -> tuple[Path, str | None, int, str]:
+    """Stream one browser upload to disk without duplicating a large file in RAM.
+
+    ``Request.stream`` yields the HTTP body in chunks. Keeping those chunks in a
+    list before parsing caused a 40-100 MiB WRD file to exist several times in
+    the web process at once (request body, joined body, staged file and parser
+    payload). The inspection parser already reads from a path, so a staged file
+    is the natural hand-off point and keeps the API memory usage bounded.
+    """
+
+    try:
+        declared_length = int(request.headers.get("content-length", "0"))
+    except ValueError:
+        declared_length = 0
+    if declared_length > MAX_BODY:
+        raise HTTPException(status_code=413, detail=upload_size_limit_detail())
+
+    safe_name = clean_name(filename)
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    target = UPLOAD_DIR / f"{int(time.time() * 1000)}-{safe_name}"
+    received = 0
+    digest = hashlib.sha256()
+    try:
+        with target.open("wb") as handle:
+            async for chunk in request.stream():
+                if not chunk:
+                    continue
+                received += len(chunk)
+                if received > MAX_BODY:
+                    raise HTTPException(status_code=413, detail=upload_size_limit_detail())
+                handle.write(chunk)
+                digest.update(chunk)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+
+    return target, None, received, digest.hexdigest()
+
+
+def inspect_staged_file(
+    filename: str,
+    target: Path,
+    storage_url: str | None,
+    *,
+    size_bytes: int,
+    sha256: str,
+    script_name: str,
+    user: dict,
+):
+    """Parse a previously staged upload and keep only one raw copy in memory."""
+
+    try:
+        result = run_script(script_name, inspection_script_arguments(script_name, target))
+    except subprocess.TimeoutExpired as exc:
+        target.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=408,
+            detail="파일 분석이 120초를 넘었습니다. 큰 파일은 다시 저장하거나 파일을 나눠서 넣어주세요.",
+        ) from exc
+    if result.returncode != 0:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail=result.stderr or "파일을 읽지 못했습니다.")
+    try:
+        parsed = json.loads(result.stdout)
+    except Exception:
+        target.unlink(missing_ok=True)
+        return result.stdout
+
+    parsed["storageUrl"] = storage_url
+    if script_name != "inspect_file.py":
+        return parsed
+
+    parsed = finalize_instrument_inspection(parsed, filename)
+    with connect() as conn:
+        upload_id = create_upload_session(
+            conn,
+            user,
+            filename,
+            target,
+            storage_url,
+            None,
+            parsed,
+            content_size=size_bytes,
+            content_sha256=sha256,
+        )
+    return public_inspection_response(
+        parsed,
+        upload_id=upload_id,
+        filename=filename,
+        content=None,
+        storage_url=storage_url,
+        content_size=size_bytes,
+        content_sha256=sha256,
+    )
+
+
 def inspect_file_bytes(filename: str, content: bytes, script_name: str, user: dict):
     """Inspect an already size-limited raw upload without Base64 expansion."""
 
@@ -3603,7 +4173,7 @@ def inspect_file_bytes(filename: str, content: bytes, script_name: str, user: di
         raise HTTPException(status_code=413, detail=upload_size_limit_detail())
     target, storage_url = save_upload_bytes(content, filename, "raw")
     try:
-        result = run_script(script_name, [str(target)])
+        result = run_script(script_name, inspection_script_arguments(script_name, target))
     except subprocess.TimeoutExpired as exc:
         target.unlink(missing_ok=True)
         raise HTTPException(status_code=408, detail="File analysis exceeded 120 seconds. Please export a smaller file and try again.") from exc
@@ -3620,30 +4190,16 @@ def inspect_file_bytes(filename: str, content: bytes, script_name: str, user: di
     if script_name != "inspect_file.py":
         return parsed
 
-    columns = parsed.get("columns") or []
-    rows = parsed.get("rows") or []
-    parsed["filename"] = filename
-    parsed["columns"] = columns
-    parsed["rows"] = rows
-    parsed["rowCount"] = len(rows)
-    detection = detect_data_type(columns, rows, filename)
-    canonical_rows = canonicalize_rows(detection["type"], columns, rows)
-    quality = evaluate_quality(detection["type"], canonical_rows)
-    parsed["detection"] = detection
-    parsed["columnMapping"] = build_column_mapping(detection["type"], columns)
-    parsed["canonicalRows"] = quality["rows"]
-    parsed["quality"] = quality["summary"]
-    parsed["parser"] = {**(parsed.get("parser") or {}), "mappingVersion": BDF_MAPPING_VERSION}
+    parsed = finalize_instrument_inspection(parsed, filename)
     with connect() as conn:
         upload_id = create_upload_session(conn, user, filename, target, storage_url, content, parsed)
-    parsed["uploadId"] = upload_id
-    parsed["rawArtifact"] = {
-        "filename": filename,
-        "sha256": hashlib.sha256(content).hexdigest(),
-        "sizeBytes": len(content),
-        "storageUrl": storage_url,
-    }
-    return parsed
+    return public_inspection_response(
+        parsed,
+        upload_id=upload_id,
+        filename=filename,
+        content=content,
+        storage_url=storage_url,
+    )
 
 
 def harvester_cell_payload(value) -> dict:
@@ -3727,8 +4283,17 @@ async def inspect_upload(
     user=Depends(get_current_user),
 ):
     filename = urllib.parse.unquote(x_filename or "upload")
-    content = await read_request_body_limited(request)
-    return inspect_file_bytes(clean_name(filename), content, "inspect_file.py", user)
+    clean_filename = clean_name(filename)
+    target, storage_url, size_bytes, sha256 = await stage_request_upload(request, clean_filename, "raw")
+    return inspect_staged_file(
+        clean_filename,
+        target,
+        storage_url,
+        size_bytes=size_bytes,
+        sha256=sha256,
+        script_name="inspect_file.py",
+        user=user,
+    )
 
 
 @app.post("/api/inspect-manual")

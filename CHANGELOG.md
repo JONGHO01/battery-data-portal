@@ -1,5 +1,75 @@
 # Changelog
 
+## Unreleased
+- Select representative raw CYC traces by detected C-rate segment while retaining the matching charge and discharge pair from the same cycle.
+- Render voltage-capacity and dQ/dV Figs with a shared color per C-rate, a dashed discharge trace, and direction-normalized dQ/dV signs so charge is positive and discharge is negative.
+- Preserve matched WRD charge/discharge traces and distribute the 5,000-row browser preview across every available cycle and direction, so long CYC files retain data for voltage profiles and dQ/dV.
+- Refresh legacy WRD datasets by parser version rather than their display-row count, preventing current representative previews from being reparsed on every startup.
+
+## v0.1.62 - 2026-07-23
+- Recognize the neutral WBCS WRD header `specific capacity (mAh g-1)` as discharge capacity when it is not a charge-only field.
+- Restore saved CYC performance, voltage/current, and dQ/dV rendering for full raw WRD traces that use this standard header.
+- Treat legacy `capacity: null` rows as unresolved instead of coercing them to zero, then rebuild their CYC render data from preserved raw/parser rows.
+
+## v0.1.61 - 2026-07-23
+- Render editable Dataset tables in 250-row pages while retaining every raw CYC point in memory and storage for performance, voltage/current, and dQ/dV analysis.
+- Keep page controls aligned to original global row indexes so edits, row selection, undo, paste, and saved row updates continue to address the correct raw rows.
+
+## v0.1.60 - 2026-07-23
+- Keep complete WBCS WRD point-level traces up to the bounded `MAX_PARSED_ROWS` limit instead of silently retaining only the first 5,000 rows.
+- Detect previously saved WRD datasets with exactly the former 5,000-row cap and rebuild their Dataset rows and normalized artifact from the immutable raw source during startup.
+- Keep an explicitly selected CYC Fig type, including dQ/dV, when inspection UI state refreshes instead of resetting it to the performance Fig.
+
+## v0.1.59 - 2026-07-23
+- Normalize stored raw CYC rows when a Dataset is reopened so source columns such as `specific capacity (mAh g-1)` and `voltage (V)` are restored to the rendering fields.
+- Restore valid WBCS WRD voltage-capacity traces for saved performance, voltage/current, and dQ/dV Figs instead of showing a blank chart after reload.
+- Explain whether dQ/dV is unavailable because voltage-capacity source points are missing, too few distinct points exist within one cycle, or no valid derivative segment remains.
+
+## v0.1.58 - 2026-07-23
+- Make normal CYC Fig generation single-panel only: capacity performance, voltage/current behavior, and dQ/dV remain separate Fig choices.
+- Keep legacy `cyc-combined` records intact, but render them as one CYC performance Fig instead of a two-panel output.
+
+## v0.1.57 - 2026-07-23
+- Preserve all supported WBCS WRD discharge points instead of reducing each cycle to a single end-capacity row, so valid within-cycle voltage-capacity traces can be used for dQ/dV.
+- Refresh older saved `.wrd` CYC datasets from their preserved raw artifacts during startup when they were parsed by an earlier parser version.
+- Keep retention analysis one point per cycle by selecting the largest recorded discharge capacity within each raw cycle trace.
+
+## v0.1.56 - 2026-07-23
+- Prevent dQ/dV analysis from differentiating CYC cycle-summary rows that contain only one capacity/end-voltage value per cycle.
+- Require a real within-cycle voltage-capacity trace for Analysis Lab and dQ/dV Fig creation; unavailable data is explained and cannot create a blank Fig record.
+
+## v0.1.55 - 2026-07-22
+- Add a CYC `dQ/dV` Fig option that derives curves only from raw within-cycle voltage-capacity traces; summary-only tables now show a clear unavailable state instead of an invented electrochemical curve.
+- Require six distinct raw points for CYC voltage profiles and keep charge and discharge traces separate when current direction is available.
+
+## v0.1.54 - 2026-07-22
+- Prevent a hosted portal from creating accounts in an ephemeral SQLite database; require PostgreSQL for a persistent hosted account store and verify new registrations through a fresh database connection.
+- Show the server's specific registration error in the login screen so missing production configuration is actionable.
+
+## v0.1.53 - 2026-07-22
+- Support a separate local verification instance through an explicit port and port-specific log files, without terminating an existing portal process.
+
+## v0.1.52 - 2026-07-22
+- Add administrator-only temporary password reset; existing passwords remain hashed and are never displayed or returned.
+
+## v0.1.51 - 2026-07-22
+- Refresh every `.SDE` EIS dataset saved by an older instrument-parser version from its preserved raw artifact during startup.
+- Keep the exact legacy `Z' = frequency` detector, and also refresh older parser output that is wrong without that exact signature so Nyquist and Bode Figs use the measured impedance columns.
+
+## v0.1.50 - 2026-07-22
+- Add a role-linked organization chart that automatically groups the selected organization's actual members as owner, admin, researcher, and viewer.
+- Keep the chart synchronized with the existing organization member list, member role assignments, and member removal without introducing duplicate organization data.
+
+## v0.1.49 - 2026-07-22
+- Add an administrator-only registered-member directory with account ID, display name, signup date, organization memberships, role, refresh action, and the existing account-removal control.
+
+## v0.1.48 - 2026-07-22
+- Add PowerPoint export for CYC comparison Figs, including the current comparison chart, legend, and selected series colors on one slide.
+
+## v0.1.47 - 2026-07-22
+- Add CYC performance Fig controls for aligned grid visibility, point-connection visibility, and marker size.
+- Preserve visual gaps between missing cycle numbers even when point connections are enabled.
+
 ## v0.1.46 - 2026-07-22
 - Add a project-local Battery Data Portal v2 launcher that reuses a healthy local portal or starts it safely on port 4174.
 - Add a Codex/PowerShell startup guide and a VS Code task without changing the legacy port-4173 task.

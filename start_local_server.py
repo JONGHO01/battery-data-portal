@@ -10,10 +10,15 @@ FastAPI 백엔드를 시작합니다.
 import os
 import sys
 import traceback
+from argparse import ArgumentParser
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+
+parser = ArgumentParser(description="Start the Battery Data Portal locally.")
+parser.add_argument("--port", type=int, help="Local HTTP port to listen on.")
+args = parser.parse_args()
 
 
 def load_dotenv(path: Path) -> None:
@@ -33,13 +38,21 @@ def load_dotenv(path: Path) -> None:
 
 
 load_dotenv(ROOT / ".env")
-os.environ.setdefault("PORT", "4173")
+if args.port is not None:
+    # Command-line selection must win so a verification server can run beside
+    # an already-open portal without touching that existing process.
+    os.environ["PORT"] = str(args.port)
+else:
+    os.environ.setdefault("PORT", "4173")
 os.environ.setdefault("DATA_DIR", str(ROOT / "data"))
 os.environ.setdefault("JWT_SECRET", "local-dev-change-before-deploy")
 os.environ.setdefault("ALLOW_LEGACY_USER_HEADER", "true")
 
-out_log = open(ROOT / "fastapi.out.log", "a", encoding="utf-8", buffering=1)
-err_log = open(ROOT / "fastapi.err.log", "a", encoding="utf-8", buffering=1)
+# A running local portal may already own its log handles. Keep each port's
+# output separate so a verification instance can start without stopping it.
+port = os.environ["PORT"]
+out_log = open(ROOT / f"fastapi-{port}.out.log", "a", encoding="utf-8", buffering=1)
+err_log = open(ROOT / f"fastapi-{port}.err.log", "a", encoding="utf-8", buffering=1)
 sys.stdout = out_log
 sys.stderr = err_log
 

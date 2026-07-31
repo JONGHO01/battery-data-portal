@@ -24,6 +24,22 @@ def _row_number(row: dict, names: tuple[str, ...]) -> float | None:
     return None
 
 
+def _row_direction(row: dict) -> str:
+    """Return a normalized trace direction without changing stored source rows."""
+
+    values = [row.get("direction"), row.get("step_type"), row.get("state")]
+    raw = row.get("_raw")
+    if isinstance(raw, dict):
+        values.extend([raw.get("direction"), raw.get("step_type"), raw.get("state")])
+    for value in values:
+        normalized = str(value or "").strip().lower()
+        if "discharge" in normalized or normalized in {"d", "dis"}:
+            return "discharge"
+        if "charge" in normalized or normalized in {"c", "chg"}:
+            return "charge"
+    return ""
+
+
 _CAPACITY_SERIES = (
     # Specific capacity takes precedence because it is the preferred comparison
     # unit when electrode mass is known.
@@ -69,12 +85,33 @@ def capacity_series(rows: list[dict]) -> tuple[list[tuple[float, float]], dict]:
     """
 
     for field, unit, scale, names in _CAPACITY_SERIES:
-        points = []
+        # Point-level CYC exports repeat a cycle for every acquired data point.
+        # Retention must use the final/largest discharge capacity once per
+        # cycle, while preserving ordinary one-row-per-cycle summary tables.
+        per_cycle: dict[int, tuple[float, float]] = {}
+        discharge_per_cycle: dict[int, tuple[float, float]] = {}
         for row in rows:
             cycle = _row_number(row, ("cycle_index", "cycle", "cycle number", "index"))
             capacity = _row_number(row, names)
             if cycle is not None and capacity is not None:
-                points.append((cycle, capacity * scale))
+                cycle_index = round(cycle)
+                if cycle_index < 1 or abs(cycle - cycle_index) > 1e-6:
+                    continue
+                normalized_capacity = capacity * scale
+                previous = per_cycle.get(cycle_index)
+                if previous is None or normalized_capacity >= previous[1]:
+                    per_cycle[cycle_index] = (cycle, normalized_capacity)
+                if _row_direction(row) == "discharge":
+                    discharge_previous = discharge_per_cycle.get(cycle_index)
+                    if discharge_previous is None or normalized_capacity >= discharge_previous[1]:
+                        discharge_per_cycle[cycle_index] = (cycle, normalized_capacity)
+
+        # Raw CYC traces contain a charge and a discharge curve for a cycle.
+        # A retention plot conventionally represents the discharge capacity,
+        # while ordinary one-row summary tables have no direction and keep the
+        # original largest-value behavior.
+        selected_cycles = discharge_per_cycle or per_cycle
+        points = list(selected_cycles.values())
         if points:
             points.sort(key=lambda point: point[0])
             return points, {"field": field, "unit": unit}
