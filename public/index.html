@@ -163,7 +163,7 @@
 
     <main class="layout hidden" id="dataWorkspace">
       <aside class="sidebar">
-        <section class="panel hierarchyPanel">
+        <section class="panel hierarchyPanel" hidden>
           <h2>실험 저장 위치</h2>
           <p>프로젝트 → 실험 배치 → 셀 아래에 CYC, EIS, CV와 Fig를 함께 정리합니다.</p>
           <label>프로젝트
@@ -342,6 +342,7 @@
             </div>
             <div class="metaGrid" id="metaGrid"></div>
           </div>
+          <div class="cycFigureViewPicker" id="cycFigureViewPicker" hidden></div>
           <div class="figureCanvas" id="figureCanvas"></div>
           <section class="excelPreview">
             <div class="excelPreviewHeader">
@@ -660,6 +661,44 @@
             </thead>
             <tbody id="usersTable"></tbody>
           </table>
+        </section>
+
+        <section id="adminRawDataView" class="view">
+          <div class="usersHeader">
+            <div>
+              <span class="eyebrow">Admin only</span>
+              <h2>&#50629;&#47196;&#46300; &#47196;&#50864; &#45936;&#51060;&#53552; &#50676;&#46988;</h2>
+              <p>&#54924;&#50896;&#46308;&#51060; &#50629;&#47196;&#46300;&#54620; &#45936;&#51060;&#53552;&#49483;&#51032; &#50896;&#48376; &#54665;&#51012; &#44288;&#47532;&#51088;&#47564; &#54869;&#51064;&#54633;&#45768;&#45796;. &#48324;&#46020; &#54869;&#51064; &#54980; &#51687;&#51008; &#49884;&#44036; &#46041;&#50504;&#47564; &#50676;&#46988; &#44428;&#54620;&#51060; &#50976;&#51648;&#46121;&#45768;&#45796;.</p>
+            </div>
+            <button id="refreshAdminRawData" type="button" class="hidden">&#49352;&#47160;&#44256;&#52840;</button>
+          </div>
+          <div id="adminRawDataNotice" class="adminRawDataNotice" role="status" aria-live="polite"></div>
+          <section id="adminRawAccessPanel" class="adminRawAccessPanel">
+            <h3>&#52628;&#44032; &#44288;&#47532;&#51088; &#54869;&#51064;</h3>
+            <p>&#50896;&#48376; &#54665;&#51012; &#50676;&#46988;&#54616;&#44592; &#51204;&#50640; &#48324;&#46020;&#51032; &#54869;&#51064; &#48708;&#48128;&#48264;&#54840;&#47484; &#51077;&#47141;&#54644; &#51452;&#49464;&#50836;.</p>
+            <form id="adminRawAccessForm" class="adminRawAccessForm">
+              <label for="adminRawAccessPassword">&#54869;&#51064; &#48708;&#48128;&#48264;&#54840;
+                <input id="adminRawAccessPassword" type="password" inputmode="numeric" autocomplete="off" required />
+              </label>
+              <button type="submit">&#47196;&#50864; &#45936;&#51060;&#53552; &#50676;&#46988; &#50672;&#44208;</button>
+            </form>
+          </section>
+          <section id="adminRawDataBrowser" class="adminRawDataBrowser hidden">
+            <div class="adminRawToolbar">
+              <label for="adminRawDatasetSelect">&#45936;&#51060;&#53552;&#49483; &#49440;&#53469;
+                <select id="adminRawDatasetSelect"></select>
+              </label>
+              <div id="adminRawDatasetSummary" class="adminRawDatasetSummary"></div>
+            </div>
+            <div id="adminRawDataTableWrap" class="adminRawDataTableWrap"></div>
+            <div class="adminRawPager">
+              <span id="adminRawPageInfo"></span>
+              <div>
+                <button id="adminRawPrevious" type="button">&#51060;&#51204;</button>
+                <button id="adminRawNext" type="button">&#45796;&#51020;</button>
+              </div>
+            </div>
+          </section>
         </section>
 
         <section id="feedbackAdminView" class="view">

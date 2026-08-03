@@ -120,10 +120,18 @@ class CycFigureUiTests(unittest.TestCase):
     def test_render_figure_rebuilds_raw_cyc_rows_after_a_saved_edit(self):
         """CYC drawing must not depend on a prior page reload to restore capacity."""
 
-        self.assertIn(
-            'if (d.dataType === "cyc") return renderCycFigure(normalizeSavedCycDataset(d));',
-            self.app_js,
-        )
+        self.assertIn("function activeCycFigureViewKind", self.app_js)
+        self.assertIn("const figureKind = activeCycFigureViewKind(normalized);", self.app_js)
+        self.assertIn("renderCycFigureViewPicker(normalized, figureKind);", self.app_js)
+        self.assertIn("return renderCycFigure({ ...normalized, figureKind });", self.app_js)
+
+    def test_saved_cyc_figure_can_switch_back_to_raw_data_views(self):
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        style_css = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+        self.assertIn('id="cycFigureViewPicker"', html)
+        self.assertIn("data-cyc-figure-view", self.app_js)
+        self.assertIn("state.cycFigureViewKinds[dataset.id] = figureKind;", self.app_js)
+        self.assertIn("cycFigureViewPicker", style_css)
 
     def test_generic_specific_capacity_header_is_accepted_for_wrd_discharge_traces(self):
         """WBCS WRD exports label the discharge trace as generic specific capacity."""

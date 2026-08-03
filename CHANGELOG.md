@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Let saved CYC Fig records switch between performance, voltage/current, and dQ/dV views by reusing their hydrated raw Dataset rows without overwriting the saved Fig record or editable table.
+- Hide the experiment-storage hierarchy panel from the standard data-registration sidebar while preserving its existing default project, batch, cell, and Dataset saving behavior.
 - Select representative raw CYC traces by detected C-rate segment while retaining the matching charge and discharge pair from the same cycle.
 - Render voltage-capacity and dQ/dV Figs with a shared color per C-rate, a dashed discharge trace, and direction-normalized dQ/dV signs so charge is positive and discharge is negative.
 - Preserve matched WRD charge/discharge traces and distribute the 5,000-row browser preview across every available cycle and direction, so long CYC files retain data for voltage profiles and dQ/dV.

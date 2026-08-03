@@ -94,6 +94,14 @@ ALLOW_LEGACY_USER_HEADER = os.environ.get("ALLOW_LEGACY_USER_HEADER", "false").l
 BOOTSTRAP_ADMIN_ID = os.environ.get("BOOTSTRAP_ADMIN_ID", "qq035786").strip()
 BOOTSTRAP_ADMIN_NAME = os.environ.get("BOOTSTRAP_ADMIN_NAME", "원종호").strip()
 BOOTSTRAP_ADMIN_PASSWORD = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "").strip()
+# A second, short-lived scope protects raw Dataset rows even after a normal
+# administrator login. The confirmation value must only exist in the local
+# .env file or the hosting provider's secret environment variables.
+ADMIN_RAW_DATA_PASSWORD = os.environ.get("ADMIN_RAW_DATA_PASSWORD", "").strip()
+try:
+    ADMIN_RAW_DATA_TTL_SECONDS = max(60, min(int(os.environ.get("ADMIN_RAW_DATA_TTL_SECONDS", "600")), 3600))
+except ValueError:
+    ADMIN_RAW_DATA_TTL_SECONDS = 600
 
 STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
 REQUIRE_DURABLE_STORAGE = os.environ.get("REQUIRE_DURABLE_STORAGE", "true" if APP_ENV == "production" else "false").lower() == "true"
@@ -114,7 +122,7 @@ def parse_cors_allow_origins(value: str) -> list[str]:
 
 
 CORS_ALLOW_ORIGINS = parse_cors_allow_origins(os.environ.get("CORS_ALLOW_ORIGINS", ""))
-CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-Filename", "X-Portal-Token"]
+CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-Filename", "X-Portal-Token", "X-Admin-Raw-Access"]
 if ALLOW_LEGACY_USER_HEADER:
     CORS_ALLOW_HEADERS.append("X-User-Id")
 
@@ -246,6 +254,27 @@ def create_token(user: dict[str, Any]) -> str:
         "role": user_field(user, "role") or "user",
         "iat": int(time.time()),
         "exp": int(time.time()) + JWT_TTL_SECONDS,
+    }
+    signing_input = ".".join(
+        [
+            b64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8")),
+            b64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8")),
+        ]
+    )
+    signature = hmac.new(JWT_SECRET.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    return f"{signing_input}.{b64url_encode(signature)}"
+
+
+def create_admin_raw_access_token(user: dict[str, Any]) -> str:
+    """Issue a deliberately short-lived token for raw Dataset row browsing."""
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "sub": user["id"],
+        "role": "admin",
+        "scope": "admin_raw_data",
+        "iat": int(time.time()),
+        "exp": int(time.time()) + ADMIN_RAW_DATA_TTL_SECONDS,
     }
     signing_input = ".".join(
         [
@@ -468,6 +497,29 @@ def get_current_user(
 def ensure_admin(user):
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="관리자만 접근할 수 있습니다.")
+
+
+def require_admin_raw_access(
+    x_admin_raw_access: str | None = Header(None, alias="X-Admin-Raw-Access"),
+    user=Depends(get_current_user),
+):
+    """Require an admin plus a short-lived, separately confirmed scope."""
+
+    ensure_admin(user)
+    token = str(x_admin_raw_access or "").strip()
+    if not token:
+        raise HTTPException(status_code=403, detail="Separate administrator confirmation is required.")
+    try:
+        payload = decode_token(token)
+    except HTTPException as exc:
+        raise HTTPException(status_code=403, detail="Administrator raw-data access has expired.") from exc
+    if (
+        payload.get("scope") != "admin_raw_data"
+        or payload.get("role") != "admin"
+        or not hmac.compare_digest(str(payload.get("sub") or ""), str(user["id"]))
+    ):
+        raise HTTPException(status_code=403, detail="Administrator raw-data access is invalid.")
+    return user
 
 
 def organization_role(conn, user: dict, organization_id: str) -> str:
@@ -2778,6 +2830,92 @@ def register(payload: dict = Body(default_factory=dict)):
         raise HTTPException(status_code=503, detail="계정 저장을 확인하지 못했습니다. 잠시 후 다시 시도하세요.")
     token = create_token(public_user(user))
     return {"user": public_user(user, token), "token": token}
+
+
+def admin_raw_dataset_summary(row, row_count: int | None = None) -> dict:
+    """Return the minimal metadata needed to choose a stored raw table.
+
+    Artifact keys, parser details, cell notes, and figure settings are omitted
+    from this privileged listing.  They are unrelated to raw-row inspection.
+    """
+
+    columns = json_loads(row["columns_json"], [])
+    if not isinstance(columns, list):
+        columns = []
+    source_name = str(row["source_name"] or "").replace(chr(92), "/").rsplit("/", 1)[-1]
+    return {
+        "id": str(row["id"]),
+        "sourceName": source_name,
+        "dataType": str(row["data_type"] or ""),
+        "ownerId": str(row["owner_id"] or ""),
+        "ownerName": str(row["owner_name"] or ""),
+        "createdAt": str(row["created_at"] or ""),
+        "columnCount": len(columns),
+        "rowCount": row_count,
+    }
+
+
+@app.post("/api/admin/raw-data/access")
+def unlock_admin_raw_data(payload: dict = Body(default_factory=dict), user=Depends(get_current_user)):
+    """Confirm a separate administrator secret before browsing raw rows."""
+
+    ensure_admin(user)
+    if not ADMIN_RAW_DATA_PASSWORD:
+        raise HTTPException(status_code=503, detail="Administrator raw-data confirmation is not configured.")
+    supplied = str(payload.get("password") or "")
+    if not supplied or not hmac.compare_digest(supplied, ADMIN_RAW_DATA_PASSWORD):
+        raise HTTPException(status_code=401, detail="Administrator confirmation was not accepted.")
+    return {
+        "accessToken": create_admin_raw_access_token(user),
+        "expiresInSeconds": ADMIN_RAW_DATA_TTL_SECONDS,
+    }
+
+
+@app.get("/api/admin/raw-data/datasets")
+def list_admin_raw_datasets(limit: int = 100, user=Depends(require_admin_raw_access)):
+    """List Dataset tables for the protected administrator raw-data view."""
+
+    bounded_limit = max(1, min(int(limit), 200))
+    with connect() as conn:
+        rows = execute(conn, "SELECT * FROM datasets ORDER BY created_at DESC LIMIT ?", (bounded_limit,)).fetchall()
+    items = []
+    for row in rows:
+        stored_rows = json_loads(row["rows_json"], [])
+        row_count = len(stored_rows) if isinstance(stored_rows, list) else 0
+        items.append(admin_raw_dataset_summary(row, row_count))
+    return {"items": items}
+
+
+@app.get("/api/admin/raw-data/datasets/{dataset_id}")
+def get_admin_raw_dataset(
+    dataset_id: str,
+    offset: int = 0,
+    limit: int = 250,
+    user=Depends(require_admin_raw_access),
+):
+    """Return one bounded page of stored raw rows for a confirmed admin."""
+
+    bounded_offset = max(0, int(offset))
+    bounded_limit = max(1, min(int(limit), 250))
+    with connect() as conn:
+        row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Dataset not found.")
+    stored_rows = json_loads(row["rows_json"], [])
+    if not isinstance(stored_rows, list):
+        stored_rows = []
+    columns = json_loads(row["columns_json"], [])
+    if not isinstance(columns, list):
+        columns = []
+    raw_rows = [item for item in stored_rows[bounded_offset : bounded_offset + bounded_limit] if isinstance(item, dict)]
+    return {
+        "dataset": admin_raw_dataset_summary(row, len(stored_rows)),
+        "columns": [str(column) for column in columns],
+        "offset": bounded_offset,
+        "limit": bounded_limit,
+        "totalRows": len(stored_rows),
+        "rows": raw_rows,
+    }
 
 
 @app.get("/api/users")

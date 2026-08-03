@@ -26,6 +26,11 @@ class NavigationLayoutTests(unittest.TestCase):
         self.assertIn("overflow-x: auto;", global_menu)
         self.assertIn("flex: 0 0 auto;", menu_group)
 
+    def test_experiment_storage_panel_is_hidden_in_standard_registration(self):
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn('<section class="panel hierarchyPanel" hidden>', html)
+
 
 if __name__ == "__main__":
     unittest.main()

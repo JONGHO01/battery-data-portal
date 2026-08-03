@@ -390,7 +390,8 @@ const RELEASE_HISTORY = [
 // ?\uc495\ucfad\\u003f\\u003f\\u003f\u0080?\u03bb\ub9ba\\u003f\\u003f\\u003f\uacd7\uc520?\uacd5\ub497 datasets\\u003f\\u003f\\u003f\u317c\ubf31?\u317a\ud02c, ?\ubdbe\u3203 ?\uafaa\uaf63 \u5bc3\uaccc\ub0b5??filtered\\u003f\\u003f\\u003f\uacd5\uc908 ?\u3013\ub572??
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const TABLE_PAGE_SIZE = 250;
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map() };
+const ADMIN_RAW_PAGE_SIZE = 250;
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -527,6 +528,7 @@ function setLoginSuccess(text) {
 }
 
 function applyUser(user) {
+  clearAdminRawAccess();
   state.user = user;
   if (user) {
     localStorage.setItem("eisUser", JSON.stringify(user));
@@ -541,6 +543,7 @@ function applyUser(user) {
     if (user.role === "admin") {
       loadUsers().catch(() => {});
       loadFeedbacks().catch(() => {});
+      ensureAdminRawDataNavigation();
     }
   } else {
     localStorage.removeItem("eisUser");
@@ -605,10 +608,11 @@ function openWorkspaceView(viewName) {
   if (viewName === "feedbackAdmin") loadFeedbacks().catch((err) => setStatus(err.message));
   if (viewName === "releaseHistory") renderReleaseHistory();
   if (viewName === "users") loadUsers().catch((err) => setStatus(err.message));
+  if (viewName === "adminRawData") renderAdminRawData();
   renderSelect();
   renderSavedList();
   renderCurrent();
-  const label = { search: "\uac80\uc0c9", savedFigures: "Fig \ubaa8\uc74c", electrodeCalc: "\uc804\uadf9 \uacc4\uc0b0", analysisLab: "Analysis Lab", feedbackAdmin: "\uc758\uacac\ud568", releaseHistory: "\ubc84\uc804 \uc774\ub825", users: "\uc0ac\uc6a9\uc790 \uad00\ub9ac", figure: "Fig" }[viewName] || "\uc791\uc5c5 \ud654\uba74";
+  const label = { search: "\uac80\uc0c9", savedFigures: "Fig \ubaa8\uc74c", electrodeCalc: "\uc804\uadf9 \uacc4\uc0b0", analysisLab: "Analysis Lab", feedbackAdmin: "\uc758\uacac\ud568", releaseHistory: "\ubc84\uc804 \uc774\ub825", users: "\uc0ac\uc6a9\uc790 \uad00\ub9ac", adminRawData: "\ub85c\uc6b0 \ub370\uc774\ud130 \uc5f4\ub78c", figure: "Fig" }[viewName] || "\uc791\uc5c5 \ud654\uba74";
   setStatus(label);
   if (viewName === "electrodeCalc") setElectrodeCalcMode("calc");
 }
@@ -835,6 +839,213 @@ function renderUsers() {
   for (const btn of body.querySelectorAll("[data-reset-user]")) {
     btn.addEventListener("click", () => resetUserPassword(btn.dataset.resetUser));
   }
+}
+
+function clearAdminRawAccess() {
+  state.adminRawAccessToken = "";
+  state.adminRawAccessExpiresAt = 0;
+  state.adminRawDatasets = [];
+  state.adminRawSelectedId = "";
+  state.adminRawPreview = null;
+}
+
+function hasAdminRawAccess() {
+  return Boolean(
+    state.user?.role === "admin"
+    && state.adminRawAccessToken
+    && state.adminRawAccessExpiresAt > Date.now()
+  );
+}
+
+function setAdminRawDataNotice(message = "", isError = false) {
+  const notice = $("adminRawDataNotice");
+  if (!notice) return;
+  notice.textContent = message;
+  notice.classList.toggle("error", Boolean(message && isError));
+}
+
+function ensureAdminRawDataNavigation() {
+  const panel = document.querySelector(".menuGroup.adminOnly .menuPanel");
+  if (!panel || panel.querySelector('[data-view="adminRawData"]')) return;
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className = "menuItem";
+  item.dataset.view = "adminRawData";
+  item.textContent = "\ub85c\uc6b0 \ub370\uc774\ud130 \uc5f4\ub78c";
+  item.addEventListener("click", () => openWorkspaceView("adminRawData"));
+  panel.append(item);
+}
+
+function adminRawHeaders(extra = {}) {
+  return authHeaders(state.adminRawAccessToken ? { ...extra, "X-Admin-Raw-Access": state.adminRawAccessToken } : extra);
+}
+
+function adminRawErrorMessage(response, body, fallback) {
+  if (response.status === 401) return "\ud655\uc778 \ube44\ubc00\ubc88\ud638\uac00 \ub9de\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.";
+  if (response.status === 403) return "\uad00\ub9ac\uc790 \ud655\uc778 \uad8c\ud55c\uc774 \ub9cc\ub8cc\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \ud655\uc778\ud574 \uc8fc\uc138\uc694.";
+  if (response.status === 503) return "\uad00\ub9ac\uc790 \ud655\uc778 \uc124\uc815\uc774 \uc644\ub8cc\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.";
+  return apiErrorMessage(body, fallback);
+}
+
+function adminRawDisplayValue(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
+function adminRawCellValue(value) {
+  const text = adminRawDisplayValue(value);
+  return text.length > 180 ? `${text.slice(0, 177)}...` : text;
+}
+
+async function requestAdminRawAccess(event) {
+  event.preventDefault();
+  const input = $("adminRawAccessPassword");
+  const password = String(input?.value || "");
+  if (!state.user || state.user.role !== "admin") {
+    setAdminRawDataNotice("\uad00\ub9ac\uc790\ub9cc \uc5f4\ub78c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", true);
+    return;
+  }
+  if (!password) {
+    setAdminRawDataNotice("\ud655\uc778 \ube44\ubc00\ubc88\ud638\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.", true);
+    input?.focus();
+    return;
+  }
+  setAdminRawDataNotice("\uad00\ub9ac\uc790 \ud655\uc778 \uc911\uc785\ub2c8\ub2e4.");
+  try {
+    const response = await fetch("/api/admin/raw-data/access", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ password }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body.accessToken) {
+      throw new Error(adminRawErrorMessage(response, body, "\uad00\ub9ac\uc790 \ud655\uc778\uc744 \uc644\ub8cc\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
+    }
+    state.adminRawAccessToken = String(body.accessToken);
+    state.adminRawAccessExpiresAt = Date.now() + Math.max(60, Number(body.expiresInSeconds || 600)) * 1000;
+    if (input) input.value = "";
+    await loadAdminRawDatasets();
+    setAdminRawDataNotice("\ub85c\uc6b0 \ub370\uc774\ud130 \uc5f4\ub78c \uad8c\ud55c\uc774 \ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
+  } catch (error) {
+    clearAdminRawAccess();
+    renderAdminRawData();
+    setAdminRawDataNotice(error.message || "\uad00\ub9ac\uc790 \ud655\uc778\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.", true);
+  } finally {
+    if (input) input.value = "";
+  }
+}
+
+async function loadAdminRawDatasets() {
+  if (!hasAdminRawAccess()) {
+    renderAdminRawData();
+    return;
+  }
+  const response = await fetch("/api/admin/raw-data/datasets", { headers: adminRawHeaders() });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) clearAdminRawAccess();
+    renderAdminRawData();
+    throw new Error(adminRawErrorMessage(response, body, "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
+  }
+  state.adminRawDatasets = Array.isArray(body.items) ? body.items : [];
+  if (!state.adminRawDatasets.some((item) => item.id === state.adminRawSelectedId)) {
+    state.adminRawSelectedId = state.adminRawDatasets[0]?.id || "";
+    state.adminRawPreview = null;
+  }
+  renderAdminRawData();
+  if (state.adminRawSelectedId) await loadAdminRawDataset(state.adminRawSelectedId, 0);
+}
+
+async function loadAdminRawDataset(datasetId, offset = 0) {
+  if (!hasAdminRawAccess()) {
+    renderAdminRawData();
+    return;
+  }
+  if (!datasetId) {
+    state.adminRawPreview = null;
+    renderAdminRawData();
+    return;
+  }
+  const response = await fetch(
+    `/api/admin/raw-data/datasets/${encodeURIComponent(datasetId)}?offset=${Math.max(0, offset)}&limit=${ADMIN_RAW_PAGE_SIZE}`,
+    { headers: adminRawHeaders() }
+  );
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) clearAdminRawAccess();
+    renderAdminRawData();
+    throw new Error(adminRawErrorMessage(response, body, "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
+  }
+  state.adminRawSelectedId = datasetId;
+  state.adminRawPreview = body;
+  renderAdminRawData();
+}
+
+function renderAdminRawData() {
+  const accessPanel = $("adminRawAccessPanel");
+  const browser = $("adminRawDataBrowser");
+  const refresh = $("refreshAdminRawData");
+  if (!accessPanel || !browser || !refresh) return;
+  const isAdmin = state.user?.role === "admin";
+  const active = isAdmin && hasAdminRawAccess();
+  accessPanel.classList.toggle("hidden", active);
+  browser.classList.toggle("hidden", !active);
+  refresh.classList.toggle("hidden", !active);
+  refresh.disabled = !active;
+  if (!isAdmin) {
+    setAdminRawDataNotice("\uad00\ub9ac\uc790\ub9cc \uc774 \ud654\uba74\uc744 \uc5f4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", true);
+    return;
+  }
+  if (!active) {
+    setAdminRawDataNotice("\ub85c\uadf8\uc778 \ud6c4 \ubcc4\ub3c4\uc758 \uad00\ub9ac\uc790 \ud655\uc778\uc744 \uc644\ub8cc\ud558\uba74 \ub85c\uc6b0 \ub370\uc774\ud130\ub97c \uc5f4\ub78c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
+    return;
+  }
+  setAdminRawDataNotice("");
+  const select = $("adminRawDatasetSelect");
+  const datasets = Array.isArray(state.adminRawDatasets) ? state.adminRawDatasets : [];
+  select.innerHTML = datasets.length
+    ? datasets.map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.sourceName || item.id)} (${escapeXml(item.ownerName || item.ownerId || "-")})</option>`).join("")
+    : `<option value="">\uc5f4\ub78c\ud560 \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</option>`;
+  select.value = state.adminRawSelectedId || "";
+  select.disabled = !datasets.length;
+  const preview = state.adminRawPreview;
+  const summary = $("adminRawDatasetSummary");
+  if (summary) {
+    summary.innerHTML = preview?.dataset ? [
+      ["\uc18c\uc720\uc790", preview.dataset.ownerName || preview.dataset.ownerId || "-"],
+      ["\uc885\ub958", preview.dataset.dataType || "-"],
+      ["\ud589 \uc218", String(preview.totalRows || 0)],
+      ["\ucee4\ub7fc \uc218", String((preview.columns || []).length)],
+    ].map(([label, value]) => `<div><span>${escapeXml(label)}</span><strong>${escapeXml(value)}</strong></div>`).join("") : "";
+  }
+  const tableWrap = $("adminRawDataTableWrap");
+  const pageInfo = $("adminRawPageInfo");
+  const previous = $("adminRawPrevious");
+  const next = $("adminRawNext");
+  if (!preview) {
+    tableWrap.innerHTML = `<p class="emptySaved">\ub370\uc774\ud130\uc14b\uc744 \uc120\ud0dd\ud558\uba74 \uc6d0\ubcf8 \ud589\uc774 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</p>`;
+    if (pageInfo) pageInfo.textContent = "";
+    if (previous) previous.disabled = true;
+    if (next) next.disabled = true;
+    return;
+  }
+  const columns = Array.isArray(preview.columns) ? preview.columns : [];
+  const rows = Array.isArray(preview.rows) ? preview.rows : [];
+  tableWrap.innerHTML = columns.length
+    ? `<table><thead><tr>${columns.map((column) => `<th>${escapeXml(column)}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.map((row) => `<tr>${columns.map((column) => `<td title="${escapeAttr(adminRawDisplayValue(row?.[column]))}">${escapeXml(adminRawCellValue(row?.[column]))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${columns.length}">\ud45c\uc2dc\ud560 \ud589\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</td></tr>`}</tbody></table>`
+    : `<p class="emptySaved">\ub370\uc774\ud130\uc14b\uc5d0 \ucee4\ub7fc \uc815\ubcf4\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
+  const offset = Number(preview.offset || 0);
+  const totalRows = Number(preview.totalRows || 0);
+  if (pageInfo) pageInfo.textContent = totalRows ? `${offset + 1}-${Math.min(offset + rows.length, totalRows)} / ${totalRows}` : "";
+  if (previous) previous.disabled = offset <= 0;
+  if (next) next.disabled = offset + rows.length >= totalRows;
 }
 
 function nextBrowserPaint() {
@@ -1595,7 +1806,7 @@ function activateView(viewName, moduleName = state.activeFigureModule) {
   document.querySelectorAll(".view").forEach((x) => x.classList.remove("active"));
   const view = $(`${viewName}View`);
   if (view) view.classList.add("active");
-  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users";
+  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users" || viewName === "adminRawData";
   $("dataWorkspace")?.classList.toggle("calcOnly", wideOnly);
   $("workspaceToolbar")?.classList.toggle("hidden", viewName !== "figure");
 }
@@ -2974,7 +3185,55 @@ function renderEisFigure(d) {
   applyAnnotationsToSvg();
 }
 
+const CYC_FIGURE_VIEW_OPTIONS = [
+  { kind: "cycling-performance", label: "\uc131\ub2a5", detail: "capacity / efficiency vs cycle" },
+  { kind: "voltage-profile", label: "\uc804\uc555 / \uc804\ub958", detail: "voltage-capacity and current behavior" },
+  { kind: "dqdv", label: "dQ/dV", detail: "differential capacity vs voltage" },
+];
+
+function activeCycFigureViewKind(dataset) {
+  const selected = state.cycFigureViewKinds[dataset?.id];
+  if (CYC_FIGURE_VIEW_OPTIONS.some((option) => option.kind === selected)) return selected;
+  return CYC_FIGURE_VIEW_OPTIONS.some((option) => option.kind === dataset?.figureKind)
+    ? dataset.figureKind
+    : "cycling-performance";
+}
+
+function renderCycFigureViewPicker(dataset, activeKind = "") {
+  const picker = $("cycFigureViewPicker");
+  if (!picker) return;
+  picker.replaceChildren();
+  if (!dataset || dataset.dataType !== "cyc" || dataset.rowsLoaded === false) {
+    picker.hidden = true;
+    return;
+  }
+
+  picker.hidden = false;
+  const intro = document.createElement("div");
+  intro.className = "cycFigureViewPickerIntro";
+  const title = document.createElement("strong");
+  title.textContent = "\uc6d0\ubcf8 \ub85c\uc6b0\ub370\uc774\ud130 \ubcf4\uae30";
+  const hint = document.createElement("span");
+  hint.textContent = "\uc800\uc7a5\ub41c \uc6d0\ubcf8 \ud589\uc73c\ub85c \ud604\uc7ac \ubcf4\uae30\ub9cc \ubc14\uafb8\uba70, \uc800\uc7a5\ub41c Fig\uc640 \ud45c\ub294 \ubcc0\uacbd\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.";
+  intro.append(title, hint);
+
+  const choices = document.createElement("div");
+  choices.className = "cycFigureViewPickerChoices";
+  for (const option of CYC_FIGURE_VIEW_OPTIONS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cycFigureViewPickerButton";
+    button.dataset.cycFigureView = option.kind;
+    button.setAttribute("aria-pressed", String(option.kind === activeKind));
+    button.title = option.detail;
+    button.textContent = option.label;
+    choices.append(button);
+  }
+  picker.append(intro, choices);
+}
+
 function renderFigure(d) {
+  renderCycFigureViewPicker(null);
   if (!d) {
     $("figureCanvas").innerHTML = "";
     $("figureTitle").textContent = "\uc120\ud0dd\ud55c Dataset \uc5c6\uc74c";
@@ -2994,7 +3253,12 @@ function renderFigure(d) {
   // Saved API responses keep their editable raw columns. Rebuild a temporary
   // CYC view at render time so a figure setting or cell edit cannot erase the
   // capacity series from an already parsed WRD file.
-  if (d.dataType === "cyc") return renderCycFigure(normalizeSavedCycDataset(d));
+  if (d.dataType === "cyc") {
+    const normalized = normalizeSavedCycDataset(d);
+    const figureKind = activeCycFigureViewKind(normalized);
+    renderCycFigureViewPicker(normalized, figureKind);
+    return renderCycFigure({ ...normalized, figureKind });
+  }
   if (d.dataType === "cv") return renderCvFigure(d);
   if (d.dataType === "eis") return renderEisFigure(d);
   const style = currentFigureStyle();
@@ -6721,12 +6985,37 @@ document.addEventListener("DOMContentLoaded", () => {
   on("createCampaign", "click", () => createCampaignFromInput().catch((err) => setStatus(err.message)));
   on("createDatasetGroup", "click", () => createDatasetGroupFromInput().catch((err) => setStatus(err.message)));
   on("openUploadFilePicker", "click", () => $("smartFile")?.click());
+  on("cycFigureViewPicker", "click", (event) => {
+    const button = event.target instanceof Element ? event.target.closest("[data-cyc-figure-view]") : null;
+    if (!button) return;
+    const dataset = state.datasets.find((item) => item.id === state.selectedId);
+    const figureKind = String(button.dataset.cycFigureView || "");
+    if (!dataset || dataset.dataType !== "cyc" || !CYC_FIGURE_VIEW_OPTIONS.some((option) => option.kind === figureKind)) return;
+    state.cycFigureViewKinds[dataset.id] = figureKind;
+    renderFigure(dataset);
+  });
   on("projectSelect", "change", () => renderHierarchyControls({ projectId: $("projectSelect")?.value || "", campaignId: "", cellRecordId: "" }));
   on("campaignSelect", "change", () => renderHierarchyControls({ projectId: $("projectSelect")?.value || "", campaignId: $("campaignSelect")?.value || "", cellRecordId: "" }));
   on("cellRecordSelect", "change", () => renderHierarchyControls(hierarchySelectionPayload()));
   on("datasetGroupSelect", "change", () => renderHierarchyControls(hierarchySelectionPayload()));
   on("reloadUsers", "click", () => loadUsers());
   on("reloadFeedback", "click", () => loadFeedbacks().catch((err) => setStatus(err.message)));
+  on("adminRawAccessForm", "submit", requestAdminRawAccess);
+  on("refreshAdminRawData", "click", () => loadAdminRawDatasets().catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
+  on("adminRawDatasetSelect", "change", (event) => loadAdminRawDataset(event.target.value, 0).catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
+  on("adminRawPrevious", "click", () => {
+    const offset = Number(state.adminRawPreview?.offset || 0);
+    loadAdminRawDataset(state.adminRawSelectedId, Math.max(0, offset - ADMIN_RAW_PAGE_SIZE))
+      .catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true));
+  });
+  on("adminRawNext", "click", () => {
+    const preview = state.adminRawPreview;
+    const offset = Number(preview?.offset || 0);
+    const visibleRows = Array.isArray(preview?.rows) ? preview.rows.length : 0;
+    if (!visibleRows) return;
+    loadAdminRawDataset(state.adminRawSelectedId, offset + visibleRows)
+      .catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true));
+  });
   on("backHome", "click", showHome);
   on("brandHome", "click", showHome);
   on("brandHome", "keydown", (event) => {
