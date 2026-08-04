@@ -1806,7 +1806,7 @@ function activateView(viewName, moduleName = state.activeFigureModule) {
   document.querySelectorAll(".view").forEach((x) => x.classList.remove("active"));
   const view = $(`${viewName}View`);
   if (view) view.classList.add("active");
-  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users" || viewName === "adminRawData";
+  const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "cycRecord" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users" || viewName === "adminRawData";
   $("dataWorkspace")?.classList.toggle("calcOnly", wideOnly);
   $("workspaceToolbar")?.classList.toggle("hidden", viewName !== "figure");
 }
@@ -3234,6 +3234,7 @@ function renderCycFigureViewPicker(dataset, activeKind = "") {
 
 function renderFigure(d) {
   renderCycFigureViewPicker(null);
+  renderCycFigureElectrodeSummary(null);
   if (!d) {
     $("figureCanvas").innerHTML = "";
     $("figureTitle").textContent = "\uc120\ud0dd\ud55c Dataset \uc5c6\uc74c";
@@ -3256,6 +3257,7 @@ function renderFigure(d) {
   if (d.dataType === "cyc") {
     const normalized = normalizeSavedCycDataset(d);
     const figureKind = activeCycFigureViewKind(normalized);
+    renderCycFigureElectrodeSummary(normalized);
     renderCycFigureViewPicker(normalized, figureKind);
     return renderCycFigure({ ...normalized, figureKind });
   }
@@ -4042,7 +4044,7 @@ function cycStyle(seriesColor = "#0f766e", showGrid = true) {
       .capLine{fill:none;stroke:${stroke};stroke-width:1.35}.capPt{fill:${fill};stroke:${stroke};stroke-width:1.45}
       .tick{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.label{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.panelTitle{font:700 14px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
       .legend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.caption{font:8px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.panelLetter{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
-      .rateBand,.rateBandAlt{fill:transparent}.rateLine{stroke:#777;stroke-width:.75;stroke-dasharray:1.6 1.6}.rateLabel{font:10px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
+      .rateBand,.rateBandAlt{fill:transparent}.rateLine{stroke:#777;stroke-width:.75;stroke-dasharray:1.6 1.6}.rateLabel{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}
       .frame{fill:none;stroke:#111;stroke-width:1;shape-rendering:crispEdges}
       .figureMovable{cursor:move;user-select:none}.figureMovable:hover text{fill:#0f766e}
       .userAnnotation{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111;cursor:move;user-select:none}
@@ -4082,6 +4084,91 @@ function loadingCaption(d) {
   return match ? `${Number(match[1]).toString()} mg cm-2` : "";
 }
 
+function filenameElectrodeMassLabels(sourceName) {
+  const labels = [];
+  const seen = new Set();
+  const source = String(sourceName || "");
+  const matcher = /(\d+(?:[.,]\d+)?)\s*(mg|g)(?![a-z])/gi;
+  let match;
+  while ((match = matcher.exec(source))) {
+    const value = Number(String(match[1]).replace(",", "."));
+    const unit = String(match[2] || "").toLowerCase();
+    if (!Number.isFinite(value) || value <= 0) continue;
+    const milligrams = unit === "g" ? value * 1000 : value;
+    if (!Number.isFinite(milligrams) || milligrams <= 0 || milligrams > 100000) continue;
+    const label = `${fixed(milligrams, 4)} mg`;
+    if (!seen.has(label)) {
+      seen.add(label);
+      labels.push(label);
+    }
+  }
+  return labels.slice(0, 3);
+}
+
+function compactElectrodeSummaryValue(value, digits, unit) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? `${fixed(number, digits)} ${unit}` : "";
+}
+
+function renderCycFigureElectrodeSummary(dataset) {
+  const summary = $("cycElectrodeSummary");
+  if (!summary) return;
+  summary.replaceChildren();
+  summary.hidden = true;
+  if (!dataset || dataset.dataType !== "cyc") return;
+
+  const rows = [];
+  const rawMasses = filenameElectrodeMassLabels(dataset.sourceName);
+  if (rawMasses.length) {
+    rows.push({
+      label: "\uc6d0\ubcf8 \ud30c\uc77c\uba85 \uc9c8\ub7c9",
+      value: rawMasses.join(" \u00b7 "),
+    });
+  }
+
+  const calc = dataset.cell?.electrodeCalc && typeof dataset.cell.electrodeCalc === "object"
+    ? dataset.cell.electrodeCalc
+    : null;
+  if (calc) {
+    const savedValues = [];
+    const profileName = String(calc.profileName || calc.electrodeType || "").trim();
+    if (profileName) savedValues.push(profileName);
+    const electrodeMass = compactElectrodeSummaryValue(calc.electrodeMass_g, 6, "g");
+    if (electrodeMass) savedValues.push(`\uc804\uadf9 \uc9c8\ub7c9 ${electrodeMass}`);
+    const loading = compactElectrodeSummaryValue(Number(calc.activeLoading_g_cm2) * 1000, 4, "mg cm-2");
+    if (loading) savedValues.push(`loading ${loading}`);
+    const area = compactElectrodeSummaryValue(calc.area_cm2, 4, "cm2");
+    if (area) savedValues.push(`area ${area}`);
+    const oneC = compactElectrodeSummaryValue(calc.oneC_mA, 4, "mA");
+    if (oneC) savedValues.push(`1C ${oneC}`);
+    if (savedValues.length) {
+      rows.push({ label: "\uc800\uc7a5 \uc804\uadf9 \uacc4\uc0b0", value: savedValues.join(" \u00b7 ") });
+    }
+  }
+
+  if (!rows.length) return;
+  const title = document.createElement("strong");
+  title.className = "cycElectrodeSummaryTitle";
+  title.textContent = "\uac04\ub2e8 \uc804\uadf9 \uc815\ubcf4";
+  const rowList = document.createElement("div");
+  rowList.className = "cycElectrodeSummaryRows";
+  for (const row of rows) {
+    const item = document.createElement("div");
+    item.className = "cycElectrodeSummaryRow";
+    const label = document.createElement("strong");
+    label.textContent = row.label;
+    const value = document.createElement("span");
+    value.textContent = row.value;
+    item.append(label, value);
+    rowList.append(item);
+  }
+  const hint = document.createElement("p");
+  hint.className = "cycElectrodeSummaryHint";
+  hint.textContent = "\ud30c\uc77c\uba85 \uc9c8\ub7c9 \ud45c\uae30\uc640 \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc740 \ucd9c\ucc98\ub97c \uad6c\ubd84\ud574 \ud45c\uc2dc\ud569\ub2c8\ub2e4.";
+  summary.append(title, rowList, hint);
+  summary.hidden = false;
+}
+
 function renderCycFigure(d) {
   // Legacy combined records stay available, but now open as one performance Fig.
   const kind = ["cycling-performance", "voltage-profile", "dqdv"].includes(d.figureKind)
@@ -4090,6 +4177,154 @@ function renderCycFigure(d) {
   if (kind === "voltage-profile") return renderCycVoltageProfileFigure(d);
   if (kind === "dqdv") return renderCycDqdvFigure(d);
   return renderCycPerformanceFigure(d);
+}
+
+// A CYC record can have both compact cycle summaries and thousands of raw
+// voltage/current points.  This workspace keeps those two views together
+// without guessing electrode properties that are not present in the WRD file.
+function cycRecordNumber(value, digits = 4, suffix = "") {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${fixed(number, digits)}${suffix}` : "-";
+}
+
+function cycRecordFact(label, value) {
+  return `<div class="cycRecordFact"><span>${escapeXml(label)}</span><strong>${escapeXml(value || "-")}</strong></div>`;
+}
+
+function cycRecordRateText(rate) {
+  const cRate = rate?.rate ?? rate?.cRate ?? rate?.label ?? "";
+  const current = rate?.current_mA ?? rate?.current ?? rate?.currentMa;
+  const currentText = Number.isFinite(Number(current)) ? ` ${fixed(Number(current), 4)} mA` : "";
+  return `${String(cRate || "-")} C${currentText}`;
+}
+
+function renderCycRecordElectrode(dataset) {
+  const cell = dataset.cell || {};
+  const calc = cell.electrodeCalc && typeof cell.electrodeCalc === "object" ? cell.electrodeCalc : null;
+  const profiles = Array.isArray(state.electrodeProfiles) ? state.electrodeProfiles : [];
+  const selector = profiles.length ? `
+    <label class="cycRecordProfilePicker">
+      <span>\uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12 \uc5f0\uacb0</span>
+      <select data-cyc-record-profile>
+        <option value="">\uc5f0\uacb0\ud560 \uc804\uadf9 \ud504\ub85c\ud544\uc744 \uace0\ub974\uc138\uc694</option>
+        ${profiles.map((profile) => `<option value="${escapeAttr(profile.id)}">${escapeXml(profile.name || "\uc804\uadf9 \ud504\ub85c\ud544")}</option>`).join("")}
+      </select>
+    </label>` : "";
+  if (!calc) {
+    return `<section class="cycRecordSection cycRecordElectrode">
+      <div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">Electrode link</p><h3>\uc5f0\uacb0\ub41c \uc804\uadf9 \uc815\ubcf4</h3></div></div>
+      <p class="cycRecordEmpty">\uc774 WRD \uc6d0\ubcf8\uc5d0\ub294 \uc804\uadf9 \ub85c\ub529, \uba74\uc801, 1C \uc815\ubcf4\uac00 \uc9c1\uc811 \uae30\ub85d\ub418\uc5b4 \uc788\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uc5f0\uacb0\ud558\uba74 \uc544\ub798 \uae30\ub85d\uc5d0 \uac19\uc774 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.</p>
+      ${selector}
+    </section>`;
+  }
+  const loading = Number(calc.activeLoading_g_cm2);
+  const totalLoading = Number(calc.totalLoading_g_cm2);
+  const rates = Array.isArray(calc.rates) ? calc.rates : [];
+  return `<section class="cycRecordSection cycRecordElectrode">
+    <div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">Electrode link</p><h3>\uc5f0\uacb0\ub41c \uc804\uadf9 \uc815\ubcf4</h3><p>\uc6d0\ubcf8 WRD\uc5d0\uc11c \ucd94\uc815\ud55c \uac12\uc774 \uc544\ub2c8\ub77c, \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0 \ud504\ub85c\ud544\uc5d0\uc11c \uc5f0\uacb0\ud55c \uac12\uc785\ub2c8\ub2e4.</p></div>${selector}</div>
+    <div class="cycRecordFacts">
+      ${cycRecordFact("\ud504\ub85c\ud544", String(calc.profileName || "-"))}
+      ${cycRecordFact("\ud65c\ubb3c\uc9c8", String(calc.active || cell.material || "-"))}
+      ${cycRecordFact("1C \uc804\ub958", cycRecordNumber(calc.oneC_mA, 4, " mA"))}
+      ${cycRecordFact("\ud65c\ubb3c\uc9c8 loading", Number.isFinite(loading) ? `${fixed(loading * 1000, 4)} mg cm-2` : "-")}
+      ${cycRecordFact("\uc804\uadf9 \uc9c8\ub7c9", cycRecordNumber(calc.electrodeMass_g, 6, " g"))}
+      ${cycRecordFact("\uc804\uadf9 \uba74\uc801", cycRecordNumber(calc.area_cm2, 4, " cm2"))}
+      ${cycRecordFact("\uc804\uadf9 \ub450\uaed8", cycRecordNumber(calc.electrodeThickness_mm, 4, " mm"))}
+      ${cycRecordFact("\uc804\uccb4 loading", Number.isFinite(totalLoading) ? `${fixed(totalLoading * 1000, 4)} mg cm-2` : "-")}
+    </div>
+    <div class="cycRecordRateList">${rates.length ? rates.map((rate) => `<span>${escapeXml(cycRecordRateText(rate))}</span>`).join("") : "<span>\uc800\uc7a5\ub41c C-rate \uc804\ub958 \uac12\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</span>"}</div>
+  </section>`;
+}
+
+function renderCycRecordRawPreview(dataset) {
+  const rows = Array.isArray(dataset.rows) ? dataset.rows : [];
+  const first = rows.find((row) => row && typeof row === "object") || {};
+  const preferred = ["cycle", "capacity", "dischargeCapacity", "chargeCapacity", "voltage", "current", "time", "direction", "range"];
+  const columns = [...new Set([...preferred.filter((key) => Object.prototype.hasOwnProperty.call(first, key)), ...Object.keys(first)])]
+    .filter((key) => key !== "raw" && key !== "record_index")
+    .slice(0, 8);
+  if (!rows.length) return `<section class="cycRecordSection"><h3>\uc6d0\ubcf8 \ub85c\uc6b0\ub370\uc774\ud130</h3><p class="cycRecordEmpty">\uc800\uc7a5\ub41c \uc6d0\ubcf8 \ud589\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</p></section>`;
+  const previewRows = rows.slice(0, 8);
+  const cellValue = (value) => {
+    if (Number.isFinite(Number(value))) return fixed(Number(value), 6);
+    return String(value ?? "-");
+  };
+  return `<section class="cycRecordSection cycRecordRaw">
+    <div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">Raw WRD data</p><h3>\uc6d0\ubcf8 \ub85c\uc6b0\ub370\uc774\ud130 \ubbf8\ub9ac\ubcf4\uae30</h3><p>${rows.length.toLocaleString("ko-KR")}\uac1c \ud589 \uc911 \uc55e 8\uac1c\ub97c \ud45c\uc2dc\ud569\ub2c8\ub2e4. \uc804\uccb4 \ub85c\uc6b0\ub370\uc774\ud130\ub294 \uc544\ub798 \ud45c\uc5d0\uc11c \uc218\uc815\u00b7\ud655\uc778\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.</p></div></div>
+    <div class="cycRecordTableWrap"><table><thead><tr>${columns.map((column) => `<th>${escapeXml(column)}</th>`).join("")}</tr></thead><tbody>${previewRows.map((row) => `<tr>${columns.map((column) => `<td>${escapeXml(cellValue(row?.[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+  </section>`;
+}
+
+function captureCycRecordPanel(dataset, figureKind) {
+  const canvas = $("figureCanvas");
+  const title = $("figureTitle");
+  const subtitle = $("figureSubtitle");
+  const meta = $("metaGrid");
+  if (!canvas || !title || !subtitle || !meta) {
+    return `<article class="cycRecordChart"><p class="cycRecordEmpty">\uadf8\ub798\ud504 \uc601\uc5ed\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</p></article>`;
+  }
+  const previous = { canvas: canvas.innerHTML, title: title.textContent, subtitle: subtitle.textContent, meta: meta.innerHTML };
+  const labels = { "cycling-performance": "\uc0ac\uc774\ud074 \uc131\ub2a5", "voltage-profile": "\uc804\uc555 \ud504\ub85c\ud30c\uc77c / \uc804\ub958", dqdv: "dQ/dV" };
+  try {
+    renderCycFigure({ ...dataset, figureKind });
+    const svg = canvas.innerHTML;
+    return `<article class="cycRecordChart"><div class="cycRecordChartHeader"><h3>${labels[figureKind] || "CYC"}</h3><span>${escapeXml(figureLabel({ ...dataset, figureKind }))}</span></div>${svg || `<p class="cycRecordEmpty">\ud45c\uc2dc\ud560 \uadf8\ub798\ud504\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`}</article>`;
+  } catch (error) {
+    console.error("CYC integrated record chart failed", figureKind, error);
+    return `<article class="cycRecordChart"><div class="cycRecordChartHeader"><h3>${labels[figureKind] || "CYC"}</h3></div><p class="cycRecordEmpty">\uc6d0\ubcf8 \ub370\uc774\ud130\uc5d0\uc11c \uc774 \uadf8\ub798\ud504\ub97c \uc548\uc804\ud558\uac8c \uadf8\ub9b4 \uc815\ubcf4\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4.</p></article>`;
+  } finally {
+    canvas.innerHTML = previous.canvas;
+    title.textContent = previous.title;
+    subtitle.textContent = previous.subtitle;
+    meta.innerHTML = previous.meta;
+  }
+}
+
+async function renderCycRecordView() {
+  const root = $("cycRecordContent");
+  if (!root) return;
+  const selectedId = state.selectedId;
+  let dataset = state.datasets.find((item) => item.id === selectedId);
+  if (!dataset || String(dataset.dataType || "").toLowerCase() !== "cyc") {
+    root.innerHTML = `<section class="cycRecordEmptyState"><h2>CYC \ud1b5\ud569 \uae30\ub85d</h2><p>\uc800\uc7a5\ub41c CYC Fig\ub97c \uc120\ud0dd\ud55c \ub4a4 \ud1b5\ud569 \uae30\ub85d \uc5f4\uae30\ub97c \ub20c\ub7ec\uc8fc\uc138\uc694.</p></section>`;
+    activateView("cycRecord", "cyc");
+    return;
+  }
+  activateView("cycRecord", "cyc");
+  root.innerHTML = `<section class="cycRecordEmptyState"><h2>CYC \ud1b5\ud569 \uae30\ub85d\uc744 \uc900\ube44\ud558\ub294 \uc911\uc785\ub2c8\ub2e4.</h2><p>\uc800\uc7a5\ub41c \uc6d0\ubcf8 WRD \ud589\uacfc \uc5f0\uacb0 \uc804\uadf9 \uc815\ubcf4\ub97c \ubd88\ub7ec\uc635\ub2c8\ub2e4.</p></section>`;
+  let rawNotice = "";
+  try {
+    dataset = await hydrateDatasetRows(selectedId) || dataset;
+  } catch (error) {
+    rawNotice = `<p class="cycRecordWarning">\uc6d0\ubcf8 \ub85c\uc6b0\ub370\uc774\ud130\ub97c \ub2e4\uc2dc \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud574 \uc800\uc7a5\ub41c \uc694\uc57d \uc815\ubcf4\ub9cc \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.</p>`;
+  }
+  const cell = dataset.cell || {};
+  const summary = [
+    cycRecordFact("\uce21\uc815\uc77c", String(cell.date || "-")),
+    cycRecordFact("\uc140 ID", String(cell.cellId || "-")),
+    cycRecordFact("\uc0d8\ud50c", String(cell.sampleName || "-")),
+    cycRecordFact("\uc6d0\ubcf8 \ud30c\uc77c", String(dataset.sourceName || "-")),
+    cycRecordFact("\ub370\uc774\ud130 \ud589", `${(dataset.rows || []).length.toLocaleString("ko-KR")} rows`),
+    cycRecordFact("\uc0ac\uc774\ud074 \ubc94\uc704", String(dataset.quality?.cycleRange || "-")),
+  ].join("");
+  const performance = captureCycRecordPanel(dataset, "cycling-performance");
+  const voltageProfile = captureCycRecordPanel(dataset, "voltage-profile");
+  const dqdv = captureCycRecordPanel(dataset, "dqdv");
+  root.innerHTML = `<section class="cycRecordHero"><div><p class="cycRecordEyebrow">Saved CYC record</p><h2>${escapeXml(datasetDisplayName(dataset))}</h2><p>\uc6d0\ubcf8 WRD \ub85c\uc6b0\ub370\uc774\ud130, \uc0ac\uc774\ud074 \uc694\uc57d, \uc804\uc555/\uc804\ub958, dQ/dV, \uc5f0\uacb0 \uc804\uadf9 \uc815\ubcf4\ub97c \ud55c \uacf3\uc5d0\uc11c \ud655\uc778\ud569\ub2c8\ub2e4.</p></div><button type="button" class="secondaryAction" data-cyc-record-back>\uc800\uc7a5\ub41c Fig \ubaa9\ub85d</button></section>
+    ${rawNotice}
+    <section class="cycRecordSummary"><div class="cycRecordFacts">${summary}</div></section>
+    ${renderCycRecordElectrode(dataset)}
+    <section class="cycRecordSection"><div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">CYC analysis</p><h3>\uc6d0\ubcf8 \uae30\ubc18 \uadf8\ub798\ud504</h3><p>\uac01 \uadf8\ub798\ud504\ub294 \uac19\uc740 \uc800\uc7a5 CYC \uc6d0\ubcf8\uc5d0\uc11c \uadf8\ub824\uc9d1\ub2c8\ub2e4. \ud3ec\uc778\ud2b8 \uc815\ubcf4\uac00 \ubd80\uc871\ud55c \uacbd\uc6b0 \uc5b5\uc9c0\ub85c \ucd94\uc815\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.</p></div></div><div class="cycRecordCharts">${performance}${voltageProfile}${dqdv}</div></section>
+    ${renderCycRecordRawPreview(dataset)}`;
+  root.querySelector("[data-cyc-record-back]")?.addEventListener("click", () => activateView("savedFigures", "cyc"));
+  root.querySelectorAll("[data-cyc-record-profile]").forEach((select) => {
+    select.addEventListener("change", async () => {
+      const profileId = select.value;
+      if (!profileId) return;
+      await applyElectrodeProfileToSelectedCyc(profileId);
+      await renderCycRecordView();
+    });
+  });
 }
 
 function evenlySpacedItems(items, maxItems) {
@@ -4248,19 +4483,26 @@ function cycProfilePanel({ x, y, w, h, profile }) {
   const allPoints = profile.series.flatMap((series) => series.points);
   const xDomain = niceBounds(allPoints.map((point) => point.x));
   const yDomain = niceBounds(allPoints.map((point) => point.y));
+  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"];
+  const columns = Math.min(4, Math.max(1, profile.series.length));
+  const legendRowHeight = 26;
+  const legendRows = Math.ceil(profile.series.length / columns);
+  const legendReserve = 72 + legendRows * legendRowHeight;
+  const plotH = Math.max(150, h - legendReserve);
+  const legendTop = y + plotH + 56;
+  const legendNote = "\uc2e4\uc120: \ucda9\uc804, \uc810\uc120: \ubc29\uc804 \u00b7 0.1 C\ub294 10\uc2dc\uac04, 1 C\ub294 1\uc2dc\uac04 \uae30\uc900\uc785\ub2c8\ub2e4. Iavg\ub294 \uad6c\uac04 \ud3c9\uade0 \uc804\ub958\uc785\ub2c8\ub2e4.";
   const axes = drawPaperAxes({
     x,
     y,
     w,
-    h,
+    h: plotH,
     xDomain,
     yDomain,
     xlabel: profile.xLabel,
     ylabel: "Voltage (V)",
-    xlabelOffset: 48,
+    xlabelOffset: 42,
     ylabelOffset: 64,
   });
-  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"];
   const lines = profile.series.map((series, index) => {
     const { color, dash } = traceStyleByRate(series, profile.series, colors);
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
@@ -4268,19 +4510,20 @@ function cycProfilePanel({ x, y, w, h, profile }) {
   }).join("");
   const legend = profile.series.map((series, index) => {
     const { color, dash } = traceStyleByRate(series, profile.series, colors);
-    const columns = Math.min(3, Math.max(1, profile.series.length));
-    const lx = x + 10 + (index % columns) * Math.max(112, Math.floor((w - 24) / columns));
-    const ly = y + 18 + Math.floor(index / columns) * 32;
+    const lx = x + 12 + (index % columns) * Math.max(126, Math.floor((w - 24) / columns));
+    const ly = legendTop + Math.floor(index / columns) * legendRowHeight;
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
     return `<line x1="${lx}" x2="${lx + 16}" y1="${ly}" y2="${ly}" class="profileLegendLine" stroke="${color}"${dashAttribute}/><text x="${lx + 22}" y="${ly + 4}" class="profileLegend">${figureTraceLabel(series)}</text><text x="${lx + 22}" y="${ly + 16}" class="profileLegend">${formatCurrentForFigure(series.currentA)}</text>`;
   }).join("");
   return `
     <g>
       <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
-      <rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${plotH}" class="frame"/>
       ${axes.svg}
       ${lines}
+      <rect x="${x}" y="${legendTop - 16}" width="${w}" height="${legendRows * legendRowHeight + 30}" rx="4" class="profileLegendPanel"/>
       ${legend}
+      <text x="${x + w / 2}" y="${legendTop + legendRows * legendRowHeight + 7}" class="profileLegendNote" text-anchor="middle">${escapeXml(legendNote)}</text>
     </g>`;
 }
 
@@ -4572,7 +4815,7 @@ function renderCycAlternativeFigure(d, mode) {
       ${cycStyle(style.seriesColor, style.showGrid)}
       <style>
         .seriesLine{fill:none;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:2.1}.points circle{fill:#fff;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:1.6}
-        .profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}
+        .profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}.profileLegendPanel{fill:#f8fafc;stroke:#d6e8eb;stroke-width:1}.profileLegendNote{font:10px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#475569}
         .voltageTrendLine{fill:none;stroke:#0f766e;stroke-width:2}.currentTrendLine{fill:none;stroke:#db2777;stroke-width:2;stroke-dasharray:5 3}.voltageTrendPt{fill:#fff;stroke:#0f766e;stroke-width:1.5}.currentTrendPt{fill:#fff;stroke:#db2777;stroke-width:1.4}
         .profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}
       </style>
@@ -7210,7 +7453,7 @@ function renderSavedList() {
     const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
     const isCyc = String(dataset.dataType || "").toLowerCase() === "cyc";
     return [
-      '<article class="savedItem' + active + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
+      '<article class="savedItem' + active + (isCyc ? " cycSavedItem" : "") + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
       '<label class="compareCheck' + (isCyc ? "" : " disabled") + '" title="' + (isCyc ? text.compareSelect : text.cycOnly) + '">',
       '<input type="checkbox" data-compare-id="' + escapeAttr(dataset.id) + '"' + (state.compareIds.includes(dataset.id) ? " checked" : "") + (isCyc ? "" : " disabled") + " />",
       "<span>" + text.compare + "</span></label>",
@@ -7219,6 +7462,7 @@ function renderSavedList() {
       '<span class="savedInfo"><strong>' + escapeXml(title) + "</strong>",
       "<span>" + escapeXml(cell.date || text.dateMissing) + " \u00b7 " + escapeXml(sub) + "</span>",
       "<em>" + escapeXml(dataset.sourceName || dataset.id) + "</em></span></button>",
+      isCyc ? '<button type="button" class="savedRecordOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="CYC \ud1b5\ud569 \uae30\ub85d \uc5f4\uae30">\ud1b5\ud569</button>' : "",
       '<button type="button" class="savedDelete" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.remove + '">\u00d7</button>',
       "</article>",
     ].join("");
@@ -7233,6 +7477,14 @@ function renderSavedList() {
       state.activeFigureModule = state.datasets.find((dataset) => dataset.id === state.selectedId)?.dataType || state.activeFigureModule;
       activateView("figure", state.activeFigureModule);
       setStatus(text.loaded);
+    });
+  });
+  list.querySelectorAll(".savedRecordOpen").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      state.selectedId = button.dataset.datasetId;
+      state.selectedAnnotation = null;
+      await renderCycRecordView();
     });
   });
   list.querySelectorAll(".savedDelete").forEach((button) => {

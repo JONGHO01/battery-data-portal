@@ -253,6 +253,24 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("Iavg", self.app_js)
         self.assertIn("Voltage/current behavior", self.app_js)
 
+    def test_raw_voltage_profile_legend_uses_a_dedicated_bottom_band(self):
+        """C-rate labels must remain readable without covering the voltage curves."""
+
+        self.assertIn("const legendRowHeight = 26;", self.app_js)
+        self.assertIn("const legendReserve = 72 + legendRows * legendRowHeight;", self.app_js)
+        self.assertIn("const plotH = Math.max(150, h - legendReserve);", self.app_js)
+        self.assertIn("const legendTop = y + plotH + 56;", self.app_js)
+        self.assertIn('class="profileLegendPanel"', self.app_js)
+        self.assertIn('class="profileLegendNote"', self.app_js)
+        self.assertIn(r"\uc2e4\uc120: \ucda9\uc804, \uc810\uc120: \ubc29\uc804", self.app_js)
+        self.assertNotIn("const ly = y + 18 + Math.floor(index / columns) * 32;", self.app_js)
+
+    def test_c_rate_segment_labels_match_axis_tick_typography(self):
+        """C-rate labels should not use a visually unrelated font or size."""
+        expected = '.rateLabel{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}'
+        self.assertIn(expected, self.app_js)
+        self.assertNotIn('.rateLabel{font:10px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}', self.app_js)
+
     def test_empty_figure_and_table_messages_are_clear_korean(self):
         html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
         self.assertIn("\uc120\ud0dd\ud55c Dataset \uc5c6\uc74c", html)
@@ -300,6 +318,18 @@ class CycFigureUiTests(unittest.TestCase):
         ):
             self.assertIn(escaped_label, saved_list)
         self.assertIn("function renderSavedList()", saved_list)
+
+    def test_cyc_header_shows_raw_and_saved_electrode_details_with_clear_sources(self):
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="cycElectrodeSummary"', html)
+        self.assertIn('class="figureIdentity"', html)
+        self.assertIn("function filenameElectrodeMassLabels", self.app_js)
+        self.assertIn("function renderCycFigureElectrodeSummary", self.app_js)
+        self.assertIn(r"\uc6d0\ubcf8 \ud30c\uc77c\uba85 \uc9c8\ub7c9", self.app_js)
+        self.assertIn(r"\uc800\uc7a5 \uc804\uadf9 \uacc4\uc0b0", self.app_js)
+        self.assertIn("renderCycFigureElectrodeSummary(normalized);", self.app_js)
+        self.assertIn("activeLoading_g_cm2", self.app_js)
+        self.assertIn("electrodeMass_g", self.app_js)
 
 
 if __name__ == "__main__":

@@ -27,6 +27,12 @@ data/*.bak-*
 # Temporary smoke-test folders created while checking the FastAPI migration.
 tmp-fastapi-test-*/
 
+# Disposable browser E2E profiles, databases, screenshots, and copied source
+# files are used only for local regression checks. Keep lab raw data out of Git.
+tmp-browser-e2e-*/
+tmp-e2e-data-*/
+tmp-real-cyc_*.wrd
+
 # Harvester credentials and duplicate-upload state belong only on the lab PC.
 harvester/config.json
 harvester/.harvester-state.json

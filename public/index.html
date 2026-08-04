@@ -75,7 +75,7 @@
             <button type="button" class="menuItem" data-view="savedFigures">저장 Fig 보기</button>
           </div>
         </div>
-        <div class="menuGroup electrodeMenu">
+        <div class="menuGroup electrodeMenu" hidden>
           <button type="button" class="menuTrigger" data-view="electrodeCalc">전극 계산</button>
           <div class="menuPanel">
             <button type="button" class="menuItem" data-view="electrodeCalc" data-electrode-mode="calc">전극 C-rate 계산</button>
@@ -141,7 +141,7 @@
           <strong>EIS Fig</strong>
           <span>Nyquist, Bode plot과 임피던스 데이터를 논문용 Fig로 만듭니다.</span>
         </button>
-        <button class="moduleCard activeModule" data-module="electrodeCalc">
+        <button class="moduleCard activeModule" data-module="electrodeCalc" hidden>
           <span class="moduleBadge">04</span>
           <strong>전극 계산</strong>
           <span>전극 무게와 두께로 loading, 1C 전류, C-rate별 전류를 계산합니다.</span>
@@ -240,7 +240,7 @@
           <button class="tab" data-view="figure" data-module="eis">EIS</button>
           <button class="tab" data-view="search">검색</button>
           <button class="tab" data-view="savedFigures">Fig 모음</button>
-          <button class="tab" data-view="electrodeCalc">전극 계산</button>
+          <button class="tab" data-view="electrodeCalc" hidden>전극 계산</button>
           <button class="tab" data-view="experimentInfo">셀 기록</button>
           <button class="tab" data-view="organization">조직</button>
           <button class="tab adminOnly" data-view="users">회원 관리</button>
@@ -336,9 +336,10 @@
             <button id="clearAnnotations" type="button">전체 삭제</button>
           </div>
           <div class="figureHeader">
-            <div>
+            <div class="figureIdentity">
               <h2 id="figureTitle">선택한 Dataset 없음</h2>
               <p id="figureSubtitle">파일을 분석하거나 저장된 Dataset을 선택하세요.</p>
+              <div class="cycElectrodeSummary" id="cycElectrodeSummary" hidden></div>
             </div>
             <div class="metaGrid" id="metaGrid"></div>
           </div>
@@ -385,6 +386,10 @@
           </div>
           <div id="savedList" class="savedList savedListWide"></div>
           <div id="comparisonPreview" class="comparisonPreview hidden"></div>
+        </section>
+
+        <section id="cycRecordView" class="view">
+          <div id="cycRecordContent" class="cycRecordContent"></div>
         </section>
 
         <section id="experimentInfoView" class="view">
@@ -456,7 +461,7 @@
         </section>
 
         <!-- 전극 계산 페이지: 전극 질량/두께로 1C 전류, loading, C-rate별 전류를 계산합니다. -->
-        <section id="electrodeCalcView" class="view">
+        <section id="electrodeCalcView" class="view" hidden>
           <div class="savedFigureHeader">
             <div>
               <h2>전극 질량/두께 계산</h2>

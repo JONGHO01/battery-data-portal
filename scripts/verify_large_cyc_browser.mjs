@@ -12,6 +12,7 @@
  *   SCREENSHOT_PATH
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const portalUrl = (process.env.PORTAL_URL || "http://127.0.0.1:4194").replace(/\/$/, "");
@@ -19,7 +20,12 @@ const cdpUrl = (process.env.CHROME_CDP || "http://127.0.0.1:9225").replace(/\/$/
 const sourceFile = process.env.E2E_CYC_FILE;
 const userId = process.env.E2E_USER || "browser_e2e_admin";
 const password = process.env.E2E_PASSWORD || "browser-e2e-only-password";
-const screenshotPath = process.env.SCREENSHOT_PATH || path.resolve("tmp-browser-e2e-cyc.png");
+// Use a fresh operating-system temp path for each run so a previously opened
+// screenshot cannot lock the next browser verification on Windows.
+const screenshotPath = process.env.SCREENSHOT_PATH || path.join(
+  os.tmpdir(),
+  `battery-portal-cyc-e2e-${process.pid}-${Date.now()}.png`,
+);
 
 if (!sourceFile || !fs.existsSync(sourceFile)) {
   throw new Error("E2E_CYC_FILE must point to an existing CYC/WRD source file.");

@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Add a compact CYC Fig electrode summary that separates raw filename mass labels from linked saved electrode-calculation values when available.
+- Normalize CYC performance-plot C-rate segment labels to the same typography and neutral text color as axis ticks.
+- Move the CYC voltage-capacity C-rate legend into a dedicated panel below the plot so charge/discharge labels do not cover measured curves; add a concise legend note for solid/dashed direction, C-rate time basis, and average-current labels.
+- Add a saved CYC integrated-record workspace that reads the existing raw WRD-backed Dataset to show performance, voltage/current, dQ/dV, a compact raw-data preview, and the linked electrode calculation profile without modifying the saved Fig or rows.
+- Hide the electrode C-rate calculator navigation while preserving stored C-rate profiles; the integrated CYC record can link an existing profile on demand.
+- Add static and browser smoke checks for opening a saved CYC integrated record and confirming its three CYC charts, linked-electrode panel, and raw-data preview render.
 - Let saved CYC Fig records switch between performance, voltage/current, and dQ/dV views by reusing their hydrated raw Dataset rows without overwriting the saved Fig record or editable table.
 - Hide the experiment-storage hierarchy panel from the standard data-registration sidebar while preserving its existing default project, batch, cell, and Dataset saving behavior.
 - Select representative raw CYC traces by detected C-rate segment while retaining the matching charge and discharge pair from the same cycle.
