@@ -1,12 +1,12 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.62-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.63-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.62** - Neutral WBCS WRD specific-capacity headers and legacy empty capacity rows are restored when saved CYC Figs reopen.
+> Current release: **v0.1.63** - Refined CYC raw-data record views, shared C-rate Fig controls, and the combined EIS Figure layout.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
@@ -22,6 +22,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.63 | 2026-08-05 | Refine CYC raw-data record views and shared C-rate Figure controls, plus a balanced combined EIS layout |
 | v0.1.62 | 2026-07-23 | Recover neutral WBCS WRD specific-capacity columns and legacy empty capacity rows for saved CYC Figs |
 | v0.1.61 | 2026-07-23 | Page editable tables at 250 rows while preserving every raw point for CYC and dQ/dV analysis |
 | v0.1.60 | 2026-07-23 | Preserve complete WRD traces; rebuild legacy 5,000-row datasets and retain the selected CYC Fig type during refresh |

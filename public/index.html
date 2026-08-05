@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battery Data Portal</title>
-    <link rel="stylesheet" href="/style.css?portal=0.1.62" />
+    <link rel="stylesheet" href="/style.css?portal=0.1.63" />
   </head>
   <body>
     <div class="busyOverlay hidden" id="busyOverlay">
@@ -320,6 +320,16 @@
             <button id="decreaseAnnotationSize" type="button">작게</button>
             <button id="increaseAnnotationSize" type="button">크게</button>
             <label class="figureColorControl">색상 <input id="figureSeriesColor" type="color" value="#0f766e" /></label>
+            <div id="profileSeriesControls" class="profileSeriesControls" hidden>
+              <label>C-rate 선택 <select id="profileSeriesSelect" aria-label="전압 프로파일 C-rate 선택"></select></label>
+              <label>C-rate 색상 <input id="profileSeriesColor" type="color" value="#0f766e" /></label>
+              <button id="profileSeriesColorReset" type="button">기본색</button>
+            </div>
+            <div id="dqdvSeriesControls" class="profileSeriesControls" hidden>
+              <label>C-rate 선택 <select id="dqdvSeriesSelect" aria-label="dQ/dV C-rate 선택"></select></label>
+              <label>C-rate 색상 <input id="dqdvSeriesColor" type="color" value="#0f766e" /></label>
+              <button id="dqdvSeriesColorReset" type="button">기본색</button>
+            </div>
             <label class="figureRatioControl">비율
               <select id="figureAspectRatio">
                 <option value="journal">논문형 4:3</option>
@@ -760,6 +770,6 @@
       </section>
     </main>
 
-    <script src="/app.js?portal=0.1.62"></script>
+    <script src="/app.js?portal=0.1.63"></script>
   </body>
 </html>

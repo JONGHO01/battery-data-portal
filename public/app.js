@@ -1,9 +1,18 @@
-const PORTAL_VERSION = "0.1.62";
+const PORTAL_VERSION = "0.1.63";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.63",
+    "date": "2026-08-05",
+    "changes": [
+      "Refine saved CYC Fig records so their retained raw rows can reopen as performance, voltage/current, or dQ/dV views without overwriting source data.",
+      "Unify C-rate colors and clean legends, annotations, electrode summaries, and raw-data context across CYC Fig views.",
+      "Refine the combined EIS Figure layout with a balanced Nyquist panel and a shared Bode frequency axis."
+    ]
+  },
   {
     "version": "0.1.62",
     "date": "2026-07-23",
@@ -391,7 +400,7 @@ const RELEASE_HISTORY = [
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const TABLE_PAGE_SIZE = 250;
 const ADMIN_RAW_PAGE_SIZE = 250;
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null };
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -3046,7 +3055,7 @@ function ticks(min, max, count = 5) {
   return Array.from({ length: count }, (_, i) => min + step * i);
 }
 
-function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "" }) {
+function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "", showXTickLabels = true, showXLabel = true }) {
   const sx = logX ? logScale(xDomain, [x, x + w]) : makeScale(xDomain, [x, x + w]);
   const sy = logY ? logScale(yDomain, [y + h, y]) : makeScale(yDomain, [y + h, y]);
   const path = points.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(2)},${sy(p.y).toFixed(2)}`).join(" ");
@@ -3059,14 +3068,14 @@ function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, lo
     <g class="plot">
       <text x="${x}" y="${y - 18}" class="panelTitle">${title}</text>
       <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/>
-      ${xt.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${y}" y2="${y + h}" class="grid"/><text x="${sx(v)}" y="${y + h + 23}" class="tick" text-anchor="middle">${logX ? formatLogTick(v) : fmt(v, 3)}</text>`).join("")}
+      ${xt.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${y}" y2="${y + h}" class="grid"/>${showXTickLabels ? `<text x="${sx(v)}" y="${y + h + 23}" class="tick" text-anchor="middle">${logX ? formatLogTick(v) : fmt(v, 3)}</text>` : ""}`).join("")}
       ${yt.map((v) => `<line x1="${x}" x2="${x + w}" y1="${sy(v)}" y2="${sy(v)}" class="grid"/><text x="${x - 10}" y="${sy(v) + 4}" class="tick" text-anchor="end">${logY ? formatLogTick(v) : fmt(v, 3)}</text>`).join("")}
       <line x1="${x}" x2="${x + w}" y1="${y + h}" y2="${y + h}" class="axis"/>
       <line x1="${x}" x2="${x}" y1="${y}" y2="${y + h}" class="axis"/>
       ${line ? `<path d="${path}" class="seriesLine"/>` : ""}
       <g class="points">${circles}</g>
       ${extra}
-      <text x="${x + w / 2}" y="${y + h + 54}" class="label" text-anchor="middle">${xlabel}</text>
+      ${showXLabel ? `<text x="${x + w / 2}" y="${y + h + 54}" class="label" text-anchor="middle">${xlabel}</text>` : ""}
       <text transform="translate(${x - 58},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>
     </g>`;
 }
@@ -3121,7 +3130,11 @@ function renderEisFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
   const seriesColor = normalizeHexColor(style.seriesColor);
-  const svgSize = figureSvgSize(style, "paper");
+  // EIS needs a compact, wide canvas. Reusing the general paper preset made
+  // the two Bode panels feel detached from the Nyquist plot and left a large
+  // unused area below the figure.
+  const compactEisSize = figureSvgSize(style, "eis");
+  const svgSize = compactEisSize;
   const kind = ["eis-combined", "nyquist", "bode"].includes(d.figureKind) ? d.figureKind : "eis-combined";
   const rows = [...d.rows]
     .map((row) => {
@@ -3142,28 +3155,31 @@ function renderEisFigure(d) {
   const title = figureDatasetLabel(d);
   const nyquistTitle = kind === "nyquist" ? "Nyquist impedance" : "Nyquist plot";
   const nyquistYLabel = negativeImaginary ? "-Z'' / \u03a9" : "Z'' / \u03a9";
-  const margin = 88;
+  const margin = 68;
   const panels = [];
   if (kind !== "bode") {
     const isOnlyNyquist = kind === "nyquist";
     const side = isOnlyNyquist
       ? Math.min(svgSize.w - margin * 2, svgSize.h - 228)
-      : Math.max(300, Math.min(Math.round(svgSize.w * 0.42), Math.round(svgSize.h * 0.57)));
+      : Math.max(300, Math.min(Math.round(svgSize.w * 0.45), Math.round(svgSize.h * 0.70)));
     const nx = isOnlyNyquist ? Math.round((svgSize.w - side) / 2) : margin;
-    const ny = 126;
+    const ny = 110;
     panels.push(nyquistPanel({ x: nx, y: ny, w: side, h: side, title: nyquistTitle, xlabel: "Z' / \u03a9", ylabel: nyquistYLabel, points: nyquist }));
     if (!isOnlyNyquist) {
-      const bodeX = nx + side + 78;
+      const bodeX = nx + side + 64;
       const bodeW = Math.max(230, svgSize.w - bodeX - margin);
-      const bodeH = Math.max(145, Math.round((side - 58) / 2));
-      panels.push(panel({ x: bodeX, y: ny, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true }));
-      panels.push(panel({ x: bodeX, y: ny + side - bodeH, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
+      const bodeGap = 52;
+      const bodeH = Math.max(132, Math.round((side - bodeGap) / 2));
+      panels.push(panel({ x: bodeX, y: ny, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true, showXTickLabels: false, showXLabel: false }));
+      panels.push(panel({ x: bodeX, y: ny + bodeH + bodeGap, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
     }
   } else {
     const bodeW = svgSize.w - margin * 2;
-    const bodeH = Math.max(190, Math.round((svgSize.h - 330) / 2));
-    panels.push(panel({ x: margin, y: 132, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true }));
-    panels.push(panel({ x: margin, y: 132 + bodeH + 130, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
+    const bodeY = 116;
+    const bodeGap = 62;
+    const bodeH = Math.max(168, Math.round((svgSize.h - bodeY - 126 - bodeGap) / 2));
+    panels.push(panel({ x: margin, y: bodeY, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true, showXTickLabels: false, showXLabel: false }));
+    panels.push(panel({ x: margin, y: bodeY + bodeH + bodeGap, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
   }
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} ${d.cell.material ? "\u00b7 " + d.cell.material : ""} ${rows.length} points`;
@@ -3171,11 +3187,11 @@ function renderEisFigure(d) {
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
       <style>
-        .axis,.nyquistFrame{stroke:#111827;stroke-width:1.6}.grid{stroke:#e5e7eb;stroke-width:1}.nyquistGrid{stroke:#9ca3af;stroke-width:1;stroke-dasharray:2 7}
-        .seriesLine{fill:none;stroke:${seriesColor};stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:${seriesColor};stroke-width:1.8}
-        .nyquistLine{fill:none;stroke:${seriesColor};stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:${seriesColor};stroke-width:1.35}
-        .label{font:18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#374151}
-        .panelTitle{font:700 20px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:15px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#4b5563}
+        .axis,.nyquistFrame{stroke:#1f2937;stroke-width:1.35}.grid{stroke:#e2e8f0;stroke-width:.9}.nyquistGrid{stroke:#94a3b8;stroke-width:.9;stroke-dasharray:2 6}
+        .seriesLine{fill:none;stroke:${seriesColor};stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:${seriesColor};stroke-width:1.65}
+        .nyquistLine{fill:none;stroke:${seriesColor};stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:${seriesColor};stroke-width:1.25}
+        .label{font:16px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#475569}
+        .panelTitle{font:700 18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:14px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}
       </style>
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
@@ -3235,6 +3251,8 @@ function renderCycFigureViewPicker(dataset, activeKind = "") {
 function renderFigure(d) {
   renderCycFigureViewPicker(null);
   renderCycFigureElectrodeSummary(null);
+  syncProfileSeriesControls(null);
+  syncDqdvSeriesControls(null);
   if (!d) {
     $("figureCanvas").innerHTML = "";
     $("figureTitle").textContent = "\uc120\ud0dd\ud55c Dataset \uc5c6\uc74c";
@@ -3729,6 +3747,15 @@ function figureSvgSize(style, kind = "paper") {
       square: { w: 560, h: 560 },
       portrait: { w: 520, h: 650 },
     }
+    : kind === "eis"
+      ? {
+        // Combined EIS figures are naturally landscape: Nyquist uses a square
+        // panel while the two Bode panels share its height on the right.
+        journal: { w: 1080, h: 650 },
+        wide: { w: 1240, h: 620 },
+        square: { w: 860, h: 780 },
+        portrait: { w: 720, h: 850 },
+      }
     : {
       journal: { w: 1120, h: 840 },
       wide: { w: 1280, h: 720 },
@@ -3749,15 +3776,20 @@ function syncFigureControls(style = currentFigureStyle()) {
   if (gridInput) gridInput.checked = style.showGrid !== false;
   if (connectInput) connectInput.checked = style.connectPoints !== false;
   if (markerInput) markerInput.value = normalizeFigureMarkerSize(style.markerSize);
+  syncProfileSeriesControls(null);
+  syncDqdvSeriesControls(null);
 }
 
 function currentFigureStyle() {
-  if (!state.selectedId) return { seriesColor: "#0f766e", aspectRatio: "journal", showGrid: true, connectPoints: true, markerSize: 4 };
+  if (!state.selectedId) return { seriesColor: "#0f766e", rateColorOverrides: {}, seriesColorOverrides: {}, dqdvSeriesColorOverrides: {}, aspectRatio: "journal", showGrid: true, connectPoints: true, markerSize: 4 };
   const d = state.datasets.find((x) => x.id === state.selectedId);
   const saved = d?.figureEdits?.style;
   if (!state.figureStyles[state.selectedId]) {
     state.figureStyles[state.selectedId] = {
       seriesColor: normalizeHexColor(saved?.seriesColor || "#0f766e"),
+      rateColorOverrides: normalizeProfileSeriesColorOverrides(saved?.rateColorOverrides),
+      seriesColorOverrides: normalizeProfileSeriesColorOverrides(saved?.seriesColorOverrides),
+      dqdvSeriesColorOverrides: normalizeProfileSeriesColorOverrides(saved?.dqdvSeriesColorOverrides),
       aspectRatio: normalizeFigureAspectRatio(saved?.aspectRatio),
       showGrid: saved?.showGrid !== false,
       connectPoints: saved?.connectPoints !== false,
@@ -3794,6 +3826,9 @@ async function saveFigureEdits(silent = true) {
     state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
     state.figureStyles[saved.id] = {
       seriesColor: normalizeHexColor(saved.figureEdits?.style?.seriesColor),
+      rateColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.rateColorOverrides),
+      seriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.seriesColorOverrides),
+      dqdvSeriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.dqdvSeriesColorOverrides),
       aspectRatio: normalizeFigureAspectRatio(saved.figureEdits?.style?.aspectRatio),
       showGrid: saved.figureEdits?.style?.showGrid !== false,
       connectPoints: saved.figureEdits?.style?.connectPoints !== false,
@@ -3814,7 +3849,7 @@ async function saveFigureEdits(silent = true) {
 }
 
 function annotationSvg() {
-  return currentAnnotations().map((a, idx) => `<text class="userAnnotation${idx === state.selectedAnnotation ? " selected" : ""}" data-annotation-index="${idx}" x="${a.x}" y="${a.y}" style="font:700 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif">${escapeXml(a.text)}</text>`).join("");
+  return currentAnnotations().map((a, idx) => `<text class="userAnnotation${idx === state.selectedAnnotation ? " selected" : ""}" data-annotation-index="${idx}" x="${a.x}" y="${a.y}" style="font:400 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif">${escapeXml(a.text)}</text>`).join("");
 }
 
 function applyAnnotationsToSvg() {
@@ -3830,7 +3865,7 @@ function applyAnnotationsToSvg() {
     el.setAttribute("data-annotation-index", String(idx));
     el.setAttribute("x", String(a.x));
     el.setAttribute("y", String(a.y));
-    el.setAttribute("style", `font:700 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif;fill:${idx === state.selectedAnnotation ? "#0f766e" : "#111"};cursor:move;user-select:none`);
+    el.setAttribute("style", `font:400 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif;fill:${idx === state.selectedAnnotation ? "#0f766e" : "#111"};cursor:move;user-select:none`);
     svg.appendChild(el);
   });
   attachAnnotationDrag();
@@ -3965,6 +4000,66 @@ function changeFigureAspectRatio() {
   const style = currentFigureStyle();
   style.aspectRatio = normalizeFigureAspectRatio(input?.value);
   if (input) input.value = style.aspectRatio;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function changeProfileSeriesSelection() {
+  state.selectedProfileSeriesKey = String($("profileSeriesSelect")?.value || "");
+  renderCurrent();
+}
+
+function changeProfileSeriesColor() {
+  if (!state.selectedId || !state.selectedProfileSeriesKey) return;
+  const input = $("profileSeriesColor");
+  const style = currentFigureStyle();
+  const color = normalizeHexColor(input?.value, "");
+  if (!color) return;
+  style.rateColorOverrides = {
+    ...normalizeProfileSeriesColorOverrides(style.rateColorOverrides),
+    [state.selectedProfileSeriesKey]: color,
+  };
+  if (input) input.value = color;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function resetProfileSeriesColor() {
+  if (!state.selectedId || !state.selectedProfileSeriesKey) return;
+  const style = currentFigureStyle();
+  const overrides = normalizeProfileSeriesColorOverrides(style.rateColorOverrides);
+  delete overrides[state.selectedProfileSeriesKey];
+  style.rateColorOverrides = overrides;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function changeDqdvSeriesSelection() {
+  state.selectedDqdvSeriesKey = String($("dqdvSeriesSelect")?.value || "");
+  renderCurrent();
+}
+
+function changeDqdvSeriesColor() {
+  if (!state.selectedId || !state.selectedDqdvSeriesKey) return;
+  const input = $("dqdvSeriesColor");
+  const style = currentFigureStyle();
+  const color = normalizeHexColor(input?.value, "");
+  if (!color) return;
+  style.rateColorOverrides = {
+    ...normalizeProfileSeriesColorOverrides(style.rateColorOverrides),
+    [state.selectedDqdvSeriesKey]: color,
+  };
+  if (input) input.value = color;
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function resetDqdvSeriesColor() {
+  if (!state.selectedId || !state.selectedDqdvSeriesKey) return;
+  const style = currentFigureStyle();
+  const overrides = normalizeProfileSeriesColorOverrides(style.rateColorOverrides);
+  delete overrides[state.selectedDqdvSeriesKey];
+  style.rateColorOverrides = overrides;
   renderCurrent();
   saveFigureEdits(false);
 }
@@ -4394,6 +4489,115 @@ function traceStyleByRate(series, allSeries, colors) {
   };
 }
 
+function normalizeProfileSeriesColorOverrides(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key, color]) => String(key || "").trim() && /^#[0-9a-f]{6}$/i.test(String(color || "").trim()))
+    .map(([key, color]) => [String(key).trim(), String(color).trim().toLowerCase()]));
+}
+
+function cycProfileSeriesKey(series) {
+  const rate = String(series?.rateLabel || `cycle-${series?.cycle ?? "unknown"}`).trim().toLowerCase();
+  const direction = String(series?.direction || "trace").trim().toLowerCase();
+  const cycle = Number.isFinite(Number(series?.cycle)) ? Math.round(Number(series.cycle)) : "unknown";
+  return `${rate}|${direction}|${cycle}`;
+}
+
+function cycRateColorKey(series) {
+  return String(series?.rateLabel || `cycle-${series?.cycle ?? "unknown"}`).trim().toLowerCase().replace(/\s+/g, "");
+}
+
+function uniqueCycRateSeries(series) {
+  const seen = new Set();
+  return (Array.isArray(series) ? series : []).filter((item) => {
+    const key = cycRateColorKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function cycRateColorLabel(series) {
+  const rate = series?.rateLabel || `cycle ${series?.cycle ?? "?"}`;
+  return `${rate} (\ucda9\uc804/\ubc29\uc804 \ud568\uaed8)`;
+}
+
+function cycRateColor(style, series, allSeries, colors, legacyOverrides) {
+  const sharedOverrides = normalizeProfileSeriesColorOverrides(style?.rateColorOverrides);
+  const legacy = normalizeProfileSeriesColorOverrides(legacyOverrides);
+  return sharedOverrides[cycRateColorKey(series)]
+    || legacy[cycProfileSeriesKey(series)]
+    || traceStyleByRate(series, allSeries, colors).color;
+}
+
+function cycProfileSeriesColor(style, series, allSeries, colors) {
+  return cycRateColor(style, series, allSeries, colors, style?.seriesColorOverrides);
+}
+
+function syncProfileSeriesControls(profile, style = currentFigureStyle()) {
+  const controls = $("profileSeriesControls");
+  const select = $("profileSeriesSelect");
+  const color = $("profileSeriesColor");
+  const reset = $("profileSeriesColorReset");
+  if (!controls || !select || !color || !reset) return;
+  const series = Array.isArray(profile?.series) ? profile.series : [];
+  if (!series.length) {
+    controls.hidden = true;
+    state.selectedProfileSeriesKey = "";
+    select.replaceChildren();
+    return;
+  }
+  const rateSeries = uniqueCycRateSeries(series);
+  const keys = rateSeries.map(cycRateColorKey);
+  if (!keys.includes(state.selectedProfileSeriesKey)) state.selectedProfileSeriesKey = keys[0];
+  select.replaceChildren(...rateSeries.map((item) => {
+    const option = document.createElement("option");
+    option.value = cycRateColorKey(item);
+    option.textContent = cycRateColorLabel(item);
+    return option;
+  }));
+  select.value = state.selectedProfileSeriesKey;
+  const selected = rateSeries.find((item) => cycRateColorKey(item) === state.selectedProfileSeriesKey) || rateSeries[0];
+  const overrides = normalizeProfileSeriesColorOverrides(style?.rateColorOverrides);
+  color.value = cycProfileSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"]);
+  reset.disabled = !overrides[state.selectedProfileSeriesKey];
+  controls.hidden = false;
+}
+
+function cycDqdvSeriesColor(style, series, allSeries, colors) {
+  return cycRateColor(style, series, allSeries, colors, style?.dqdvSeriesColorOverrides);
+}
+
+function syncDqdvSeriesControls(analysis, style = currentFigureStyle()) {
+  const controls = $("dqdvSeriesControls");
+  const select = $("dqdvSeriesSelect");
+  const color = $("dqdvSeriesColor");
+  const reset = $("dqdvSeriesColorReset");
+  if (!controls || !select || !color || !reset) return;
+  const series = Array.isArray(analysis?.series) ? analysis.series : [];
+  if (!series.length) {
+    controls.hidden = true;
+    state.selectedDqdvSeriesKey = "";
+    select.replaceChildren();
+    return;
+  }
+  const rateSeries = uniqueCycRateSeries(series);
+  const keys = rateSeries.map(cycRateColorKey);
+  if (!keys.includes(state.selectedDqdvSeriesKey)) state.selectedDqdvSeriesKey = keys[0];
+  select.replaceChildren(...rateSeries.map((item) => {
+    const option = document.createElement("option");
+    option.value = cycRateColorKey(item);
+    option.textContent = cycRateColorLabel(item);
+    return option;
+  }));
+  select.value = state.selectedDqdvSeriesKey;
+  const selected = rateSeries.find((item) => cycRateColorKey(item) === state.selectedDqdvSeriesKey) || rateSeries[0];
+  const overrides = normalizeProfileSeriesColorOverrides(style?.rateColorOverrides);
+  color.value = cycDqdvSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"]);
+  reset.disabled = !overrides[state.selectedDqdvSeriesKey];
+  controls.hidden = false;
+}
+
 function cycVoltageProfileSeries(rows, rateSegments = []) {
   const sourceRows = (rows || []).map((row) => ({
     cycle: Number(row?.cycle),
@@ -4469,7 +4673,7 @@ function cycVoltageCurrentTrend(rows) {
   };
 }
 
-function cycProfilePanel({ x, y, w, h, profile }) {
+function cycProfilePanel({ x, y, w, h, profile, style }) {
   if (!profile.series.length) {
     return `
       <g>
@@ -4503,13 +4707,15 @@ function cycProfilePanel({ x, y, w, h, profile }) {
     xlabelOffset: 42,
     ylabelOffset: 64,
   });
-  const lines = profile.series.map((series, index) => {
-    const { color, dash } = traceStyleByRate(series, profile.series, colors);
+  const lines = profile.series.map((series) => {
+    const { dash } = traceStyleByRate(series, profile.series, colors);
+    const color = cycProfileSeriesColor(style, series, profile.series, colors);
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
     return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"${dashAttribute}/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
   }).join("");
   const legend = profile.series.map((series, index) => {
-    const { color, dash } = traceStyleByRate(series, profile.series, colors);
+    const { dash } = traceStyleByRate(series, profile.series, colors);
+    const color = cycProfileSeriesColor(style, series, profile.series, colors);
     const lx = x + 12 + (index % columns) * Math.max(126, Math.floor((w - 24) / columns));
     const ly = legendTop + Math.floor(index / columns) * legendRowHeight;
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
@@ -4721,7 +4927,7 @@ function dqdvUnavailableMessage(rows) {
   return "dQ/dV Fig\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \ud3ec\uc778\ud2b8\ub294 \uc788\uc9c0\ub9cc \uc720\ud6a8\ud55c \uc804\uc555-\uc6a9\ub7c9 \ubbf8\ubd84 \uad6c\uac04\uc744 \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.";
 }
 
-function cycDqdvPanel({ x, y, w, h, analysis, seriesColor }) {
+function cycDqdvPanel({ x, y, w, h, analysis, style }) {
   if (!analysis.series.length) {
     return `
       <g>
@@ -4745,21 +4951,28 @@ function cycDqdvPanel({ x, y, w, h, analysis, seriesColor }) {
     xlabelOffset: 48,
     ylabelOffset: 64,
   });
-  const colors = [normalizeHexColor(seriesColor), "#2563eb", "#db2777", "#b45309", "#7c3aed"];
+  const colors = [normalizeHexColor(style?.seriesColor || "#0f766e"), "#2563eb", "#db2777", "#b45309", "#7c3aed"];
+  const legendColumns = Math.min(3, Math.max(1, analysis.series.length));
+  const legendRows = Math.ceil(analysis.series.length / legendColumns);
+  const legendRowHeight = 20;
+  const legendTop = y + h + 34;
+  const legendHeight = 18 + legendRows * legendRowHeight;
+  const legendColumnWidth = Math.max(160, Math.floor((w - 28) / legendColumns));
   const lines = analysis.series.map((series, index) => {
-    const { color, dash } = traceStyleByRate(series, analysis.series, colors);
+    const { dash } = traceStyleByRate(series, analysis.series, colors);
+    const color = cycDqdvSeriesColor(style, series, analysis.series, colors);
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
     return `<path d="${linePath(series.points, axes.sx, axes.sy)}" class="profileLine" stroke="${color}"${dashAttribute}/>${markerPoints(series.points, axes.sx, axes.sy, "profilePt", 2.8).replaceAll('class="profilePt"', `class="profilePt" fill="${color}" stroke="${color}"`)}`;
   }).join("");
   const legend = analysis.series.map((series, index) => {
-    const { color, dash } = traceStyleByRate(series, analysis.series, colors);
-    const columns = Math.min(4, Math.max(1, analysis.series.length));
-    const lx = x + 12 + (index % columns) * Math.max(106, Math.floor((w - 24) / columns));
-    const ly = y + 18 + Math.floor(index / columns) * 18;
+    const { dash } = traceStyleByRate(series, analysis.series, colors);
+    const color = cycDqdvSeriesColor(style, series, analysis.series, colors);
+    const lx = x + 12 + (index % legendColumns) * legendColumnWidth;
+    const ly = legendTop + Math.floor(index / legendColumns) * legendRowHeight;
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
     return `<line x1="${lx}" x2="${lx + 16}" y1="${ly}" y2="${ly}" class="profileLegendLine" stroke="${color}"${dashAttribute}/><text x="${lx + 22}" y="${ly + 4}" class="profileLegend">${figureTraceLabel(series)}</text>`;
   }).join("");
-  return `<g><text x="${x}" y="${y - 32}" class="panelTitle">dQ/dV</text><text x="${x}" y="${y - 17}" class="caption">Raw within-cycle voltage-capacity trace only</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>${axes.svg}${lines}${legend}</g>`;
+  return `<g><text x="${x}" y="${y - 32}" class="panelTitle">dQ/dV</text><text x="${x}" y="${y - 17}" class="caption">Raw within-cycle voltage-capacity trace only</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>${axes.svg}${lines}<rect x="${x}" y="${legendTop - 12}" width="${w}" height="${legendHeight}" rx="5" class="profileLegendPanel"/>${legend}</g>`;
 }
 
 function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific capacity (mAh g-1)" }) {
@@ -4788,6 +5001,7 @@ function renderCycAlternativeFigure(d, mode) {
   const capPts = dischargeSeries(rows);
   const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
   const profile = cycVoltageProfileSeries(rows, rateSegments);
+  syncProfileSeriesControls(profile, style);
   const electricalTrend = cycVoltageCurrentTrend(rows);
   const hasRawVoltageProfile = profile.series.length > 0;
   const electricalTitle = hasRawVoltageProfile ? "Voltage-capacity profiles" : "Voltage/current trend (cycle summary)";
@@ -4808,7 +5022,7 @@ function renderCycAlternativeFigure(d, mode) {
   const performance = combined ? cycPerformancePanel({ x: padX, y: plotY, w: panelW, h: plotH, points: capPts, capacityAxisLabel }) : "";
   const electricalX = combined ? padX + panelW + gap : padX;
   const profilePanel = hasRawVoltageProfile
-    ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: plotH, profile })
+    ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: plotH, profile, style })
     : cycVoltageCurrentTrendPanel({ x: electricalX, y: plotY, w: panelW, h: plotH, trend: electricalTrend });
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
@@ -4840,23 +5054,27 @@ function renderCycDqdvFigure(d) {
   const capPts = dischargeSeries(rows);
   const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
   const analysis = cycDqdvSeries(rows, rateSegments);
+  syncDqdvSeriesControls(analysis, style);
   const svgSize = figureSvgSize(style, "paper");
   const padX = Math.max(72, Math.round(svgSize.w * 0.1));
   const plotY = Math.max(118, Math.round(svgSize.h * 0.2));
   const plotW = Math.max(380, svgSize.w - padX * 2);
   const plotH = Math.max(300, Math.round(svgSize.h * 0.58));
+  const legendColumns = Math.min(3, Math.max(1, analysis.series.length || 1));
+  const legendRows = analysis.series.length ? Math.ceil(analysis.series.length / legendColumns) : 0;
+  const figureHeight = svgSize.h + (legendRows ? 56 + legendRows * 20 : 0);
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - dQ/dV Fig - ${dqdvReadinessSummary(analysis)}`;
   const rateText = rateSegments.map((segment) => segment.label).join(" | ");
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "dQ/dV (raw trace only)"], ["C-rate traces", rateText || "Representative cycles"], ["Trace status", dqdvReadinessSummary(analysis)], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
   $("figureCanvas").innerHTML = `
-    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
+    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${figureHeight}" xmlns="http://www.w3.org/2000/svg">
       ${cycStyle(style.seriesColor, style.showGrid)}
-      <style>.profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}.profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}</style>
-      <rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
+      <style>.profileLine{fill:none;stroke-width:2}.profilePt{stroke-width:1.2}.profileLegend{font:9px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}.profileLegendLine{stroke-width:2}.profileLegendPanel{fill:#f8fafc;stroke:#d6e8eb;stroke-width:1}.profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}</style>
+      <rect width="${svgSize.w}" height="${figureHeight}" fill="#fff"/>
       <text x="${padX}" y="48" class="panelTitle">${escapeXml(title)}</text>
       <text x="${padX}" y="72" class="caption">dQ/dV is calculated only from raw within-cycle voltage-capacity traces</text>
-      ${cycDqdvPanel({ x: padX, y: plotY, w: plotW, h: plotH, analysis, seriesColor: style.seriesColor })}
+      ${cycDqdvPanel({ x: padX, y: plotY, w: plotW, h: plotH, analysis, style })}
     </svg>`;
   applyAnnotationsToSvg();
 }
@@ -7325,6 +7543,12 @@ document.addEventListener("DOMContentLoaded", () => {
   on("increaseAnnotationSize", "click", () => changeAnnotationSize(1));
   on("annotationSize", "change", () => changeAnnotationSize(0));
   on("figureSeriesColor", "input", changeFigureSeriesColor);
+  on("profileSeriesSelect", "change", changeProfileSeriesSelection);
+  on("profileSeriesColor", "input", changeProfileSeriesColor);
+  on("profileSeriesColorReset", "click", resetProfileSeriesColor);
+  on("dqdvSeriesSelect", "change", changeDqdvSeriesSelection);
+  on("dqdvSeriesColor", "input", changeDqdvSeriesColor);
+  on("dqdvSeriesColorReset", "click", resetDqdvSeriesColor);
   on("figureAspectRatio", "change", changeFigureAspectRatio);
   on("figureShowGrid", "change", changeFigureGridVisibility);
   on("figureConnectPoints", "change", changeFigureConnectionVisibility);

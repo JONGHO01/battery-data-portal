@@ -1658,6 +1658,53 @@ button.danger { background: var(--danger); }
   background: transparent;
   cursor: pointer;
 }
+
+.profileSeriesControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.profileSeriesControls[hidden] {
+  display: none;
+}
+
+.profileSeriesControls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profileSeriesControls select {
+  width: auto;
+  min-width: 155px;
+  max-width: 240px;
+  min-height: 30px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.profileSeriesControls input {
+  width: 34px;
+  height: 28px;
+  min-height: 28px !important;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profileSeriesControls button {
+  min-height: 32px !important;
+  padding: 0 10px !important;
+}
 .annotationTools input {
   min-height: 38px;
 }
@@ -3486,6 +3533,8 @@ pre {
   .sidebar { border-right: 0; border-bottom: 0; }
   .toolbar, .figureHeader { grid-template-columns: 1fr; display: grid; }
   .annotationTools { grid-template-columns: 1fr 96px; }
+  .profileSeriesControls { grid-column: 1 / -1; flex-wrap: wrap; }
+  .profileSeriesControls select { flex: 1 1 150px; max-width: none; }
   .metaGrid { min-width: 0; grid-template-columns: 1fr; }
   .loginBox { grid-template-columns: 1fr; }
   .registerBox { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 18px; }

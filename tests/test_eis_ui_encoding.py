@@ -47,3 +47,24 @@ class EisUiEncodingTests(unittest.TestCase):
         self.assertIn("const seriesColor = normalizeHexColor(style.seriesColor);", source)
         self.assertIn(".nyquistLine{fill:none;stroke:${seriesColor}", source)
         self.assertIn(".seriesLine{fill:none;stroke:${seriesColor}", source)
+
+    def test_eis_combined_layout_avoids_duplicate_bode_x_axis_labels(self):
+        source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
+
+        expected_fragments = [
+            "showXTickLabels = true, showXLabel = true",
+            "showXTickLabels ? `<text x=",
+            "showXLabel ? `<text x=",
+            "showXTickLabels: false, showXLabel: false",
+            "const compactEisSize = figureSvgSize(style, \"eis\");",
+        ]
+
+        for fragment in expected_fragments:
+            self.assertIn(fragment, source)
+
+    def test_nyquist_panel_does_not_reference_bode_axis_visibility_options(self):
+        source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
+        nyquist_source = source.split("function nyquistPanel", 1)[1].split("function renderEisFigure", 1)[0]
+
+        self.assertNotIn("showXLabel", nyquist_source)
+        self.assertNotIn("showXTickLabels", nyquist_source)

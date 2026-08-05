@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.1.63 - 2026-08-05
+- Refine the combined EIS Fig layout with a compact EIS-specific canvas, tighter three-panel spacing, lighter axes and grids, and a single shared Bode frequency axis to prevent overlapping labels.
+- Unify CYC voltage-profile and dQ/dV color selection by C-rate: a saved rate color applies to the matching charge and discharge traces in either view, while legacy per-trace overrides remain compatible as a fallback.
+- Make custom Fig annotations use the same regular Segoe UI / Noto Sans KR typography as figure captions and labels.
 - Add a compact CYC Fig electrode summary that separates raw filename mass labels from linked saved electrode-calculation values when available.
 - Normalize CYC performance-plot C-rate segment labels to the same typography and neutral text color as axis ticks.
 - Move the CYC voltage-capacity C-rate legend into a dedicated panel below the plot so charge/discharge labels do not cover measured curves; add a concise legend note for solid/dashed direction, C-rate time basis, and average-current labels.

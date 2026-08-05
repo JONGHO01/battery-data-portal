@@ -54,6 +54,59 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("style.connectPoints", self.app_js)
         self.assertIn('markerPoints(capPts, sx, sy, "capPt", style.markerSize)', self.app_js)
 
+    def test_voltage_profile_supports_shared_c_rate_colors(self):
+        """A C-rate override colors its charge/discharge pair and remains saved."""
+
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="profileSeriesSelect"', html)
+        self.assertIn('id="profileSeriesColor"', html)
+        self.assertIn('id="profileSeriesColorReset"', html)
+        self.assertIn("C-rate 선택", html)
+        self.assertIn("C-rate 색상", html)
+        self.assertIn("function cycProfileSeriesKey", self.app_js)
+        self.assertIn("function cycRateColorKey", self.app_js)
+        self.assertIn("function uniqueCycRateSeries", self.app_js)
+        self.assertIn("function cycRateColor", self.app_js)
+        self.assertIn(
+            "return cycRateColor(style, series, allSeries, colors, style?.seriesColorOverrides);",
+            self.app_js,
+        )
+        self.assertIn("function syncProfileSeriesControls", self.app_js)
+        self.assertIn("function changeProfileSeriesColor", self.app_js)
+        self.assertIn("function resetProfileSeriesColor", self.app_js)
+        self.assertIn("seriesColorOverrides", self.app_js)
+        self.assertIn("rateColorOverrides", self.app_js)
+        self.assertIn("cycProfileSeriesColor(style, series", self.app_js)
+        self.assertIn('on("profileSeriesSelect", "change", changeProfileSeriesSelection)', self.app_js)
+        self.assertIn('on("profileSeriesColor", "input", changeProfileSeriesColor)', self.app_js)
+        self.assertIn('on("profileSeriesColorReset", "click", resetProfileSeriesColor)', self.app_js)
+        self.assertIn("syncProfileSeriesControls(null);", self.app_js)
+
+    def test_dqdv_shares_c_rate_colors_and_has_a_bottom_legend(self):
+        """dQ/dV reads shared C-rate colors and keeps its legend below the plot."""
+
+        html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="dqdvSeriesControls"', html)
+        self.assertIn('id="dqdvSeriesSelect"', html)
+        self.assertIn('id="dqdvSeriesColor"', html)
+        self.assertIn('id="dqdvSeriesColorReset"', html)
+        self.assertIn('aria-label="dQ/dV C-rate 선택"', html)
+        self.assertIn("function cycDqdvSeriesColor", self.app_js)
+        self.assertIn(
+            "return cycRateColor(style, series, allSeries, colors, style?.dqdvSeriesColorOverrides);",
+            self.app_js,
+        )
+        self.assertIn("function syncDqdvSeriesControls", self.app_js)
+        self.assertIn("function changeDqdvSeriesColor", self.app_js)
+        self.assertIn("function resetDqdvSeriesColor", self.app_js)
+        self.assertIn("dqdvSeriesColorOverrides", self.app_js)
+        self.assertIn("style.rateColorOverrides = {", self.app_js)
+        self.assertIn("syncDqdvSeriesControls(analysis, style);", self.app_js)
+        self.assertIn("const legendTop = y + h + 34;", self.app_js)
+        self.assertIn('on("dqdvSeriesSelect", "change", changeDqdvSeriesSelection)', self.app_js)
+        self.assertIn('on("dqdvSeriesColor", "input", changeDqdvSeriesColor)', self.app_js)
+        self.assertIn('on("dqdvSeriesColorReset", "click", resetDqdvSeriesColor)', self.app_js)
+
     def test_cyc_connection_line_keeps_gaps_between_missing_cycles(self):
         self.assertIn('Math.abs(p.x - prev.x) > 1.5 ? "M" : "L"', self.app_js)
         self.assertIn('style.connectPoints && capPath ? `<path d="${capPath}" class="capLine"/>` : ""', self.app_js)
@@ -196,14 +249,6 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("function changeExcelTablePage(delta)", self.app_js)
         self.assertIn('id="excelTablePagination"', index_html)
 
-    def test_large_tables_are_paginated_without_reindexing_raw_rows(self):
-        index_html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("const TABLE_PAGE_SIZE = 250", self.app_js)
-        self.assertIn("const visibleRows = d.rows.slice(rowStart, rowEnd)", self.app_js)
-        self.assertIn("const rowIndex = rowStart + visibleIndex", self.app_js)
-        self.assertIn("function changeExcelTablePage(delta)", self.app_js)
-        self.assertIn('id="excelTablePagination"', index_html)
-
     def test_selected_cyc_figure_updates_the_create_action_label(self):
         """A dQ/dV selection must never still look like a performance-Fig action."""
 
@@ -270,6 +315,15 @@ class CycFigureUiTests(unittest.TestCase):
         expected = '.rateLabel{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}'
         self.assertIn(expected, self.app_js)
         self.assertNotIn('.rateLabel{font:10px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111}', self.app_js)
+
+    def test_user_annotations_match_figure_label_typography(self):
+        """Custom annotations should use the regular label font, not bold text."""
+        annotation_font = "font:400 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif"
+        self.assertEqual(self.app_js.count(annotation_font), 2)
+        self.assertNotIn(
+            "font:700 ${clampFontSize(a.size)}px 'Segoe UI','Noto Sans KR',Arial,sans-serif",
+            self.app_js,
+        )
 
     def test_empty_figure_and_table_messages_are_clear_korean(self):
         html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")

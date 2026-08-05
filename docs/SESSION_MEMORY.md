@@ -1,5 +1,7 @@
 # Session Memory
 
+> Release state (2026-08-05): `v0.1.63` packages the current CYC raw-record/Fig workflow refinements and combined EIS Figure layout for validation and GitHub push. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
+
 ## Project Goal
 
 Battery Data Portal is a Korean research workflow portal for battery experiment data. It should connect CYC, CV, and EIS files to experimental metadata; support reproducible analysis, figures, reports, and electrode C-rate calculations; and grow from a local tool into a shared, login-based web service.
@@ -11,6 +13,12 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 ```
 
 ## Current Task
+
+Current uncommitted EIS Fig layout refinement: combined Nyquist + Bode Figs must use a compact EIS-specific canvas with a balanced left Nyquist panel and stacked right Bode panels. The magnitude panel must not repeat the frequency tick labels or x-axis title; the phase panel owns the shared Bode frequency axis. Keep measured EIS rows, axes domains, plot data, and saved Fig settings unchanged. Verify the layout with the focused EIS UI test, JavaScript syntax validation, and a browser rendering check before release.
+
+Current uncommitted Fig typography refinement: custom text added through the Fig editor must use the regular Segoe UI / Noto Sans KR typography used by captions and labels. Selection can change only the text color; it must not force a bold font weight.
+
+Current uncommitted CYC shared C-rate color refinement: voltage-profile and dQ/dV controls select a C-rate, not an individual charge/discharge trace. A persistent `rateColorOverrides` entry colors the matching charge and discharge traces in both views. Legacy `seriesColorOverrides` and `dqdvSeriesColorOverrides` remain a read-only fallback for saved Figs that predate the shared palette. Keep the C-rate selector hidden outside its relevant Fig views, and keep the dQ/dV legend below the plot.
 
 Current uncommitted CYC integrated-record delivery: Saved Fig storage now gives each CYC Dataset a `통합` read-only workspace. It hydrates retained raw rows and displays the actual cycle performance, voltage/current, and dQ/dV outputs in one page together with a compact raw-row preview and linked electrode metadata. It must not change the saved Fig, Dataset rows, artifacts, or calculation profile.
 
@@ -43,6 +51,10 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- 2026-08-05: Combined EIS Fig rendering now uses a compact EIS canvas, a tighter Nyquist/Bode panel layout, reduced axis and grid visual weight, and one shared Bode frequency axis to remove overlapping labels.
+
+- 2026-08-04: Unreleased CYC color controls use one shared C-rate palette across voltage-profile and dQ/dV Figs. A selected rate color applies to both charge and discharge traces, and legacy per-trace saved overrides remain readable as a fallback.
 
 - 2026-08-04: Saved CYC Fig headers now show a compact left-side "간단 전극 정보" summary. It separates mass labels found in the raw filename from linked saved electrode-calculation values (profile, electrode mass, loading, area, and 1C). Filename values are never inferred to be loading or electrode area; unavailable values are omitted.
 
@@ -180,6 +192,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Treat an SDE parser-version mismatch as a safe reparse signal when its immutable local raw artifact is available. Do not substitute arbitrary graph limits for malformed stored impedance columns.
 
 ## Files Changed
+
+- Unreleased CYC shared C-rate color controls: `public/index.html`, `public/app.js`, `tests/test_cyc_figure_ui.py`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
 - Unreleased CYC Fig electrode summary: `public/index.html`, `public/style.css`, `public/app.js`, and `tests/test_cyc_figure_ui.py`.
 
@@ -327,6 +341,14 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-08-05: EIS layout refinement verified with `python -m unittest discover -s tests -p "test_eis_ui_encoding.py"` (5 passed), `node --check public/app.js`, and a local browser check at `http://localhost:4174`. The EIS Fig opened without a `showXLabel is not defined` runtime error; the compact Nyquist/Bode layout rendered with the magnitude panel no longer repeating the Bode frequency labels.
+
+- 2026-08-04: Three-round QA completed for the current uncommitted CYC/Fig work. Removed one duplicate UI test definition that Python was silently overwriting. CYC/Fig UI tests (46), parser/artifact/inspection tests (30), integrated CYC/analysis/dedup tests (18), and full discovery (172) passed. Direct parsing of the supplied WBCS WRD CYC file confirmed 33,221 rows, 35 cycles, charge/discharge data, valid voltage/capacity values, and dQ/dV output (70 series, 10,459 points). An isolated local browser run on port 4194 rendered Korean login UI without console errors; Node syntax, backend AST, UTF-8 replacement scan, and diff whitespace checks passed.
+
+- 2026-08-04 CYC shared C-rate color controls: bundled `node --check public/app.js`, focused CYC/release-history UI tests (51 checks), `git diff --check`, and the full unittest suite (172 checks) passed. Direct browser automation remains unavailable in this session.
+
+- 2026-08-04 Fig annotation typography: `.venv\Scripts\python.exe -m unittest tests.test_cyc_figure_ui tests.test_cyc_integrated_record_ui` passed (48 tests); bundled `node --check public/app.js` and `git diff --check` passed.
 
 - 2026-08-04 CYC Fig electrode summary: `python -m unittest tests.test_cyc_figure_ui` passed (43 tests); bundled `node --check public/app.js` passed. Visual browser automation remains unavailable in this Codex session.
 
