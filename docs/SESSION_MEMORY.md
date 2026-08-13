@@ -1,6 +1,6 @@
 # Session Memory
 
-> Release state (2026-08-05): `v0.1.63` packages the current CYC raw-record/Fig workflow refinements and combined EIS Figure layout for validation and GitHub push. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
+> Release state (2026-08-12): `v0.1.69` groups saved Figs by date and separates CYC, EIS, CV, and other figure types while preserving open, compare, and delete actions. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
 
 ## Project Goal
 
@@ -13,6 +13,12 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 ```
 
 ## Current Task
+
+Current v0.1.69 task: keep the growing saved-Fig gallery readable by grouping the newest date first and separating CYC, EIS, CV, and other figures inside each date group.
+
+Current v0.1.65 task: connect the administrator member directory to the protected raw-data workspace. Each member row provides an upload-data action, the raw-data request carries the selected `owner_id`, and the administrator can return to all-member data without leaving the workspace.
+
+Current v0.1.64 task: make multi-file WRD import resilient. Each file is analyzed, saved as a Dataset, and saved as a Fig independently with visible stage progress. Meaningful interrupted low-capacity traces are accepted from measured point count, capacity change, and voltage span; scientifically unusable two-point fragments are excluded without aborting the remaining files.
 
 Current uncommitted EIS Fig layout refinement: combined Nyquist + Bode Figs must use a compact EIS-specific canvas with a balanced left Nyquist panel and stacked right Bode panels. The magnitude panel must not repeat the frequency tick labels or x-axis title; the phase panel owns the shared Bode frequency axis. Keep measured EIS rows, axes domains, plot data, and saved Fig settings unchanged. Verify the layout with the focused EIS UI test, JavaScript syntax validation, and a browser rendering check before release.
 
@@ -51,6 +57,10 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- 2026-08-11: Administrator member rows now open the protected raw-data workspace scoped to the selected account. The view shows the active member filter, supports one-click return to all-member data, and retains the existing administrator-only second-confirmation gate. Focused UI/API tests and the full 179-test suite passed.
+
+- 2026-08-11: Seven supplied LFP WRD files were exercised through the parser and FastAPI inspect/Dataset/Fig path. Six files completed successfully. `260728_LFP_ref_0.003592_4_(0.1,0.33,1,2,re0.33).cyc_085.wrd` was correctly excluded because its candidate segments contain only two measured points and cannot support a meaningful cycling curve. Focused parser/UI tests and the full 177-test suite passed.
 
 - 2026-08-05: Combined EIS Fig rendering now uses a compact EIS canvas, a tighter Nyquist/Bode panel layout, reduced axis and grid visual weight, and one shared Bode frequency axis to remove overlapping labels.
 
@@ -192,6 +202,14 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Treat an SDE parser-version mismatch as a safe reparse signal when its immutable local raw artifact is available. Do not substitute arbitrary graph limits for malformed stored impedance columns.
 
 ## Files Changed
+
+- v0.1.69 saved Fig grouping: `public/app.js`, `public/style.css`, `tests/test_saved_figure_grouping_ui.py`, `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
+
+- v0.1.68 editable graph ranges: `public/index.html`, `public/style.css`, `public/app.js`, `tests/test_figure_axis_range_ui.py`, `VERSION`, `package.json`, `python_backend.py`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
+
+- v0.1.66 EIS readability: `public/app.js`, `tests/test_eis_ui_encoding.py`, `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
+
+- v0.1.65 member upload-data browsing: `python_backend.py`, `public/index.html`, `public/style.css`, `public/app.js`, `tests/test_admin_raw_data_http.py`, `tests/test_admin_member_data_ui.py`, `VERSION`, `package.json`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
 - Unreleased CYC shared C-rate color controls: `public/index.html`, `public/app.js`, `tests/test_cyc_figure_ui.py`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
@@ -341,6 +359,14 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-08-12 v0.1.69 saved Fig grouping: focused grouping tests (2), CYC/EIS regressions (51), `node --check public/app.js`, and `git diff --check` passed. Full discovery did not complete because the pre-existing `tests.test_admin_raw_data_http` integration setup stalled while starting/polling its separate Uvicorn process; do not report the full suite as passed for this release.
+
+- 2026-08-12 v0.1.68 editable graph ranges: `node --check public/app.js`, the full Python suite (183 tests), and `git diff --check` all passed after restoring EIS renderer compatibility.
+
+- 2026-08-11 v0.1.66 EIS readability: focused EIS UI regression reached 5/5, full suite reached 179/179 (both pytest processes remained alive after completion and were terminated by command timeouts), `node --check public/app.js` passed, and `git diff --check` passed.
+
+- 2026-08-11 v0.1.65 member upload-data browsing: focused administrator raw-data API/UI checks passed (3 tests), `node --check public/app.js` passed, and full unittest discovery passed (179 tests).
 
 - 2026-08-05: EIS layout refinement verified with `python -m unittest discover -s tests -p "test_eis_ui_encoding.py"` (5 passed), `node --check public/app.js`, and a local browser check at `http://localhost:4174`. The EIS Fig opened without a `showXLabel is not defined` runtime error; the compact Nyquist/Bode layout rendered with the magnitude panel no longer repeating the Bode frequency labels.
 

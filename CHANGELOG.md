@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.1.69 - 2026-08-12
+
+- Group saved Figs by date with the newest date expanded first.
+- Separate CYC, EIS, CV, and other Figs inside each date group.
+- Preserve existing open, compare, and delete actions in the grouped gallery.
+
+## v0.1.68 - 2026-08-12
+- Add editable X/Y minimum and maximum ranges to the Fig editor.
+- Save axis ranges independently for CYC performance, voltage/current, dQ/dV, EIS Nyquist, and CV figures.
+- Let users restore any selected graph to its automatic axis range.
+
+## v0.1.66 - 2026-08-11
+- Mark the actual highest-frequency Nyquist point as the EIS start point instead of assuming source row order.
+- Fit Nyquist axes closely to the measured impedance range with meaningful zero origins.
+- Increase the Nyquist/Bode panel spacing so magnitude and phase labels remain readable.
+
+## v0.1.65 - 2026-08-11
+- Add an `업로드 데이터 보기` action to each administrator member row.
+- Open the administrator raw-data browser filtered to the selected account, with a one-click return to all-member data.
+- Keep the existing administrator-only second-confirmation gate for raw dataset rows.
+
+## v0.1.64 - 2026-08-11
+- Accept meaningful interrupted low-capacity WRD traces when measured point count, capacity change, and voltage span provide enough evidence for a cycling curve.
+- Reject scientifically unusable tiny WRD fragments instead of turning them into misleading CYC Figs.
+- Process multi-file uploads one file at a time with visible analysis, Dataset-save, and Fig-save progress.
+- Continue the remaining batch after an invalid file and summarize successful and excluded filenames when processing finishes.
+
 ## v0.1.63 - 2026-08-05
 - Refine the combined EIS Fig layout with a compact EIS-specific canvas, tighter three-panel spacing, lighter axes and grids, and a single shared Bode frequency axis to prevent overlapping labels.
 - Unify CYC voltage-profile and dQ/dV color selection by C-rate: a saved rate color applies to the matching charge and discharge traces in either view, while legacy per-trace overrides remain compatible as a fallback.

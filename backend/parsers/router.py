@@ -13,7 +13,7 @@ from .wrd import read_wrd
 
 # Bump this whenever an instrument parser changes its interpreted values. The
 # portal uses it to distinguish data imported with older parser behavior.
-PARSER_VERSION = "parser-6"
+PARSER_VERSION = "parser-7"
 
 
 def parser_key_for_path(path: Path) -> str:

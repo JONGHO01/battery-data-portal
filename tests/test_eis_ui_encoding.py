@@ -24,13 +24,19 @@ class EisUiEncodingTests(unittest.TestCase):
         for label in expected_labels:
             self.assertIn(label, source)
 
-    def test_eis_fig_uses_a_connected_equal_aspect_nyquist_renderer(self):
+    def test_eis_fig_uses_a_clean_data_fitted_nyquist_renderer(self):
         source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
 
         expected_fragments = [
-            "function equalAspectNyquistBounds(points, width, height)",
+            "function cleanNyquistBounds(points)",
             "function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points })",
-            "const unitPerPixel = Math.max(xSpan / width, ySpan / height) * 1.12;",
+            "const domains = cleanNyquistBounds(points);",
+            'class="nyquistStart"',
+            'class="nyquistStartLabel">HF start</text>',
+            "frequency: row.frequency",
+            "const startPoint = points.reduce(",
+            "pointFrequency > bestFrequency",
+            "const combinedPanelGap = 140;",
             'const kind = ["eis-combined", "nyquist", "bode"].includes(d.figureKind)',
             'if (d.dataType === "eis") return renderEisFigure(d);',
             'class="nyquistLine"',
@@ -40,6 +46,8 @@ class EisUiEncodingTests(unittest.TestCase):
 
         for fragment in expected_fragments:
             self.assertIn(fragment, source)
+
+        self.assertNotIn("function equalAspectNyquistBounds", source)
 
     def test_eis_fig_uses_the_saved_series_color(self):
         source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")

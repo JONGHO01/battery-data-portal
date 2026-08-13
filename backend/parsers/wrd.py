@@ -20,6 +20,9 @@ from pathlib import Path
 MAX_POINTS_PER_TRACE = 2_000
 MAX_TOTAL_CYC_POINTS = 35_000
 MIN_CAPACITY_AH = 1e-4
+MIN_INCOMPLETE_TRACE_POINTS = 5
+MIN_INCOMPLETE_CAPACITY_AH = 1e-6
+MIN_INCOMPLETE_VOLTAGE_SPAN = 0.05
 CONTINUATION_CAPACITY_RATIO = 0.2
 
 
@@ -167,12 +170,36 @@ def read_wrd(path: Path) -> tuple[list[list], str]:
     if current_segment:
         segments.append(current_segment)
 
-    candidates = []
+    segment_records = []
     for segment in segments:
         direction = segment[0]["direction"]
         max_q = max(_capacity_for_direction(item, direction) for item in segment)
-        if max_q >= MIN_CAPACITY_AH:
-            candidates.append({"direction": direction, "segment": segment, "max_q": max_q})
+        voltages = [item["voltage"] for item in segment]
+        segment_records.append(
+            {
+                "direction": direction,
+                "segment": segment,
+                "max_q": max_q,
+                "voltage_span": max(voltages) - min(voltages),
+            }
+        )
+
+    candidates = [
+        candidate for candidate in segment_records if candidate["max_q"] >= MIN_CAPACITY_AH
+    ]
+    if not candidates:
+        # Low-mass or interrupted experiments can finish below the normal
+        # 0.1 mAh threshold. Keep them only when they still contain a measured
+        # trace with enough points, capacity change, and voltage movement.
+        # This rejects short binary metadata fragments while preserving useful
+        # partial cycling data for diagnosis and comparison.
+        candidates = [
+            candidate
+            for candidate in segment_records
+            if len(candidate["segment"]) >= MIN_INCOMPLETE_TRACE_POINTS
+            and candidate["max_q"] >= MIN_INCOMPLETE_CAPACITY_AH
+            and candidate["voltage_span"] >= MIN_INCOMPLETE_VOLTAGE_SPAN
+        ]
 
     if len(candidates) >= 3:
         typical_q = median(candidate["max_q"] for candidate in candidates)
@@ -235,5 +262,8 @@ def read_wrd(path: Path) -> tuple[list[list], str]:
             )
         previous_direction = direction
     if len(rows) == 1:
-        raise RuntimeError("No supported charge or discharge capacity segments were found in the WRD file.")
+        raise RuntimeError(
+            "The WRD file does not contain enough measured points, capacity change, "
+            "or voltage span for a cycling curve."
+        )
     return rows, "WRD charge/discharge traces"

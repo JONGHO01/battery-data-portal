@@ -23,7 +23,7 @@ class BatchFigureUploadUiTests(unittest.TestCase):
         for expected in (
             "const BATCH_FIGURE_FILE_LIMIT = 10;",
             "async function createBatchFigures()",
-            "for (const file of files)",
+            "for (const [index, file] of files.entries())",
             "await inspectFileUpload(file);",
             "await saveDatasetFromInspection(",
             "await saveFigureRecord(",
@@ -32,6 +32,19 @@ class BatchFigureUploadUiTests(unittest.TestCase):
             r"\uac19\uc740 \uc6d0\ubcf8 \ud30c\uc77c\uc774\ub77c \uae30\uc874 Dataset\uacfc Fig\ub97c \uc7ac\uc0ac\uc6a9\ud588\uc2b5\ub2c8\ub2e4.",
         ):
             self.assertIn(expected, self.app_js)
+
+    def test_batch_reports_each_file_progress_without_stopping_the_batch(self):
+        for expected in (
+            r"${index + 1}/${files.length} \ud30c\uc77c \ubd84\uc11d \uc911",
+            r"${index + 1}/${files.length} Dataset \uc800\uc7a5 \uc911",
+            r"${index + 1}/${files.length} Fig \uc800\uc7a5 \uc911",
+            r"\ub2e4\uc74c \ud30c\uc77c\uc744 \uacc4\uc18d \ucc98\ub9ac\ud569\ub2c8\ub2e4.",
+            r"\uac1c \uc131\uacf5",
+            r"\uac1c \uc81c\uc678",
+        ):
+            self.assertIn(expected, self.app_js)
+        self.assertIn("state.batchFigureResults.push({", self.app_js)
+        self.assertIn("ok: false", self.app_js)
 
     def test_primary_analysis_button_starts_batch_workflow_for_multiple_files(self):
         self.assertIn("if (files.length > 1) return createBatchFigures();", self.app_js)

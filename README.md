@@ -1,16 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.63-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.69-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.63** - Refined CYC raw-data record views, shared C-rate Fig controls, and the combined EIS Figure layout.
+> Current release: **v0.1.69** - Saved Figs are grouped by date and separated into CYC, EIS, CV, and other sections.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.57**입니다. 처음에는 로컬 연구 보조 도구로 시작하고, 이후에는 로그인 기반 웹 서비스처럼 여러 컴퓨터에서 같은 데이터를 확인할 수 있는 구조로 확장하는 것을 목표로 합니다.
+현재 버전은 **v0.1.69**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +22,12 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.69 | 2026-08-12 | Group saved Figs by date and separate CYC, EIS, CV, and other figures |
+| v0.1.68 | 2026-08-12 | Add saved manual X/Y graph ranges with one-click automatic range restore |
+| v0.1.67 | 2026-08-11 | Mark the EIS high-frequency start and refine Nyquist/Bode layout bounds |
+| v0.1.66 | 2026-08-11 | Clarify the EIS high-frequency start and prevent clipped Nyquist/Bode labels |
+| v0.1.65 | 2026-08-11 | Browse administrator raw-data records filtered to a selected member account |
+| v0.1.64 | 2026-08-11 | Recover meaningful interrupted WRD traces and continue multi-file batches after invalid files |
 | v0.1.63 | 2026-08-05 | Refine CYC raw-data record views and shared C-rate Figure controls, plus a balanced combined EIS layout |
 | v0.1.62 | 2026-07-23 | Recover neutral WBCS WRD specific-capacity columns and legacy empty capacity rows for saved CYC Figs |
 | v0.1.61 | 2026-07-23 | Page editable tables at 250 rows while preserving every raw point for CYC and dQ/dV analysis |

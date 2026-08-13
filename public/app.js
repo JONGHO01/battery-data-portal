@@ -1,9 +1,54 @@
-const PORTAL_VERSION = "0.1.63";
+const PORTAL_VERSION = "0.1.69";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.69",
+    "date": "2026-08-12",
+    "changes": [
+      "Group saved Figs by date with the newest date expanded first.",
+      "Separate CYC, EIS, CV, and other Figs inside each date group.",
+      "Preserve existing open, compare, and delete actions in the grouped gallery."
+    ]
+  },
+  {
+    "version": "0.1.68",
+    "date": "2026-08-12",
+    "changes": [
+      "Add editable X/Y minimum and maximum ranges to the Fig editor.",
+      "Save axis ranges independently for CYC performance, voltage/current, dQ/dV, EIS Nyquist, and CV figures.",
+      "Restore any selected graph to its automatic axis range with one click."
+    ]
+  },
+  {
+    "version": "0.1.67",
+    "date": "2026-08-11",
+    "changes": [
+      "Mark the actual highest-frequency Nyquist point as the EIS start point.",
+      "Fit Nyquist axes closely to the measured impedance range with meaningful zero origins.",
+      "Increase the Nyquist/Bode panel spacing so Bode labels are not clipped."
+    ]
+  },
+  {
+    "version": "0.1.65",
+    "date": "2026-08-11",
+    "changes": [
+      "Add an upload-data action to every administrator member row.",
+      "Open the administrator raw-data browser filtered to the selected account, with a one-click return to all-member data.",
+      "Keep member datasets protected by the existing administrator-only second confirmation gate."
+    ]
+  },
+  {
+    "version": "0.1.64",
+    "date": "2026-08-11",
+    "changes": [
+      "Accept meaningful interrupted low-capacity WRD traces when measured point count, capacity change, and voltage span provide enough evidence for a cycling curve.",
+      "Reject scientifically unusable tiny WRD fragments without stopping the rest of a multi-file batch.",
+      "Show per-file analysis, Dataset-save, and Fig-save progress and summarize successful and excluded files at the end of a batch."
+    ]
+  },
   {
     "version": "0.1.63",
     "date": "2026-08-05",
@@ -400,7 +445,7 @@ const RELEASE_HISTORY = [
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const TABLE_PAGE_SIZE = 250;
 const ADMIN_RAW_PAGE_SIZE = 250;
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null };
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null, adminRawOwnerId: "", adminRawOwnerName: "" };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -832,10 +877,11 @@ function renderUsers() {
   }
   body.innerHTML = users.map((user) => {
     const isSelf = user.id === state.user.id;
+    const dataAction = `<button class="smallReset" data-view-user-data="${escapeAttr(user.id)}">\uc5c5\ub85c\ub4dc \ub370\uc774\ud130 \ubcf4\uae30</button>`;
     const resetAction = `<button class="smallReset" data-reset-user="${escapeAttr(user.id)}">\uc784\uc2dc \ube44\ubc00\ubc88\ud638 \uc7ac\uc124\uc815</button>`;
     const action = isSelf
-      ? `${resetAction}<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
-      : `${resetAction}<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
+      ? `${dataAction}${resetAction}<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
+      : `${dataAction}${resetAction}<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
     const organizations = Array.isArray(user.organizations) ? user.organizations : [];
     const organizationText = organizations.length
       ? organizations.map((organization) => `${organization.name} (${organizationRoleLabel(organization.role)})`).join(", ")
@@ -848,6 +894,35 @@ function renderUsers() {
   for (const btn of body.querySelectorAll("[data-reset-user]")) {
     btn.addEventListener("click", () => resetUserPassword(btn.dataset.resetUser));
   }
+  for (const btn of body.querySelectorAll("[data-view-user-data]")) {
+    btn.addEventListener("click", () => openUserRawData(btn.dataset.viewUserData).catch((error) => setStatus(error.message)));
+  }
+}
+
+async function openUserRawData(userId) {
+  const selectedUser = state.users.find((item) => item.id === userId);
+  state.adminRawOwnerId = userId;
+  state.adminRawOwnerName = selectedUser?.name || userId;
+  state.adminRawDatasets = [];
+  state.adminRawSelectedId = "";
+  state.adminRawPreview = null;
+  openWorkspaceView("adminRawData");
+  if (hasAdminRawAccess()) {
+    await loadAdminRawDatasets();
+  } else {
+    renderAdminRawData();
+    $("adminRawAccessPassword")?.focus();
+  }
+}
+
+async function clearAdminRawOwnerFilter() {
+  state.adminRawOwnerId = "";
+  state.adminRawOwnerName = "";
+  state.adminRawDatasets = [];
+  state.adminRawSelectedId = "";
+  state.adminRawPreview = null;
+  if (hasAdminRawAccess()) await loadAdminRawDatasets();
+  else renderAdminRawData();
 }
 
 function clearAdminRawAccess() {
@@ -956,7 +1031,10 @@ async function loadAdminRawDatasets() {
     renderAdminRawData();
     return;
   }
-  const response = await fetch("/api/admin/raw-data/datasets", { headers: adminRawHeaders() });
+  const params = new URLSearchParams();
+  if (state.adminRawOwnerId) params.set("owner_id", state.adminRawOwnerId);
+  const query = params.toString();
+  const response = await fetch(`/api/admin/raw-data/datasets${query ? `?${query}` : ""}`, { headers: adminRawHeaders() });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) clearAdminRawAccess();
@@ -1001,6 +1079,8 @@ function renderAdminRawData() {
   const accessPanel = $("adminRawAccessPanel");
   const browser = $("adminRawDataBrowser");
   const refresh = $("refreshAdminRawData");
+  const ownerFilter = $("adminRawOwnerFilter");
+  const ownerFilterText = $("adminRawOwnerFilterText");
   if (!accessPanel || !browser || !refresh) return;
   const isAdmin = state.user?.role === "admin";
   const active = isAdmin && hasAdminRawAccess();
@@ -1008,6 +1088,12 @@ function renderAdminRawData() {
   browser.classList.toggle("hidden", !active);
   refresh.classList.toggle("hidden", !active);
   refresh.disabled = !active;
+  if (ownerFilter) ownerFilter.classList.toggle("hidden", !state.adminRawOwnerId);
+  if (ownerFilterText) {
+    ownerFilterText.textContent = state.adminRawOwnerId
+      ? `${state.adminRawOwnerName || state.adminRawOwnerId} (${state.adminRawOwnerId})`
+      : "";
+  }
   if (!isAdmin) {
     setAdminRawDataNotice("\uad00\ub9ac\uc790\ub9cc \uc774 \ud654\uba74\uc744 \uc5f4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", true);
     return;
@@ -1626,9 +1712,10 @@ async function createBatchFigures() {
   setBusy(true, `${files.length}\uac1c \ud30c\uc77c\uc744 \ubd84\uc11d\ud558\uace0 Dataset \ubc0f Fig\ub97c \uc0dd\uc131\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.`, 0);
 
   try {
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
       try {
-        setStatus(`${file.name} \ubd84\uc11d \uc911...`);
+        setBusy(true, `${index + 1}/${files.length} \ud30c\uc77c \ubd84\uc11d \uc911: ${file.name}`, 0);
+        setStatus(`${index + 1}/${files.length} ${file.name} \ubd84\uc11d \uc911...`);
         const { res, body } = await inspectFileUpload(file);
         if (!res.ok) {
           throw new Error(apiErrorMessage(body, "\ud30c\uc77c \ubd84\uc11d\uc744 \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
@@ -1641,10 +1728,14 @@ async function createBatchFigures() {
           ...cell,
           sampleName: cell.sampleName || baseNameWithoutExtension(file.name),
         };
+        setBusy(true, `${index + 1}/${files.length} Dataset \uc800\uc7a5 \uc911: ${file.name}`, 0);
+        setStatus(`${index + 1}/${files.length} ${file.name} Dataset \uc800\uc7a5 \uc911...`);
         const saved = await saveDatasetFromInspection(body, dataType, fileCell, BATCH_FIGURE_KIND_BY_TYPE[dataType]);
         if (!state.datasets.some((dataset) => dataset.id === saved.id)) state.datasets.unshift(saved);
         let note = saved.reusedExistingSource ? "\uac19\uc740 \uc6d0\ubcf8 \ud30c\uc77c\uc774\ub77c \uae30\uc874 Dataset\uacfc Fig\ub97c \uc7ac\uc0ac\uc6a9\ud588\uc2b5\ub2c8\ub2e4." : "";
         try {
+          setBusy(true, `${index + 1}/${files.length} Fig \uc800\uc7a5 \uc911: ${file.name}`, 0);
+          setStatus(`${index + 1}/${files.length} ${file.name} Fig \uc800\uc7a5 \uc911...`);
           await saveFigureRecord(saved);
         } catch (error) {
           note = `Dataset\uc740 \uc800\uc7a5\ud588\uc9c0\ub9cc Fig \uae30\ub85d\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`;
@@ -1652,6 +1743,7 @@ async function createBatchFigures() {
         state.batchFigureResults.push({ ok: true, fileName: file.name, dataType, datasetId: saved.id, note });
       } catch (error) {
         state.batchFigureResults.push({ ok: false, fileName: file.name, message: error.message || "\ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4." });
+        setStatus(`${index + 1}/${files.length} ${file.name} \uc81c\uc678: ${error.message || "\ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."} \ub2e4\uc74c \ud30c\uc77c\uc744 \uacc4\uc18d \ucc98\ub9ac\ud569\ub2c8\ub2e4.`);
       }
       renderBatchFigureResults();
     }
@@ -1660,7 +1752,13 @@ async function createBatchFigures() {
       applyFilters();
     }
     const completed = state.batchFigureResults.filter((item) => item.ok).length;
-    setStatus(`\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131 \uc644\ub8cc: ${completed}/${files.length}\uac1c`);
+    const failed = state.batchFigureResults.filter((item) => !item.ok);
+    const failedNames = failed.map((item) => item.fileName).join(", ");
+    setStatus(
+      failed.length
+        ? `\uc5ec\ub7ec \ud30c\uc77c \ucc98\ub9ac \uc644\ub8cc: ${completed}\uac1c \uc131\uacf5, ${failed.length}\uac1c \uc81c\uc678 (${failedNames}). \uc544\ub798 \uacb0\uacfc\uc5d0\uc11c \uc81c\uc678 \uc0ac\uc720\ub97c \ud655\uc778\ud574 \uc8fc\uc138\uc694.`
+        : `\uc5ec\ub7ec \ud30c\uc77c \ucc98\ub9ac \uc644\ub8cc: ${completed}/${files.length}\uac1c Dataset \ubc0f Fig \uc800\uc7a5 \uc131\uacf5`,
+    );
   } catch (error) {
     setStatus(`\uc5ec\ub7ec \ud30c\uc77c Fig \uc0dd\uc131 \uc911 \uc624\ub958: ${error.message}`);
   } finally {
@@ -3055,7 +3153,7 @@ function ticks(min, max, count = 5) {
   return Array.from({ length: count }, (_, i) => min + step * i);
 }
 
-function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "", showXTickLabels = true, showXLabel = true }) {
+function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "", showXTickLabels = true, showXLabel = true, yLabelOffset = 58 }) {
   const sx = logX ? logScale(xDomain, [x, x + w]) : makeScale(xDomain, [x, x + w]);
   const sy = logY ? logScale(yDomain, [y + h, y]) : makeScale(yDomain, [y + h, y]);
   const path = points.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(2)},${sy(p.y).toFixed(2)}`).join(" ");
@@ -3076,43 +3174,52 @@ function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, lo
       <g class="points">${circles}</g>
       ${extra}
       ${showXLabel ? `<text x="${x + w / 2}" y="${y + h + 54}" class="label" text-anchor="middle">${xlabel}</text>` : ""}
-      <text transform="translate(${x - 58},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>
+      <text transform="translate(${x - yLabelOffset},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>
     </g>`;
 }
 
-function equalAspectNyquistBounds(points, width, height) {
+function cleanNyquistBounds(points) {
   const xs = points.map((point) => point.x).filter(Number.isFinite);
   const ys = points.map((point) => point.y).filter(Number.isFinite);
   if (!xs.length || !ys.length) return { x: [0, 1], y: [0, 1] };
-  const xMin = Math.min(...xs, 0);
-  const xMax = Math.max(...xs, 0);
-  const yMin = Math.min(...ys, 0);
-  const yMax = Math.max(...ys, 0);
-  const xSpan = Math.max(xMax - xMin, 1e-9);
-  const ySpan = Math.max(yMax - yMin, 1e-9);
-  // One ohm occupies the same physical distance on both axes. Without this,
-  // a semicircle can look flattened or stretched just because of the panel size.
-  const unitPerPixel = Math.max(xSpan / width, ySpan / height) * 1.12;
-  const displayXSpan = unitPerPixel * width;
-  const displayYSpan = unitPerPixel * height;
-  const xCenter = (xMin + xMax) / 2;
-  const yCenter = (yMin + yMax) / 2;
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+  const xSpan = Math.max(xMax - xMin, Math.abs(xMax) * 0.08, 1e-9);
+  const ySpan = Math.max(yMax - yMin, Math.abs(yMax) * 0.08, 1e-9);
+  // Keep the data close to the axes. The previous forced square scale created
+  // large negative margins and made the first high-frequency point ambiguous.
+  const xLower = xMin >= 0 ? 0 : xMin - xSpan * 0.06;
+  const yLower = yMin >= 0 ? 0 : yMin - ySpan * 0.06;
   return {
-    x: [xCenter - displayXSpan / 2, xCenter + displayXSpan / 2],
-    y: [yCenter - displayYSpan / 2, yCenter + displayYSpan / 2],
+    x: [xLower, xMax + xSpan * 0.06],
+    y: [yLower, yMax <= 0 ? 0 : yMax + ySpan * 0.08],
   };
 }
 
 function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points }) {
-  const domains = equalAspectNyquistBounds(points, w, h);
-  const sx = makeScale(domains.x, [x, x + w]);
-  const sy = makeScale(domains.y, [y + h, y]);
-  const xTicks = ticks(domains.x[0], domains.x[1]);
-  const yTicks = ticks(domains.y[0], domains.y[1]);
+  const domains = cleanNyquistBounds(points);
+  const resolvedDomains = resolveFigureAxisDomains(domains.x, domains.y, "eis");
+  const sx = makeScale(resolvedDomains.x, [x, x + w]);
+  const sy = makeScale(resolvedDomains.y, [y + h, y]);
+  const xTicks = ticks(resolvedDomains.x[0], resolvedDomains.x[1]);
+  const yTicks = ticks(resolvedDomains.y[0], resolvedDomains.y[1]);
   const path = linePath(points, sx, sy);
   const pointStep = Math.max(1, Math.ceil(points.length / 48));
   const visiblePoints = points.filter((_, index) => index % pointStep === 0 || index === points.length - 1);
   const pointMarkers = markerPoints(visiblePoints, sx, sy, "nyquistPoint", points.length > 90 ? 1.7 : 2.7);
+  const startPoint = points.reduce((best, point) => {
+    const pointFrequency = Number(point.frequency);
+    const bestFrequency = Number(best?.frequency);
+    if (!Number.isFinite(pointFrequency)) return best;
+    if (!best || !Number.isFinite(bestFrequency) || pointFrequency > bestFrequency) return point;
+    return best;
+  }, points[0]);
+  const startX = startPoint ? sx(startPoint.x) : 0;
+  const startY = startPoint ? sy(startPoint.y) : 0;
+  const startLabelX = Math.min(x + w - 54, startX + 10);
+  const startLabelY = Math.max(y + 17, startY - 9);
   return `
     <g class="plot nyquistPlot">
       <text x="${x}" y="${y - 18}" class="panelTitle">${title}</text>
@@ -3121,6 +3228,7 @@ function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points }) {
       ${yTicks.map((value) => `<line x1="${x}" x2="${x + w}" y1="${sy(value)}" y2="${sy(value)}" class="nyquistGrid"/><text x="${x - 10}" y="${sy(value) + 4}" class="tick" text-anchor="end">${fmt(value, 3)}</text>`).join("")}
       <path d="${path}" class="nyquistLine"/>
       <g>${pointMarkers}</g>
+      ${startPoint ? `<circle cx="${startX.toFixed(2)}" cy="${startY.toFixed(2)}" r="4.8" class="nyquistStart"/><text x="${startLabelX.toFixed(2)}" y="${startLabelY.toFixed(2)}" class="nyquistStartLabel">HF start</text>` : ""}
       <text x="${x + w / 2}" y="${y + h + 54}" class="label" text-anchor="middle">${xlabel}</text>
       <text transform="translate(${x - 58},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>
     </g>`;
@@ -3146,7 +3254,11 @@ function renderEisFigure(d) {
     .filter((row) => Number.isFinite(row.frequency) && row.frequency > 0 && Number.isFinite(row.zreal) && Number.isFinite(row.zimag))
     .sort((left, right) => right.frequency - left.frequency);
   const negativeImaginary = rows.filter((row) => row.zimag < 0).length >= rows.filter((row) => row.zimag > 0).length;
-  const nyquist = rows.map((row) => ({ x: row.zreal, y: negativeImaginary ? -row.zimag : row.zimag }));
+  const nyquist = rows.map((row) => ({
+    x: row.zreal,
+    y: negativeImaginary ? -row.zimag : row.zimag,
+    frequency: row.frequency,
+  }));
   const bodeMag = rows.map((row) => ({ x: row.frequency, y: row.mag }));
   const bodePhase = rows.map((row) => ({ x: row.frequency, y: -row.phase }));
   const fDomain = positiveLogBounds(rows.map((row) => row.frequency));
@@ -3166,12 +3278,13 @@ function renderEisFigure(d) {
     const ny = 110;
     panels.push(nyquistPanel({ x: nx, y: ny, w: side, h: side, title: nyquistTitle, xlabel: "Z' / \u03a9", ylabel: nyquistYLabel, points: nyquist }));
     if (!isOnlyNyquist) {
-      const bodeX = nx + side + 64;
+      const combinedPanelGap = 140;
+      const bodeX = nx + side + combinedPanelGap;
       const bodeW = Math.max(230, svgSize.w - bodeX - margin);
       const bodeGap = 52;
       const bodeH = Math.max(132, Math.round((side - bodeGap) / 2));
-      panels.push(panel({ x: bodeX, y: ny, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true, showXTickLabels: false, showXLabel: false }));
-      panels.push(panel({ x: bodeX, y: ny + bodeH + bodeGap, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true }));
+      panels.push(panel({ x: bodeX, y: ny, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "|Z| / \u03a9", title: "Bode magnitude", xDomain: fDomain, yDomain: magDomain, points: bodeMag, logX: true, logY: true, line: true, showXTickLabels: false, showXLabel: false, yLabelOffset: 40 }));
+      panels.push(panel({ x: bodeX, y: ny + bodeH + bodeGap, w: bodeW, h: bodeH, xlabel: "Frequency / Hz", ylabel: "-Phase angle, -\u03b8 / deg", title: "Bode phase", xDomain: fDomain, yDomain: phaseDomain, points: bodePhase, logX: true, line: true, yLabelOffset: 40 }));
     }
   } else {
     const bodeW = svgSize.w - margin * 2;
@@ -3190,6 +3303,7 @@ function renderEisFigure(d) {
         .axis,.nyquistFrame{stroke:#1f2937;stroke-width:1.35}.grid{stroke:#e2e8f0;stroke-width:.9}.nyquistGrid{stroke:#94a3b8;stroke-width:.9;stroke-dasharray:2 6}
         .seriesLine{fill:none;stroke:${seriesColor};stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.points circle{fill:#fff;stroke:${seriesColor};stroke-width:1.65}
         .nyquistLine{fill:none;stroke:${seriesColor};stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}.nyquistPoint{fill:#fff;stroke:${seriesColor};stroke-width:1.25}
+        .nyquistStart{fill:${seriesColor};stroke:#fff;stroke-width:1.8}.nyquistStartLabel{font:700 11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:${seriesColor};paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
         .label{font:16px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.tick{font:12px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#475569}
         .panelTitle{font:700 18px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#111827}.caption{font:14px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}
       </style>
@@ -3361,14 +3475,24 @@ function renderLegacyCycFigure(d) {
   $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const panels = [];
   if (d.figureKind !== "voltage-profile" && capRows.length) {
-    panels.push(panel({ x: 95, y: 130, w: 420, h: 390, xlabel: "Cycle number", ylabel: "Capacity (mAh g-1)", title: "Cycling performance", xDomain: niceBounds(capRows.map((r) => r.cycle)), yDomain: niceBounds(capRows.map((r) => r.capacity)), points: capRows.map((r) => ({ x: r.cycle, y: r.capacity })) }));
+    const domains = resolveFigureAxisDomains(
+      niceBounds(capRows.map((r) => r.cycle)),
+      niceBounds(capRows.map((r) => r.capacity)),
+      "performance",
+    );
+    panels.push(panel({ x: 95, y: 130, w: 420, h: 390, xlabel: "Cycle number", ylabel: "Capacity (mAh g-1)", title: "Cycling performance", xDomain: domains.x, yDomain: domains.y, points: capRows.map((r) => ({ x: r.cycle, y: r.capacity })) }));
   }
   if (d.figureKind !== "voltage-profile" && effRows.length) {
     panels.push(panel({ x: 620, y: 130, w: 380, h: 390, xlabel: "Cycle number", ylabel: "Efficiency (%)", title: "Coulombic efficiency", xDomain: niceBounds(effRows.map((r) => r.cycle)), yDomain: niceBounds(effRows.map((r) => r.efficiency)), points: effRows.map((r) => ({ x: r.cycle, y: r.efficiency })) }));
   }
   if ((d.figureKind === "voltage-profile" || d.figureKind === "cyc-combined" || !panels.length) && voltRows.length) {
     const xKey = voltRows.some((r) => Number.isFinite(r.capacity)) ? "capacity" : "time";
-    panels.push(panel({ x: 95, y: panels.length ? 530 : 130, w: panels.length ? 905 : 760, h: panels.length ? 140 : 390, xlabel: xKey === "capacity" ? "Capacity (mAh g-1)" : "Time", ylabel: "Voltage (V)", title: "Voltage profile", xDomain: niceBounds(voltRows.map((r) => r[xKey])), yDomain: niceBounds(voltRows.map((r) => r.voltage)), points: voltRows.map((r) => ({ x: r[xKey], y: r.voltage })) }));
+    const domains = resolveFigureAxisDomains(
+      niceBounds(voltRows.map((r) => r[xKey])),
+      niceBounds(voltRows.map((r) => r.voltage)),
+      "voltage",
+    );
+    panels.push(panel({ x: 95, y: panels.length ? 530 : 130, w: panels.length ? 905 : 760, h: panels.length ? 140 : 390, xlabel: xKey === "capacity" ? "Capacity (mAh g-1)" : "Time", ylabel: "Voltage (V)", title: "Voltage profile", xDomain: domains.x, yDomain: domains.y, points: voltRows.map((r) => ({ x: r[xKey], y: r.voltage })) }));
   }
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
@@ -3738,6 +3862,58 @@ function normalizeFigureMarkerSize(value) {
   return Math.max(2, Math.min(10, Math.round(size)));
 }
 
+const FIGURE_AXIS_RANGE_KEYS = ["performance", "voltage", "dqdv", "eis", "cv"];
+
+function normalizeAxisRangeValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function normalizeFigureAxisRange(value) {
+  return {
+    xMin: normalizeAxisRangeValue(value?.xMin),
+    xMax: normalizeAxisRangeValue(value?.xMax),
+    yMin: normalizeAxisRangeValue(value?.yMin),
+    yMax: normalizeAxisRangeValue(value?.yMax),
+  };
+}
+
+function normalizeFigureAxisRanges(value) {
+  return Object.fromEntries(
+    FIGURE_AXIS_RANGE_KEYS.map((key) => [key, normalizeFigureAxisRange(value?.[key])]),
+  );
+}
+
+function resolveFigureAxisDomains(autoX, autoY, key) {
+  const range = normalizeFigureAxisRange(currentFigureStyle().axisRanges?.[key]);
+  const xDomain = [range.xMin ?? autoX[0], range.xMax ?? autoX[1]];
+  const yDomain = [range.yMin ?? autoY[0], range.yMax ?? autoY[1]];
+  return {
+    x: xDomain[0] < xDomain[1] ? xDomain : autoX,
+    y: yDomain[0] < yDomain[1] ? yDomain : autoY,
+  };
+}
+
+function selectedFigureAxisRangeTarget() {
+  const target = $("figureAxisRangeTarget")?.value || "performance";
+  return FIGURE_AXIS_RANGE_KEYS.includes(target) ? target : "performance";
+}
+
+function syncFigureAxisRangeControls(style = currentFigureStyle()) {
+  const range = normalizeFigureAxisRange(style.axisRanges?.[selectedFigureAxisRangeTarget()]);
+  const values = {
+    figureXMin: range.xMin,
+    figureXMax: range.xMax,
+    figureYMin: range.yMin,
+    figureYMax: range.yMax,
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const input = $(id);
+    if (input) input.value = value === null ? "" : String(value);
+  });
+}
+
 function figureSvgSize(style, kind = "paper") {
   const ratio = normalizeFigureAspectRatio(style?.aspectRatio);
   const presets = kind === "rate"
@@ -3776,12 +3952,13 @@ function syncFigureControls(style = currentFigureStyle()) {
   if (gridInput) gridInput.checked = style.showGrid !== false;
   if (connectInput) connectInput.checked = style.connectPoints !== false;
   if (markerInput) markerInput.value = normalizeFigureMarkerSize(style.markerSize);
+  syncFigureAxisRangeControls(style);
   syncProfileSeriesControls(null);
   syncDqdvSeriesControls(null);
 }
 
 function currentFigureStyle() {
-  if (!state.selectedId) return { seriesColor: "#0f766e", rateColorOverrides: {}, seriesColorOverrides: {}, dqdvSeriesColorOverrides: {}, aspectRatio: "journal", showGrid: true, connectPoints: true, markerSize: 4 };
+  if (!state.selectedId) return { seriesColor: "#0f766e", rateColorOverrides: {}, seriesColorOverrides: {}, dqdvSeriesColorOverrides: {}, aspectRatio: "journal", showGrid: true, connectPoints: true, markerSize: 4, axisRanges: normalizeFigureAxisRanges() };
   const d = state.datasets.find((x) => x.id === state.selectedId);
   const saved = d?.figureEdits?.style;
   if (!state.figureStyles[state.selectedId]) {
@@ -3794,6 +3971,7 @@ function currentFigureStyle() {
       showGrid: saved?.showGrid !== false,
       connectPoints: saved?.connectPoints !== false,
       markerSize: normalizeFigureMarkerSize(saved?.markerSize),
+      axisRanges: normalizeFigureAxisRanges(saved?.axisRanges),
     };
   }
   return state.figureStyles[state.selectedId];
@@ -3833,6 +4011,7 @@ async function saveFigureEdits(silent = true) {
       showGrid: saved.figureEdits?.style?.showGrid !== false,
       connectPoints: saved.figureEdits?.style?.connectPoints !== false,
       markerSize: normalizeFigureMarkerSize(saved.figureEdits?.style?.markerSize),
+      axisRanges: normalizeFigureAxisRanges(saved.figureEdits?.style?.axisRanges),
     };
     const figureRes = await fetch("/api/figures", {
       method: "POST",
@@ -4090,6 +4269,65 @@ function changeFigureMarkerSize() {
   if (input) input.value = style.markerSize;
   renderCurrent();
   saveFigureEdits(false);
+}
+
+function readFigureAxisRangeInput(id) {
+  const raw = String($(id)?.value ?? "").trim();
+  if (!raw) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function setFigureAxisRangeMessage(message = "", isError = false) {
+  const output = $("figureAxisRangeMessage");
+  if (!output) return;
+  output.textContent = message;
+  output.classList.toggle("isError", isError);
+}
+
+function applyFigureAxisRange() {
+  if (!state.selectedId) return setStatus("\uba3c\uc800 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  const target = selectedFigureAxisRangeTarget();
+  const range = {
+    xMin: readFigureAxisRangeInput("figureXMin"),
+    xMax: readFigureAxisRangeInput("figureXMax"),
+    yMin: readFigureAxisRangeInput("figureYMin"),
+    yMax: readFigureAxisRangeInput("figureYMax"),
+  };
+  if (range.xMin !== null && range.xMax !== null && range.xMin >= range.xMax) {
+    return setFigureAxisRangeMessage("X \ucd5c\uc18c\uac12\uc740 X \ucd5c\ub300\uac12\ubcf4\ub2e4 \uc791\uc544\uc57c \ud569\ub2c8\ub2e4.", true);
+  }
+  if (range.yMin !== null && range.yMax !== null && range.yMin >= range.yMax) {
+    return setFigureAxisRangeMessage("Y \ucd5c\uc18c\uac12\uc740 Y \ucd5c\ub300\uac12\ubcf4\ub2e4 \uc791\uc544\uc57c \ud569\ub2c8\ub2e4.", true);
+  }
+  const style = currentFigureStyle();
+  style.axisRanges = {
+    ...normalizeFigureAxisRanges(style.axisRanges),
+    [target]: normalizeFigureAxisRange(range),
+  };
+  syncFigureAxisRangeControls(style);
+  setFigureAxisRangeMessage("\ucd95 \ubc94\uc704\ub97c \uc801\uc6a9\ud588\uc2b5\ub2c8\ub2e4.");
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function resetFigureAxisRange() {
+  if (!state.selectedId) return setStatus("\uba3c\uc800 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
+  const target = selectedFigureAxisRangeTarget();
+  const style = currentFigureStyle();
+  style.axisRanges = {
+    ...normalizeFigureAxisRanges(style.axisRanges),
+    [target]: normalizeFigureAxisRange(),
+  };
+  syncFigureAxisRangeControls(style);
+  setFigureAxisRangeMessage("\uc790\ub3d9 \ubc94\uc704\ub85c \ub418\ub3cc\ub838\uc2b5\ub2c8\ub2e4.");
+  renderCurrent();
+  saveFigureEdits(false);
+}
+
+function changeFigureAxisRangeTarget() {
+  syncFigureAxisRangeControls(currentFigureStyle());
+  setFigureAxisRangeMessage("");
 }
 
 function attachAnnotationDrag() {
@@ -4739,13 +4977,18 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
   }
   const allCycles = [...trend.voltage, ...trend.current].map((point) => point.x);
   const hasCurrent = trend.current.length > 0;
+  const domains = resolveFigureAxisDomains(
+    niceBounds(allCycles),
+    niceBounds(trend.voltage.map((point) => point.y)),
+    "voltage",
+  );
   const axes = drawPaperAxes({
     x,
     y,
     w,
     h,
-    xDomain: niceBounds(allCycles),
-    yDomain: niceBounds(trend.voltage.map((point) => point.y)),
+    xDomain: domains.x,
+    yDomain: domains.y,
     y2Domain: hasCurrent ? niceBounds(trend.current.map((point) => point.y)) : null,
     xlabel: "Cycle number",
     ylabel: "Voltage (V)",
@@ -4939,13 +5182,18 @@ function cycDqdvPanel({ x, y, w, h, analysis, style }) {
       </g>`;
   }
   const points = analysis.series.flatMap((series) => series.points);
+  const domains = resolveFigureAxisDomains(
+    niceBounds(points.map((point) => point.x)),
+    niceBounds(points.map((point) => point.y)),
+    "dqdv",
+  );
   const axes = drawPaperAxes({
     x,
     y,
     w,
     h,
-    xDomain: niceBounds(points.map((point) => point.x)),
-    yDomain: niceBounds(points.map((point) => point.y)),
+    xDomain: domains.x,
+    yDomain: domains.y,
     xlabel: "Voltage (V)",
     ylabel: dqdvAxisLabel(analysis.capacityUnit),
     xlabelOffset: 48,
@@ -4979,6 +5227,11 @@ function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific
   if (!points.length) {
     return `<g><text x="${x}" y="${y - 18}" class="panelTitle">Cycling performance</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="profileEmpty"/><text x="${x + w / 2}" y="${y + h / 2}" class="profileEmptyTitle" text-anchor="middle">\uc6a9\ub7c9 \ub370\uc774\ud130\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.</text></g>`;
   }
+  const domains = resolveFigureAxisDomains(
+    niceBounds(points.map((point) => point.x)),
+    niceBounds(points.map((point) => point.y)),
+    "performance",
+  );
   return panel({
     x,
     y,
@@ -4987,8 +5240,8 @@ function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific
     xlabel: "Cycle number",
     ylabel: capacityAxisLabel,
     title: "Cycling performance",
-    xDomain: niceBounds(points.map((point) => point.x)),
-    yDomain: niceBounds(points.map((point) => point.y)),
+    xDomain: domains.x,
+    yDomain: domains.y,
     points,
   });
 }
@@ -5195,6 +5448,11 @@ function renderCvFigure(d) {
     h: Math.max(300, Math.round(svgSize.h * 0.58)),
   };
   const rows = d.rows.filter((r) => Number.isFinite(r.voltage) && Number.isFinite(r.current));
+  const cvDomains = resolveFigureAxisDomains(
+    niceBounds(rows.map((r) => r.voltage)),
+    niceBounds(rows.map((r) => r.current)),
+    "cv",
+  );
   const title = figureDatasetLabel(d);
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} \u00b7 CV \u00b7 ${d.rows.length} points`;
@@ -5205,7 +5463,7 @@ function renderCvFigure(d) {
       <rect width="${svgSize.w}" height="${svgSize.h}" fill="#ffffff"/>
       <text x="72" y="48" class="panelTitle">${escapeXml(title)}</text>
       <text x="72" y="74" class="caption">CV \u00b7 ${escapeXml(d.cell.condition || "")}</text>
-      ${panel({ x: cvPlot.x, y: cvPlot.y, w: cvPlot.w, h: cvPlot.h, xlabel: "Voltage (V)", ylabel: "Current", title: "Cyclic voltammetry", xDomain: niceBounds(rows.map((r) => r.voltage)), yDomain: niceBounds(rows.map((r) => r.current)), points: rows.map((r) => ({ x: r.voltage, y: r.current })) })}
+      ${panel({ x: cvPlot.x, y: cvPlot.y, w: cvPlot.w, h: cvPlot.h, xlabel: "Voltage (V)", ylabel: "Current", title: "Cyclic voltammetry", xDomain: cvDomains.x, yDomain: cvDomains.y, points: rows.map((r) => ({ x: r.voltage, y: r.current })) })}
     </svg>`;
   applyAnnotationsToSvg();
 }
@@ -7463,6 +7721,7 @@ document.addEventListener("DOMContentLoaded", () => {
   on("reloadFeedback", "click", () => loadFeedbacks().catch((err) => setStatus(err.message)));
   on("adminRawAccessForm", "submit", requestAdminRawAccess);
   on("refreshAdminRawData", "click", () => loadAdminRawDatasets().catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
+  on("clearAdminRawOwnerFilter", "click", () => clearAdminRawOwnerFilter().catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
   on("adminRawDatasetSelect", "change", (event) => loadAdminRawDataset(event.target.value, 0).catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
   on("adminRawPrevious", "click", () => {
     const offset = Number(state.adminRawPreview?.offset || 0);
@@ -7553,6 +7812,9 @@ document.addEventListener("DOMContentLoaded", () => {
   on("figureShowGrid", "change", changeFigureGridVisibility);
   on("figureConnectPoints", "change", changeFigureConnectionVisibility);
   on("figureMarkerSize", "change", changeFigureMarkerSize);
+  on("applyFigureAxisRange", "click", applyFigureAxisRange);
+  on("resetFigureAxisRange", "click", resetFigureAxisRange);
+  on("figureAxisRangeTarget", "change", changeFigureAxisRangeTarget);
   on("clearAnnotations", "click", clearAnnotations);
   on("annotationText", "keydown", (event) => { if (event.key === "Enter") addOrUpdateAnnotation(); });
   on("smartFile", "change", () => resetAnalysisForNewFile());
@@ -7651,6 +7913,50 @@ function figureLabel(d) {
   return labels[d.figureKind] || String(d.dataType || "data").toUpperCase() + " Fig";
 }
 
+function savedFigureDateKey(dataset) {
+  const candidates = [dataset?.cell?.date, dataset?.createdAt, dataset?.updatedAt];
+  for (const value of candidates) {
+    const match = String(value || "").match(/\d{4}-\d{2}-\d{2}/);
+    if (match) return match[0];
+  }
+  return "unknown";
+}
+
+function savedFigureDateLabel(dateKey) {
+  return dateKey === "unknown" ? savedFigText().dateMissing : dateKey;
+}
+
+function savedFigureTypeKey(dataset) {
+  const type = String(dataset?.dataType || "").toLowerCase();
+  return ["cyc", "eis", "cv"].includes(type) ? type : "other";
+}
+
+function savedFigureTypeLabel(type) {
+  return { cyc: "CYC", eis: "EIS", cv: "CV", other: "\uae30\ud0c0" }[type] || "\uae30\ud0c0";
+}
+
+function savedFigureCardHtml(dataset, text) {
+  const cell = dataset.cell || {};
+  const active = dataset.id === state.selectedId ? " active" : "";
+  const title = datasetDisplayName(dataset);
+  const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
+  const isCyc = String(dataset.dataType || "").toLowerCase() === "cyc";
+  return [
+    '<article class="savedItem' + active + (isCyc ? " cycSavedItem" : "") + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
+    '<label class="compareCheck' + (isCyc ? "" : " disabled") + '" title="' + (isCyc ? text.compareSelect : text.cycOnly) + '">',
+    '<input type="checkbox" data-compare-id="' + escapeAttr(dataset.id) + '"' + (state.compareIds.includes(dataset.id) ? " checked" : "") + (isCyc ? "" : " disabled") + " />",
+    "<span>" + text.compare + "</span></label>",
+    '<button type="button" class="savedOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.open + '">',
+    figureThumb(dataset),
+    '<span class="savedInfo"><strong>' + escapeXml(title) + "</strong>",
+    "<span>" + escapeXml(cell.date || text.dateMissing) + " \u00b7 " + escapeXml(sub) + "</span>",
+    "<em>" + escapeXml(dataset.sourceName || dataset.id) + "</em></span></button>",
+    isCyc ? '<button type="button" class="savedRecordOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="CYC \ud1b5\ud569 \uae30\ub85d \uc5f4\uae30">\ud1b5\ud569</button>' : "",
+    '<button type="button" class="savedDelete" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.remove + '">\u00d7</button>',
+    "</article>",
+  ].join("");
+}
+
 function renderSavedList() {
   const list = $("savedList");
   if (!list) return;
@@ -7670,25 +7976,38 @@ function renderSavedList() {
     list.innerHTML = '<p class="emptySaved">' + text.empty + "</p>";
     return;
   }
-  list.innerHTML = state.filtered.map((dataset) => {
-    const cell = dataset.cell || {};
-    const active = dataset.id === state.selectedId ? " active" : "";
-    const title = datasetDisplayName(dataset);
-    const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
-    const isCyc = String(dataset.dataType || "").toLowerCase() === "cyc";
+  const groupedByDate = state.filtered.reduce((groups, dataset) => {
+    const dateKey = savedFigureDateKey(dataset);
+    if (!groups[dateKey]) groups[dateKey] = [];
+    groups[dateKey].push(dataset);
+    return groups;
+  }, {});
+  const dateKeys = Object.keys(groupedByDate).sort((a, b) => {
+    if (a === "unknown") return 1;
+    if (b === "unknown") return -1;
+    return b.localeCompare(a);
+  });
+  const typeOrder = ["cyc", "eis", "cv", "other"];
+  list.innerHTML = dateKeys.map((dateKey, dateIndex) => {
+    const datasets = groupedByDate[dateKey];
+    const groupedByType = datasets.reduce((groups, dataset) => {
+      const typeKey = savedFigureTypeKey(dataset);
+      if (!groups[typeKey]) groups[typeKey] = [];
+      groups[typeKey].push(dataset);
+      return groups;
+    }, {});
+    const sections = typeOrder.filter((typeKey) => groupedByType[typeKey]?.length).map((typeKey) => [
+      '<section class="savedFigureTypeSection" data-figure-type="' + typeKey + '">',
+      '<div class="savedFigureTypeHeader"><strong>' + savedFigureTypeLabel(typeKey) + '</strong><span>' + groupedByType[typeKey].length + '\uac1c</span></div>',
+      '<div class="savedFigureTypeGrid">',
+      groupedByType[typeKey].map((dataset) => savedFigureCardHtml(dataset, text)).join(""),
+      "</div></section>",
+    ].join("")).join("");
     return [
-      '<article class="savedItem' + active + (isCyc ? " cycSavedItem" : "") + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
-      '<label class="compareCheck' + (isCyc ? "" : " disabled") + '" title="' + (isCyc ? text.compareSelect : text.cycOnly) + '">',
-      '<input type="checkbox" data-compare-id="' + escapeAttr(dataset.id) + '"' + (state.compareIds.includes(dataset.id) ? " checked" : "") + (isCyc ? "" : " disabled") + " />",
-      "<span>" + text.compare + "</span></label>",
-      '<button type="button" class="savedOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.open + '">',
-      figureThumb(dataset),
-      '<span class="savedInfo"><strong>' + escapeXml(title) + "</strong>",
-      "<span>" + escapeXml(cell.date || text.dateMissing) + " \u00b7 " + escapeXml(sub) + "</span>",
-      "<em>" + escapeXml(dataset.sourceName || dataset.id) + "</em></span></button>",
-      isCyc ? '<button type="button" class="savedRecordOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="CYC \ud1b5\ud569 \uae30\ub85d \uc5f4\uae30">\ud1b5\ud569</button>' : "",
-      '<button type="button" class="savedDelete" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.remove + '">\u00d7</button>',
-      "</article>",
+      '<details class="savedFigureDateGroup"' + (dateIndex === 0 ? " open" : "") + '>',
+      '<summary class="savedFigureDateSummary"><strong>' + savedFigureDateLabel(dateKey) + '</strong><span>' + datasets.length + '\uac1c Fig</span></summary>',
+      '<div class="savedFigureDateBody">' + sections + "</div>",
+      "</details>",
     ].join("");
   }).join("");
   list.querySelectorAll(".savedOpen").forEach((button) => {

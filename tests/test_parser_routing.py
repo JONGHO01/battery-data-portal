@@ -191,6 +191,29 @@ class ParserRoutingTests(unittest.TestCase):
         first_cycle_capacity = max(row[3] for row in rows[1:] if row[0] == 1)
         self.assertLess(third_cycle_capacity, first_cycle_capacity * 0.2)
 
+    def test_wrd_accepts_meaningful_interrupted_low_capacity_traces(self):
+        """A short low-mass run is valid when it still has a real voltage trace."""
+        header = b"WbcsFile example DISCHARGE Q 0.0500000g "
+        capacities = (0.000001, 0.000003, 0.000006, 0.000010, 0.000015, 0.000020)
+        voltages = (4.10, 4.00, 3.90, 3.80, 3.70, 3.60)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "meaningful-interrupted-low-capacity.wrd"
+            path.write_bytes(header + self._wrd_segment(capacities, voltages))
+            rows, _ = read_wrd(path)
+
+        self.assertEqual(len(rows) - 1, 6)
+        self.assertEqual({row[0] for row in rows[1:]}, {1})
+
+    def test_wrd_rejects_tiny_two_point_fragments(self):
+        """Metadata-like two-point fragments must not become a fake cycle."""
+        header = b"WbcsFile example DISCHARGE Q 0.0500000g "
+        points = self._wrd_segment((0.0000001, 0.0000005), (4.10, 3.95))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "insufficient-two-point-fragment.wrd"
+            path.write_bytes(header + points)
+            with self.assertRaisesRegex(RuntimeError, "does not contain enough"):
+                read_wrd(path)
+
     def test_wrd_preserves_an_ordered_voltage_capacity_trace_for_dqdv(self):
         header = b"WbcsFile example DISCHARGE Q 0.0500000g "
         capacities = tuple(point * 0.0004 for point in range(1, 11))

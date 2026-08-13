@@ -184,6 +184,20 @@ class AdminRawDataHttpTests(unittest.TestCase):
         self.assertEqual(item["rowCount"], 2)
         self.assertNotIn("rows", item)
 
+        filtered_status, filtered = self.request_json(
+            "/api/admin/raw-data/datasets?owner_id=raw-member",
+            headers=raw_headers,
+        )
+        self.assertEqual(filtered_status, 200)
+        self.assertEqual([dataset["id"] for dataset in filtered["items"]], [self.dataset_id])
+
+        empty_status, empty = self.request_json(
+            "/api/admin/raw-data/datasets?owner_id=another-member",
+            headers=raw_headers,
+        )
+        self.assertEqual(empty_status, 200)
+        self.assertEqual(empty["items"], [])
+
         detail_status, detail = self.request_json(
             f"/api/admin/raw-data/datasets/{self.dataset_id}?offset=1&limit=1",
             headers=raw_headers,
@@ -198,4 +212,3 @@ class AdminRawDataHttpTests(unittest.TestCase):
             headers=self.auth_headers(self.member_token, {"X-Admin-Raw-Access": access["accessToken"]}),
         )
         self.assertEqual(mismatched_status, 403)
-

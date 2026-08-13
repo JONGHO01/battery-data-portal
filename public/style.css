@@ -1738,6 +1738,46 @@ button.danger { background: var(--danger); }
 .annotationTools .figureMarkerControl input {
   width: 54px;
 }
+.figureRangeEditor {
+  grid-column: 1 / -1;
+  border: 1px solid #cfe4e8;
+  border-radius: 8px;
+  background: #fff;
+}
+.figureRangeEditor summary {
+  padding: 10px 12px;
+  color: #29445c;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.figureRangeEditorBody {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(4, minmax(92px, 1fr)) auto auto minmax(140px, 1fr);
+  gap: 8px;
+  align-items: end;
+  padding: 0 12px 12px;
+}
+.figureRangeEditorBody label {
+  display: grid;
+  gap: 4px;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+}
+.figureRangeEditorBody input,
+.figureRangeEditorBody select {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 8px;
+  font-size: 12px;
+}
+#figureAxisRangeMessage {
+  min-height: 18px;
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 700;
+}
 .annotationTools button {
   min-height: 38px;
   padding: 0 12px;
@@ -2566,6 +2606,77 @@ th:first-child, td:first-child { text-align: left; }
 }
 .savedListWide {
   max-height: calc(100vh - 230px);
+  display: block;
+  overflow: auto;
+}
+.savedFigureDateGroup {
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+.savedFigureDateSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  cursor: pointer;
+  color: var(--ink);
+  background: #f2fafb;
+  list-style: none;
+}
+.savedFigureDateSummary::-webkit-details-marker {
+  display: none;
+}
+.savedFigureDateSummary::after {
+  content: "+";
+  width: 24px;
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+}
+.savedFigureDateGroup[open] .savedFigureDateSummary::after {
+  content: "-";
+}
+.savedFigureDateSummary > span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.savedFigureDateBody {
+  padding: 12px;
+}
+.savedFigureTypeSection + .savedFigureTypeSection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.savedFigureTypeHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.savedFigureTypeHeader strong {
+  min-width: 52px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+}
+.savedFigureTypeHeader span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.savedFigureTypeGrid {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 10px;
 }
@@ -3490,6 +3601,15 @@ pre {
 }
 
 @media (max-width: 920px) {
+  .savedFigureTypeGrid {
+    grid-template-columns: 1fr;
+  }
+  .savedFigureDateSummary {
+    padding: 11px 12px;
+  }
+  .savedFigureDateBody {
+    padding: 9px;
+  }
   .moduleHome {
     width: min(100%, calc(100vw - 28px));
     padding: 20px 0 28px;
@@ -3533,6 +3653,9 @@ pre {
   .sidebar { border-right: 0; border-bottom: 0; }
   .toolbar, .figureHeader { grid-template-columns: 1fr; display: grid; }
   .annotationTools { grid-template-columns: 1fr 96px; }
+  .figureRangeEditorBody { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figureRangeEditorBody label:first-child,
+  #figureAxisRangeMessage { grid-column: 1 / -1; }
   .profileSeriesControls { grid-column: 1 / -1; flex-wrap: wrap; }
   .profileSeriesControls select { flex: 1 1 150px; max-width: none; }
   .metaGrid { min-width: 0; grid-template-columns: 1fr; }
@@ -3654,6 +3777,39 @@ pre {
 .adminRawDataBrowser {
   display: grid;
   gap: 14px;
+}
+
+.adminRawOwnerFilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #bfe3e6;
+  border-radius: 8px;
+  background: #f2fbfb;
+}
+
+.adminRawOwnerFilter div {
+  min-width: 0;
+}
+
+.adminRawOwnerFilter span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.adminRawOwnerFilter strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.adminRawOwnerFilter button {
+  flex: 0 0 auto;
 }
 
 .adminRawToolbar {

@@ -144,7 +144,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.63", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.69", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -2872,12 +2872,27 @@ def unlock_admin_raw_data(payload: dict = Body(default_factory=dict), user=Depen
 
 
 @app.get("/api/admin/raw-data/datasets")
-def list_admin_raw_datasets(limit: int = 100, user=Depends(require_admin_raw_access)):
+def list_admin_raw_datasets(
+    limit: int = 100,
+    owner_id: str | None = None,
+    user=Depends(require_admin_raw_access),
+):
     """List Dataset tables for the protected administrator raw-data view."""
 
     bounded_limit = max(1, min(int(limit), 200))
     with connect() as conn:
-        rows = execute(conn, "SELECT * FROM datasets ORDER BY created_at DESC LIMIT ?", (bounded_limit,)).fetchall()
+        if owner_id:
+            rows = execute(
+                conn,
+                "SELECT * FROM datasets WHERE owner_id = ? ORDER BY created_at DESC LIMIT ?",
+                (owner_id, bounded_limit),
+            ).fetchall()
+        else:
+            rows = execute(
+                conn,
+                "SELECT * FROM datasets ORDER BY created_at DESC LIMIT ?",
+                (bounded_limit,),
+            ).fetchall()
     items = []
     for row in rows:
         stored_rows = json_loads(row["rows_json"], [])
