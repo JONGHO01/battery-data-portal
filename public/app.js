@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.1.72";
+const PORTAL_VERSION = "0.1.73";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.73",
+    "date": "2026-08-20",
+    "changes": [
+      "Repair the Search scope and saved-date labels so they display readable Korean.",
+      "Verify saved Figs are separated by experiment dates embedded in source filenames."
+    ]
+  },
   {
     "version": "0.1.72",
     "date": "2026-08-20",
@@ -2719,7 +2727,7 @@ function clearSearchFilters() {
 }
 
 function typeDisplay(type) {
-  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "?\uafa9\uaedc" }[type || "all"] || "DATA";
+  return { cyc: "CYC", cv: "CV", eis: "EIS", all: "\uc804\uccb4" }[type || "all"] || "DATA";
 }
 
 function renderSearchResults() {
@@ -2794,7 +2802,7 @@ function renderDateOptions() {
   if (!sel) return;
   const current = sel.value;
   const dates = [...new Set(state.datasets.map((d) => d.cell?.date).filter(Boolean))].sort().reverse();
-  sel.innerHTML = `<option value="">?\uafa9\uaedc ?\uc88e\ucb68</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
+  sel.innerHTML = `<option value="">\uc804\uccb4 \ub0a0\uc9dc</option>` + dates.map((date) => `<option value="${escapeAttr(date)}">${escapeXml(date)}</option>`).join("");
   sel.value = dates.includes(current) ? current : "";
 }
 

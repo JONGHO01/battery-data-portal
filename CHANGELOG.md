@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.73 - 2026-08-20
+
+- Repair the Search scope and saved-date labels so they display `전체` and `전체 날짜` correctly.
+- Verify saved Figs are separated by valid experiment dates embedded in source filenames, with saved timestamps used only as a fallback.
+
 ## v0.1.72 - 2026-08-20
 
 - Prefer valid experiment dates embedded in source filenames when grouping saved Figs.

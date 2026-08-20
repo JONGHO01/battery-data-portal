@@ -1,6 +1,6 @@
 # Session Memory
 
-> Release state (2026-08-20): `v0.1.72` groups saved Figs by valid experiment dates embedded in source filenames before falling back to shared cell or saved timestamps. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
+> Release state (2026-08-20): local `v0.1.73` repairs the Search scope/date labels and verifies saved Figs group by valid experiment dates embedded in source filenames before falling back to shared cell or saved timestamps. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
 
 ## Project Goal
 
@@ -13,6 +13,8 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 ```
 
 ## Current Task
+
+Current v0.1.73 task: keep Search labels readable as `전체` and `전체 날짜`, and verify the 52 saved Figs split into source-date groups with card dates aligned to their group.
 
 Current v0.1.72 task: prefer valid experiment dates embedded in source filenames for saved-Fig groups and keep each card's displayed date aligned with its group.
 
@@ -61,6 +63,8 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- 2026-08-20: Local v0.1.73 is running on port 4174. Search displays `전체` and `전체 날짜`; the 52 saved Figs render as eight newest-first date groups (8, 1, 36, 3, 1, 1, 1, 1 cards), every card date matches its group, only the newest group is expanded, and browser logs are clean.
 
 - 2026-08-11: Administrator member rows now open the protected raw-data workspace scoped to the selected account. The view shows the active member filter, supports one-click return to all-member data, and retains the existing administrator-only second-confirmation gate. Focused UI/API tests and the full 179-test suite passed.
 
@@ -207,6 +211,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.1.73 Search/date verification: `public/app.js`, `tests/test_ui_text_integrity.py`, `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
+
 - v0.1.69 saved Fig grouping: `public/app.js`, `public/style.css`, `tests/test_saved_figure_grouping_ui.py`, `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
 - v0.1.68 editable graph ranges: `public/index.html`, `public/style.css`, `public/app.js`, `tests/test_figure_axis_range_ui.py`, `VERSION`, `package.json`, `python_backend.py`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
@@ -312,6 +318,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.1.73 has no remaining implementation work. Its GitHub publication target is the current `codex/release-v0.1.72` branch; verify the remote commit before reporting publication complete.
+
 - Before a release, manually inspect the integrated record with a saved CYC whose Cell has a linked electrode calculation profile, and test the profile-picker link/relink behavior. Do not label WRD-only values as loading, area, or 1C.
 
 - Before release or deployment, perform an authenticated browser smoke check of the raw-data workspace and configure the administrator raw-data confirmation as a host secret. Do not commit or document the actual confirmation value.
@@ -363,6 +371,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-08-20 v0.1.73: focused version/text/Fig-group tests passed 11/11; the full pytest suite passed 199/199; JavaScript, Python, package JSON, and `git diff --check` passed. Restarted local health reports `0.1.73`. Browser verification found readable Search labels, 52 cards across eight date groups with aligned card dates, one open newest group, and no console errors.
 
 - 2026-08-12 v0.1.69 saved Fig grouping: focused grouping tests (2), CYC/EIS regressions (51), `node --check public/app.js`, and `git diff --check` passed. Full discovery did not complete because the pre-existing `tests.test_admin_raw_data_http` integration setup stalled while starting/polling its separate Uvicorn process; do not report the full suite as passed for this release.
 
