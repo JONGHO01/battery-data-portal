@@ -14,6 +14,44 @@
   --radius: 14px;
 }
 
+.cRateInference {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #b7e1df;
+  border-radius: 8px;
+  background: #f4fbfb;
+}
+
+.cRateInference strong {
+  color: #0f766e;
+}
+
+.cRateInference p {
+  margin: 8px 0 0;
+  color: #475569;
+}
+
+.cRateInferenceRates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cRateInferenceRates span {
+  padding: 4px 8px;
+  border: 1px solid #99d5d1;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.cRateInferenceUnavailable {
+  border-color: #dbe3ea;
+  background: #f8fafc;
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -3587,6 +3625,31 @@ body.isAdmin .tab.adminOnly { display: inline-flex; }
   font-size: 12px;
   margin-right: 6px;
   background: var(--teal);
+}
+
+.memberFilesHeader,
+.memberFileCell {
+  width: 132px;
+  min-width: 132px;
+  text-align: center;
+}
+
+.memberFileButton {
+  margin-right: 0;
+  white-space: nowrap;
+}
+
+.memberManageActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.memberManageActions .smallReset,
+.memberManageActions .smallDanger {
+  margin-right: 0;
 }
 .mutedText {
   color: var(--muted);

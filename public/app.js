@@ -1,9 +1,34 @@
-const PORTAL_VERSION = "0.1.69";
+const PORTAL_VERSION = "0.1.72";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.72",
+    "date": "2026-08-20",
+    "changes": [
+      "Prefer experiment dates embedded in source filenames when grouping saved Figs.",
+      "Keep the date shown on each Fig card aligned with its date group."
+    ]
+  },
+  {
+    "version": "0.1.71",
+    "date": "2026-08-18",
+    "changes": [
+      "Infer missing C-rates from explicit 1C current or electrode metadata.",
+      "Show inferred C-rate segments and their calculation basis during upload review."
+    ]
+  },
+  {
+    "version": "0.1.70",
+    "date": "2026-08-18",
+    "changes": [
+      "Add a dedicated saved-files column to administrator member management.",
+      "Open the protected raw-data archive filtered to the selected member.",
+      "Separate saved-file access from account management actions."
+    ]
+  },
   {
     "version": "0.1.69",
     "date": "2026-08-12",
@@ -877,16 +902,16 @@ function renderUsers() {
   }
   body.innerHTML = users.map((user) => {
     const isSelf = user.id === state.user.id;
-    const dataAction = `<button class="smallReset" data-view-user-data="${escapeAttr(user.id)}">\uc5c5\ub85c\ub4dc \ub370\uc774\ud130 \ubcf4\uae30</button>`;
+    const dataAction = `<button type="button" class="smallReset memberFileButton" data-view-user-data="${escapeAttr(user.id)}">\uc800\uc7a5 \ud30c\uc77c \ubcf4\uae30</button>`;
     const resetAction = `<button class="smallReset" data-reset-user="${escapeAttr(user.id)}">\uc784\uc2dc \ube44\ubc00\ubc88\ud638 \uc7ac\uc124\uc815</button>`;
-    const action = isSelf
-      ? `${dataAction}${resetAction}<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
-      : `${dataAction}${resetAction}<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
+    const manageAction = isSelf
+      ? `${resetAction}<span class="mutedText">\ud604\uc7ac \uacc4\uc815</span>`
+      : `${resetAction}<button class="smallDanger" data-delete-user="${escapeAttr(user.id)}">\ud0c8\ud1f4</button>`;
     const organizations = Array.isArray(user.organizations) ? user.organizations : [];
     const organizationText = organizations.length
       ? organizations.map((organization) => `${organization.name} (${organizationRoleLabel(organization.role)})`).join(", ")
       : "\uc18c\uc18d \uc870\uc9c1 \uc5c6\uc74c";
-    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${escapeXml(formatUserCreatedAt(user.createdAt))}</td><td>${escapeXml(organizationText)}</td><td>${user.role === "admin" ? "\uad00\ub9ac\uc790" : "\uc77c\ubc18"}</td><td>${action}</td></tr>`;
+    return `<tr><td>${escapeXml(user.id)}</td><td>${escapeXml(user.name || "-")}</td><td>${escapeXml(formatUserCreatedAt(user.createdAt))}</td><td>${escapeXml(organizationText)}</td><td>${user.role === "admin" ? "\uad00\ub9ac\uc790" : "\uc77c\ubc18"}</td><td class="memberFileCell">${dataAction}</td><td><div class="memberManageActions">${manageAction}</div></td></tr>`;
   }).join("");
   for (const btn of body.querySelectorAll("[data-delete-user]")) {
     btn.addEventListener("click", () => deleteUser(btn.dataset.deleteUser));
@@ -1938,9 +1963,24 @@ function renderAnalysis() {
   const detectedCRates = a.detection.type === "cyc"
     ? explicitCRateValues(inspectionCanonicalRows("cyc"))
     : [];
+  const inferredCRate = a.cRateInference && typeof a.cRateInference === "object"
+    ? a.cRateInference
+    : null;
+  const inferredSegments = Array.isArray(inferredCRate?.segments)
+    ? inferredCRate.segments
+    : [];
+  const inferredLabels = [...new Set(
+    inferredSegments.map((item) => String(item?.label || "").trim()).filter(Boolean)
+  )];
+  const inferredBasis = String(inferredCRate?.one_c_label || "").trim();
+  const inferredReason = String(inferredCRate?.reason || "").trim();
   const cRateNotice = detectedCRates.length
-    ? `<p class="columnPreviewHint"><strong>C-rate \uc5f4 \uac10\uc9c0:</strong> ${detectedCRates.map(formatExplicitCRate).join(" | ")}. \uc800\uc7a5 \ud6c4 CYC Fig\uc5d0\uc11c \uc774 \uac12\uc73c\ub85c cycle \uad6c\uac04\uc744 \uad6c\ubd84\ud569\ub2c8\ub2e4.</p>`
-    : "";
+    ? `<div class="cRateInference"><strong>C-rate \uc5f4 \uac10\uc9c0</strong><div class="cRateInferenceRates">${detectedCRates.map((value) => `<span>${escapeXml(formatExplicitCRate(value))}</span>`).join("")}</div><p>\uc800\uc7a5 \ud6c4 CYC Fig\uc5d0\uc11c \uc774 \uac12\uc73c\ub85c cycle \uad6c\uac04\uc744 \uad6c\ubd84\ud569\ub2c8\ub2e4.</p></div>`
+    : inferredCRate?.available
+      ? `<div class="cRateInference"><strong>C-rate \uc790\ub3d9 \uacc4\uc0b0</strong>${inferredLabels.length ? `<div class="cRateInferenceRates">${inferredLabels.map((label) => `<span>${escapeXml(label)}</span>`).join("")}</div>` : ""}${inferredBasis ? `<p>\uacc4\uc0b0 \uae30\uc900: ${escapeXml(inferredBasis)}</p>` : ""}</div>`
+      : inferredCRate
+        ? `<div class="cRateInference cRateInferenceUnavailable"><strong>C-rate \uc790\ub3d9 \uacc4\uc0b0 \ubd88\uac00</strong><p>${escapeXml(inferredReason || "1C \uae30\uc900 \uc804\ub958\ub97c \uacc4\uc0b0\ud560 \uc804\uadf9 \uc815\ubcf4\uac00 \ubd80\uc871\ud569\ub2c8\ub2e4.")}</p></div>`
+        : "";
   const eisColumnGuide = a.detection.type === "eis" ? `
     <div class="eisColumnGuide">
       <strong>EIS \uc5f4 \uc548\ub0b4</strong>
@@ -7913,7 +7953,30 @@ function figureLabel(d) {
   return labels[d.figureKind] || String(d.dataType || "data").toUpperCase() + " Fig";
 }
 
+function normalizeSavedFigureDateToken(token) {
+  const digits = String(token || "");
+  if (![6, 8].includes(digits.length)) return "";
+  const year = digits.length === 6 ? 2000 + Number(digits.slice(0, 2)) : Number(digits.slice(0, 4));
+  const month = Number(digits.slice(-4, -2));
+  const day = Number(digits.slice(-2));
+  if (year < 2000 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) return "";
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return "";
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function savedFigureSourceDateKey(sourceName) {
+  const matches = String(sourceName || "").matchAll(/(?:^|\D)(\d{8}|\d{6})(?=\D|$)/g);
+  for (const match of matches) {
+    const dateKey = normalizeSavedFigureDateToken(match[1]);
+    if (dateKey) return dateKey;
+  }
+  return "";
+}
+
 function savedFigureDateKey(dataset) {
+  const sourceDate = savedFigureSourceDateKey(dataset?.sourceName);
+  if (sourceDate) return sourceDate;
   const candidates = [dataset?.cell?.date, dataset?.createdAt, dataset?.updatedAt];
   for (const value of candidates) {
     const match = String(value || "").match(/\d{4}-\d{2}-\d{2}/);
@@ -7937,6 +8000,7 @@ function savedFigureTypeLabel(type) {
 
 function savedFigureCardHtml(dataset, text) {
   const cell = dataset.cell || {};
+  const dateKey = savedFigureDateKey(dataset);
   const active = dataset.id === state.selectedId ? " active" : "";
   const title = datasetDisplayName(dataset);
   const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
@@ -7949,7 +8013,7 @@ function savedFigureCardHtml(dataset, text) {
     '<button type="button" class="savedOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.open + '">',
     figureThumb(dataset),
     '<span class="savedInfo"><strong>' + escapeXml(title) + "</strong>",
-    "<span>" + escapeXml(cell.date || text.dateMissing) + " \u00b7 " + escapeXml(sub) + "</span>",
+    "<span>" + escapeXml(savedFigureDateLabel(dateKey)) + " \u00b7 " + escapeXml(sub) + "</span>",
     "<em>" + escapeXml(dataset.sourceName || dataset.id) + "</em></span></button>",
     isCyc ? '<button type="button" class="savedRecordOpen" data-dataset-id="' + escapeAttr(dataset.id) + '" title="CYC \ud1b5\ud569 \uae30\ub85d \uc5f4\uae30">\ud1b5\ud569</button>' : "",
     '<button type="button" class="savedDelete" data-dataset-id="' + escapeAttr(dataset.id) + '" title="' + text.remove + '">\u00d7</button>',

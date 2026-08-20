@@ -1,6 +1,6 @@
 # Session Memory
 
-> Release state (2026-08-12): `v0.1.69` groups saved Figs by date and separates CYC, EIS, CV, and other figure types while preserving open, compare, and delete actions. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
+> Release state (2026-08-20): `v0.1.72` groups saved Figs by valid experiment dates embedded in source filenames before falling back to shared cell or saved timestamps. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
 
 ## Project Goal
 
@@ -13,6 +13,10 @@ Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> d
 ```
 
 ## Current Task
+
+Current v0.1.72 task: prefer valid experiment dates embedded in source filenames for saved-Fig groups and keep each card's displayed date aligned with its group.
+
+Current v0.1.71 task: infer missing C-rate values conservatively from electrode metadata, expose the inferred segments and basis in upload review, and state a clear reason when the available data is insufficient.
 
 Current v0.1.69 task: keep the growing saved-Fig gallery readable by grouping the newest date first and separating CYC, EIS, CV, and other figures inside each date group.
 

@@ -40,6 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend.c_rate import collect_c_rate_metadata, infer_cycle_c_rates
 from backend.schemas.bdf import PARSER_VERSION as BDF_MAPPING_VERSION
 from backend.schemas.bdf import build_column_mapping, canonicalize_rows, evaluate_quality
 from backend.parsers import PARSER_VERSION as INSTRUMENT_PARSER_VERSION, inspect_path
@@ -144,7 +145,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.69", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.72", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -4156,6 +4157,11 @@ def finalize_instrument_inspection(parsed: dict, filename: str) -> dict:
     parsed["columnMapping"] = build_column_mapping(detection["type"], columns)
     parsed["canonicalRows"] = quality["rows"]
     parsed["quality"] = quality["summary"]
+    if detection["type"] == "cyc":
+        parsed["cRateInference"] = infer_cycle_c_rates(
+            quality["rows"],
+            collect_c_rate_metadata(parsed),
+        )
     parsed["parser"] = {**(parsed.get("parser") or {}), "mappingVersion": BDF_MAPPING_VERSION}
     parsed["rows"] = limit_inspection_rows(source_rows, columns)
     return parsed

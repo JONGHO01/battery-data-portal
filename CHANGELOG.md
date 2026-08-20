@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.72 - 2026-08-20
+
+- Prefer valid experiment dates embedded in source filenames when grouping saved Figs.
+- Keep the date displayed on each saved Fig card aligned with its date group.
+
+## v0.1.71 - 2026-08-18
+
+- Calculate C-rate automatically when a CYC file does not contain an explicit C-rate.
+- Prefer an explicit 1C current, then active-material mass and specific capacity, then loading, electrode area, and specific capacity.
+- Show the inferred C-rate segments and calculation basis in the upload review card; explain why calculation is unavailable instead of guessing.
+- Add focused backend and frontend contract tests for C-rate inference.
+
+## v0.1.70 - 2026-08-18
+
+- Add a dedicated saved-files column to the administrator member table.
+- Open the raw-data archive prefiltered to the selected member from member management.
+- Keep account actions visually separate from saved-file access.
+
 ## v0.1.69 - 2026-08-12
 
 - Group saved Figs by date with the newest date expanded first.

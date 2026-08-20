@@ -1,16 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.69-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.72-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.69** - Saved Figs are grouped by date and separated into CYC, EIS, CV, and other sections.
+> Current release: **v0.1.72** - Saved Figs use valid experiment dates embedded in source filenames before shared cell dates.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.69**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
+현재 버전은 **v0.1.72**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +22,9 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.72 | 2026-08-20 | Prefer valid experiment dates in source filenames when grouping saved Figs and showing card dates. |
+| v0.1.71 | 2026-08-18 | Infer C-rate from 1C current or electrode mass/loading metadata and show the calculation basis during upload review. |
+| v0.1.70 | 2026-08-18 | Add direct member-to-saved-files access in administrator member management. |
 | v0.1.69 | 2026-08-12 | Group saved Figs by date and separate CYC, EIS, CV, and other figures |
 | v0.1.68 | 2026-08-12 | Add saved manual X/Y graph ranges with one-click automatic range restore |
 | v0.1.67 | 2026-08-11 | Mark the EIS high-frequency start and refine Nyquist/Bode layout bounds |
