@@ -1,9 +1,18 @@
-const PORTAL_VERSION = "0.1.73";
+const PORTAL_VERSION = "0.1.74";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.74",
+    "date": "2026-08-26",
+    "changes": [
+      "Keep production account and Dataset/Fig metadata in PostgreSQL while storing full normalized rows in private object storage.",
+      "Back up raw artifacts to a Windows archive with exact size and SHA-256 verification before cloud cleanup is considered.",
+      "Remove the public administrator account identifier from the login screen."
+    ]
+  },
   {
     "version": "0.1.73",
     "date": "2026-08-20",
@@ -478,7 +487,7 @@ const RELEASE_HISTORY = [
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const TABLE_PAGE_SIZE = 250;
 const ADMIN_RAW_PAGE_SIZE = 250;
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null, adminRawOwnerId: "", adminRawOwnerName: "" };
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null, adminRawOwnerId: "", adminRawOwnerName: "", adminRawStorage: null };
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -939,6 +948,7 @@ async function openUserRawData(userId) {
   state.adminRawDatasets = [];
   state.adminRawSelectedId = "";
   state.adminRawPreview = null;
+  state.adminRawStorage = null;
   openWorkspaceView("adminRawData");
   if (hasAdminRawAccess()) {
     await loadAdminRawDatasets();
@@ -954,6 +964,7 @@ async function clearAdminRawOwnerFilter() {
   state.adminRawDatasets = [];
   state.adminRawSelectedId = "";
   state.adminRawPreview = null;
+  state.adminRawStorage = null;
   if (hasAdminRawAccess()) await loadAdminRawDatasets();
   else renderAdminRawData();
 }
@@ -964,6 +975,7 @@ function clearAdminRawAccess() {
   state.adminRawDatasets = [];
   state.adminRawSelectedId = "";
   state.adminRawPreview = null;
+  state.adminRawStorage = null;
 }
 
 function hasAdminRawAccess() {
@@ -1021,6 +1033,14 @@ function adminRawCellValue(value) {
   return text.length > 180 ? `${text.slice(0, 177)}...` : text;
 }
 
+function formatAdminStorageBytes(value) {
+  const bytes = Math.max(0, Number(value || 0));
+  if (bytes >= 1024 ** 3) return `${(bytes / (1024 ** 3)).toFixed(2)} GB`;
+  if (bytes >= 1024 ** 2) return `${(bytes / (1024 ** 2)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${Math.round(bytes)} B`;
+}
+
 async function requestAdminRawAccess(event) {
   event.preventDefault();
   const input = $("adminRawAccessPassword");
@@ -1075,6 +1095,7 @@ async function loadAdminRawDatasets() {
     throw new Error(adminRawErrorMessage(response, body, "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
   }
   state.adminRawDatasets = Array.isArray(body.items) ? body.items : [];
+  state.adminRawStorage = body.storage && typeof body.storage === "object" ? body.storage : null;
   if (!state.adminRawDatasets.some((item) => item.id === state.adminRawSelectedId)) {
     state.adminRawSelectedId = state.adminRawDatasets[0]?.id || "";
     state.adminRawPreview = null;
@@ -1114,6 +1135,7 @@ function renderAdminRawData() {
   const refresh = $("refreshAdminRawData");
   const ownerFilter = $("adminRawOwnerFilter");
   const ownerFilterText = $("adminRawOwnerFilterText");
+  const storageStatus = $("adminRawStorageStatus");
   if (!accessPanel || !browser || !refresh) return;
   const isAdmin = state.user?.role === "admin";
   const active = isAdmin && hasAdminRawAccess();
@@ -1136,6 +1158,15 @@ function renderAdminRawData() {
     return;
   }
   setAdminRawDataNotice("");
+  if (storageStatus) {
+    const storage = state.adminRawStorage;
+    const pendingCount = Number(storage?.pending?.count || 0);
+    const verifiedCount = Number(storage?.verified?.count || 0);
+    const hardLimit = Number(storage?.hardLimitBytes || 0);
+    storageStatus.textContent = storage
+      ? `B2 \uc6d0\ubcf8 ${formatAdminStorageBytes(storage.totalBytes)} / \uad00\ub9ac \uae30\uc900 ${formatAdminStorageBytes(hardLimit)} \u00b7 \ub85c\uceec \ubc31\uc5c5 \ub300\uae30 ${pendingCount}\uac74 \u00b7 \uac80\uc99d \uc644\ub8cc ${verifiedCount}\uac74`
+      : "";
+  }
   const select = $("adminRawDatasetSelect");
   const datasets = Array.isArray(state.adminRawDatasets) ? state.adminRawDatasets : [];
   select.innerHTML = datasets.length
@@ -1151,6 +1182,7 @@ function renderAdminRawData() {
       ["\uc885\ub958", preview.dataset.dataType || "-"],
       ["\ud589 \uc218", String(preview.totalRows || 0)],
       ["\ucee4\ub7fc \uc218", String((preview.columns || []).length)],
+      ["\ub85c\uceec \ubc31\uc5c5", preview.dataset.rawBackupState === "verified" ? "\uac80\uc99d \uc644\ub8cc" : preview.dataset.rawBackupState === "pending" ? "\ub300\uae30 \uc911" : "\ubbf8\ub4f1\ub85d"],
     ].map(([label, value]) => `<div><span>${escapeXml(label)}</span><strong>${escapeXml(value)}</strong></div>`).join("") : "";
   }
   const tableWrap = $("adminRawDataTableWrap");

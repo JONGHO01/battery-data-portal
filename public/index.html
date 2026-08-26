@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battery Data Portal</title>
-  <link rel="stylesheet" href="/style.css?portal=0.1.73" />
+  <link rel="stylesheet" href="/style.css?portal=0.1.74" />
   </head>
   <body>
     <div class="busyOverlay hidden" id="busyOverlay">
@@ -32,7 +32,6 @@
           <label>비밀번호 <input id="registerPassword" name="password" type="password" autocomplete="new-password" required /></label>
           <button id="registerButton" type="button">아이디 생성</button>
         </form>
-        <p class="loginHint">관리자 계정: qq035786</p>
         <p class="loginSuccess" id="loginSuccess"></p>
         <p class="loginError" id="loginError"></p>
       </div>
@@ -720,6 +719,7 @@
             </form>
           </section>
           <section id="adminRawDataBrowser" class="adminRawDataBrowser hidden">
+            <div id="adminRawStorageStatus" class="adminRawStorageStatus" role="status" aria-live="polite"></div>
             <div id="adminRawOwnerFilter" class="adminRawOwnerFilter hidden">
               <div>
                 <span>&#49440;&#53469;&#54620; &#54924;&#50896;</span>
@@ -798,6 +798,6 @@
       </section>
     </main>
 
-  <script src="/app.js?portal=0.1.73"></script>
+  <script src="/app.js?portal=0.1.74"></script>
   </body>
 </html>

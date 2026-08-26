@@ -33,6 +33,10 @@ services:
         value: "true"
       - key: DATA_DIR
         value: "/tmp/battery-data"
+      - key: DATABASE_ROWS_MODE
+        value: "artifact"
+      - key: MAX_OBJECT_ARTIFACT_BYTES
+        value: "268435456"
       - key: CORS_ALLOW_ORIGINS
         sync: false
       - key: S3_FORCE_PATH_STYLE
@@ -49,6 +53,14 @@ services:
         sync: false
       - key: S3_PUBLIC_BASE_URL
         sync: false
+      - key: ARCHIVE_AGENT_TOKEN
+        sync: false
+      - key: ARCHIVE_DOWNLOAD_TTL_SECONDS
+        value: "900"
+      - key: ARCHIVE_SOFT_LIMIT_BYTES
+        value: "8589934592"
+      - key: ARCHIVE_HARD_LIMIT_BYTES
+        value: "9663676416"
       - key: OPENAI_MODEL
         value: "gpt-5.5"
       - key: OPENAI_REASONING_EFFORT

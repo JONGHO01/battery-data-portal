@@ -1,16 +1,16 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.73-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.74-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.73** - Search labels are readable and saved Figs are grouped by source-file experiment dates.
+> Current release: **v0.1.74** - Neon stores account and metadata records, private B2 stores raw/normalized artifacts, and a verified Windows archive agent protects raw files locally.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.73**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
+현재 버전은 **v0.1.74**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +22,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.74 | 2026-08-26 | Separate Neon metadata, private B2 artifacts, and SHA-256-verified Windows raw archives; remove the public administrator identifier. |
 | v0.1.73 | 2026-08-20 | Repair Search labels and verify source-file experiment-date grouping across saved Figs. |
 | v0.1.72 | 2026-08-20 | Prefer valid experiment dates in source filenames when grouping saved Figs and showing card dates. |
 | v0.1.71 | 2026-08-18 | Infer C-rate from 1C current or electrode mass/loading metadata and show the calculation basis during upload review. |
@@ -249,6 +250,8 @@ data/portal.sqlite3
 
 다른 컴퓨터에서도 로그인만 하면 같은 데이터를 볼 수 있게 하려면 PostgreSQL과 클라우드 저장소를 연결합니다.
 
+운영 구조는 **Neon에는 계정·Dataset/Fig 메타데이터만**, **Backblaze B2에는 원본과 Fig용 정규화 데이터**, **관리자 Windows 작업공간에는 검증된 원본 백업**을 두는 방식입니다. 저장된 Fig를 열 때 포털은 B2의 정규화 데이터를 다시 불러오므로 다른 컴퓨터에서도 과거 Fig를 확인할 수 있습니다. 설정 순서는 [B2 + Neon + 로컬 작업공간 안내](./docs/B2_LOCAL_ARCHIVE.md)를 따릅니다.
+
 ```text
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
 JWT_SECRET=long_random_secret
@@ -271,6 +274,7 @@ OPENAI_REASONING_EFFORT=low
 | 로컬 개발 | `data/uploads` | 내 컴퓨터에서만 사용합니다. |
 | 연구실 공유 | Supabase Storage | 로그인 기반 포털로 확장하기 좋습니다. |
 | 운영 배포 | S3 계열 Storage | 장기 운영과 백업에 유리합니다. |
+| 현재 권장 운영 | Neon + private B2 + Windows archive | 메타데이터, 온라인 Fig 데이터, 장기 원본을 분리합니다. |
 
 ---
 

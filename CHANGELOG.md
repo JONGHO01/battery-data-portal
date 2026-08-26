@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+## v0.1.74 - 2026-08-26
+
+- Keep production PostgreSQL rows slim by storing uploaded normalized tables in private S3-compatible object storage and hydrating old Figs on demand.
+- Add an authenticated raw-artifact archive queue with short-lived private download URLs, exact size/SHA-256 verification, and no automatic cloud deletion.
+- Add a standard-library Windows backup agent and scheduled-task installer for account/date/Dataset-partitioned local raw-data archives.
+- Show B2 raw-data usage plus pending and verified local-backup counts in the protected administrator raw-data browser.
+- Preserve exact point counts in compact Dataset/Fig lists without loading the full normalized table into PostgreSQL or the browser.
+- Document the Neon metadata, Backblaze B2 artifact, and local workspace archive operating model.
+- Remove the public administrator account identifier from the login screen.
+- Add a regression test that prevents the administrator identifier from being advertised again.
+
 ## v0.1.73 - 2026-08-20
 
 - Repair the Search scope and saved-date labels so they display `전체` and `전체 날짜` correctly.

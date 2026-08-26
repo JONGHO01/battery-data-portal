@@ -37,3 +37,8 @@ class UiTextIntegrityTests(unittest.TestCase):
         self.assertNotIn(r'?\uafa9\uaedc', type_source + date_source)
         self.assertNotIn(r'?\uc88e\ucb68', date_source)
 
+    def test_login_screen_does_not_advertise_the_administrator_identifier(self):
+        html = (PROJECT_ROOT / "public" / "index.html").read_text(encoding="utf-8")
+
+        self.assertNotIn("관리자 계정:", html)
+        self.assertNotIn("qq035786", html)

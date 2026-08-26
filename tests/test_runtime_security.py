@@ -191,11 +191,15 @@ class RuntimeSecurityTests(unittest.TestCase):
             S3_BUCKET="",
             S3_ACCESS_KEY_ID="access-value-that-must-not-appear",
             S3_SECRET_ACCESS_KEY="secret-value-that-must-not-appear",
+            ARCHIVE_AGENT_TOKEN="archive-value-that-must-not-appear",
         ):
             payload = portal.health()
         self.assertFalse(payload["storageConfigured"])
         self.assertEqual(payload["storageMissingVariables"], ["S3_BUCKET"])
+        self.assertTrue(payload["archiveAgentConfigured"])
+        self.assertEqual(payload["databaseRowsMode"], portal.DATABASE_ROWS_MODE)
         self.assertNotIn("secret-value-that-must-not-appear", str(payload))
+        self.assertNotIn("archive-value-that-must-not-appear", str(payload))
 
     def test_base64_upload_is_rejected_before_decoding_when_too_large_or_invalid(self):
         with patch.multiple(portal, MAX_BODY=3, MAX_BASE64_CHARS=4):

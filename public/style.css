@@ -3842,6 +3842,20 @@ pre {
   gap: 14px;
 }
 
+.adminRawStorageStatus {
+  padding: 11px 13px;
+  border: 1px solid #bfe3e6;
+  border-radius: 9px;
+  background: #f2fbfb;
+  color: #075d62;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.adminRawStorageStatus:empty {
+  display: none;
+}
+
 .adminRawOwnerFilter {
   display: flex;
   align-items: center;
@@ -3884,7 +3898,7 @@ pre {
 
 .adminRawDatasetSummary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
 }
 

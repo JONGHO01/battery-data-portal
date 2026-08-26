@@ -4,6 +4,7 @@
 # Local secrets. Put OPENAI_API_KEY here, but never upload it to GitHub.
 .env
 .env.local
+.archive-agent.env
 
 # Python and editor cache files.
 __pycache__/

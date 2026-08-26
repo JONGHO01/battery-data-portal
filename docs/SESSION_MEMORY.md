@@ -1,6 +1,6 @@
 # Session Memory
 
-> Release state (2026-08-20): local `v0.1.73` repairs the Search scope/date labels and verifies saved Figs group by valid experiment dates embedded in source filenames before falling back to shared cell or saved timestamps. Do not include local raw experiment files, databases, `.env`, or credentials in the release.
+> Release state (2026-08-26): `v0.1.74` includes the Neon metadata + private B2 artifact + verified Windows raw-archive structure and is synchronized to GitHub `main`. The public Render service still requires a current-code deployment, Neon/PostgreSQL, B2, and secret environment configuration. Do not include local raw experiment files, databases, `.env`, archive-agent configuration, or credentials in a release.
 
 ## Project Goal
 
@@ -9,10 +9,16 @@ Battery Data Portal is a Korean research workflow portal for battery experiment 
 The intended operating architecture is:
 
 ```text
-Browser -> application server -> PostgreSQL -> object storage -> OpenAI API -> domain with HTTPS
+Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
+                                     -> private B2 (raw + normalized Fig rows)
+                                     -> Windows archive agent (verified raw copy)
 ```
 
 ## Current Task
+
+Released v0.1.74 task: separate portal storage so Neon keeps identities, permissions, Dataset/Fig metadata, row counts, object keys, and backup status; private Backblaze B2 keeps immutable raw files plus normalized rows needed to reopen historical Figs; and a token-scoped Windows agent automatically copies raw artifacts into the administrator workspace and verifies exact size/SHA-256. Automatic B2 deletion is intentionally excluded.
+
+Current v0.1.74 task: stop advertising the administrator identifier on the public login screen and recover the Render service from the stale `v0.1.69` local/SQLite runtime to the current production/PostgreSQL deployment.
 
 Current v0.1.73 task: keep Search labels readable as `전체` and `전체 날짜`, and verify the 52 saved Figs split into source-date groups with card dates aligned to their group.
 
@@ -64,7 +70,11 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Current Status
 
-- 2026-08-20: Local v0.1.73 is running on port 4174. Search displays `전체` and `전체 날짜`; the 52 saved Figs render as eight newest-first date groups (8, 1, 36, 3, 1, 1, 1, 1 cards), every card date matches its group, only the newest group is expanded, and browser logs are clean.
+- 2026-08-26: v0.1.74 storage separation is released to GitHub `main`. PostgreSQL artifact mode retains only normalized row counts/references after artifact finalization; Dataset/Fig detail hydration reads bounded `parsed/normalized.json` bytes from private S3-compatible storage. Every valid raw artifact enters an authenticated archive queue; the local agent receives only a short-lived download URL, verifies size/SHA-256, writes an account/date/Dataset-partitioned file, and records `verified`/`cleanup eligible` without deleting B2. Full regression passes 208 tests, all syntax/config/diff checks pass, and the signed-in browser shows the protected raw-data screen plus the 52 saved Figs in eight date groups without console warnings/errors. Activating real backup still requires private B2/Render secrets and installing the scheduled task on the administrator PC.
+
+- 2026-08-20: Local v0.1.74 is running on port 4174. The login screen no longer advertises the administrator identifier; Search displays `전체` and `전체 날짜`; the 52 saved Figs render as eight newest-first date groups (8, 1, 36, 3, 1, 1, 1, 1 cards), every card date matches its group, only the newest group is expanded, and browser logs are clean.
+- 2026-08-20: Render service `battery-data-portal-v2` follows GitHub `main`, whose live deployment is commit `d9722a1` / v0.1.69. The current release branch is a two-commit fast-forward from `main` before the local v0.1.74 commit.
+- 2026-08-20: Render PostgreSQL `battery-data-portal-db` is expired and suspended, with deletion scheduled in one day. Render requires a paid upgrade to resume and preserve it; the smallest displayed option is Basic-256mb plus 1 GB storage at US$6.30/month. No plan change or payment action has been submitted.
 
 - 2026-08-11: Administrator member rows now open the protected raw-data workspace scoped to the selected account. The view shows the active member filter, supports one-click return to all-member data, and retains the existing administrator-only second-confirmation gate. Focused UI/API tests and the full 179-test suite passed.
 
@@ -195,6 +205,12 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Design Decisions
 
+- In production, keep large normalized row arrays out of Neon/PostgreSQL by using `DATABASE_ROWS_MODE=artifact`; retain exact row counts and object references in PostgreSQL.
+- Keep both `raw` and `parsed/normalized.json` in a private B2 bucket. Historical Fig hydration depends on the parsed artifact even if a verified raw file is later archived locally.
+- Queue every raw artifact for local backup immediately rather than waiting for a capacity threshold. A PC that is offline catches up on its next scheduled pass.
+- Use a dedicated `X-Archive-Token` plus short-lived presigned B2 downloads. Never give the local agent B2 credentials and never log the token or signed URL query.
+- Mark an exact local copy as cleanup-eligible only after matching size and SHA-256. Do not provide an automatic cloud-delete endpoint.
+
 - Normalize supported battery files through dedicated parsers in `backend/parsers/` and BDF canonical columns in `backend/schemas/bdf.py`.
 - Keep quality issues as review metadata instead of silently deleting questionable rows.
 - Store upload and derived artifacts by stable hierarchy: `projects/{project}/cells/{cell}/datasets/{dataset}/{kind}/...`, where `kind` includes `raw`, `parsed`, `analysis`, `figure`, and `report`.
@@ -210,6 +226,10 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Treat an SDE parser-version mismatch as a safe reparse signal when its immutable local raw artifact is available. Do not substitute arbitrary graph limits for malformed stored impedance columns.
 
 ## Files Changed
+
+- Unreleased Neon/B2/local archive structure: `python_backend.py`, `scripts/archive_agent.py`, `scripts/install_archive_backup_task.ps1`, `public/index.html`, `public/app.js`, `public/style.css`, `tests/test_cloud_archive_architecture.py`, `.env.example`, `.gitignore`, `render.yaml`, `docs/B2_LOCAL_ARCHIVE.md`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
+
+- v0.1.74 login identifier protection: `public/index.html`, `tests/test_ui_text_integrity.py`, `VERSION`, `package.json`, `python_backend.py`, `public/app.js`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
 - v0.1.73 Search/date verification: `public/app.js`, `tests/test_ui_text_integrity.py`, `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
@@ -318,7 +338,12 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
-- v0.1.73 has no remaining implementation work. Its GitHub publication target is the current `codex/release-v0.1.72` branch; verify the remote commit before reporting publication complete.
+- In Render, configure the private B2 S3 variables, `DATABASE_ROWS_MODE=artifact`, and a new long `ARCHIVE_AGENT_TOKEN`; then deploy only after explicit GitHub/deployment authorization.
+- On the administrator PC, run `scripts/install_archive_backup_task.ps1` with the deployed portal URL and an explicit archive root, enter the same archive token securely, and confirm the first raw item changes from `pending` to `verified`.
+
+- v0.1.74 implementation, release verification, commit, and GitHub `main` synchronization are complete. Render production configuration and deployment verification have not been completed.
+- The public `battery-data-portal-v2` Render service reports `v0.1.69`, `environment: local`, `database: sqlite`, and `accountStorePersistent: false`. Preserve/resume the expired PostgreSQL database only after the user explicitly approves the US$6.30/month paid plan and supplies a payment method directly in Render. Then link `DATABASE_URL`, set production-only environment variables without exposing their values, deploy the current `main`, and verify the public health response before reporting recovery complete.
+- Verify the Render auto-deploy result only after Neon/PostgreSQL, private B2, and secret environment values are configured; a GitHub push alone does not prove the public service is production-ready.
 
 - Before a release, manually inspect the integrated record with a saved CYC whose Cell has a linked electrode calculation profile, and test the profile-picker link/relink behavior. Do not label WRD-only values as loading, area, or 1C.
 
@@ -366,11 +391,15 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Open Questions
 
-- Which production provider should be used for the application, PostgreSQL, and object storage: Render, Railway, Fly.io, Supabase, S3-compatible storage, or another approved service?
+- Backblaze B2 is the selected durable S3-compatible provider. The actual private bucket, endpoint/region, bucket-scoped key, archive root drive, and archive token still need to be configured outside Git.
 - Should the next deployment package replace the existing clean upload copy or be created as a new versioned package?
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-08-26 v0.1.74 release: full pytest passes 208/208. Python in-memory compilation, bundled-Node JavaScript syntax, package JSON, Render YAML, PowerShell parser, synchronized version touchpoints, and `git diff --check` pass. Browser verification from the preceding storage review confirms the protected raw-data view includes the archive-status region, the existing 52 Figs remain grouped across eight dates, and no console warnings/errors appear. Real B2 hydration and the public Render production state still require configured external services and post-deployment verification.
+
+- 2026-08-20 v0.1.74: the administrator-ID exposure regression test failed before the HTML fix and passed afterward. Focused UI/release tests passed 9/9; full pytest passed 200/200; JavaScript, Python, package JSON, and `git diff --check` passed. Restarted local health reports `0.1.74`; browser verification shows `Battery Portal v0.1.74`, no administrator hint, and no console warnings or errors. The public Render health endpoint still reports stale `v0.1.69` with local SQLite and a nonpersistent account store.
 
 - 2026-08-20 v0.1.73: focused version/text/Fig-group tests passed 11/11; the full pytest suite passed 199/199; JavaScript, Python, package JSON, and `git diff --check` passed. Restarted local health reports `0.1.73`. Browser verification found readable Search labels, 52 cards across eight date groups with aligned card dates, one open newest group, and no console errors.
 

@@ -58,6 +58,11 @@ class DatasetArtifactTests(unittest.TestCase):
             item.update(portal.persist_upload_session_artifacts(conn, item, upload_id, user))
             portal.save_dataset(conn, item)
             saved = portal.dataset_from_row(portal.execute(conn, "SELECT * FROM datasets WHERE id = ?", (item["id"],)).fetchone())
+            archive = portal.execute(
+                conn,
+                "SELECT * FROM artifact_archives WHERE dataset_id = ?",
+                (item["id"],),
+            ).fetchone()
 
         self.assertTrue((portal.DATA_DIR / saved["rawArtifact"]["localPath"]).exists())
         self.assertTrue((portal.DATA_DIR / saved["parsedArtifact"]["localPath"]).exists())
@@ -65,6 +70,8 @@ class DatasetArtifactTests(unittest.TestCase):
         self.assertEqual(saved["parser"]["name"], "csv")
         self.assertEqual(saved["quality"]["status"], "ok")
         self.assertEqual(saved["analysisProvenance"]["sourceUploadId"], upload_id)
+        self.assertEqual(archive["backup_state"], "pending")
+        self.assertEqual(archive["sha256"], saved["rawArtifact"]["sha256"])
 
     def test_raw_upload_finalization_streams_the_source_file_without_reading_it_all(self):
         """Large CYC files must be copied into artifacts without a full RAM-sized read."""
@@ -580,8 +587,16 @@ class DatasetArtifactTests(unittest.TestCase):
         user = {"id": "tester", "name": "Tester", "role": "user"}
         dataset_id = "DATA-DELETE-CLEANUP-TEST"
         with portal.connect() as conn:
-            raw_artifact = portal.write_dataset_artifact(b"raw", f"datasets/{dataset_id}/raw.csv", "text/csv")
-            parsed_artifact = portal.write_dataset_artifact(b"parsed", f"datasets/{dataset_id}/parsed.json", "application/json")
+            raw_artifact = portal.write_dataset_artifact(
+                b"raw",
+                f"projects/test/cells/delete/datasets/{dataset_id}/raw/raw.csv",
+                "text/csv",
+            )
+            parsed_artifact = portal.write_dataset_artifact(
+                b"parsed",
+                f"projects/test/cells/delete/datasets/{dataset_id}/parsed/normalized.json",
+                "application/json",
+            )
             dataset = portal.save_dataset(
                 conn,
                 {
@@ -597,6 +612,7 @@ class DatasetArtifactTests(unittest.TestCase):
                     "parsedArtifact": parsed_artifact,
                 },
             )
+            portal.register_archive_artifact(conn, dataset, raw_artifact, "raw")
             analysis = portal.create_analysis_run(conn, dataset, user, "retention", {})
 
         figure = portal.save_figure_record({"datasetId": dataset_id}, user)
@@ -615,6 +631,7 @@ class DatasetArtifactTests(unittest.TestCase):
             self.assertIsNone(portal.execute(conn, "SELECT * FROM analysis_runs WHERE dataset_id = ?", (dataset_id,)).fetchone())
             self.assertIsNone(portal.execute(conn, "SELECT * FROM figures WHERE dataset_id = ?", (dataset_id,)).fetchone())
             self.assertIsNone(portal.execute(conn, "SELECT * FROM reports WHERE dataset_id = ?", (dataset_id,)).fetchone())
+            self.assertIsNone(portal.execute(conn, "SELECT * FROM artifact_archives WHERE dataset_id = ?", (dataset_id,)).fetchone())
         self.assertTrue(all(not path.exists() for path in artifact_paths))
 
     def test_legacy_analysis_table_is_migrated_before_deleting_its_dataset(self):

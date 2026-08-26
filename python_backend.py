@@ -32,7 +32,7 @@ import urllib.error
 import urllib.request
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, Response
@@ -113,6 +113,27 @@ S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", "")
 S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", "")
 S3_PUBLIC_BASE_URL = os.environ.get("S3_PUBLIC_BASE_URL", "").rstrip("/")
 S3_FORCE_PATH_STYLE = os.environ.get("S3_FORCE_PATH_STYLE", "true").lower() == "true"
+DATABASE_ROWS_MODE = os.environ.get(
+    "DATABASE_ROWS_MODE",
+    "artifact" if APP_ENV == "production" and USE_POSTGRES else "full",
+).strip().lower()
+MAX_OBJECT_ARTIFACT_BYTES = int(os.environ.get("MAX_OBJECT_ARTIFACT_BYTES", str(256 * 1024 * 1024)))
+ARCHIVE_AGENT_TOKEN = os.environ.get("ARCHIVE_AGENT_TOKEN", "").strip()
+try:
+    ARCHIVE_DOWNLOAD_TTL_SECONDS = max(300, min(int(os.environ.get("ARCHIVE_DOWNLOAD_TTL_SECONDS", "900")), 3600))
+except ValueError:
+    ARCHIVE_DOWNLOAD_TTL_SECONDS = 900
+try:
+    ARCHIVE_SOFT_LIMIT_BYTES = max(0, int(os.environ.get("ARCHIVE_SOFT_LIMIT_BYTES", str(8 * 1024**3))))
+except ValueError:
+    ARCHIVE_SOFT_LIMIT_BYTES = 8 * 1024**3
+try:
+    ARCHIVE_HARD_LIMIT_BYTES = max(
+        ARCHIVE_SOFT_LIMIT_BYTES,
+        int(os.environ.get("ARCHIVE_HARD_LIMIT_BYTES", str(9 * 1024**3))),
+    )
+except ValueError:
+    ARCHIVE_HARD_LIMIT_BYTES = max(ARCHIVE_SOFT_LIMIT_BYTES, 9 * 1024**3)
 HARVESTER_ENABLED = os.environ.get("HARVESTER_ENABLED", "false").lower() == "true"
 
 
@@ -123,7 +144,14 @@ def parse_cors_allow_origins(value: str) -> list[str]:
 
 
 CORS_ALLOW_ORIGINS = parse_cors_allow_origins(os.environ.get("CORS_ALLOW_ORIGINS", ""))
-CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-Filename", "X-Portal-Token", "X-Admin-Raw-Access"]
+CORS_ALLOW_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "X-Filename",
+    "X-Portal-Token",
+    "X-Admin-Raw-Access",
+    "X-Archive-Token",
+]
 if ALLOW_LEGACY_USER_HEADER:
     CORS_ALLOW_HEADERS.append("X-User-Id")
 
@@ -145,7 +173,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.73", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.74", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -703,6 +731,21 @@ def browser_safe_dataset_rows(rows: list[dict], data_type: str, limit: int = MAX
     return [row for _, row in sampled], True
 
 
+def database_rows_payload(item: dict) -> tuple[list, int, str]:
+    """Return the database row payload without duplicating durable artifacts."""
+
+    rows = item.get("rows") if isinstance(item.get("rows"), list) else []
+    try:
+        row_count = max(len(rows), int(item.get("rowCount") or 0))
+    except (TypeError, ValueError):
+        row_count = len(rows)
+    parsed_artifact = item.get("parsedArtifact") if isinstance(item.get("parsedArtifact"), dict) else {}
+    can_use_artifact = bool(parsed_artifact.get("objectKey"))
+    if USE_POSTGRES and DATABASE_ROWS_MODE == "artifact" and can_use_artifact:
+        return [], row_count, "artifact"
+    return rows, row_count, "database"
+
+
 def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False) -> dict:
     """Return the browser dataset shape without always serializing raw points.
 
@@ -717,7 +760,11 @@ def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False)
     stored_rows = json_loads(row["rows_json"], []) if include_rows else []
     if not isinstance(stored_rows, list):
         stored_rows = []
-    all_row_count = len(stored_rows)
+    try:
+        all_row_count = int(row["row_count"]) if "row_count" in keys else len(stored_rows)
+    except (TypeError, ValueError):
+        all_row_count = len(stored_rows)
+    all_row_count = max(all_row_count, len(stored_rows))
     rows_truncated = False
     if include_rows and browser_safe:
         stored_rows, rows_truncated = browser_safe_dataset_rows(stored_rows, row["data_type"])
@@ -732,12 +779,12 @@ def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False)
         "cell": json_loads(row["cell_json"], {}),
         "rows": stored_rows,
         "rowsLoaded": include_rows,
-        # The compact list deliberately does not parse the potentially large
-        # rows_json field merely to count it.  The detail response has the exact
-        # count after its rows are loaded.
-        "rowCount": all_row_count if include_rows else None,
+        # The migration stores this count separately, so compact Dataset/Fig
+        # lists can show an exact point count without parsing rows_json.
+        "rowCount": all_row_count,
         "loadedRowCount": len(stored_rows) if include_rows else 0,
         "rowsTruncated": rows_truncated,
+        "rowsStorage": row["rows_storage"] if "rows_storage" in keys else "database",
         "columns": json_loads(row["columns_json"], []),
         "sourceName": row["source_name"],
         "figureEdits": json_loads(row["figure_edits_json"], {}),
@@ -758,26 +805,25 @@ def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False)
 
 
 def dataset_detail_from_row(row) -> dict:
-    """Build a hydrated dataset and repair legacy CYC rows when possible."""
+    """Build one browser-safe Dataset hydrated from its normalized artifact.
+
+    Production PostgreSQL stores only metadata for uploaded instrument files.
+    The complete normalized table lives beside the immutable raw file in B2
+    (or the configured S3-compatible object store), so opening an old Fig must
+    rehydrate that table before applying the browser sampling limit.
+    """
 
     full_item = dataset_from_row(row, include_rows=True)
-    item = dataset_from_row(row, include_rows=True, browser_safe=True)
-    # Older browser saves can have a null front-end ``capacity`` field.  Keep
-    # their editable rows intact but attach parser-normalized rows only after a
-    # user explicitly opens that dataset for a Figure.
-    if item["dataType"].lower() == "cyc":
-        saved_rows = full_item.get("rows") if isinstance(full_item.get("rows"), list) else []
-        has_usable_capacity = any(
-            isinstance(saved, dict)
-            and isinstance(saved.get("capacity"), (int, float))
-            for saved in saved_rows
-        )
-        if not has_usable_capacity:
-            render_rows, provenance = load_analysis_rows(full_item)
-            if provenance["rowSource"] == "parsed-artifact" and render_rows:
-                display_rows, truncated = browser_safe_dataset_rows(render_rows, "cyc")
-                item["renderRows"] = display_rows
-                item["renderRowsTruncated"] = truncated
+    render_rows, provenance = load_analysis_rows(full_item, include_review_rows=True)
+    item = dataset_from_row(row, include_rows=False)
+    display_rows, truncated = browser_safe_dataset_rows(render_rows, item["dataType"])
+    item["rows"] = display_rows
+    item["rowsLoaded"] = True
+    item["rowCount"] = max(int(full_item.get("rowCount") or 0), len(render_rows))
+    item["loadedRowCount"] = len(display_rows)
+    item["rowsTruncated"] = truncated
+    if provenance["rowSource"] == "parsed-artifact":
+        item["rowsStorage"] = "artifact"
     return item
 
 
@@ -862,6 +908,22 @@ def ensure_dataset_provenance_columns(conn) -> None:
     if "organization_id" not in columns:
         execute(conn, "ALTER TABLE datasets ADD COLUMN organization_id TEXT NOT NULL DEFAULT ''")
     execute(conn, "UPDATE datasets SET organization_id = '' WHERE organization_id = '{}' ")
+
+
+def ensure_dataset_row_storage_columns(conn) -> None:
+    """Track full row counts while PostgreSQL keeps large rows in object storage."""
+
+    columns = table_columns(conn, "datasets")
+    if "row_count" not in columns:
+        execute(conn, "ALTER TABLE datasets ADD COLUMN row_count INTEGER NOT NULL DEFAULT 0")
+    if "rows_storage" not in columns:
+        execute(conn, "ALTER TABLE datasets ADD COLUMN rows_storage TEXT NOT NULL DEFAULT 'database'")
+
+    rows = execute(conn, "SELECT id, rows_json, row_count FROM datasets WHERE row_count = 0").fetchall()
+    for row in rows:
+        stored_rows = json_loads(row["rows_json"], [])
+        if isinstance(stored_rows, list) and stored_rows:
+            execute(conn, "UPDATE datasets SET row_count = ? WHERE id = ?", (len(stored_rows), row["id"]))
 
 
 def ensure_hierarchy_organization_columns(conn) -> None:
@@ -1386,6 +1448,8 @@ def init_db() -> None:
           updated_at TEXT NOT NULL,
           cell_json TEXT NOT NULL DEFAULT '{}',
           rows_json TEXT NOT NULL DEFAULT '[]',
+          row_count INTEGER NOT NULL DEFAULT 0,
+          rows_storage TEXT NOT NULL DEFAULT 'database',
           columns_json TEXT NOT NULL DEFAULT '[]',
           source_name TEXT NOT NULL DEFAULT '',
           figure_edits_json TEXT NOT NULL DEFAULT '{}',
@@ -1604,6 +1668,26 @@ def init_db() -> None:
           FOREIGN KEY(owner_id) REFERENCES users(id)
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS artifact_archives (
+          id TEXT PRIMARY KEY,
+          dataset_id TEXT NOT NULL,
+          owner_id TEXT NOT NULL,
+          owner_name TEXT NOT NULL DEFAULT '',
+          artifact_kind TEXT NOT NULL,
+          object_key TEXT NOT NULL UNIQUE,
+          source_name TEXT NOT NULL,
+          size_bytes INTEGER NOT NULL,
+          sha256 TEXT NOT NULL,
+          content_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+          created_at TEXT NOT NULL,
+          backup_state TEXT NOT NULL DEFAULT 'pending',
+          backup_device_id TEXT NOT NULL DEFAULT '',
+          backup_relative_path TEXT NOT NULL DEFAULT '',
+          verified_at TEXT NOT NULL DEFAULT '',
+          cleanup_eligible INTEGER NOT NULL DEFAULT 0
+        )
+        """,
         "CREATE INDEX IF NOT EXISTS idx_datasets_owner ON datasets(owner_id)",
         "CREATE INDEX IF NOT EXISTS idx_organization_members_user ON organization_members(user_id, organization_id)",
         "CREATE INDEX IF NOT EXISTS idx_api_tokens_owner ON api_tokens(owner_id, created_at)",
@@ -1626,6 +1710,8 @@ def init_db() -> None:
         "CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)",
         "CREATE INDEX IF NOT EXISTS idx_upload_sessions_owner ON upload_sessions(owner_id)",
         "CREATE INDEX IF NOT EXISTS idx_upload_sessions_created ON upload_sessions(created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_artifact_archives_state ON artifact_archives(backup_state, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_artifact_archives_dataset ON artifact_archives(dataset_id, artifact_kind)",
     ]
 
     with connect() as conn:
@@ -1633,6 +1719,7 @@ def init_db() -> None:
             execute(conn, statement)
         ensure_dataset_hierarchy_columns(conn)
         ensure_dataset_provenance_columns(conn)
+        ensure_dataset_row_storage_columns(conn)
         ensure_hierarchy_organization_columns(conn)
         ensure_derived_artifact_columns(conn)
         ensure_analysis_run_columns(conn)
@@ -1688,6 +1775,9 @@ def init_db() -> None:
         # cell ID from a different data type in the same experiment. Keep the
         # stored record aligned with its actual Dataset before the UI reads it.
         normalize_figure_record_identity(conn)
+        # Raw artifacts created before the local backup agent existed are also
+        # queued. Backfill stores metadata only and never reads or deletes B2.
+        backfill_archive_registry(conn)
 
 
 def ensure_bootstrap_admin(conn) -> None:
@@ -1741,6 +1831,7 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
         "updatedAt": updated_at,
         "cell": payload.get("cell") if isinstance(payload.get("cell"), dict) else {},
         "rows": payload.get("rows") if isinstance(payload.get("rows"), list) else [],
+        "rowCount": payload.get("rowCount") or payload.get("row_count") or 0,
         "columns": payload.get("columns") if isinstance(payload.get("columns"), list) else [],
         "sourceName": str(payload.get("sourceName") or payload.get("source_name") or ""),
         "figureEdits": payload.get("figureEdits") if isinstance(payload.get("figureEdits"), dict) else {},
@@ -1765,17 +1856,18 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
         )
 
     item.update(resolve_dataset_hierarchy(conn, item, actor_user))
+    database_rows, row_count, rows_storage = database_rows_payload(item)
 
     execute(
         conn,
         """
         INSERT INTO datasets(
           id, owner_id, owner_name, data_type, figure_kind, created_at, updated_at,
-          cell_json, rows_json, columns_json, source_name, figure_edits_json,
+          cell_json, rows_json, row_count, rows_storage, columns_json, source_name, figure_edits_json,
           project_id, campaign_id, cell_record_id, dataset_group_id,
           raw_artifact_json, parsed_artifact_json, column_mapping_json, quality_json,
           parser_json, analysis_provenance_json, organization_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           owner_id = excluded.owner_id,
           owner_name = excluded.owner_name,
@@ -1785,6 +1877,8 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
           updated_at = excluded.updated_at,
           cell_json = excluded.cell_json,
           rows_json = excluded.rows_json,
+          row_count = excluded.row_count,
+          rows_storage = excluded.rows_storage,
           columns_json = excluded.columns_json,
           source_name = excluded.source_name,
           figure_edits_json = excluded.figure_edits_json,
@@ -1809,7 +1903,9 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
             item["createdAt"],
             item["updatedAt"],
             json_dumps(item["cell"]),
-            json_dumps(item["rows"]),
+            json_dumps(database_rows),
+            row_count,
+            rows_storage,
             json_dumps(item["columns"]),
             item["sourceName"],
             json_dumps(item["figureEdits"]),
@@ -1826,6 +1922,8 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
             item["organizationId"],
         ),
     )
+    item["rowCount"] = row_count
+    item["rowsStorage"] = rows_storage
     return item
 
 
@@ -2154,6 +2252,67 @@ def upload_to_object_storage(data: bytes | Path, object_name: str, content_type:
     return f"s3://{S3_BUCKET}/{object_name}"
 
 
+def validated_object_key(object_name: str) -> str:
+    """Accept only portal-owned relative object keys."""
+
+    value = str(object_name or "").strip().replace("\\", "/")
+    parts = [part for part in value.split("/") if part]
+    if not value or value.startswith("/") or any(part in {".", ".."} for part in parts):
+        raise HTTPException(status_code=400, detail="Invalid object-storage key.")
+    if not value.startswith("projects/"):
+        raise HTTPException(status_code=400, detail="Object key is outside the portal artifact namespace.")
+    return value
+
+
+def read_object_storage_bytes(object_name: str) -> bytes | None:
+    """Read one bounded private portal artifact from S3-compatible storage."""
+
+    object_key = validated_object_key(object_name)
+    if STORAGE_BACKEND not in {"s3", "supabase"} or storage_configuration_issues():
+        if REQUIRE_DURABLE_STORAGE:
+            raise HTTPException(status_code=503, detail="Durable object storage is not available.")
+        return None
+    try:
+        import boto3
+        from botocore.config import Config
+    except ImportError as exc:
+        raise HTTPException(status_code=503, detail="The object-storage client is unavailable.") from exc
+
+    client = boto3.client(
+        "s3",
+        endpoint_url=S3_ENDPOINT_URL or None,
+        region_name=S3_REGION,
+        aws_access_key_id=S3_ACCESS_KEY_ID or None,
+        aws_secret_access_key=S3_SECRET_ACCESS_KEY or None,
+        config=Config(
+            signature_version="s3v4",
+            s3={"addressing_style": "path" if S3_FORCE_PATH_STYLE else "auto"},
+        ),
+    )
+    body = None
+    try:
+        response = client.get_object(Bucket=S3_BUCKET, Key=object_key)
+        content_length = int(response.get("ContentLength") or 0)
+        if content_length > MAX_OBJECT_ARTIFACT_BYTES:
+            raise HTTPException(status_code=413, detail="The normalized artifact exceeds the configured read limit.")
+        body = response["Body"]
+        data = body.read(MAX_OBJECT_ARTIFACT_BYTES + 1)
+        if len(data) > MAX_OBJECT_ARTIFACT_BYTES:
+            raise HTTPException(status_code=413, detail="The normalized artifact exceeds the configured read limit.")
+        return data
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Object storage read failed for {object_key}: {type(exc).__name__}", file=sys.stderr)
+        raise HTTPException(status_code=503, detail="The saved artifact could not be read from durable storage.") from exc
+    finally:
+        if body is not None:
+            try:
+                body.close()
+            except Exception:
+                pass
+
+
 def delete_from_object_storage(object_name: str) -> None:
     """Remove one durable artifact when object storage is configured.
 
@@ -2342,6 +2501,25 @@ def write_derived_artifact(dataset: dict, record_id: str, kind: str, document: d
     return write_dataset_artifact(json_dumps(document).encode("utf-8"), object_key, "application/json")
 
 
+def rewrite_normalized_artifact_rows(item: dict, rows: list[dict]) -> dict:
+    """Persist an intentional full-table edit back to the canonical artifact."""
+
+    parsed_artifact = item.get("parsedArtifact") if isinstance(item.get("parsedArtifact"), dict) else {}
+    object_key = str(parsed_artifact.get("objectKey") or "")
+    if not object_key:
+        raise HTTPException(status_code=409, detail="This Dataset has no normalized artifact to update.")
+    document = {
+        "schemaVersion": BDF_MAPPING_VERSION,
+        "datasetId": str(item.get("id") or ""),
+        "sourceColumns": item.get("columns") if isinstance(item.get("columns"), list) else [],
+        "columnMapping": item.get("columnMapping") if isinstance(item.get("columnMapping"), dict) else {},
+        "quality": item.get("quality") if isinstance(item.get("quality"), dict) else {},
+        "parser": item.get("parser") if isinstance(item.get("parser"), dict) else {},
+        "canonicalRows": rows,
+    }
+    return write_dataset_artifact(json_dumps(document).encode("utf-8"), object_key, "application/json")
+
+
 def delete_local_data_path(local_path_value: str) -> None:
     """Delete a local runtime artifact only when it remains below DATA_DIR."""
 
@@ -2410,6 +2588,223 @@ def analysis_run_from_row(row) -> dict:
     }
 
 
+def require_archive_agent(
+    x_archive_token: str | None = Header(None, alias="X-Archive-Token"),
+) -> bool:
+    """Authenticate the single-purpose local backup agent."""
+
+    if not ARCHIVE_AGENT_TOKEN:
+        raise HTTPException(status_code=503, detail="The local archive agent is not configured.")
+    supplied = str(x_archive_token or "").strip()
+    if not supplied or not hmac.compare_digest(supplied, ARCHIVE_AGENT_TOKEN):
+        raise HTTPException(status_code=401, detail="A valid X-Archive-Token is required.")
+    return True
+
+
+def archive_artifact_from_row(row, *, include_object_key: bool = False) -> dict:
+    """Return the bounded backup-agent contract for one immutable artifact."""
+
+    item = {
+        "archiveId": str(row["id"]),
+        "datasetId": str(row["dataset_id"]),
+        "ownerId": str(row["owner_id"]),
+        "ownerName": str(row["owner_name"] or ""),
+        "artifactKind": str(row["artifact_kind"]),
+        "sourceName": str(row["source_name"]),
+        "sizeBytes": int(row["size_bytes"] or 0),
+        "sha256": str(row["sha256"] or ""),
+        "contentType": str(row["content_type"] or "application/octet-stream"),
+        "createdAt": str(row["created_at"]),
+        "backupState": str(row["backup_state"]),
+        "backupDeviceId": str(row["backup_device_id"] or ""),
+        "backupRelativePath": str(row["backup_relative_path"] or ""),
+        "verifiedAt": str(row["verified_at"] or ""),
+        "isCleanupEligible": bool(int(row["cleanup_eligible"] or 0)),
+    }
+    if include_object_key:
+        item["objectKey"] = str(row["object_key"])
+    return item
+
+
+def register_archive_artifact(conn, dataset: dict, artifact: dict, artifact_kind: str = "raw") -> str:
+    """Queue an immutable raw artifact for a verified local copy."""
+
+    kind = str(artifact_kind or "").strip().lower()
+    if kind != "raw":
+        raise HTTPException(status_code=400, detail="Only immutable raw artifacts can enter the local archive queue.")
+    object_key = validated_object_key(str((artifact or {}).get("objectKey") or ""))
+    sha256 = str((artifact or {}).get("sha256") or "").strip().lower()
+    try:
+        size_bytes = int((artifact or {}).get("sizeBytes") or 0)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Archive artifact size is invalid.") from exc
+    if not re.fullmatch(r"[0-9a-f]{64}", sha256) or size_bytes <= 0:
+        raise HTTPException(status_code=400, detail="Archive artifact requires a positive size and SHA-256 digest.")
+
+    archive_id = make_id("archive")
+    source_name = clean_name(str(dataset.get("sourceName") or Path(object_key).name))
+    execute(
+        conn,
+        """
+        INSERT INTO artifact_archives(
+          id, dataset_id, owner_id, owner_name, artifact_kind, object_key,
+          source_name, size_bytes, sha256, content_type, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(object_key) DO UPDATE SET
+          dataset_id = excluded.dataset_id,
+          owner_id = excluded.owner_id,
+          owner_name = excluded.owner_name,
+          artifact_kind = excluded.artifact_kind,
+          source_name = excluded.source_name,
+          size_bytes = excluded.size_bytes,
+          sha256 = excluded.sha256,
+          content_type = excluded.content_type
+        """,
+        (
+            archive_id,
+            str(dataset.get("id") or ""),
+            str(dataset.get("ownerId") or ""),
+            str(dataset.get("ownerName") or ""),
+            kind,
+            object_key,
+            source_name,
+            size_bytes,
+            sha256,
+            str(artifact.get("contentType") or "application/octet-stream")[:160],
+            str(dataset.get("createdAt") or now_iso()),
+        ),
+    )
+    row = execute(conn, "SELECT id FROM artifact_archives WHERE object_key = ?", (object_key,)).fetchone()
+    return str(row["id"])
+
+
+def backfill_archive_registry(conn) -> int:
+    """Queue valid historical raw artifacts without touching their bytes."""
+
+    created = 0
+    rows = execute(conn, "SELECT * FROM datasets ORDER BY created_at").fetchall()
+    for row in rows:
+        dataset = dataset_from_row(row, include_rows=False)
+        artifact = dataset.get("rawArtifact") if isinstance(dataset.get("rawArtifact"), dict) else {}
+        if not artifact.get("objectKey") or not artifact.get("sha256") or not artifact.get("sizeBytes"):
+            continue
+        existed = execute(
+            conn,
+            "SELECT id FROM artifact_archives WHERE object_key = ?",
+            (str(artifact["objectKey"]),),
+        ).fetchone()
+        try:
+            register_archive_artifact(conn, dataset, artifact, "raw")
+        except HTTPException as exc:
+            print(f"Archive registry skipped Dataset {dataset['id']}: {exc.detail}", file=sys.stderr)
+            continue
+        if not existed:
+            created += 1
+    return created
+
+
+def list_archive_artifacts(conn, state: str = "pending", limit: int = 100) -> list[dict]:
+    """List a bounded archive queue without exposing object-store credentials."""
+
+    normalized_state = str(state or "pending").strip().lower()
+    if normalized_state not in {"pending", "verified"}:
+        raise HTTPException(status_code=400, detail="Archive state must be pending or verified.")
+    bounded_limit = max(1, min(int(limit), 200))
+    rows = execute(
+        conn,
+        "SELECT * FROM artifact_archives WHERE backup_state = ? ORDER BY created_at, id LIMIT ?",
+        (normalized_state, bounded_limit),
+    ).fetchall()
+    return [archive_artifact_from_row(row, include_object_key=True) for row in rows]
+
+
+def validate_archive_relative_path(relative_path: str) -> str:
+    """Reject absolute or traversal paths reported by a backup device."""
+
+    value = str(relative_path or "").strip().replace("\\", "/")
+    path = PurePosixPath(value)
+    if not value or len(value) > 600 or path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+        raise HTTPException(status_code=400, detail="The archive relative path is invalid.")
+    return path.as_posix()
+
+
+def verify_archive_artifact(
+    conn,
+    archive_id: str,
+    *,
+    size_bytes: int,
+    sha256: str,
+    device_id: str,
+    relative_path: str,
+) -> dict:
+    """Mark a local copy verified only after exact size and digest matching."""
+
+    row = execute(conn, "SELECT * FROM artifact_archives WHERE id = ?", (str(archive_id),)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Archive item was not found.")
+    supplied_hash = str(sha256 or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", supplied_hash):
+        raise HTTPException(status_code=400, detail="A valid SHA-256 digest is required.")
+    try:
+        supplied_size = int(size_bytes)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Archive size is invalid.") from exc
+    if supplied_size != int(row["size_bytes"]) or not hmac.compare_digest(supplied_hash, str(row["sha256"])):
+        raise HTTPException(status_code=409, detail="The local backup does not match the stored raw artifact.")
+    normalized_device = str(device_id or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9._-]{1,80}", normalized_device):
+        raise HTTPException(status_code=400, detail="Archive device ID is invalid.")
+    normalized_path = validate_archive_relative_path(relative_path)
+    verified_at = now_iso()
+    execute(
+        conn,
+        """
+        UPDATE artifact_archives
+        SET backup_state = 'verified', backup_device_id = ?, backup_relative_path = ?,
+            verified_at = ?, cleanup_eligible = 1
+        WHERE id = ?
+        """,
+        (normalized_device, normalized_path, verified_at, str(archive_id)),
+    )
+    verified = execute(conn, "SELECT * FROM artifact_archives WHERE id = ?", (str(archive_id),)).fetchone()
+    return archive_artifact_from_row(verified)
+
+
+def create_object_download_url(object_name: str, expires_in: int = ARCHIVE_DOWNLOAD_TTL_SECONDS) -> str:
+    """Create a short-lived private download URL for the authenticated agent."""
+
+    object_key = validated_object_key(object_name)
+    if STORAGE_BACKEND not in {"s3", "supabase"} or storage_configuration_issues():
+        raise HTTPException(status_code=503, detail="Durable object storage is not available for archive download.")
+    try:
+        import boto3
+        from botocore.config import Config
+
+        client = boto3.client(
+            "s3",
+            endpoint_url=S3_ENDPOINT_URL or None,
+            region_name=S3_REGION,
+            aws_access_key_id=S3_ACCESS_KEY_ID or None,
+            aws_secret_access_key=S3_SECRET_ACCESS_KEY or None,
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "path" if S3_FORCE_PATH_STYLE else "auto"},
+            ),
+        )
+        return str(
+            client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": S3_BUCKET, "Key": object_key},
+                ExpiresIn=max(300, min(int(expires_in), 3600)),
+            )
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Archive download signing failed for {object_key}: {type(exc).__name__}", file=sys.stderr)
+        raise HTTPException(status_code=503, detail="A private archive download URL could not be created.") from exc
+
+
 def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dict) -> dict:
     """Finalize a verified upload into raw and parsed artifact locations."""
 
@@ -2451,6 +2846,7 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
             "application/json",
         )
         stored_artifacts.append(parsed_artifact)
+        register_archive_artifact(conn, item, raw_artifact, "raw")
     except Exception:
         # A failed finalization must not leave a raw artifact without its
         # normalized companion. Preserve the original exception for diagnosis.
@@ -2560,15 +2956,34 @@ def load_analysis_rows(item: dict, include_review_rows: bool = False) -> tuple[l
     rows = item.get("rows") if isinstance(item.get("rows"), list) else []
     source = "dataset-rows"
     parsed_artifact = item.get("parsedArtifact") if isinstance(item.get("parsedArtifact"), dict) else {}
-    local_path = parsed_artifact.get("localPath")
-    if local_path:
-        candidate = (DATA_DIR / str(local_path)).resolve()
-        if str(candidate).startswith(str(DATA_DIR.resolve())) and candidate.exists():
-            document = json_loads(candidate.read_text(encoding="utf-8"), {})
-            canonical_rows = document.get("canonicalRows") if isinstance(document, dict) else None
-            if isinstance(canonical_rows, list):
-                rows = canonical_rows
-                source = "parsed-artifact"
+    artifact_bytes = None
+    candidate = _artifact_local_path(parsed_artifact)
+    if candidate is not None:
+        artifact_bytes = candidate.read_bytes()
+    elif parsed_artifact.get("objectKey"):
+        artifact_bytes = read_object_storage_bytes(str(parsed_artifact["objectKey"]))
+    if artifact_bytes is not None:
+        if len(artifact_bytes) > MAX_OBJECT_ARTIFACT_BYTES:
+            raise HTTPException(status_code=413, detail="The normalized artifact exceeds the configured read limit.")
+        try:
+            document = json.loads(artifact_bytes.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            if rows:
+                # Some legacy/local tests attached an arbitrary placeholder as
+                # parsedArtifact while retaining a complete database table.
+                # Preserve that safe fallback, but never hide corruption when
+                # artifact mode is the Dataset's only row source.
+                print(
+                    f"Normalized artifact fallback for Dataset {item.get('id', '')}: invalid JSON",
+                    file=sys.stderr,
+                )
+                document = {}
+            else:
+                raise HTTPException(status_code=502, detail="The normalized artifact is not valid JSON.") from exc
+        canonical_rows = document.get("canonicalRows") if isinstance(document, dict) else None
+        if isinstance(canonical_rows, list):
+            rows = canonical_rows
+            source = "parsed-artifact"
 
     valid_rows = []
     excluded_count = 0
@@ -2764,6 +3179,10 @@ def health():
         "storage": STORAGE_BACKEND,
         "storageConfigured": storage_ready(),
         "storageMissingVariables": storage_configuration_issues(),
+        "databaseRowsMode": DATABASE_ROWS_MODE,
+        "archiveAgentConfigured": bool(ARCHIVE_AGENT_TOKEN),
+        "archiveSoftLimitBytes": ARCHIVE_SOFT_LIMIT_BYTES,
+        "archiveHardLimitBytes": ARCHIVE_HARD_LIMIT_BYTES,
         "openai": "configured" if OPENAI_API_KEY else "missing",
         "version": app.version,
     }
@@ -2833,18 +3252,40 @@ def register(payload: dict = Body(default_factory=dict)):
     return {"user": public_user(user, token), "token": token}
 
 
-def admin_raw_dataset_summary(row, row_count: int | None = None) -> dict:
-    """Return the minimal metadata needed to choose a stored raw table.
+def raw_archive_status(conn, dataset_id: str) -> dict:
+    row = execute(
+        conn,
+        "SELECT * FROM artifact_archives WHERE dataset_id = ? AND artifact_kind = 'raw' ORDER BY created_at DESC LIMIT 1",
+        (str(dataset_id),),
+    ).fetchone()
+    if not row:
+        return {
+            "rawBackupState": "unregistered",
+            "rawBackupVerifiedAt": "",
+            "rawSizeBytes": 0,
+            "rawCleanupEligible": False,
+        }
+    return {
+        "rawBackupState": str(row["backup_state"]),
+        "rawBackupVerifiedAt": str(row["verified_at"] or ""),
+        "rawSizeBytes": int(row["size_bytes"] or 0),
+        "rawCleanupEligible": bool(int(row["cleanup_eligible"] or 0)),
+    }
 
-    Artifact keys, parser details, cell notes, and figure settings are omitted
-    from this privileged listing.  They are unrelated to raw-row inspection.
-    """
+
+def admin_raw_dataset_summary(row, row_count: int | None = None, archive_status: dict | None = None) -> dict:
+    """Return bounded raw-table and local-backup metadata for administrators."""
 
     columns = json_loads(row["columns_json"], [])
     if not isinstance(columns, list):
         columns = []
+    if row_count is None:
+        try:
+            row_count = int(row["row_count"])
+        except (KeyError, TypeError, ValueError):
+            row_count = None
     source_name = str(row["source_name"] or "").replace(chr(92), "/").rsplit("/", 1)[-1]
-    return {
+    item = {
         "id": str(row["id"]),
         "sourceName": source_name,
         "dataType": str(row["data_type"] or ""),
@@ -2853,7 +3294,10 @@ def admin_raw_dataset_summary(row, row_count: int | None = None) -> dict:
         "createdAt": str(row["created_at"] or ""),
         "columnCount": len(columns),
         "rowCount": row_count,
+        "rowsStorage": str(row["rows_storage"] if "rows_storage" in row.keys() else "database"),
     }
+    item.update(archive_status or {})
+    return item
 
 
 @app.post("/api/admin/raw-data/access")
@@ -2894,12 +3338,31 @@ def list_admin_raw_datasets(
                 "SELECT * FROM datasets ORDER BY created_at DESC LIMIT ?",
                 (bounded_limit,),
             ).fetchall()
-    items = []
-    for row in rows:
-        stored_rows = json_loads(row["rows_json"], [])
-        row_count = len(stored_rows) if isinstance(stored_rows, list) else 0
-        items.append(admin_raw_dataset_summary(row, row_count))
-    return {"items": items}
+        items = [
+            admin_raw_dataset_summary(row, archive_status=raw_archive_status(conn, str(row["id"])))
+            for row in rows
+        ]
+        archive_rows = execute(
+            conn,
+            "SELECT backup_state, COUNT(*) AS item_count, COALESCE(SUM(size_bytes), 0) AS total_bytes FROM artifact_archives GROUP BY backup_state",
+        ).fetchall()
+    archive_summary = {
+        str(entry["backup_state"]): {
+            "count": int(entry["item_count"] or 0),
+            "bytes": int(entry["total_bytes"] or 0),
+        }
+        for entry in archive_rows
+    }
+    return {
+        "items": items,
+        "storage": {
+            "pending": archive_summary.get("pending", {"count": 0, "bytes": 0}),
+            "verified": archive_summary.get("verified", {"count": 0, "bytes": 0}),
+            "totalBytes": sum(value["bytes"] for value in archive_summary.values()),
+            "softLimitBytes": ARCHIVE_SOFT_LIMIT_BYTES,
+            "hardLimitBytes": ARCHIVE_HARD_LIMIT_BYTES,
+        },
+    }
 
 
 @app.get("/api/admin/raw-data/datasets/{dataset_id}")
@@ -2915,23 +3378,71 @@ def get_admin_raw_dataset(
     bounded_limit = max(1, min(int(limit), 250))
     with connect() as conn:
         row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+        archive_status = raw_archive_status(conn, dataset_id) if row else {}
     if not row:
         raise HTTPException(status_code=404, detail="Dataset not found.")
-    stored_rows = json_loads(row["rows_json"], [])
-    if not isinstance(stored_rows, list):
-        stored_rows = []
+    stored_rows, _ = load_analysis_rows(dataset_from_row(row), include_review_rows=True)
     columns = json_loads(row["columns_json"], [])
     if not isinstance(columns, list):
         columns = []
+    if stored_rows:
+        row_columns = list(dict.fromkeys(key for item in stored_rows if isinstance(item, dict) for key in item.keys()))
+        if not columns or not any(column in row_columns for column in columns):
+            columns = row_columns
     raw_rows = [item for item in stored_rows[bounded_offset : bounded_offset + bounded_limit] if isinstance(item, dict)]
     return {
-        "dataset": admin_raw_dataset_summary(row, len(stored_rows)),
+        "dataset": admin_raw_dataset_summary(row, len(stored_rows), archive_status),
         "columns": [str(column) for column in columns],
         "offset": bounded_offset,
         "limit": bounded_limit,
         "totalRows": len(stored_rows),
         "rows": raw_rows,
     }
+
+
+@app.get("/api/archive/artifacts")
+def get_archive_artifacts(
+    state: str = "pending",
+    limit: int = 100,
+    archive_agent=Depends(require_archive_agent),
+):
+    """Return authenticated backup work with short-lived private URLs."""
+
+    with connect() as conn:
+        items = list_archive_artifacts(conn, state=state, limit=limit)
+        total_bytes = int(scalar(execute(conn, "SELECT COALESCE(SUM(size_bytes), 0) AS total FROM artifact_archives").fetchone()) or 0)
+    public_items = []
+    for item in items:
+        object_key = str(item.pop("objectKey"))
+        item["downloadUrl"] = create_object_download_url(object_key)
+        item["downloadExpiresInSeconds"] = ARCHIVE_DOWNLOAD_TTL_SECONDS
+        public_items.append(item)
+    return {
+        "items": public_items,
+        "totalBytes": total_bytes,
+        "softLimitBytes": ARCHIVE_SOFT_LIMIT_BYTES,
+        "hardLimitBytes": ARCHIVE_HARD_LIMIT_BYTES,
+        "usageRatio": (total_bytes / ARCHIVE_HARD_LIMIT_BYTES) if ARCHIVE_HARD_LIMIT_BYTES else 0,
+    }
+
+
+@app.post("/api/archive/artifacts/{archive_id}/verification")
+def confirm_archive_artifact(
+    archive_id: str,
+    payload: dict = Body(default_factory=dict),
+    archive_agent=Depends(require_archive_agent),
+):
+    """Record a local copy only after the agent reports an exact digest."""
+
+    with connect() as conn:
+        return verify_archive_artifact(
+            conn,
+            archive_id,
+            size_bytes=payload.get("sizeBytes"),
+            sha256=str(payload.get("sha256") or ""),
+            device_id=str(payload.get("deviceId") or ""),
+            relative_path=str(payload.get("relativePath") or ""),
+        )
 
 
 @app.get("/api/users")
@@ -3627,7 +4138,7 @@ def update_dataset(dataset_id: str, payload: dict = Body(default_factory=dict), 
             # A browser detail response can be a deliberately sampled preview.
             # Reject a preview-sized write rather than letting an ordinary table
             # edit erase the immutable large raw trace from the Dataset record.
-            current_rows = item.get("rows") if isinstance(item.get("rows"), list) else []
+            current_rows, _ = load_analysis_rows(item, include_review_rows=True)
             if (
                 len(current_rows) > MAX_BROWSER_DATASET_ROWS
                 and len(payload["rows"]) < len(current_rows)
@@ -3638,6 +4149,9 @@ def update_dataset(dataset_id: str, payload: dict = Body(default_factory=dict), 
                     detail="This large Dataset is displayed as a preview and cannot be saved as a partial table. Re-import the source file to replace all rows.",
                 )
             item["rows"] = payload["rows"]
+            item["rowCount"] = len(payload["rows"])
+            if str(item.get("rowsStorage") or "") == "artifact":
+                item["parsedArtifact"] = rewrite_normalized_artifact_rows(item, payload["rows"])
         if isinstance(payload.get("columns"), list):
             item["columns"] = payload["columns"]
         if isinstance(payload.get("figureEdits"), dict):
@@ -3684,6 +4198,7 @@ def delete_dataset(dataset_id: str, user=Depends(get_current_user)):
         execute(conn, "DELETE FROM figures WHERE dataset_id = ?", (dataset_id,))
         execute(conn, "DELETE FROM reports WHERE dataset_id = ?", (dataset_id,))
         execute(conn, "DELETE FROM upload_sessions WHERE consumed_dataset_id = ?", (dataset_id,))
+        execute(conn, "DELETE FROM artifact_archives WHERE dataset_id = ?", (dataset_id,))
         execute(conn, "DELETE FROM datasets WHERE id = ?", (dataset_id,))
     return {"ok": True}
 
