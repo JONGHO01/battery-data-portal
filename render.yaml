@@ -41,6 +41,8 @@ services:
         sync: false
       - key: S3_FORCE_PATH_STYLE
         value: "true"
+      - key: S3_PROVIDER
+        value: "b2"
       - key: S3_BUCKET
         sync: false
       - key: S3_ENDPOINT_URL

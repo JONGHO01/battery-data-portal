@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.1.75 - 2026-09-09
+
+- Confirm Backblaze B2 as the private S3-compatible object store while preserving Neon metadata and verified Windows raw-file archives.
+- Require an official HTTPS B2 S3 endpoint whose embedded region matches `S3_REGION` before production storage is reported as configured or any upload, read, signed-download, or delete operation can use it.
+- Add a B2-specific Render template, operator guide, administrator storage label, and provider-neutral archive implementation without storing any credentials.
+
 ## v0.1.74 - 2026-08-26
 
 - Keep production PostgreSQL rows slim by storing uploaded normalized tables in private S3-compatible object storage and hydrating old Figs on demand.

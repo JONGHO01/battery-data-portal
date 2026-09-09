@@ -1,6 +1,6 @@
 # Session Memory
 
-> Release state (2026-08-26): `v0.1.74` includes the Neon metadata + private B2 artifact + verified Windows raw-archive structure and is synchronized to GitHub `main`. The public Render service still requires a current-code deployment, Neon/PostgreSQL, B2, and secret environment configuration. Do not include local raw experiment files, databases, `.env`, archive-agent configuration, or credentials in a release.
+> Release state (2026-09-09): `v0.1.75` confirms Neon metadata + private Backblaze B2 artifacts, enforces official endpoint/region matching, and reports the active storage provider. Preliminary public health reports production mode, PostgreSQL, persistent accounts, S3 artifact storage, and no missing storage variables; the Windows archive agent remains unconfigured until its separate token and scheduled task are installed. Do not include local raw experiment files, databases, `.env`, archive-agent configuration, or credentials in a release.
 
 ## Project Goal
 
@@ -10,15 +10,17 @@ The intended operating architecture is:
 
 ```text
 Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
-                                     -> private B2 (raw + normalized Fig rows)
+                                     -> private Backblaze B2 (raw + normalized Fig rows)
                                      -> Windows archive agent (verified raw copy)
 ```
 
 ## Current Task
 
+Released v0.1.75 task: keep Backblaze B2 as the selected durable object-store provider. Require the official HTTPS B2 S3 endpoint and an endpoint-matching `S3_REGION`, keep the bucket private, preserve the verified Windows archive flow, and never store real B2 credentials in source, tests, documentation, chat, or session memory.
+
 Released v0.1.74 task: separate portal storage so Neon keeps identities, permissions, Dataset/Fig metadata, row counts, object keys, and backup status; private Backblaze B2 keeps immutable raw files plus normalized rows needed to reopen historical Figs; and a token-scoped Windows agent automatically copies raw artifacts into the administrator workspace and verifies exact size/SHA-256. Automatic B2 deletion is intentionally excluded.
 
-Current v0.1.74 task: stop advertising the administrator identifier on the public login screen and recover the Render service from the stale `v0.1.69` local/SQLite runtime to the current production/PostgreSQL deployment.
+Current v0.1.74 deployment task: keep the administrator identifier off the public login screen, retain the now-connected Neon/PostgreSQL account store, and replace Render's unsafe local artifact storage with private B2 plus verified Windows backup.
 
 Current v0.1.73 task: keep Search labels readable as `전체` and `전체 날짜`, and verify the 52 saved Figs split into source-date groups with card dates aligned to their group.
 
@@ -56,7 +58,7 @@ Current uncommitted fix: CYC Fig rendering must keep the source capacity unit ra
 
 Current uncommitted stability fix: large WRD inspection responses must not send both the editable `rows` preview and a second full `canonicalRows` copy to the browser. `canonicalRows` stays only in the server-side upload session for Dataset saving; the public response contains the capped representative preview. The initial CYC inspection must also use only a lightweight dQ/dV readiness scan. Full derivative calculation remains deferred until the user actually creates a dQ/dV Fig.
 
-Current release target remains `v0.1.62`; do not bump the version without an explicit release request. Existing WRD Datasets with a parser marker older than `parser-6` must rebuild from their immutable raw artifact when it is available. Do not use an exact 5,000-row display count as a legacy-parser signal because current browser samples can legitimately have 5,000 rows. Saved CYC Dataset rows may preserve original instrument column names for traceability. On every Dataset reload, raw CYC rows must be canonicalized before Fig rendering so recognized fields such as `specific capacity (mAh g-1)`, `voltage (V)`, and `current (A)` render as capacity, voltage, and current. A legacy `capacity: null` is unresolved data, not numeric zero: it must trigger raw/parser-row recovery rather than leave a valid Fig blank. Large editable tables must page at 250 rows without discarding source rows; the global row index must stay stable for edits, paste, undo, and save. A valid dQ/dV Fig requires real ordered voltage-capacity points inside at least one cycle; when unavailable, the UI must state whether raw points are missing, too sparse within a cycle, or could not form a valid derivative segment. This must never invent a dQ/dV curve from summary-only CYC data or leave a valid saved raw trace as a blank Fig.
+Current release remains `v0.1.75`; do not bump the version without an explicit release request. Existing WRD Datasets with a parser marker older than `parser-6` must rebuild from their immutable raw artifact when it is available. Do not use an exact 5,000-row display count as a legacy-parser signal because current browser samples can legitimately have 5,000 rows. Saved CYC Dataset rows may preserve original instrument column names for traceability. On every Dataset reload, raw CYC rows must be canonicalized before Fig rendering so recognized fields such as `specific capacity (mAh g-1)`, `voltage (V)`, and `current (A)` render as capacity, voltage, and current. A legacy `capacity: null` is unresolved data, not numeric zero: it must trigger raw/parser-row recovery rather than leave a valid Fig blank. Large editable tables must page at 250 rows without discarding source rows; the global row index must stay stable for edits, paste, undo, and save. A valid dQ/dV Fig requires real ordered voltage-capacity points inside at least one cycle; when unavailable, the UI must state whether raw points are missing, too sparse within a cycle, or could not form a valid derivative segment. This must never invent a dQ/dV curve from summary-only CYC data or leave a valid saved raw trace as a blank Fig.
 
 Historical v0.1.57 task context: WBCS WRD CYC parsing preserves point-level discharge voltage-capacity traces rather than collapsing each cycle to a final-capacity summary row. Existing saved `.wrd` datasets parsed by an older parser version refresh from their preserved raw artifact at startup. dQ/dV accepts only a real ordered within-cycle voltage-capacity trace. CYC summary data with one capacity/end-voltage value per cycle must remain unavailable; it must never be differentiated into an invented dQ/dV curve or create an empty dQ/dV Fig. Raw traces require at least eight points and six distinct voltage/capacity values within one cycle; charge and discharge are kept separate when current direction is available. Hosted account registration must use PostgreSQL, never an ephemeral container SQLite file. A successful signup is read back through a fresh database connection before a token is issued; the login UI shows the backend's specific registration diagnostic. SQLite remains supported only for local development. Existing passwords must remain PBKDF2 hashes and must never be displayed, returned by an API, logged, or stored in release notes.
 
@@ -69,6 +71,11 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+- 2026-09-09: The user reports that Backblaze B2 configuration is complete. Preliminary public health reports `environment: production`, `database: postgresql`, `accountStorePersistent: true`, `storage: s3`, `storageConfigured: true`, no missing storage variables, and `databaseRowsMode: artifact`. The separate Windows archive agent is still unconfigured (`archiveAgentConfigured: false`) and remains the only known incomplete layer in the intended three-tier storage structure.
+
+
+- 2026-09-02: The user selected Backblaze B2 after the administrator computer reached `s3.us-west-004.backblazeb2.com` and received the expected unauthenticated XML `AccessDenied` response rather than the institutional block page. Unreleased source now selects `S3_PROVIDER=b2`, validates the official HTTPS B2 endpoint and matching region, labels administrator cloud usage as B2, and documents laptop-based B2 setup plus verified Windows backup. No access key, application key, bucket name, or archive token has been configured or stored. Real Render/B2 upload, Fig hydration, and local SHA-256 backup remain unverified until the private bucket and secrets are configured outside Git.
+- 2026-09-02: Public Render health reports `v0.1.74`, `database: postgresql`, and `accountStorePersistent: true`, so Neon is connected. It still reports `environment: local`, `storage: local`, `databaseRowsMode: full`, and `archiveAgentConfigured: false`; raw/Fig artifacts are not production-safe until B2 and production settings are applied.
 
 - 2026-08-26: v0.1.74 storage separation is released to GitHub `main`. PostgreSQL artifact mode retains only normalized row counts/references after artifact finalization; Dataset/Fig detail hydration reads bounded `parsed/normalized.json` bytes from private S3-compatible storage. Every valid raw artifact enters an authenticated archive queue; the local agent receives only a short-lived download URL, verifies size/SHA-256, writes an account/date/Dataset-partitioned file, and records `verified`/`cleanup eligible` without deleting B2. Full regression passes 208 tests, all syntax/config/diff checks pass, and the signed-in browser shows the protected raw-data screen plus the 52 saved Figs in eight date groups without console warnings/errors. Activating real backup still requires private B2/Render secrets and installing the scheduled task on the administrator PC.
 
@@ -201,12 +208,13 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Keep the existing personal `battery-portal-versioning` skill separate and never modify it.
 - Keep portal-specific skills inside `.agents/skills/` so a GitHub clone has the same project workflow guidance.
 - Record every meaningful delivered code, UI, analysis, deployment, documentation, or workflow change in `CHANGELOG.md`; use `Unreleased` until the user requests the next released version.
+- Use Backblaze B2 as the selected private object store. Keep the bucket private, scope a `Read and Write` application key to that bucket only, and enter real credentials only in Render.
 - CYC electrical behavior must remain visible: raw data should show voltage curves and current context, while summary data should show voltage/current trends by cycle instead of an empty or misleading profile.
 
 ## Design Decisions
 
 - In production, keep large normalized row arrays out of Neon/PostgreSQL by using `DATABASE_ROWS_MODE=artifact`; retain exact row counts and object references in PostgreSQL.
-- Keep both `raw` and `parsed/normalized.json` in a private B2 bucket. Historical Fig hydration depends on the parsed artifact even if a verified raw file is later archived locally.
+- Keep both `raw` and `parsed/normalized.json` in a private Backblaze B2 bucket. Historical Fig hydration depends on the parsed artifact even if a verified raw file is later archived locally.
 - Queue every raw artifact for local backup immediately rather than waiting for a capacity threshold. A PC that is offline catches up on its next scheduled pass.
 - Use a dedicated `X-Archive-Token` plus short-lived presigned B2 downloads. Never give the local agent B2 credentials and never log the token or signed URL query.
 - Mark an exact local copy as cleanup-eligible only after matching size and SHA-256. Do not provide an automatic cloud-delete endpoint.
@@ -226,6 +234,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Treat an SDE parser-version mismatch as a safe reparse signal when its immutable local raw artifact is available. Do not substitute arbitrary graph limits for malformed stored impedance columns.
 
 ## Files Changed
+
+- Unreleased Backblaze B2 selection and validation: `python_backend.py`, `.env.example`, `render.yaml`, `public/app.js`, `scripts/archive_agent.py`, `scripts/install_archive_backup_task.ps1`, `docs/B2_LOCAL_ARCHIVE.md`, `docs/RENDER_STORAGE_CHECKLIST.md`, `README.md`, `CHANGELOG.md`, `tests/test_runtime_security.py`, `tests/test_storage_cloud_archive_architecture.py`, and `docs/SESSION_MEMORY.md`.
 
 - Unreleased Neon/B2/local archive structure: `python_backend.py`, `scripts/archive_agent.py`, `scripts/install_archive_backup_task.ps1`, `public/index.html`, `public/app.js`, `public/style.css`, `tests/test_cloud_archive_architecture.py`, `.env.example`, `.gitignore`, `render.yaml`, `docs/B2_LOCAL_ARCHIVE.md`, `README.md`, `CHANGELOG.md`, and `docs/SESSION_MEMORY.md`.
 
@@ -338,11 +348,11 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
-- In Render, configure the private B2 S3 variables, `DATABASE_ROWS_MODE=artifact`, and a new long `ARCHIVE_AGENT_TOKEN`; then deploy only after explicit GitHub/deployment authorization.
+- On the accessible laptop, create one private Backblaze B2 bucket and a `Read and Write` application key restricted to that bucket. Enter its bucket name, exact S3 endpoint/region, key ID, and application key directly in Render together with `DATABASE_ROWS_MODE=artifact` and a new long `ARCHIVE_AGENT_TOKEN`; deploy only after explicit GitHub/deployment authorization.
 - On the administrator PC, run `scripts/install_archive_backup_task.ps1` with the deployed portal URL and an explicit archive root, enter the same archive token securely, and confirm the first raw item changes from `pending` to `verified`.
 
 - v0.1.74 implementation, release verification, commit, and GitHub `main` synchronization are complete. Render production configuration and deployment verification have not been completed.
-- The public `battery-data-portal-v2` Render service reports `v0.1.69`, `environment: local`, `database: sqlite`, and `accountStorePersistent: false`. Preserve/resume the expired PostgreSQL database only after the user explicitly approves the US$6.30/month paid plan and supplies a payment method directly in Render. Then link `DATABASE_URL`, set production-only environment variables without exposing their values, deploy the current `main`, and verify the public health response before reporting recovery complete.
+- The public `battery-data-portal-v2` Render service now reports `v0.1.74`, PostgreSQL, and a persistent account store, but still runs with `environment: local`, `storage: local`, full database rows, and no archive agent. Preserve the working Neon `DATABASE_URL`; set the production/B2 variables and verify public health before reporting storage recovery complete.
 - Verify the Render auto-deploy result only after Neon/PostgreSQL, private B2, and secret environment values are configured; a GitHub push alone does not prove the public service is production-ready.
 
 - Before a release, manually inspect the integrated record with a saved CYC whose Cell has a linked electrode calculation profile, and test the profile-picker link/relink behavior. Do not label WRD-only values as loading, area, or 1C.
@@ -355,7 +365,7 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 - Manually refresh the browser and regenerate each existing CYC Fig once. Saved SVG/PNG Fig artifacts do not retroactively change when the renderer is corrected. Before a release, run the full suite, check a real interactive CYC upload/selection flow, then follow the versioning and GitHub workflow only when explicitly requested.
 
-- Configure the Render `battery-data-portal-v2` service with the internal PostgreSQL `DATABASE_URL` from `battery-data-portal-db`, set `APP_ENV=production`, then redeploy. Accounts created before this configuration may have been stored in `/tmp` and must be created again after the durable database is connected.
+- Preserve the current working Neon `DATABASE_URL`, set `APP_ENV=production`, configure private B2 and artifact row mode, then redeploy. Do not replace the connected account database merely to configure object storage.
 - Refresh the browser page at `http://localhost:4174` before visually checking the v0.1.51 SDE migration. The local server is already running v0.1.51; legacy SDE rows are refreshed only when their preserved raw artifact is available. Do not alter raw experiment files or hide malformed data with arbitrary axis limits.
 - Before releasing future portal changes, run the launcher, full automated suite, syntax checks, version-touchpoint checks, and `git diff --check`; then commit and push only after the user explicitly asks.
 - In the `battery-data-portal-v2` Render service, set `APP_ENV=production`, the linked `DATABASE_URL`, generated `JWT_SECRET`, `ALLOW_LEGACY_USER_HEADER=false`, `BOOTSTRAP_ADMIN_ID`, `BOOTSTRAP_ADMIN_NAME`, a secret `BOOTSTRAP_ADMIN_PASSWORD`, `CORS_ALLOW_ORIGINS`, and the durable S3-compatible storage variables. Then redeploy and verify `/api/health` reports `environment: production`, `database: postgresql`, and `storageConfigured: true`. This also updates the configured bootstrap administrator password hash at startup.
@@ -374,7 +384,7 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Do Not Repeat
 
-- Never expose, return, log, commit, or store administrator confirmation values, passwords, access tokens, or raw authentication headers. Never make raw Dataset rows available from an ordinary administrator login alone.
+- Never expose, return, log, commit, or store administrator confirmation values, passwords, B2 credentials, access tokens, or raw authentication headers. Never make raw Dataset rows available from an ordinary administrator login alone.
 
 - Do not start v2 on `4173`, terminate a port-owning process merely to start the portal, or deploy cloud services for a local-run request.
 - Do not store raw chats, passwords, API keys, tokens, cookies, credentials, or unnecessary personal information in repository memory files.
@@ -391,11 +401,13 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Open Questions
 
-- Backblaze B2 is the selected durable S3-compatible provider. The actual private bucket, endpoint/region, bucket-scoped key, archive root drive, and archive token still need to be configured outside Git.
+- Backblaze B2 is the selected durable S3-compatible provider. The actual private bucket, endpoint/region, bucket-scoped application key, archive root drive, and archive token still need to be configured outside Git.
 - Should the next deployment package replace the existing clean upload copy or be created as a new versioned package?
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-09-02 Unreleased B2 selection: the B2 endpoint/region, active-provider, invalid-delete, administrator B2-label, and environment/operator-guide contract tests failed against the R2-oriented source before implementation and pass after the B2 changes. Full pytest passes 213/213; Python in-memory compilation, bundled-Node JavaScript syntax, package JSON, Render YAML, PowerShell parser, secret-template/tracked-secret checks, and `git diff --check` pass. Real B2/Render integration remains unverified until the user creates the bucket and enters secrets directly in Render.
 
 - 2026-08-26 v0.1.74 release: full pytest passes 208/208. Python in-memory compilation, bundled-Node JavaScript syntax, package JSON, Render YAML, PowerShell parser, synchronized version touchpoints, and `git diff --check` pass. Browser verification from the preceding storage review confirms the protected raw-data view includes the archive-status region, the existing 52 Figs remain grouped across eight dates, and no console warnings/errors appear. Real B2 hydration and the public Render production state still require configured external services and post-deployment verification.
 

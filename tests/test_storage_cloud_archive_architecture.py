@@ -189,6 +189,12 @@ class ArchiveRegistryTests(unittest.TestCase):
 
 
 class LocalArchiveAgentTests(unittest.TestCase):
+    def test_administrator_storage_status_names_b2(self):
+        app_source = (Path(__file__).resolve().parents[1] / "public" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('storage?.provider === "b2" ? "B2"', app_source)
+        self.assertIn("${storageProviderLabel} \\uc6d0\\ubcf8", app_source)
+
     def test_archive_path_is_partitioned_by_owner_date_and_dataset(self):
         from scripts.archive_agent import archive_relative_path
 
@@ -211,6 +217,23 @@ class LocalArchiveAgentTests(unittest.TestCase):
         self.assertEqual(validate_portal_url("http://localhost:4174"), "http://localhost:4174")
         with self.assertRaises(ValueError):
             validate_portal_url("http://portal.example.com")
+
+
+class B2DeploymentContractTests(unittest.TestCase):
+    def test_b2_environment_and_operator_guide_stay_aligned(self):
+        root = Path(__file__).resolve().parents[1]
+        env_example = (root / ".env.example").read_text(encoding="utf-8")
+        render_yaml = (root / "render.yaml").read_text(encoding="utf-8")
+        operator_guide = (root / "docs" / "B2_LOCAL_ARCHIVE.md").read_text(encoding="utf-8")
+
+        self.assertIn("S3_PROVIDER=b2", env_example)
+        self.assertIn("S3_ENDPOINT_URL=https://s3.<B2_REGION>.backblazeb2.com", env_example)
+        self.assertIn("S3_REGION=<B2_REGION>", env_example)
+        self.assertIn('key: S3_PROVIDER\n        value: "b2"', render_yaml)
+        self.assertIn('key: S3_REGION\n        sync: false', render_yaml)
+        self.assertIn("Read and Write", operator_guide)
+        self.assertIn("https://s3.<B2_REGION>.backblazeb2.com", operator_guide)
+        self.assertIn("S3_PUBLIC_BASE_URL=", operator_guide)
 
 
 if __name__ == "__main__":

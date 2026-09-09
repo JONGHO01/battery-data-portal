@@ -106,6 +106,7 @@ except ValueError:
 
 STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
 REQUIRE_DURABLE_STORAGE = os.environ.get("REQUIRE_DURABLE_STORAGE", "true" if APP_ENV == "production" else "false").lower() == "true"
+S3_PROVIDER = os.environ.get("S3_PROVIDER", "").strip().lower()
 S3_BUCKET = os.environ.get("S3_BUCKET", "")
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
 S3_REGION = os.environ.get("S3_REGION", "auto")
@@ -173,7 +174,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.74", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.75", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -808,8 +809,8 @@ def dataset_detail_from_row(row) -> dict:
     """Build one browser-safe Dataset hydrated from its normalized artifact.
 
     Production PostgreSQL stores only metadata for uploaded instrument files.
-    The complete normalized table lives beside the immutable raw file in B2
-    (or the configured S3-compatible object store), so opening an old Fig must
+    The complete normalized table lives beside the immutable raw file in the
+    configured S3-compatible object store, so opening an old Fig must
     rehydrate that table before applying the browser sampling limit.
     """
 
@@ -1776,7 +1777,7 @@ def init_db() -> None:
         # stored record aligned with its actual Dataset before the UI reads it.
         normalize_figure_record_identity(conn)
         # Raw artifacts created before the local backup agent existed are also
-        # queued. Backfill stores metadata only and never reads or deletes B2.
+        # queued. Backfill stores metadata only and never reads or deletes cloud objects.
         backfill_archive_registry(conn)
 
 
@@ -2206,8 +2207,8 @@ def upload_to_object_storage(data: bytes | Path, object_name: str, content_type:
         print(f"Storage warning: boto3 is not installed, so object storage upload was skipped: {exc}", file=sys.stderr)
         return None
 
-    # Supabase Storage speaks the S3 API. Path-style addressing is the safest
-    # default for Supabase endpoints, while AWS S3 can still use auto.
+    # B2 and Supabase both speak the S3 API. Path-style addressing is the
+    # conservative default for these custom endpoints.
     client_config = Config(
         signature_version="s3v4",
         s3={"addressing_style": "path" if S3_FORCE_PATH_STYLE else "auto"},
@@ -2323,9 +2324,15 @@ def delete_from_object_storage(object_name: str) -> None:
 
     if not object_name or STORAGE_BACKEND not in {"s3", "supabase"}:
         return
-    if not S3_BUCKET:
+    configuration_issues = storage_configuration_issues()
+    if configuration_issues:
         if REQUIRE_DURABLE_STORAGE:
             raise HTTPException(status_code=503, detail="Durable object storage is not configured; file deletion was not completed.")
+        print(
+            f"Storage warning: object storage delete was skipped because configuration is invalid "
+            f"({', '.join(configuration_issues)}).",
+            file=sys.stderr,
+        )
         return
     try:
         import boto3
@@ -3097,6 +3104,8 @@ def storage_configuration_issues() -> list[str]:
         return ["STORAGE_BACKEND"]
 
     missing = []
+    if S3_PROVIDER not in {"", "b2"}:
+        missing.append("S3_PROVIDER")
     if not S3_BUCKET:
         missing.append("S3_BUCKET")
     if not S3_ACCESS_KEY_ID:
@@ -3105,11 +3114,44 @@ def storage_configuration_issues() -> list[str]:
         missing.append("S3_SECRET_ACCESS_KEY")
     if STORAGE_BACKEND == "supabase" and not S3_ENDPOINT_URL:
         missing.append("S3_ENDPOINT_URL")
+    if S3_PROVIDER == "b2":
+        endpoint = urllib.parse.urlsplit(S3_ENDPOINT_URL.strip())
+        endpoint_host = str(endpoint.hostname or "").lower()
+        endpoint_suffix = ".backblazeb2.com"
+        endpoint_region = (
+            endpoint_host[len("s3.") : -len(endpoint_suffix)]
+            if endpoint_host.startswith("s3.") and endpoint_host.endswith(endpoint_suffix)
+            else ""
+        )
+        valid_region_name = bool(endpoint_region) and all(
+            character in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in endpoint_region
+        )
+        valid_endpoint = (
+            endpoint.scheme == "https"
+            and valid_region_name
+            and endpoint.username is None
+            and endpoint.password is None
+            and endpoint.path in {"", "/"}
+            and not endpoint.query
+            and not endpoint.fragment
+        )
+        if not valid_endpoint and "S3_ENDPOINT_URL" not in missing:
+            missing.append("S3_ENDPOINT_URL")
+        elif S3_REGION.strip().lower() != endpoint_region:
+            missing.append("S3_REGION")
     return missing
 
 
 def storage_ready() -> bool:
     return not storage_configuration_issues()
+
+
+def active_storage_provider() -> str:
+    """Name only the provider used by the active storage backend."""
+
+    if STORAGE_BACKEND == "s3":
+        return S3_PROVIDER or "s3"
+    return STORAGE_BACKEND
 
 
 def is_hosted_runtime() -> bool:
@@ -3177,6 +3219,7 @@ def health():
         "database": "postgresql" if USE_POSTGRES else "sqlite",
         "accountStorePersistent": account_store_is_persistent(),
         "storage": STORAGE_BACKEND,
+        "storageProvider": active_storage_provider(),
         "storageConfigured": storage_ready(),
         "storageMissingVariables": storage_configuration_issues(),
         "databaseRowsMode": DATABASE_ROWS_MODE,
@@ -3356,6 +3399,7 @@ def list_admin_raw_datasets(
     return {
         "items": items,
         "storage": {
+            "provider": active_storage_provider(),
             "pending": archive_summary.get("pending", {"count": 0, "bytes": 0}),
             "verified": archive_summary.get("verified", {"count": 0, "bytes": 0}),
             "totalBytes": sum(value["bytes"] for value in archive_summary.values()),

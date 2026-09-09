@@ -132,6 +132,61 @@ class RuntimeSecurityTests(unittest.TestCase):
         ):
             self.assertEqual(portal.storage_configuration_issues(), ["S3_ENDPOINT_URL"])
 
+    def test_b2_requires_the_official_endpoint_and_matching_region(self):
+        configured = {
+            "STORAGE_BACKEND": "s3",
+            "S3_PROVIDER": "b2",
+            "S3_BUCKET": "battery-portal-private",
+            "S3_ACCESS_KEY_ID": "access",
+            "S3_SECRET_ACCESS_KEY": "secret",
+            "S3_REGION": "us-west-004",
+        }
+
+        with patch.multiple(portal, **configured, S3_ENDPOINT_URL=""):
+            self.assertEqual(portal.storage_configuration_issues(), ["S3_ENDPOINT_URL"])
+        with patch.multiple(
+            portal,
+            **configured,
+            S3_ENDPOINT_URL="http://example.com",
+        ):
+            self.assertEqual(portal.storage_configuration_issues(), ["S3_ENDPOINT_URL"])
+        with patch.multiple(
+            portal,
+            **{**configured, "S3_REGION": "us-east-1"},
+            S3_ENDPOINT_URL="https://s3.us-west-004.backblazeb2.com",
+        ):
+            self.assertEqual(portal.storage_configuration_issues(), ["S3_REGION"])
+        with patch.multiple(
+            portal,
+            **configured,
+            S3_ENDPOINT_URL="https://s3.us-west-004.backblazeb2.com",
+        ):
+            self.assertEqual(portal.storage_configuration_issues(), [])
+
+    def test_health_reports_only_the_active_storage_provider(self):
+        with patch.multiple(portal, STORAGE_BACKEND="local", S3_PROVIDER="b2"):
+            self.assertEqual(portal.health()["storageProvider"], "local")
+        with patch.multiple(portal, STORAGE_BACKEND="s3", S3_PROVIDER="b2"):
+            self.assertEqual(portal.health()["storageProvider"], "b2")
+
+    def test_invalid_b2_configuration_blocks_delete_before_creating_a_client(self):
+        with patch.multiple(
+            portal,
+            STORAGE_BACKEND="s3",
+            REQUIRE_DURABLE_STORAGE=True,
+            S3_PROVIDER="b2",
+            S3_BUCKET="battery-portal-private",
+            S3_ENDPOINT_URL="http://untrusted.example",
+            S3_REGION="us-west-004",
+            S3_ACCESS_KEY_ID="access",
+            S3_SECRET_ACCESS_KEY="secret",
+        ), patch("boto3.client") as client:
+            with self.assertRaises(portal.HTTPException) as blocked:
+                portal.delete_from_object_storage("projects/one/datasets/two/raw/source.wrd")
+
+        self.assertEqual(blocked.exception.status_code, 503)
+        client.assert_not_called()
+
     def test_production_storage_warning_names_the_missing_render_variable(self):
         with patch.multiple(
             portal,

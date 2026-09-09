@@ -1,16 +1,18 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.74-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.75-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.74** - Neon stores account and metadata records, private B2 stores raw/normalized artifacts, and a verified Windows archive agent protects raw files locally.
+> Current release: **v0.1.75** - Neon stores accounts and metadata, private B2 stores raw/normalized artifacts, and the Windows archive agent can preserve verified raw-file copies locally.
+
+> B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.74**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
+현재 버전은 **v0.1.75**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
@@ -22,6 +24,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.75 | 2026-09-09 | Validate official B2 endpoints and regions, report the active provider, and retain Neon/B2/Windows storage separation. |
 | v0.1.74 | 2026-08-26 | Separate Neon metadata, private B2 artifacts, and SHA-256-verified Windows raw archives; remove the public administrator identifier. |
 | v0.1.73 | 2026-08-20 | Repair Search labels and verify source-file experiment-date grouping across saved Figs. |
 | v0.1.72 | 2026-08-20 | Prefer valid experiment dates in source filenames when grouping saved Figs and showing card dates. |

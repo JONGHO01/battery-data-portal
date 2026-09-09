@@ -1,9 +1,18 @@
-const PORTAL_VERSION = "0.1.74";
+const PORTAL_VERSION = "0.1.75";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.75",
+    "date": "2026-09-09",
+    "changes": [
+      "Confirm Backblaze B2 as the private artifact store while Neon keeps accounts and metadata.",
+      "Reject unofficial or region-mismatched B2 endpoints before upload, read, signed-download, or delete operations.",
+      "Expose the active storage provider in health diagnostics and B2-specific administrator guidance."
+    ]
+  },
   {
     "version": "0.1.74",
     "date": "2026-08-26",
@@ -1163,8 +1172,9 @@ function renderAdminRawData() {
     const pendingCount = Number(storage?.pending?.count || 0);
     const verifiedCount = Number(storage?.verified?.count || 0);
     const hardLimit = Number(storage?.hardLimitBytes || 0);
+    const storageProviderLabel = storage?.provider === "b2" ? "B2" : "\uac1d\uccb4 \uc800\uc7a5\uc18c";
     storageStatus.textContent = storage
-      ? `B2 \uc6d0\ubcf8 ${formatAdminStorageBytes(storage.totalBytes)} / \uad00\ub9ac \uae30\uc900 ${formatAdminStorageBytes(hardLimit)} \u00b7 \ub85c\uceec \ubc31\uc5c5 \ub300\uae30 ${pendingCount}\uac74 \u00b7 \uac80\uc99d \uc644\ub8cc ${verifiedCount}\uac74`
+      ? `${storageProviderLabel} \uc6d0\ubcf8 ${formatAdminStorageBytes(storage.totalBytes)} / \uad00\ub9ac \uae30\uc900 ${formatAdminStorageBytes(hardLimit)} \u00b7 \ub85c\uceec \ubc31\uc5c5 \ub300\uae30 ${pendingCount}\uac74 \u00b7 \uac80\uc99d \uc644\ub8cc ${verifiedCount}\uac74`
       : "";
   }
   const select = $("adminRawDatasetSelect");
