@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## v0.1.80 - 2026-09-10
+
+- Publish the accumulated v0.1.77-v0.1.80 source changes with the local/runtime versus production verification boundaries documented in README.
+- Record the standing user instruction to commit and push verified future portal changes promptly, excluding credentials and experiment data.
+
+- Clear stale inspection state and markup before a new upload so an old EIS preview cannot appear below a failed WRD request.
+- Retain single-file selections after failure, disable concurrent selection/duplicate clicks during inspection, and use the bounded request timeout instead of inviting another upload while one is pending.
+- Explain disconnected uploads in Korean with a default-portal hint only for nonstandard loopback ports; never automatically replay POSTs or redirect files/authentication to another origin.
+- Offload synchronous parsing/storage work from the async upload handler to the framework thread pool; retain existing authentication, byte limits, and parser timeout.
+- Add executable failure/recovery and thread-isolation tests. Update the earlier refresh test to assert rendered spelling, not HTML entity syntax.
+
+## v0.1.79 - 2026-09-10
+
+- Write the administrator raw-data refresh label explicitly as `새로고침` instead of equivalent numeric HTML entities, and add exact rendered-label checks for all six refresh buttons.
+- The current local source already decoded to the correct spelling; the reported older screen was not reproduced. No refresh handler, permissions, data, or storage changes are included.
+
+## v0.1.78 - 2026-09-10
+
+- Fix blank Nyquist/Bode figures when persisted EIS rows use `frequency_hz`, `z_real_ohm`, and `z_imag_ohm` instead of legacy frontend names.
+- Reuse a non-mutating display adapter for EIS plots, saved-Fig thumbnails, and local summaries; preserve original rows, units, and storage.
+- Reject missing/non-finite measurements without treating them as zero and show an explicit message when no usable points exist.
+- Add executable JavaScript regression coverage for persisted and legacy measurements, all three plot inputs, thumbnails, and empty states. No production deployment is included.
+
+## v0.1.77 - 2026-09-10
+
+- Replace the protected administrator raw-row table and pager with a readable card for each Dataset.
+- Show owner, registration time, data type, exact row/column counts, original-file size, and local-backup state on each card.
+- Add an administrator-only original-file download endpoint protected by the existing short-lived second confirmation.
+- Stream private Backblaze B2 objects through the application or return the validated local artifact without exposing an object key or filesystem path.
+- Keep Neon metadata, private B2 artifacts, verified Windows archives, existing Dataset rows, and the compatibility raw-preview API unchanged.
+
 ## v0.1.76 - 2026-09-10
 
 - Render editable-table pagination buttons and the home-screen status as readable Korean instead of literal or corrupted Unicode text.

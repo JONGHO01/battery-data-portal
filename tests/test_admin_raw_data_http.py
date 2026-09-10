@@ -2,6 +2,7 @@
 
 import json
 import os
+import sqlite3
 import socket
 import subprocess
 import sys
@@ -24,6 +25,7 @@ class AdminRawDataHttpTests(unittest.TestCase):
         cls.temp_dir = tempfile.TemporaryDirectory(prefix="battery-portal-admin-raw-")
         cls.environment = os.environ.copy()
         cls.environment.pop("DATABASE_URL", None)
+        cls.environment.pop("SQLITE_DB", None)
         cls.environment.update(
             {
                 "DATA_DIR": str(Path(cls.temp_dir.name) / "data"),
@@ -67,6 +69,28 @@ class AdminRawDataHttpTests(unittest.TestCase):
         )
         assert status == 201
         cls.dataset_id = dataset["id"]
+        cls.raw_bytes = b"WBCS raw dataset download regression\r\n"
+        raw_relative_path = Path("storage") / "projects" / "raw-project" / "cells" / "raw-cell" / "datasets" / cls.dataset_id / "raw" / "member-upload.wrd"
+        raw_path = Path(cls.environment["DATA_DIR"]) / raw_relative_path
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        raw_path.write_bytes(cls.raw_bytes)
+        raw_artifact = {
+            "objectKey": "projects/raw-project/cells/raw-cell/datasets/raw-dataset-test/raw/member-upload.wrd",
+            "localPath": raw_relative_path.as_posix(),
+            "storageUrl": None,
+            "sha256": "test-only-digest",
+            "sizeBytes": len(cls.raw_bytes),
+            "contentType": "application/octet-stream",
+        }
+        connection = sqlite3.connect(Path(cls.environment["DATA_DIR"]) / "portal.sqlite3")
+        try:
+            connection.execute(
+                "UPDATE datasets SET raw_artifact_json = ? WHERE id = ?",
+                (json.dumps(raw_artifact), cls.dataset_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
 
         status, admin = cls.request_json(
             "/api/login",
@@ -147,6 +171,15 @@ class AdminRawDataHttpTests(unittest.TestCase):
             body = json.loads(error.read().decode("utf-8"))
             return error.code, body
 
+    @classmethod
+    def request_bytes(cls, path, headers=None):
+        request = Request(f"{cls.base_url}{path}", method="GET", headers=headers or {})
+        try:
+            with urlopen(request, timeout=15) as response:
+                return response.status, response.headers, response.read()
+        except HTTPError as error:
+            return error.code, error.headers, error.read()
+
     def test_raw_rows_require_admin_and_second_confirmation(self):
         member_status, _ = self.request_json(
             "/api/admin/raw-data/datasets",
@@ -182,7 +215,39 @@ class AdminRawDataHttpTests(unittest.TestCase):
         self.assertEqual(list_status, 200)
         item = next(dataset for dataset in listing["items"] if dataset["id"] == self.dataset_id)
         self.assertEqual(item["rowCount"], 2)
+        self.assertTrue(item["hasRawDownload"])
+        self.assertEqual(item["rawSizeBytes"], len(self.raw_bytes))
         self.assertNotIn("rows", item)
+        self.assertNotIn("rawArtifact", item)
+        self.assertNotIn("objectKey", json.dumps(item))
+        self.assertNotIn("localPath", json.dumps(item))
+
+        member_download_status, _, _ = self.request_bytes(
+            f"/api/admin/raw-data/datasets/{self.dataset_id}/download",
+            headers=self.auth_headers(self.member_token),
+        )
+        self.assertEqual(member_download_status, 403)
+
+        unconfirmed_download_status, _, _ = self.request_bytes(
+            f"/api/admin/raw-data/datasets/{self.dataset_id}/download",
+            headers=self.auth_headers(self.admin_token),
+        )
+        self.assertEqual(unconfirmed_download_status, 403)
+
+        download_status, download_headers, downloaded = self.request_bytes(
+            f"/api/admin/raw-data/datasets/{self.dataset_id}/download",
+            headers=raw_headers,
+        )
+        self.assertEqual(download_status, 200)
+        self.assertEqual(downloaded, self.raw_bytes)
+        self.assertIn("attachment", download_headers.get("Content-Disposition", ""))
+        self.assertIn("member-upload.wrd", download_headers.get("Content-Disposition", ""))
+
+        missing_download_status, _, _ = self.request_bytes(
+            "/api/admin/raw-data/datasets/missing-dataset/download",
+            headers=raw_headers,
+        )
+        self.assertEqual(missing_download_status, 404)
 
         filtered_status, filtered = self.request_json(
             "/api/admin/raw-data/datasets?owner_id=raw-member",

@@ -1,34 +1,55 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.76-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.80-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.76** - saved CYC comparisons now load a small authorized projection, compact cards show exact point counts, and the full button audit is clean.
+> Source release: **v0.1.80** - clears stale upload previews, explains disconnected requests, prevents duplicate clicks, and offloads blocking inspection work. Includes EIS plot recovery, refresh-label checks, and administrator Dataset cards with protected downloads. GitHub source and running-server versions must be verified separately.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.76**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
+현재 소스 버전은 **v0.1.80**이며, 운영 배포 여부와는 별개입니다. 파일 분석 실패 시 이전 결과를 제거하고 연결 오류를 안내합니다. 단일 파일 선택을 유지하며 중복 요청은 방지합니다. 분석 작업의 서버 응답 차단 개선은 서버 재시작 후 적용됩니다. 원본 데이터와 Neon/B2 저장 구조는 유지합니다.
+
+## 이번 업데이트와 연결 점검
+
+- **EIS Fig 복구:** 저장된 표준 컬럼 이름을 읽어 Nyquist·Bode 그래프를 표시합니다. 원본 측정값은 바꾸지 않습니다.
+- **파일 분석 실패 처리:** 이전 파일의 결과를 지우고, 실패한 파일 선택은 유지하며, 중복 분석 요청을 막습니다.
+- **관리자 원본 확인:** 큰 데이터 표 대신 Dataset 카드를 보여주며 추가 관리자 확인 후 원본 파일을 다운로드합니다.
+
+2026-09-10 읽기 전용 점검 결과입니다. 아래는 당시 상태이며 운영 연결 성공을 보장하는 실시간 상태판이 아닙니다.
+
+| 구간 | 확인 결과 |
+|---|---|
+| 로컬 포탈 | `http://localhost:4174/` 응답 정상. `4196`은 응답하지 않음 |
+| 로컬 DB·파일 | SQLite 무결성과 연결 관계 정상. 원본·분석·Fig 참조 파일 모두 존재하며 기록된 파일 크기와 일치 |
+| 실행 버전 | 정적 프론트엔드 0.1.80 / 실행 중 백엔드 0.1.78. 백엔드 적용에는 정상 재시작 필요 |
+| 운영 Neon·B2 | Render 로딩 화면과 대시보드 로그인 제한으로 실제 연결·파일 읽기는 확인하지 못함 |
+| Windows 자동 백업 | 로컬 큐는 대기 상태이며 표준 백업 설정 파일을 확인하지 못함 |
+
+**로컬 SQLite·파일과 운영 Neon·B2는 별개입니다.** 로컬 파일이 운영 저장소로 자동 동기화되지는 않습니다. `/api/health`의 설정 상태만으로 DB 질의나 B2 파일 읽기 성공을 단정하지 않습니다. 운영 서비스 이름은 `battery-data-portal-v2`, GitHub 저장소 이름은 `battery-data-portal`입니다.
+
+앞으로 요청된 수정은 검증과 변경 기록을 마친 뒤 GitHub `main`에 올립니다. 비밀키·DB 파일·로우데이터는 제외하며, 업로드와 Render 배포 성공은 별도로 확인합니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
 
 ---
 
-## v0.1.76 구조 변경 요약
+## v0.1.77 구조 변경 요약
 
-| 구간 | 이전 | v0.1.76 |
+| 구간 | 이전 | v0.1.77 |
 |---|---|---|
-| 저장 CYC Fig 비교 | 전체 행을 먼저 열어야 비교 가능 | 권한 확인 후 사이클·용량 점만 경량 API로 조회 |
-| 검색·저장 카드 포인트 수 | 원본 행 미로딩 시 `0 points`로 표시 | Neon 메타데이터의 정확한 `rowCount` 사용 |
+| 관리자 로우 데이터 확인 | Dataset 선택 후 큰 원본 행 표와 페이지 이동 표시 | Dataset별 카드에서 등록자·날짜·행/열·원본 용량·백업 상태 확인 |
+| 원본 파일 받기 | 관리자 화면에서 직접 다운로드 불가 | 추가 관리자 확인 후 로컬 또는 private B2 원본을 다운로드 |
+| 민감 저장 정보 | 내부 경로를 API에서 다룰 수 있음 | 카드 API에는 B2 객체 키와 로컬 경로를 노출하지 않음 |
 | 원본·정규화 데이터 | private B2 저장 | 변경 없음 |
 | 계정·권한·Fig 인덱스 | Neon PostgreSQL 저장 | 변경 없음 |
 | 관리자 장기 백업 | Windows archive agent | 변경 없음 |
 
-즉, **저장 위치나 기존 데이터를 옮기지 않고**, 비교 화면에 필요한 최소 데이터만 가져오도록 경로를 분리했습니다. 기존 CYC 전압·dQ/dV 화면은 필요할 때 정상적인 전체 Dataset 경로를 그대로 사용합니다.
+즉, **저장 위치나 기존 데이터를 옮기지 않고**, 관리자에게 필요한 Dataset 정보만 간단히 표시합니다. 원본 다운로드는 기존 관리자 로그인에 더해 짧게 유지되는 추가 확인 권한이 있어야 하며, private B2 객체 키나 서버 경로는 브라우저에 전달하지 않습니다.
 
 ---
 
@@ -38,6 +59,10 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.80 | 2026-09-10 | Recover cleanly from upload failures and offload blocking inspection work. |
+| v0.1.79 | 2026-09-10 | Explicit Korean refresh label and spelling tests for six refresh buttons. |
+| v0.1.78 | 2026-09-10 | Restore persisted EIS Nyquist/Bode plots and thumbnails without rewriting measured data. |
+| v0.1.77 | 2026-09-10 | Replace the large administrator raw-row table with Dataset cards and protected local/private-B2 source downloads. |
 | v0.1.76 | 2026-09-10 | Repair Korean UI text and search-card layout; add lightweight authorized CYC comparison data and exact compact-card point counts. |
 | v0.1.75 | 2026-09-09 | Validate official B2 endpoints and regions, report the active provider, and retain Neon/B2/Windows storage separation. |
 | v0.1.74 | 2026-08-26 | Separate Neon metadata, private B2 artifacts, and SHA-256-verified Windows raw archives; remove the public administrator identifier. |

@@ -8,6 +8,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class UiTextIntegrityTests(unittest.TestCase):
+    def test_refresh_buttons_use_the_correct_korean_spelling(self):
+        html = (PROJECT_ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        expected = {
+            "refreshAdminRawData": "새로고침",
+            "reloadData": "새로고침",
+            "refreshAnalysisRuns": "분석 이력 새로고침",
+            "refreshOrganizationMembers": "새로고침",
+            "reloadUsers": "목록 새로고침",
+            "reloadFeedback": "의견 새로고침",
+        }
+        for button_id, label in expected.items():
+            with self.subTest(button_id=button_id):
+                match = re.search(r'<button\b[^>]*id="' + button_id + r'"[^>]*>(.*?)</button>', html, re.S)
+                self.assertIsNotNone(match)
+                self.assertEqual(unescape(match.group(1)).strip(), label)
+
     def test_frontend_source_has_no_mojibake_or_replacement_character(self):
         source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
 

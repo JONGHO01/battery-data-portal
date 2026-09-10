@@ -1,10 +1,12 @@
+import asyncio
 import hashlib
+import io
 import json
 import gc
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import python_backend as portal
 
@@ -48,6 +50,44 @@ def dataset_row(**overrides):
 
 
 class CloudDatasetArchitectureTests(unittest.TestCase):
+    def test_admin_raw_download_streams_the_private_b2_object(self):
+        raw = b"private B2 raw battery dataset"
+        body = io.BytesIO(raw)
+        client = Mock()
+        client.get_object.return_value = {"Body": body, "ContentLength": len(raw)}
+        raw_artifact = {
+            "objectKey": "projects/project-a/cells/cell-a/datasets/data-cloud-001/raw/member-cycle.wrd",
+            "sizeBytes": len(raw),
+            "contentType": "application/octet-stream",
+        }
+
+        with patch.multiple(
+            portal,
+            STORAGE_BACKEND="s3",
+            S3_PROVIDER="b2",
+            S3_BUCKET="portal-bucket",
+            S3_ENDPOINT_URL="https://s3.us-west-004.backblazeb2.com",
+            S3_REGION="us-west-004",
+            S3_ACCESS_KEY_ID="test-key-id",
+            S3_SECRET_ACCESS_KEY="test-secret",
+        ), patch.object(portal, "storage_configuration_issues", return_value=[]), patch(
+            "boto3.client", return_value=client
+        ):
+            response = portal.raw_artifact_download_response(
+                dataset_row(raw_artifact_json=json.dumps(raw_artifact))
+            )
+
+        async def collect_response():
+            return b"".join([chunk async for chunk in response.body_iterator])
+
+        self.assertEqual(asyncio.run(collect_response()), raw)
+        self.assertIn("attachment", response.headers["content-disposition"])
+        self.assertIn("member-cycle.wrd", response.headers["content-disposition"])
+        client.get_object.assert_called_once_with(
+            Bucket="portal-bucket",
+            Key=raw_artifact["objectKey"],
+        )
+
     def test_artifact_row_mode_keeps_only_the_count_in_postgresql(self):
         item = {
             "rows": [{"cycle_index": 1}, {"cycle_index": 2}],

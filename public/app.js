@@ -1,9 +1,42 @@
-const PORTAL_VERSION = "0.1.76";
+const PORTAL_VERSION = "0.1.80";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.80",
+    "date": "2026-09-10",
+    "changes": [
+      "Clear stale analysis results before uploads, retain failed single-file selections, and prevent duplicate analysis clicks.",
+      "Explain network failures without silently replaying uploads or sending files to another server.",
+      "Run blocking inspection work outside the request event loop so other requests can proceed."
+    ]
+  },
+  {
+    "version": "0.1.79",
+    "date": "2026-09-10",
+    "changes": [
+      "Local text update: explicitly spell the administrator refresh button in Korean and guard all six refresh labels with regression tests."
+    ]
+  },
+  {
+    "version": "0.1.78",
+    "date": "2026-09-10",
+    "changes": [
+      "Local update: render saved EIS BDF rows in Nyquist, Bode, and Fig thumbnails alongside legacy imports.",
+      "Keep original measurements unchanged and explain missing EIS plot values instead of drawing empty axes."
+    ]
+  },
+  {
+    "version": "0.1.77",
+    "date": "2026-09-10",
+    "changes": [
+      "Replace the administrator raw-row table with a readable card for each Dataset.",
+      "Show owner, date, row and column counts, source size, and local-backup state without exposing storage paths.",
+      "Download immutable source files through the existing second administrator check from local or private B2 storage."
+    ]
+  },
   {
     "version": "0.1.76",
     "date": "2026-09-10",
@@ -505,8 +538,7 @@ const RELEASE_HISTORY = [
 // ?\uc495\ucfad\\u003f\\u003f\\u003f\u0080?\u03bb\ub9ba\\u003f\\u003f\\u003f\uacd7\uc520?\uacd5\ub497 datasets\\u003f\\u003f\\u003f\u317c\ubf31?\u317a\ud02c, ?\ubdbe\u3203 ?\uafaa\uaf63 \u5bc3\uaccc\ub0b5??filtered\\u003f\\u003f\\u003f\uacd5\uc908 ?\u3013\ub572??
 // ?\ub300\uc803\u5bc3?\u907a\uafa8\u2501?\uc10e\u3203 \u5bc3\u0080??\u8b70\uaccc\uad54??\u8adb\ubdbd\ud4ed\\u003f\\u003f\\u003f\uba2e\ub0af ?\uacd7\uc520??\uf9cf\u2478\uc909\\u003f\\u003f\\u003f\u317c\ub586 \u907a\ub348\uc72d?\u317c? ?\ub506\ube18\\u003f\\u003f\\u003f\u2478\ub572??
 const TABLE_PAGE_SIZE = 250;
-const ADMIN_RAW_PAGE_SIZE = 250;
-const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null, adminRawOwnerId: "", adminRawOwnerName: "", adminRawStorage: null };
+const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawOwnerId: "", adminRawOwnerName: "", adminRawStorage: null };
 state.comparisonSeriesByDatasetId = new Map();
 state.comparisonSeriesRequests = new Map();
 let lastElectrodeCalcAt = "";
@@ -967,8 +999,6 @@ async function openUserRawData(userId) {
   state.adminRawOwnerId = userId;
   state.adminRawOwnerName = selectedUser?.name || userId;
   state.adminRawDatasets = [];
-  state.adminRawSelectedId = "";
-  state.adminRawPreview = null;
   state.adminRawStorage = null;
   openWorkspaceView("adminRawData");
   if (hasAdminRawAccess()) {
@@ -983,8 +1013,6 @@ async function clearAdminRawOwnerFilter() {
   state.adminRawOwnerId = "";
   state.adminRawOwnerName = "";
   state.adminRawDatasets = [];
-  state.adminRawSelectedId = "";
-  state.adminRawPreview = null;
   state.adminRawStorage = null;
   if (hasAdminRawAccess()) await loadAdminRawDatasets();
   else renderAdminRawData();
@@ -994,8 +1022,6 @@ function clearAdminRawAccess() {
   state.adminRawAccessToken = "";
   state.adminRawAccessExpiresAt = 0;
   state.adminRawDatasets = [];
-  state.adminRawSelectedId = "";
-  state.adminRawPreview = null;
   state.adminRawStorage = null;
 }
 
@@ -1037,23 +1063,6 @@ function adminRawErrorMessage(response, body, fallback) {
   return apiErrorMessage(body, fallback);
 }
 
-function adminRawDisplayValue(value) {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "object") {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-  return String(value);
-}
-
-function adminRawCellValue(value) {
-  const text = adminRawDisplayValue(value);
-  return text.length > 180 ? `${text.slice(0, 177)}...` : text;
-}
-
 function formatAdminStorageBytes(value) {
   const bytes = Math.max(0, Number(value || 0));
   if (bytes >= 1024 ** 3) return `${(bytes / (1024 ** 3)).toFixed(2)} GB`;
@@ -1090,7 +1099,7 @@ async function requestAdminRawAccess(event) {
     state.adminRawAccessExpiresAt = Date.now() + Math.max(60, Number(body.expiresInSeconds || 600)) * 1000;
     if (input) input.value = "";
     await loadAdminRawDatasets();
-    setAdminRawDataNotice("\ub85c\uc6b0 \ub370\uc774\ud130 \uc5f4\ub78c \uad8c\ud55c\uc774 \ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
+    setAdminRawDataNotice("Dataset \ubaa9\ub85d \uc811\uadfc \uad8c\ud55c\uc774 \ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.");
   } catch (error) {
     clearAdminRawAccess();
     renderAdminRawData();
@@ -1117,37 +1126,80 @@ async function loadAdminRawDatasets() {
   }
   state.adminRawDatasets = Array.isArray(body.items) ? body.items : [];
   state.adminRawStorage = body.storage && typeof body.storage === "object" ? body.storage : null;
-  if (!state.adminRawDatasets.some((item) => item.id === state.adminRawSelectedId)) {
-    state.adminRawSelectedId = state.adminRawDatasets[0]?.id || "";
-    state.adminRawPreview = null;
-  }
   renderAdminRawData();
-  if (state.adminRawSelectedId) await loadAdminRawDataset(state.adminRawSelectedId, 0);
 }
 
-async function loadAdminRawDataset(datasetId, offset = 0) {
-  if (!hasAdminRawAccess()) {
-    renderAdminRawData();
-    return;
+async function downloadAdminRawDataset(datasetId, button) {
+  const dataset = state.adminRawDatasets.find((item) => item.id === datasetId);
+  if (!dataset || !dataset.hasRawDownload) return;
+  const originalText = button?.textContent || "\uc6d0\ubcf8 \ub2e4\uc6b4\ub85c\ub4dc";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "\ub2e4\uc6b4\ub85c\ub4dc \uc911...";
   }
-  if (!datasetId) {
-    state.adminRawPreview = null;
-    renderAdminRawData();
-    return;
+  try {
+    const response = await fetch(`/api/admin/raw-data/datasets/${encodeURIComponent(datasetId)}/download`, {
+      headers: adminRawHeaders(),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        clearAdminRawAccess();
+        renderAdminRawData();
+      }
+      const fallback = "\uc6d0\ubcf8 \ud30c\uc77c\uc744 \ub2e4\uc6b4\ub85c\ub4dc\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.";
+      const message = response.status === 401 || response.status === 403
+        ? adminRawErrorMessage(response, body, fallback)
+        : apiErrorMessage(body, fallback);
+      throw new Error(message);
+    }
+    const blob = await response.blob();
+    const sourceName = String(dataset.sourceName || "dataset-download").split(/[\\/]/).pop();
+    const filename = sourceName.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_") || "dataset-download";
+    const downloadUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = downloadUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+    setAdminRawDataNotice(`${filename} \uc6d0\ubcf8 \ud30c\uc77c \ub2e4\uc6b4\ub85c\ub4dc\ub97c \uc2dc\uc791\ud588\uc2b5\ub2c8\ub2e4.`);
+  } finally {
+    if (button?.isConnected) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
   }
-  const response = await fetch(
-    `/api/admin/raw-data/datasets/${encodeURIComponent(datasetId)}?offset=${Math.max(0, offset)}&limit=${ADMIN_RAW_PAGE_SIZE}`,
-    { headers: adminRawHeaders() }
-  );
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) clearAdminRawAccess();
-    renderAdminRawData();
-    throw new Error(adminRawErrorMessage(response, body, "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
-  }
-  state.adminRawSelectedId = datasetId;
-  state.adminRawPreview = body;
-  renderAdminRawData();
+}
+
+function adminRawBackupLabel(value) {
+  if (value === "verified") return "\uac80\uc99d \uc644\ub8cc";
+  if (value === "pending") return "\ub300\uae30 \uc911";
+  return "\ubbf8\ub4f1\ub85d";
+}
+
+function adminRawDatasetCard(item) {
+  const sourceName = item.sourceName || item.id || "Dataset";
+  const owner = item.ownerName || item.ownerId || "-";
+  const dataType = String(item.dataType || "data").toUpperCase();
+  const createdAt = formatUserCreatedAt(item.createdAt);
+  const rowCount = Math.max(0, Number(item.rowCount || 0)).toLocaleString("ko-KR");
+  const columnCount = Math.max(0, Number(item.columnCount || 0)).toLocaleString("ko-KR");
+  const downloadDisabled = item.hasRawDownload ? "" : " disabled";
+  const downloadText = item.hasRawDownload ? "\uc6d0\ubcf8 \ub2e4\uc6b4\ub85c\ub4dc" : "\uc6d0\ubcf8 \ud30c\uc77c \uc5c6\uc74c";
+  const facts = [
+    ["\ub4f1\ub85d\uc790", owner],
+    ["\ub4f1\ub85d\uc77c", createdAt],
+    ["\ub370\uc774\ud130 \ud06c\uae30", `${rowCount} \ud589 \u00b7 ${columnCount} \uc5f4`],
+    ["\uc6d0\ubcf8 \ud30c\uc77c", formatAdminStorageBytes(item.rawSizeBytes)],
+    ["\ub85c\uceec \ubc31\uc5c5", adminRawBackupLabel(item.rawBackupState)],
+  ];
+  return `<article class="adminRawDatasetCard">
+    <div class="adminRawDatasetCardHeader"><span class="adminRawDatasetType">${escapeXml(dataType)}</span><h4 title="${escapeAttr(sourceName)}">${escapeXml(sourceName)}</h4></div>
+    <dl class="adminRawDatasetFacts">${facts.map(([label, value]) => `<div><dt>${escapeXml(label)}</dt><dd>${escapeXml(value)}</dd></div>`).join("")}</dl>
+    <div class="adminRawDatasetActions"><button type="button" data-admin-raw-download="${escapeAttr(item.id)}"${downloadDisabled}>${downloadText}</button></div>
+  </article>`;
 }
 
 function renderAdminRawData() {
@@ -1175,7 +1227,7 @@ function renderAdminRawData() {
     return;
   }
   if (!active) {
-    setAdminRawDataNotice("\ub85c\uadf8\uc778 \ud6c4 \ubcc4\ub3c4\uc758 \uad00\ub9ac\uc790 \ud655\uc778\uc744 \uc644\ub8cc\ud558\uba74 \ub85c\uc6b0 \ub370\uc774\ud130\ub97c \uc5f4\ub78c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
+    setAdminRawDataNotice("\ub85c\uadf8\uc778 \ud6c4 \ubcc4\ub3c4\uc758 \uad00\ub9ac\uc790 \ud655\uc778\uc744 \uc644\ub8cc\ud558\uba74 Dataset \ubaa9\ub85d\uacfc \uc6d0\ubcf8 \ud30c\uc77c\uc744 \ud655\uc778\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
     return;
   }
   setAdminRawDataNotice("");
@@ -1189,45 +1241,15 @@ function renderAdminRawData() {
       ? `${storageProviderLabel} \uc6d0\ubcf8 ${formatAdminStorageBytes(storage.totalBytes)} / \uad00\ub9ac \uae30\uc900 ${formatAdminStorageBytes(hardLimit)} \u00b7 \ub85c\uceec \ubc31\uc5c5 \ub300\uae30 ${pendingCount}\uac74 \u00b7 \uac80\uc99d \uc644\ub8cc ${verifiedCount}\uac74`
       : "";
   }
-  const select = $("adminRawDatasetSelect");
   const datasets = Array.isArray(state.adminRawDatasets) ? state.adminRawDatasets : [];
-  select.innerHTML = datasets.length
-    ? datasets.map((item) => `<option value="${escapeAttr(item.id)}">${escapeXml(item.sourceName || item.id)} (${escapeXml(item.ownerName || item.ownerId || "-")})</option>`).join("")
-    : `<option value="">\uc5f4\ub78c\ud560 \ub370\uc774\ud130\uc14b\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</option>`;
-  select.value = state.adminRawSelectedId || "";
-  select.disabled = !datasets.length;
-  const preview = state.adminRawPreview;
-  const summary = $("adminRawDatasetSummary");
-  if (summary) {
-    summary.innerHTML = preview?.dataset ? [
-      ["\uc18c\uc720\uc790", preview.dataset.ownerName || preview.dataset.ownerId || "-"],
-      ["\uc885\ub958", preview.dataset.dataType || "-"],
-      ["\ud589 \uc218", String(preview.totalRows || 0)],
-      ["\ucee4\ub7fc \uc218", String((preview.columns || []).length)],
-      ["\ub85c\uceec \ubc31\uc5c5", preview.dataset.rawBackupState === "verified" ? "\uac80\uc99d \uc644\ub8cc" : preview.dataset.rawBackupState === "pending" ? "\ub300\uae30 \uc911" : "\ubbf8\ub4f1\ub85d"],
-    ].map(([label, value]) => `<div><span>${escapeXml(label)}</span><strong>${escapeXml(value)}</strong></div>`).join("") : "";
+  const list = $("adminRawDatasetList");
+  const count = $("adminRawDatasetCount");
+  if (count) count.textContent = `${datasets.length.toLocaleString("ko-KR")}\uac1c Dataset`;
+  if (list) {
+    list.innerHTML = datasets.length
+      ? datasets.map(adminRawDatasetCard).join("")
+      : `<div class="adminRawDatasetEmpty"><strong>\ud45c\uc2dc\ud560 Dataset\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</strong><span>\ud68c\uc6d0 \ud544\ud130\ub97c \ud574\uc81c\ud558\uac70\ub098 Dataset \ubaa9\ub85d\uc744 \uc0c8\ub85c\uace0\uce68\ud574 \ubcf4\uc138\uc694.</span></div>`;
   }
-  const tableWrap = $("adminRawDataTableWrap");
-  const pageInfo = $("adminRawPageInfo");
-  const previous = $("adminRawPrevious");
-  const next = $("adminRawNext");
-  if (!preview) {
-    tableWrap.innerHTML = `<p class="emptySaved">\ub370\uc774\ud130\uc14b\uc744 \uc120\ud0dd\ud558\uba74 \uc6d0\ubcf8 \ud589\uc774 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</p>`;
-    if (pageInfo) pageInfo.textContent = "";
-    if (previous) previous.disabled = true;
-    if (next) next.disabled = true;
-    return;
-  }
-  const columns = Array.isArray(preview.columns) ? preview.columns : [];
-  const rows = Array.isArray(preview.rows) ? preview.rows : [];
-  tableWrap.innerHTML = columns.length
-    ? `<table><thead><tr>${columns.map((column) => `<th>${escapeXml(column)}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.map((row) => `<tr>${columns.map((column) => `<td title="${escapeAttr(adminRawDisplayValue(row?.[column]))}">${escapeXml(adminRawCellValue(row?.[column]))}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${columns.length}">\ud45c\uc2dc\ud560 \ud589\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</td></tr>`}</tbody></table>`
-    : `<p class="emptySaved">\ub370\uc774\ud130\uc14b\uc5d0 \ucee4\ub7fc \uc815\ubcf4\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</p>`;
-  const offset = Number(preview.offset || 0);
-  const totalRows = Number(preview.totalRows || 0);
-  if (pageInfo) pageInfo.textContent = totalRows ? `${offset + 1}-${Math.min(offset + rows.length, totalRows)} / ${totalRows}` : "";
-  if (previous) previous.disabled = offset <= 0;
-  if (next) next.disabled = offset + rows.length >= totalRows;
 }
 
 function nextBrowserPaint() {
@@ -1664,14 +1686,27 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FILE_INSPECT_
 }
 
 async function inspectFileUpload(file) {
-  return fetchJsonWithTimeout("/api/inspect-upload", {
-    method: "POST",
-    headers: authHeaders({
-      "Content-Type": "application/octet-stream",
-      "X-Filename": encodeURIComponent(file.name),
-    }),
-    body: file,
-  });
+  try {
+    return await fetchJsonWithTimeout("/api/inspect-upload", {
+      method: "POST",
+      headers: authHeaders({
+        "Content-Type": "application/octet-stream",
+        "X-Filename": encodeURIComponent(file.name),
+      }),
+      body: file,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) throw new Error(uploadFailureMessage());
+    throw error;
+  }
+}
+
+function uploadFailureMessage() {
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+  const hint = local && window.location.port !== "4174"
+    ? " \ub85c\uceec \ud3ec\ud0c8 http://localhost:4174/\uc5d0\uc11c \ud30c\uc77c\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694."
+    : " \uc11c\ubc84 \uc2e4\ud589 \uc0c1\ud0dc\uc640 \ub124\ud2b8\uc6cc\ud06c \uc5f0\uacb0\uc744 \ud655\uc778\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.";
+  return "\uc11c\ubc84 \uc5f0\uacb0\uc774 \ub04a\uaca8 \ud30c\uc77c \ubd84\uc11d \uacb0\uacfc\ub97c \ubc1b\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc790\ub3d9\uc73c\ub85c \uc7ac\uc804\uc1a1\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4." + hint;
 }
 
 function selectedUploadFiles() {
@@ -1872,18 +1907,23 @@ function clearExpiredLogin(res, body) {
 }
 
 async function inspectSelectedFile() {
+  if ($("inspectFile")?.disabled || state.batchInProgress) return;
   const files = selectedUploadFiles();
   const file = files[0];
   if (!file) return setStatus("\uba3c\uc800 \ud30c\uc77c\uc744 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.");
   if (files.length > 1) return createBatchFigures();
   const token = ++state.inspectToken;
+  state.analysis = null;
+  renderAnalysis();
+  const fileInput = $("smartFile");
+  if (fileInput) fileInput.disabled = true;
   const inspectButton = $("inspectFile");
   if (inspectButton) {
     inspectButton.disabled = true;
     inspectButton.textContent = "\ud30c\uc77c \ubd84\uc11d \uc911...";
   }
   setStatus("\ud30c\uc77c \ubd84\uc11d \uc911...");
-  setBusy(true, "\uc5d1\uc140/CSV \ud30c\uc77c\uc744 \uc77d\uace0 \ub370\uc774\ud130 \uc885\ub958\ub97c \ucd94\uc815\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.");
+  setBusy(true, "\uc120\ud0dd\ud55c \ud30c\uc77c\uc744 \uc77d\uace0 \ub370\uc774\ud130 \uc885\ub958\ub97c \ucd94\uc815\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4.", 0);
   try {
     const { res, body } = await inspectFileUpload(file);
     if (token !== state.inspectToken) return;
@@ -1906,10 +1946,13 @@ async function inspectSelectedFile() {
     setStatus("\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
     setAnalysisMessage(`\ud30c\uc77c\uc744 \ubd88\ub7ec\uc624\ub294 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`, "\ud30c\uc77c \ubd88\ub7ec\uc624\uae30 \uc2e4\ud328");
   } finally {
-    if (token === state.inspectToken) setBusy(false);
-    if (inspectButton) {
-      inspectButton.disabled = false;
-      inspectButton.textContent = "\ud30c\uc77c \ubd84\uc11d";
+    if (token === state.inspectToken) {
+      setBusy(false);
+      if (fileInput) fileInput.disabled = false;
+      if (inspectButton) {
+        inspectButton.disabled = false;
+        inspectButton.textContent = "\ud30c\uc77c \ubd84\uc11d";
+      }
     }
   }
 }
@@ -2010,6 +2053,7 @@ function renderAnalysis() {
   const createBtn = $("createFigure");
   const a = state.analysis;
   if (!a) {
+    panel.replaceChildren();
     panel.classList.add("hidden");
     createBtn.classList.add("hidden");
     return;
@@ -2971,6 +3015,22 @@ function figureLabel(d) {
   return labels[d.figureKind] || `${(d.dataType || "data").toUpperCase()} Fig`;
 }
 
+// Adapt persisted BDF columns and legacy imports only for display. Never
+// rewrite the measured rows or turn missing measurements into zeroes.
+function eisPlotRows(rows) {
+  const measuredNumber = (value) => {
+    if ((typeof value !== "number" && typeof value !== "string") || String(value).trim() === "") return NaN;
+    return Number(value);
+  };
+  return (rows || []).filter((row) => row && typeof row === "object").map((row) => {
+    const frequency = measuredNumber(Object.hasOwn(row, "frequency_hz") ? row.frequency_hz : row.frequency);
+    const zreal = measuredNumber(Object.hasOwn(row, "z_real_ohm") ? row.z_real_ohm : row.zreal);
+    const zimag = measuredNumber(Object.hasOwn(row, "z_imag_ohm") ? row.z_imag_ohm : row.zimag);
+    return { ...row, frequency, zreal, zimag, mag: Math.hypot(zreal, zimag), phase: Math.atan2(zimag, zreal) * 180 / Math.PI };
+  }).filter((row) => Number.isFinite(row.frequency) && row.frequency > 0 && Number.isFinite(row.zreal) && Number.isFinite(row.zimag))
+    .sort((left, right) => right.frequency - left.frequency);
+}
+
 function figureThumb(d) {
   const rows = (d.rows || []).filter(Boolean);
   const type = String(d.dataType || "").toLowerCase();
@@ -2983,7 +3043,7 @@ function figureThumb(d) {
       .map((r, i) => ({ x: Number.isFinite(r.cycle) ? r.cycle : i + 1, y: Number.isFinite(r.capacity) ? r.capacity : NaN }))
       .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
   } else if (type === "eis") {
-    pts = rows
+    pts = eisPlotRows(rows)
       .map((r) => ({ x: r.zreal, y: Math.abs(r.zimag) }))
       .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
   } else {
@@ -3393,15 +3453,14 @@ function renderEisFigure(d) {
   const compactEisSize = figureSvgSize(style, "eis");
   const svgSize = compactEisSize;
   const kind = ["eis-combined", "nyquist", "bode"].includes(d.figureKind) ? d.figureKind : "eis-combined";
-  const rows = [...d.rows]
-    .map((row) => {
-      const frequency = Number(row.frequency);
-      const zreal = Number(row.zreal);
-      const zimag = Number(row.zimag);
-      return { ...row, frequency, zreal, zimag, mag: Math.hypot(zreal, zimag), phase: Math.atan2(zimag, zreal) * 180 / Math.PI };
-    })
-    .filter((row) => Number.isFinite(row.frequency) && row.frequency > 0 && Number.isFinite(row.zreal) && Number.isFinite(row.zimag))
-    .sort((left, right) => right.frequency - left.frequency);
+  const rows = eisPlotRows(d.rows);
+  if (!rows.length) {
+    $("figureTitle").textContent = figureDatasetLabel(d);
+    $("figureSubtitle").textContent = "0 points";
+    $("metaGrid").innerHTML = "";
+    $("figureCanvas").innerHTML = '<p class="empty" role="status">\uadf8\ub798\ud504\ub85c \ud45c\uc2dc\ud560 \uc218 \uc788\ub294 EIS \uce21\uc815\uac12\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uc8fc\ud30c\uc218(Hz), \uc2e4\uc218\ubd80(\u03a9), \ud5c8\uc218\ubd80(\u03a9) \uc5f4\uc744 \ud655\uc778\ud574 \uc8fc\uc138\uc694.</p>';
+    return;
+  }
   const negativeImaginary = rows.filter((row) => row.zimag < 0).length >= rows.filter((row) => row.zimag > 0).length;
   const nyquist = rows.map((row) => ({
     x: row.zreal,
@@ -6136,7 +6195,7 @@ function aiMainSummaryHtml(d) {
       </ul>`;
   }
   if (type === "eis") {
-    const rows = d.rows || [];
+    const rows = eisPlotRows(d.rows);
     const [fMin, fMax] = rangeOf(rows.map((r) => Number(r.frequency)));
     const [zrMin, zrMax] = rangeOf(rows.map((r) => Number(r.zreal)));
     return `
@@ -7872,19 +7931,11 @@ document.addEventListener("DOMContentLoaded", () => {
   on("adminRawAccessForm", "submit", requestAdminRawAccess);
   on("refreshAdminRawData", "click", () => loadAdminRawDatasets().catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
   on("clearAdminRawOwnerFilter", "click", () => clearAdminRawOwnerFilter().catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
-  on("adminRawDatasetSelect", "change", (event) => loadAdminRawDataset(event.target.value, 0).catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true)));
-  on("adminRawPrevious", "click", () => {
-    const offset = Number(state.adminRawPreview?.offset || 0);
-    loadAdminRawDataset(state.adminRawSelectedId, Math.max(0, offset - ADMIN_RAW_PAGE_SIZE))
-      .catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true));
-  });
-  on("adminRawNext", "click", () => {
-    const preview = state.adminRawPreview;
-    const offset = Number(preview?.offset || 0);
-    const visibleRows = Array.isArray(preview?.rows) ? preview.rows.length : 0;
-    if (!visibleRows) return;
-    loadAdminRawDataset(state.adminRawSelectedId, offset + visibleRows)
-      .catch((err) => setAdminRawDataNotice(err.message || "\ub85c\uc6b0 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true));
+  on("adminRawDatasetList", "click", (event) => {
+    const button = event.target.closest("[data-admin-raw-download]");
+    if (!button) return;
+    downloadAdminRawDataset(button.dataset.adminRawDownload, button)
+      .catch((err) => setAdminRawDataNotice(err.message || "\uc6d0\ubcf8 \ud30c\uc77c\uc744 \ub2e4\uc6b4\ub85c\ub4dc\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", true));
   });
   on("backHome", "click", showHome);
   on("brandHome", "click", showHome);

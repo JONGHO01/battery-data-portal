@@ -3829,8 +3829,7 @@ pre {
   margin-top: 14px;
 }
 
-.adminRawAccessForm label,
-.adminRawToolbar label {
+.adminRawAccessForm label {
   display: grid;
   gap: 6px;
   color: var(--ink);
@@ -3838,8 +3837,7 @@ pre {
   font-weight: 800;
 }
 
-.adminRawAccessForm input,
-.adminRawToolbar select {
+.adminRawAccessForm input {
   width: 100%;
 }
 
@@ -3895,73 +3893,138 @@ pre {
   flex: 0 0 auto;
 }
 
-.adminRawToolbar {
-  display: grid;
-  grid-template-columns: minmax(240px, 380px) 1fr;
+.adminRawDatasetSectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 12px;
-  align-items: end;
+  padding-top: 2px;
 }
 
-.adminRawDatasetSummary {
+.adminRawDatasetSectionHeader h3,
+.adminRawDatasetSectionHeader p {
+  margin: 0;
+}
+
+.adminRawDatasetSectionHeader p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.adminRawDatasetCount {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e8f7f7;
+  color: #08777c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.adminRawDatasetGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 12px;
 }
 
-.adminRawDatasetSummary div {
+.adminRawDatasetCard {
+  display: grid;
+  gap: 14px;
   min-width: 0;
-  padding: 10px;
-  border: 1px solid #d8e8ef;
-  border-radius: 9px;
-  background: #f8fcfd;
+  padding: 16px;
+  border: 1px solid #d5e7ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 74, 83, 0.06);
 }
 
-.adminRawDatasetSummary span {
-  display: block;
+.adminRawDatasetCardHeader {
+  min-width: 0;
+}
+
+.adminRawDatasetCardHeader h4 {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.adminRawDatasetType {
+  display: inline-flex;
+  padding: 4px 8px;
+  border: 1px solid #bde1e4;
+  border-radius: 999px;
+  background: #effafa;
+  color: #08777c;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.adminRawDatasetFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.adminRawDatasetFacts div {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f7fbfc;
+}
+
+.adminRawDatasetFacts dt,
+.adminRawDatasetFacts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.adminRawDatasetFacts dt {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
 }
 
-.adminRawDatasetSummary strong {
-  display: block;
-  margin-top: 3px;
+.adminRawDatasetFacts dd {
+  margin-top: 4px;
   color: var(--ink);
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.adminRawDataTableWrap {
-  overflow: auto;
-  border: 1px solid #d6e6ed;
-  border-radius: 10px;
-}
-
-.adminRawDataTableWrap table {
-  min-width: 760px;
-  margin: 0;
-}
-
-.adminRawDataTableWrap th,
-.adminRawDataTableWrap td {
-  max-width: 260px;
-  overflow-wrap: anywhere;
-  vertical-align: top;
-}
-
-.adminRawPager {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--muted);
   font-size: 13px;
   font-weight: 800;
 }
 
-.adminRawPager > div {
+.adminRawDatasetActions {
   display: flex;
-  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.adminRawDatasetActions button {
+  min-width: 132px;
+}
+
+.adminRawDatasetEmpty {
+  display: grid;
+  gap: 5px;
+  grid-column: 1 / -1;
+  padding: 28px 18px;
+  border: 1px dashed #bfd8df;
+  border-radius: 12px;
+  background: #f8fcfd;
+  text-align: center;
+}
+
+.adminRawDatasetEmpty strong {
+  color: var(--ink);
+}
+
+.adminRawDatasetEmpty span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .cycRecordContent {
@@ -4157,16 +4220,11 @@ pre {
 }
 
 @media (max-width: 920px) {
-  .adminRawAccessForm,
-  .adminRawToolbar {
+  .adminRawAccessForm {
     grid-template-columns: 1fr;
   }
 
-  .adminRawDatasetSummary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .adminRawPager {
+  .adminRawDatasetSectionHeader {
     align-items: stretch;
     flex-direction: column;
   }

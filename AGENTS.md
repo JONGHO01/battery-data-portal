@@ -34,3 +34,11 @@ This repository is the Battery Data Portal project.
 - For `VERSION`, `CHANGELOG`, release notes, upload packaging, or a version bump, use the project-local `battery-portal-versioning` skill.
 - Record every meaningful delivered change in the newest `CHANGELOG.md` section before commit, push, packaging, or deployment. Use `Unreleased` until a version is explicitly released.
 - Do not modify the personal `battery-portal-versioning` skill itself.
+
+## GitHub Synchronization
+
+- Standing user authorization (2026-09-10): after completing and verifying requested portal changes, commit and promptly push the task-scoped source, tests, and documentation to `https://github.com/JONGHO01/battery-data-portal.git` on `main`, without asking again for each normal upload. This supersedes older per-upload approval notes in session memory.
+- Fetch and check the destination before pushing. Use ordinary fast-forward pushes only; stop and report conflicts, failed checks, authentication failures, or protected-branch restrictions. Never force-push or include unrelated work.
+- Exclude credentials, environment secrets, databases, raw experiment files, runtime artifacts, logs, and caches. Use an explicit staging allow-list.
+- Verify the remote commit after pushing and report its link. A GitHub push can trigger Render auto-deploy but does not prove deployment or database/storage connectivity. Do not change hosting settings, restart existing local servers, or run data migrations under this upload authorization.
+- This is a workflow for changes made in an active task, not a background file watcher or scheduled auto-commit service.

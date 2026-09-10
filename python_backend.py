@@ -37,8 +37,9 @@ from typing import Any
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 
 from backend.c_rate import collect_c_rate_metadata, infer_cycle_c_rates
 from backend.schemas.bdf import PARSER_VERSION as BDF_MAPPING_VERSION
@@ -174,7 +175,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.76", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.80", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -3337,11 +3338,14 @@ def raw_archive_status(conn, dataset_id: str) -> dict:
 
 
 def admin_raw_dataset_summary(row, row_count: int | None = None, archive_status: dict | None = None) -> dict:
-    """Return bounded raw-table and local-backup metadata for administrators."""
+    """Return bounded Dataset-card metadata without exposing artifact paths."""
 
     columns = json_loads(row["columns_json"], [])
     if not isinstance(columns, list):
         columns = []
+    raw_artifact = json_loads(row["raw_artifact_json"], {}) if "raw_artifact_json" in row.keys() else {}
+    if not isinstance(raw_artifact, dict):
+        raw_artifact = {}
     if row_count is None:
         try:
             row_count = int(row["row_count"])
@@ -3358,8 +3362,13 @@ def admin_raw_dataset_summary(row, row_count: int | None = None, archive_status:
         "columnCount": len(columns),
         "rowCount": row_count,
         "rowsStorage": str(row["rows_storage"] if "rows_storage" in row.keys() else "database"),
+        "hasRawDownload": bool(raw_artifact.get("objectKey") or raw_artifact.get("localPath")),
     }
     item.update(archive_status or {})
+    item["rawSizeBytes"] = max(
+        int(item.get("rawSizeBytes") or 0),
+        int(raw_artifact.get("sizeBytes") or 0),
+    )
     return item
 
 
@@ -3462,6 +3471,75 @@ def get_admin_raw_dataset(
         "totalRows": len(stored_rows),
         "rows": raw_rows,
     }
+
+
+def raw_artifact_download_response(row):
+    """Stream one immutable upload without exposing its B2 key or local path."""
+
+    dataset = dataset_from_row(row, include_rows=False)
+    artifact = dataset.get("rawArtifact") if isinstance(dataset.get("rawArtifact"), dict) else {}
+    source_name = PurePosixPath(str(dataset.get("sourceName") or "").replace("\\", "/")).name
+    filename = clean_name(source_name or f"{dataset['id']}.bin")
+    media_type = str(artifact.get("contentType") or mimetypes.guess_type(filename)[0] or "application/octet-stream")
+    object_key = str(artifact.get("objectKey") or "")
+
+    if object_key and STORAGE_BACKEND in {"s3", "supabase"}:
+        if storage_configuration_issues():
+            raise HTTPException(status_code=503, detail="Durable object storage is not available for download.")
+        try:
+            import boto3
+            from botocore.config import Config
+
+            client = boto3.client(
+                "s3",
+                endpoint_url=S3_ENDPOINT_URL or None,
+                region_name=S3_REGION,
+                aws_access_key_id=S3_ACCESS_KEY_ID or None,
+                aws_secret_access_key=S3_SECRET_ACCESS_KEY or None,
+                config=Config(
+                    signature_version="s3v4",
+                    s3={"addressing_style": "path" if S3_FORCE_PATH_STYLE else "auto"},
+                ),
+            )
+            storage_response = client.get_object(Bucket=S3_BUCKET, Key=validated_object_key(object_key))
+            body = storage_response["Body"]
+        except HTTPException:
+            raise
+        except Exception as exc:
+            print(f"Raw Dataset download failed for {dataset['id']}: {type(exc).__name__}", file=sys.stderr)
+            raise HTTPException(status_code=503, detail="The original uploaded file could not be read from durable storage.") from exc
+
+        def iter_download():
+            try:
+                while chunk := body.read(1024 * 1024):
+                    yield chunk
+            finally:
+                try:
+                    body.close()
+                except Exception:
+                    pass
+
+        headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+        content_length = int(storage_response.get("ContentLength") or 0)
+        if content_length > 0:
+            headers["Content-Length"] = str(content_length)
+        return StreamingResponse(iter_download(), media_type=media_type, headers=headers)
+
+    local_path = _artifact_local_path(artifact)
+    if local_path is not None:
+        return FileResponse(local_path, media_type=media_type, filename=filename)
+    raise HTTPException(status_code=404, detail="The original uploaded file is not available for download.")
+
+
+@app.get("/api/admin/raw-data/datasets/{dataset_id}/download")
+def download_admin_raw_dataset(dataset_id: str, user=Depends(require_admin_raw_access)):
+    """Download one Dataset's immutable source after the second admin check."""
+
+    with connect() as conn:
+        row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (str(dataset_id),)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Dataset not found.")
+    return raw_artifact_download_response(row)
 
 
 @app.get("/api/archive/artifacts")
@@ -5036,7 +5114,8 @@ async def inspect_upload(
     filename = urllib.parse.unquote(x_filename or "upload")
     clean_filename = clean_name(filename)
     target, storage_url, size_bytes, sha256 = await stage_request_upload(request, clean_filename, "raw")
-    return inspect_staged_file(
+    return await run_in_threadpool(
+        inspect_staged_file,
         clean_filename,
         target,
         storage_url,
