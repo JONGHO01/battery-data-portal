@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.2.0 - 2026-09-10
+
+- Preserve the existing EIS grid, point-connection and marker-size controls in the new renderer; add an executable regression and browser toggle check.
+- Replace the right-hand Bode panels of the combined EIS result with nonnegative RC-DRT and signed Im(Z) Nyquist. Preserve left-plot size, saved axes, HF marker, raw sweep order and image exports. Standalone Bode remains available.
+- Normalize signed and negative-imaginary headers in an EIS-only adapter without rewriting artifacts or shared parsers.
+- Fit real/imaginary data jointly with trapezoidal log-time kernels, bounded least squares, gamma-only smoothing, optional exact-zero L, and guarded 41-point L-curve selection. Add only pinned SciPy.
+- Add neutral peaks, log-time resistance integration, reconstruction/error, quality warnings, CSV/metadata exports and saved-analysis restoration through the existing authorized API.
+- Invalidate fits after file/settings/data changes; keep Nyquist without frequency and clear failed calculations.
+- No new routes, migration, global CSS/layout/state changes, or changes to CYC/CV, login, sidebar, header or storage providers. See docs/EIS_DRT.md for verification and limits.
+
 ## v0.1.80 - 2026-09-10
 
 - Publish the accumulated v0.1.77-v0.1.80 source changes with the local/runtime versus production verification boundaries documented in README.

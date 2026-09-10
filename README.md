@@ -1,20 +1,29 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.80-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.0-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.1.80** - clears stale upload previews, explains disconnected requests, prevents duplicate clicks, and offloads blocking inspection work. Includes EIS plot recovery, refresh-label checks, and administrator Dataset cards with protected downloads. GitHub source and running-server versions must be verified separately.
+> Source release: **v0.2.0** — EIS-only DRT analysis, signed-Im Nyquist, reconstruction and exports. Existing portal layout, authentication, CYC/CV, and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.1.80**이며, 운영 배포 여부와는 별개입니다. 파일 분석 실패 시 이전 결과를 제거하고 연결 오류를 안내합니다. 단일 파일 선택을 유지하며 중복 요청은 방지합니다. 분석 작업의 서버 응답 차단 개선은 서버 재시작 후 적용됩니다. 원본 데이터와 Neon/B2 저장 구조는 유지합니다.
+현재 소스 버전은 **v0.2.0**이며, 운영 배포 여부와는 별개입니다. EIS 통합 Fig의 오른쪽 두 패널만 DRT와 실제 Im(Z) Nyquist로 교체했습니다. 왼쪽 Nyquist, 포탈 전체 폭·사이드바·로그인·CYC/CV·원본 저장 구조는 유지합니다. 새 서버 계산은 의존성 설치와 서버 재시작 후 적용됩니다.
 
-## 이번 업데이트와 연결 점검
+## EIS DRT 사용법
+
+1. 저장된 EIS 통합 Fig를 엽니다. 표를 편집했다면 먼저 표를 저장합니다.
+2. Fig 아래의 **DRT 설정**에서 M, λ, 직렬 L 포함 여부를 선택하고 **DRT 계산·저장**을 누릅니다. 기본값은 시작값이며 항상 최적은 아닙니다.
+3. 왼쪽은 −Im(Z), 오른쪽 아래는 실제 Im(Z)입니다. 측정값은 마커, 재구성은 주황 점선입니다. Rs·L·오차와 중립적 P1/P2 피크를 확인합니다.
+4. τ 구간을 입력해 ln(τ)에 대한 저항 적분을 계산하고 DRT CSV·재구성 CSV·메타데이터 JSON 또는 기존 SVG·PNG를 저장합니다.
+
+계산 결과는 기존 Dataset 분석 기록에 별도로 저장되며 원본 행을 덮어쓰지 않습니다. 주파수가 없으면 Nyquist만 표시합니다. 중복 주파수는 유지하며 측정 대역 밖 결과와 불명확한 자동 λ 선택에는 경고합니다. 자세한 모델·제한·검증은 [EIS DRT 설명](docs/EIS_DRT.md)을 참고하세요.
+
+## 이전 업데이트와 연결 점검
 
 - **EIS Fig 복구:** 저장된 표준 컬럼 이름을 읽어 Nyquist·Bode 그래프를 표시합니다. 원본 측정값은 바꾸지 않습니다.
 - **파일 분석 실패 처리:** 이전 파일의 결과를 지우고, 실패한 파일 선택은 유지하며, 중복 분석 요청을 막습니다.
@@ -59,6 +68,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.0 | 2026-09-10 | EIS 전용 DRT·실제 Im(Z) Nyquist, 재구성 검증, 구간 저항 적분, CSV/메타데이터 저장. |
 | v0.1.80 | 2026-09-10 | Recover cleanly from upload failures and offload blocking inspection work. |
 | v0.1.79 | 2026-09-10 | Explicit Korean refresh label and spelling tests for six refresh buttons. |
 | v0.1.78 | 2026-09-10 | Restore persisted EIS Nyquist/Bode plots and thumbnails without rewriting measured data. |

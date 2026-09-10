@@ -1,9 +1,18 @@
-const PORTAL_VERSION = "0.1.80";
+const PORTAL_VERSION = "0.2.0";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.0",
+    "date": "2026-09-10",
+    "changes": [
+      "EIS \uacb0\uacfc \ub0b4\ubd80\uc758 \uc624\ub978\ucabd Bode \ub450 \ud328\ub110\uc744 DRT\uc640 \uc2e4\uc81c Im(Z) Nyquist\ub85c \uad50\uccb4\ud588\uc2b5\ub2c8\ub2e4.",
+      "\ube44\uc74c\uc218 RC-DRT, \uc120\ud0dd\uc801 \uc9c1\ub82c L, L-curve, \uad6c\uac04 \uc800\ud56d \uc801\ubd84, \uc7ac\uad6c\uc131 \uc624\ucc28\uc640 CSV \uc800\uc7a5\uc744 \ucd94\uac00\ud588\uc2b5\ub2c8\ub2e4.",
+      "\uae30\uc874 \uc0ac\uc774\ub4dc\ubc14\u00b7\ud5e4\ub354\u00b7\ub85c\uadf8\uc778\u00b7\ub2e4\ub978 \ubd84\uc11d \ud398\uc774\uc9c0\uc640 Neon/B2 \uc800\uc7a5 \uad6c\uc870\ub294 \uc720\uc9c0\ud569\ub2c8\ub2e4."
+    ]
+  },
   {
     "version": "0.1.80",
     "date": "2026-09-10",
@@ -3444,6 +3453,7 @@ function nyquistPanel({ x, y, w, h, title, xlabel, ylabel, points }) {
 }
 
 function renderEisFigure(d) {
+  if (typeof EisDrt !== "undefined" && d.figureKind !== "bode") return EisDrt.render(d);
   const style = currentFigureStyle();
   syncFigureControls(style);
   const seriesColor = normalizeHexColor(style.seriesColor);

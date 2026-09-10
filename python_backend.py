@@ -175,7 +175,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.80", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.2.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -3030,6 +3030,21 @@ def run_dataset_analysis(item: dict, analysis_name: str, parameters: dict | None
 
     normalized_name = str(analysis_name or "").strip().lower()
     supplied_parameters = parameters if isinstance(parameters, dict) else {}
+    if normalized_name == "eis-drt":
+        if item.get("dataType") != "eis":
+            raise HTTPException(status_code=400, detail="DRT is available only for EIS Datasets.")
+        from backend.analysis.eis_drt import fit_drt
+
+        # EIS-only branch: quality review flags must not silently remove points.
+        rows, provenance = load_analysis_rows(item, True)
+        try:
+            result = fit_drt(rows, supplied_parameters)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        provenance.update({"analysisVersion":"rc-drt-1", "schemaVersion":BDF_MAPPING_VERSION,
+                           "sourceDatasetId":item["id"],
+                           "sourceSha256":(item.get("analysisProvenance") or {}).get("sourceSha256", "")})
+        return result, provenance
     rows, provenance = load_analysis_rows(item, bool(supplied_parameters.get("includeReviewRows")))
     handlers = {
         "retention": lambda: summarize_retention(rows),
