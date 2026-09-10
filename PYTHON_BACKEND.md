@@ -61,6 +61,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
 POST /api/login
 POST /api/register
 GET /api/datasets
+GET /api/datasets/{id}/comparison-series
 POST /api/datasets
 PATCH /api/datasets/{id}
 DELETE /api/datasets/{id}
@@ -71,6 +72,8 @@ GET /api/health
 ```
 
 로그인 성공 후 프론트는 다음 헤더를 붙여 API를 호출합니다.
+
+`GET /api/datasets/{id}/comparison-series`는 권한이 있는 CYC Dataset의 사이클·방전용량 점만 반환하며 원본 측정 행은 포함하지 않습니다.
 
 ```http
 Authorization: Bearer <token>

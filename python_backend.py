@@ -174,7 +174,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.1.75", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.1.76", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -826,6 +826,26 @@ def dataset_detail_from_row(row) -> dict:
     if provenance["rowSource"] == "parsed-artifact":
         item["rowsStorage"] = "artifact"
     return item
+
+
+def cyc_comparison_series_from_row(row) -> dict:
+    """Return the smallest authenticated payload needed for CYC comparison."""
+
+    item = dataset_from_row(row, include_rows=True)
+    if str(item.get("dataType") or "").lower() != "cyc":
+        raise HTTPException(status_code=422, detail="Only CYC datasets have a comparison series.")
+    rows, _ = load_analysis_rows(item, include_review_rows=True)
+    points, capacity_info = capacity_series(rows)
+    return {
+        "datasetId": item["id"],
+        "dataType": "cyc",
+        "capacityUnit": str(capacity_info.get("unit") or ""),
+        "pointCount": len(points),
+        "points": [
+            {"cycle": float(cycle), "capacity": float(capacity)}
+            for cycle, capacity in points
+        ],
+    }
 
 
 def browser_dataset_detail(conn, dataset_id: str) -> dict:
@@ -4056,6 +4076,19 @@ def get_dataset(dataset_id: str, user=Depends(get_current_user)):
     if not can_see(user, row):
         raise HTTPException(status_code=403, detail="조회 권한이 없습니다.")
     return dataset_detail_from_row(row)
+
+
+@app.get("/api/datasets/{dataset_id}/comparison-series")
+def get_dataset_comparison_series(dataset_id: str, user=Depends(get_current_user)):
+    """Return an authorized cycle-capacity projection without raw trace rows."""
+
+    with connect() as conn:
+        row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="데이터를 찾을 수 없습니다.")
+    if not can_see(user, row):
+        raise HTTPException(status_code=403, detail="조회 권한이 없습니다.")
+    return cyc_comparison_series_from_row(row)
 
 
 @app.get("/api/datasets/{dataset_id}/analyses")

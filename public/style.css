@@ -1071,6 +1071,8 @@ button.danger { background: var(--danger); }
 }
 .searchResultCard {
   display: grid;
+  min-width: 0;
+  overflow: hidden;
   gap: 12px;
   padding: 14px;
   transition: transform 0.16s ease, border-color 0.16s ease;
@@ -1085,6 +1087,8 @@ button.danger { background: var(--danger); }
 }
 .searchResultOpen {
   display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
   gap: 7px;
   padding: 0;
   background: transparent;
@@ -1117,6 +1121,8 @@ button.danger { background: var(--danger); }
 }
 .searchResultActions {
   display: flex;
+  width: 100%;
+  min-width: 0;
   gap: 8px;
 }
 .searchResultActions button {

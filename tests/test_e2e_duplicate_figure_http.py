@@ -167,6 +167,14 @@ class DuplicateFigureHttpE2ETests(unittest.TestCase):
         self.assertTrue(detail["rowsLoaded"])
         self.assertEqual(len(detail["rows"]), len(first["rows"]))
 
+        comparison_status, comparison = self.request_json(
+            f"/api/datasets/{first['id']}/comparison-series", headers=headers
+        )
+        self.assertEqual(comparison_status, 200)
+        self.assertEqual(comparison["datasetId"], first["id"])
+        self.assertEqual(comparison["pointCount"], 2)
+        self.assertNotIn("rows", comparison)
+
 
 if __name__ == "__main__":
     unittest.main()

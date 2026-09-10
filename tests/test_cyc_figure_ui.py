@@ -151,6 +151,27 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("d.rowsLoaded === false", self.app_js)
         self.assertIn("datasetDetailRequests: new Map()", self.app_js)
 
+    def test_compact_search_and_saved_cards_display_the_exact_dataset_row_count(self):
+        authoritative = self.app_js[self.app_js.rindex("// Authoritative saved-Fig labels.") :]
+
+        self.assertIn("function datasetPointCount(dataset)", self.app_js)
+        self.assertGreaterEqual(self.app_js.count("datasetPointCount("), 5)
+        self.assertIn('String(datasetPointCount(dataset)) + " points"', authoritative)
+        self.assertNotIn('String(dataset.rows?.length || 0) + " points"', authoritative)
+
+    def test_cyc_comparison_hydrates_every_selected_metadata_only_dataset(self):
+        authoritative = self.app_js[self.app_js.rindex("// Authoritative saved-Fig labels.") :]
+
+        self.assertIn("async function renderCycComparison()", authoritative)
+        self.assertIn("await Promise.all(", authoritative)
+        self.assertIn("hydrateCycComparisonSeries(datasetId)", authoritative)
+        self.assertIn("/comparison-series", self.app_js)
+        self.assertIn("state.comparisonSeriesByDatasetId = new Map()", self.app_js)
+        no_series_guard = '    return;\n  }\n'
+        color_map = "  const colorMap = Object.fromEntries("
+        self.assertIn(no_series_guard + color_map, authoritative)
+        self.assertNotIn('    return;\n' + color_map, authoritative)
+
     def test_raw_ah_capacity_keeps_its_real_unit_for_cyc_figures(self):
         """A raw discharge-Q column must not be labeled as specific capacity."""
 

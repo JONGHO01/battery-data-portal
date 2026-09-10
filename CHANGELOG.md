@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.1.76 - 2026-09-10
+
+- Render editable-table pagination buttons and the home-screen status as readable Korean instead of literal or corrupted Unicode text.
+- Keep both search-result actions inside each card so `Fig 열기` and `모음에서 보기` remain separately visible and clickable.
+- Load an authenticated, cycle-level capacity projection for saved CYC comparisons instead of transferring full trace rows, so two metadata-only Figs compare promptly without being opened first.
+- Show each compact search and saved-Fig card's exact stored point count before its full normalized rows are hydrated.
+- Preserve the existing Neon metadata, private B2 artifact, and verified Windows archive boundaries; this release adds no database migration or raw-data rewrite.
+- Complete five fresh-browser verification passes after the final fix, covering 425 active non-destructive interactions with no UI, text, layout, comparison, or console failure.
+- Clarify the GitHub README architecture and remove obsolete version rows that had been misplaced inside API and storage tables.
+
 ## v0.1.75 - 2026-09-09
 
 - Confirm Backblaze B2 as the private S3-compatible object store while preserving Neon metadata and verified Windows raw-file archives.
@@ -200,11 +210,6 @@
 ## v0.1.34 - 2026-07-20
 - Restore clear Korean empty-state guidance in the Fig workspace and editable data table.
 - Replace the English `No dataset` title with a direct Dataset-selection instruction.
-
-## Unreleased
-- Record every delivered meaningful portal change here before commit, push, packaging, or deployment. Move these entries into the next version section when the version is released.
-- Restore the EIS inspection panel's Korean labels and column guide directly in the renderer, so sweep, point, frequency, zreal, zimag, mag, phase, quality review, and Fig choices remain readable.
-- Verify that saving the same raw source reuses one Dataset and one Fig record instead of adding a duplicate Fig card.
 
 ## v0.1.33 - 2026-07-20
 - Add ZIVE SmartManager `.SDE` binary file support through the validated EIS parser used for compatible `.SEO` records.

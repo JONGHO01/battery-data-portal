@@ -76,6 +76,28 @@ class CloudDatasetArchitectureTests(unittest.TestCase):
         self.assertEqual(detail["rowsStorage"], "artifact")
         self.assertTrue(detail["rowsLoaded"])
 
+    def test_cyc_comparison_projection_returns_only_one_capacity_point_per_cycle(self):
+        canonical_rows = [
+            {"cycle_index": 1, "specific_capacity_mah_g": 120.0, "direction": "charge", "voltage_v": 4.2},
+            {"cycle_index": 1, "specific_capacity_mah_g": 110.0, "direction": "discharge", "voltage_v": 2.8},
+            {"cycle_index": 1, "specific_capacity_mah_g": 115.0, "direction": "discharge", "voltage_v": 2.7},
+            {"cycle_index": 2, "specific_capacity_mah_g": 108.0, "direction": "discharge", "voltage_v": 2.8},
+        ]
+        stored_document = json.dumps({"canonicalRows": canonical_rows}).encode("utf-8")
+
+        with patch.object(portal, "read_object_storage_bytes", return_value=stored_document):
+            projection = portal.cyc_comparison_series_from_row(dataset_row(row_count=len(canonical_rows)))
+
+        self.assertEqual(projection["datasetId"], "DATA-CLOUD-001")
+        self.assertEqual(projection["dataType"], "cyc")
+        self.assertEqual(projection["capacityUnit"], "mAh g-1")
+        self.assertEqual(projection["pointCount"], 2)
+        self.assertEqual(projection["points"], [
+            {"cycle": 1.0, "capacity": 115.0},
+            {"cycle": 2.0, "capacity": 108.0},
+        ])
+        self.assertNotIn("rows", projection)
+
     def test_compact_dataset_list_keeps_the_exact_row_count(self):
         compact = portal.dataset_from_row(dataset_row(row_count=123), include_rows=False)
 

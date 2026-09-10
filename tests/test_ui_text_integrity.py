@@ -1,3 +1,4 @@
+from html import unescape
 from pathlib import Path
 import re
 import unittest
@@ -21,6 +22,23 @@ class UiTextIntegrityTests(unittest.TestCase):
         # Single question marks are valid JavaScript syntax. A repeated run in
         # this source is a text-corruption symptom and must not ship.
         self.assertNotIn("???", source)
+
+    def test_static_html_does_not_render_literal_unicode_escape_text(self):
+        html = (PROJECT_ROOT / "public" / "index.html").read_text(encoding="utf-8")
+        rendered_html = unescape(html)
+
+        # HTML does not interpret JavaScript-style Unicode escapes. Any such
+        # sequence becomes visible as literal backslash-u text in the portal.
+        self.assertNotRegex(html, r"\\u[0-9a-fA-F]{4}")
+        self.assertIn("이전 250행", rendered_html)
+        self.assertIn("다음 250행", rendered_html)
+
+    def test_home_status_uses_the_readable_menu_label(self):
+        source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")
+        home_source = source[source.index("function showHome()") : source.index("function showWorkspace()")]
+
+        self.assertIn(r'setStatus("\uba54\ub274");', home_source)
+        self.assertNotIn(r'\uf9ce\ubdbe\ub3f1', home_source)
 
     def test_search_all_labels_use_readable_unicode_escapes(self):
         source = (PROJECT_ROOT / "public" / "app.js").read_text(encoding="utf-8")

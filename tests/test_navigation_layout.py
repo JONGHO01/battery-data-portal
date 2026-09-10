@@ -31,6 +31,18 @@ class NavigationLayoutTests(unittest.TestCase):
 
         self.assertIn('<section class="panel hierarchyPanel" hidden>', html)
 
+    def test_search_result_cards_keep_both_action_buttons_inside_each_card(self):
+        css = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+        card = css.split(".searchResultCard {", 2)[2].split("}", 1)[0]
+        open_button = css.split(".searchResultOpen {", 1)[1].split("}", 1)[0]
+        actions = css.split(".searchResultActions {", 1)[1].split("}", 1)[0]
+
+        self.assertIn("min-width: 0;", card)
+        self.assertIn("overflow: hidden;", card)
+        self.assertIn("min-width: 0;", open_button)
+        self.assertIn("width: 100%;", actions)
+        self.assertIn("min-width: 0;", actions)
+
 
 if __name__ == "__main__":
     unittest.main()

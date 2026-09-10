@@ -1,9 +1,19 @@
-const PORTAL_VERSION = "0.1.75";
+const PORTAL_VERSION = "0.1.76";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.1.76",
+    "date": "2026-09-10",
+    "changes": [
+      "Repair visible Korean status and pagination text, and keep search actions inside each result card.",
+      "Compare unopened saved CYC Figs through a small authorized cycle-capacity projection instead of full trace transfer.",
+      "Show exact stored point counts on compact cards and complete five fresh-browser button-audit passes.",
+      "Document the Neon metadata, private B2 artifact, and verified Windows archive boundaries clearly."
+    ]
+  },
   {
     "version": "0.1.75",
     "date": "2026-09-09",
@@ -497,6 +507,8 @@ const RELEASE_HISTORY = [
 const TABLE_PAGE_SIZE = 250;
 const ADMIN_RAW_PAGE_SIZE = 250;
 const state = { datasets: [], filtered: [], selectedId: null, user: null, users: [], feedbacks: [], hierarchy: [], organizations: [], selectedOrganizationId: "", organizationMembers: [], cellWorkspace: null, cellWorkspaceRequestId: 0, analysis: null, batchFigureResults: [], batchInProgress: false, analysisRuns: [], selectedAnalysisRunId: null, pendingAnalysisName: "", selectedAnnotation: null, manualInfo: null, inspectToken: 0, annotations: {}, layoutEdits: {}, figureStyles: {}, activeFigureModule: "cyc", searchType: "all", compareIds: [], comparisonColors: {}, cycFigureViewKinds: {}, selectedProfileSeriesKey: "", selectedDqdvSeriesKey: "", tableSaveTimer: null, tableSelection: null, tableUndoStack: [], tablePage: 0, electrodeProfiles: [], selectedElectrodeProfileId: null, electrodeCalcSlots: [], datasetDetailRequests: new Map(), adminRawAccessToken: "", adminRawAccessExpiresAt: 0, adminRawDatasets: [], adminRawSelectedId: "", adminRawPreview: null, adminRawOwnerId: "", adminRawOwnerName: "", adminRawStorage: null };
+state.comparisonSeriesByDatasetId = new Map();
+state.comparisonSeriesRequests = new Map();
 let lastElectrodeCalcAt = "";
 let busyUnlockTimer = null;
 
@@ -682,7 +694,7 @@ function applyUser(user) {
 function showHome() {
   if ($("moduleHome")) $("moduleHome").classList.remove("hidden");
   $("dataWorkspace").classList.add("hidden");
-  setStatus("\uf9ce\ubdbe\ub3f1");
+  setStatus("\uba54\ub274");
 }
 
 function showWorkspace() {
@@ -2451,6 +2463,46 @@ async function hydrateDatasetRows(datasetId) {
   }
 }
 
+async function hydrateCycComparisonSeries(datasetId) {
+  if (state.comparisonSeriesByDatasetId.has(datasetId)) {
+    return state.comparisonSeriesByDatasetId.get(datasetId);
+  }
+  if (state.comparisonSeriesRequests.has(datasetId)) {
+    return state.comparisonSeriesRequests.get(datasetId);
+  }
+  const dataset = state.datasets.find((item) => item.id === datasetId);
+  if (!dataset || String(dataset.dataType || "").toLowerCase() !== "cyc") return [];
+  if (dataset.rowsLoaded !== false) {
+    const points = dischargeSeries((dataset.rows || []).filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle));
+    state.comparisonSeriesByDatasetId.set(datasetId, points);
+    return points;
+  }
+
+  const request = (async () => {
+    const response = await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/comparison-series`, { headers: authHeaders() });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (clearExpiredLogin(response, body)) return [];
+      throw new Error(apiErrorMessage(body, "CYC \ube44\uad50 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4."));
+    }
+    if (body.datasetId !== datasetId || body.dataType !== "cyc" || !Array.isArray(body.points)) {
+      throw new Error("CYC \ube44\uad50 \ub370\uc774\ud130 \ud615\uc2dd\uc774 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.");
+    }
+    const points = body.points.map((point) => ({
+      x: Number(point?.cycle),
+      y: Number(point?.capacity),
+    })).filter((point) => Number.isFinite(point.x) && point.x >= 1 && Number.isFinite(point.y));
+    state.comparisonSeriesByDatasetId.set(datasetId, points);
+    return points;
+  })();
+  state.comparisonSeriesRequests.set(datasetId, request);
+  try {
+    return await request;
+  } finally {
+    state.comparisonSeriesRequests.delete(datasetId);
+  }
+}
+
 function renderOrganizationChart(organization) {
   const chart = $("organizationChart");
   if (!chart) return;
@@ -2794,7 +2846,7 @@ function renderSearchResults() {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const meta = [cell.date || "\ub0a0\uc9dc \uc5c6\uc74c", typeDisplay(d.dataType), `${d.rows?.length || 0} points`, displayUserName(d)].filter(Boolean).join(" \u00b7 ");
+    const meta = [cell.date || "\ub0a0\uc9dc \uc5c6\uc74c", typeDisplay(d.dataType), `${datasetPointCount(d)} points`, displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     const detail = [hierarchyLabel(d), cell.material, cell.sampleName, cell.condition, d.sourceName].filter(Boolean).join(" / ");
     return `
       <article class="searchResultCard${active}">
@@ -2885,6 +2937,13 @@ function datasetDisplayName(d) {
   return figureDatasetLabel(d);
 }
 
+function datasetPointCount(dataset) {
+  const loadedCount = Array.isArray(dataset?.rows) ? dataset.rows.length : 0;
+  const storedCount = Number(dataset?.rowCount);
+  if (!Number.isFinite(storedCount) || storedCount < 0) return loadedCount;
+  return Math.max(Math.round(storedCount), loadedCount);
+}
+
 function figureDatasetLabel(d) {
   const type = typeDisplay(d?.dataType);
   const sourceName = String(d?.sourceName || "").trim().replace(/\\/g, "/").split("/").pop();
@@ -2972,7 +3031,7 @@ function renderSavedList() {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
+    const sub = [figureLabel(d), `${datasetPointCount(d)} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     return `
       <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
         <label class="compareCheck${String(d.dataType || "").toLowerCase() === "cyc" ? "" : " disabled"}" title="${String(d.dataType || "").toLowerCase() === "cyc" ? "CYC \ube44\uad50 \uc120\ud0dd" : "CYC Fig\ub9cc \ube44\uad50\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}">
@@ -3026,7 +3085,7 @@ function renderSavedList() {
     const cell = d.cell || {};
     const active = d.id === state.selectedId ? " active" : "";
     const title = datasetDisplayName(d);
-    const sub = [figureLabel(d), `${d.rows?.length || 0} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
+    const sub = [figureLabel(d), `${datasetPointCount(d)} points`, hierarchyLabel(d), displayUserName(d)].filter(Boolean).join(" \u00b7 ");
     const isCyc = String(d.dataType || "").toLowerCase() === "cyc";
     return `
       <article class="savedItem${active}" data-dataset-id="${escapeAttr(d.id)}">
@@ -6802,7 +6861,8 @@ function selectedComparisonSeries() {
     .map((d) => ({
       d,
       name: datasetDisplayName(d),
-      points: dischargeSeries((d.rows || []).filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle)),
+      points: state.comparisonSeriesByDatasetId.get(d.id)
+        || dischargeSeries((d.rows || []).filter((r) => Number.isFinite(r.cycle)).sort((a, b) => a.cycle - b.cycle)),
     }))
     .filter((s) => s.points.length);
 }
@@ -8053,7 +8113,7 @@ function savedFigureCardHtml(dataset, text) {
   const dateKey = savedFigureDateKey(dataset);
   const active = dataset.id === state.selectedId ? " active" : "";
   const title = datasetDisplayName(dataset);
-  const sub = [figureLabel(dataset), String(dataset.rows?.length || 0) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
+  const sub = [figureLabel(dataset), String(datasetPointCount(dataset)) + " points", hierarchyLabel(dataset), displayUserName(dataset)].filter(Boolean).join(" \u00b7 ");
   const isCyc = String(dataset.dataType || "").toLowerCase() === "cyc";
   return [
     '<article class="savedItem' + active + (isCyc ? " cycSavedItem" : "") + '" data-dataset-id="' + escapeAttr(dataset.id) + '">',
@@ -8177,15 +8237,33 @@ function clearCompareSelection() {
   setStatus(savedFigText().cleared);
 }
 
-function renderCycComparison() {
+async function renderCycComparison() {
   const preview = $("comparisonPreview");
   if (!preview) return;
   const text = savedFigText();
-  const series = selectedComparisonSeries();
+  const selectedIds = state.compareIds.slice(0, 8);
   preview.classList.remove("hidden");
-  if (series.length < 2) {
+  if (selectedIds.length < 2) {
     preview.innerHTML = '<p class="emptySaved">' + text.chooseTwo + "</p>";
     setStatus(text.chooseTwo);
+    return;
+  }
+  const missingSeriesIds = selectedIds.filter((datasetId) => !state.comparisonSeriesByDatasetId.has(datasetId));
+  if (missingSeriesIds.length) {
+    try {
+      setStatus("\uc120\ud0dd\ud55c CYC Fig \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\ub294 \uc911\uc785\ub2c8\ub2e4...");
+      await Promise.all(missingSeriesIds.map((datasetId) => hydrateCycComparisonSeries(datasetId)));
+    } catch (error) {
+      const message = error.message || "\uc120\ud0dd\ud55c CYC Fig \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.";
+      preview.innerHTML = '<p class="emptySaved">' + escapeXml(message) + "</p>";
+      setStatus(message);
+      return;
+    }
+  }
+  const series = selectedComparisonSeries();
+  if (series.length < 2) {
+    preview.innerHTML = '<p class="emptySaved">' + text.noSeries + "</p>";
+    setStatus(text.noSeries);
     return;
   }
   const colorMap = Object.fromEntries(series.map((item, index) => [item.d.id, comparisonColor(item.d.id, index)]));

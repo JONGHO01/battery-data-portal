@@ -1,20 +1,34 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.1.75-2f80ed)
+![Version](https://img.shields.io/badge/version-0.1.76-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Current release: **v0.1.75** - Neon stores accounts and metadata, private B2 stores raw/normalized artifacts, and the Windows archive agent can preserve verified raw-file copies locally.
+> Current release: **v0.1.76** - saved CYC comparisons now load a small authorized projection, compact cards show exact point counts, and the full button audit is clean.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 버전은 **v0.1.75**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
+현재 버전은 **v0.1.76**입니다. 로컬 연구 보조 도구를 기반으로 시작해, 로그인과 서버 저장을 지원하는 다중 사용자 연구 포털로 확장하고 있습니다.
 
 실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
+
+---
+
+## v0.1.76 구조 변경 요약
+
+| 구간 | 이전 | v0.1.76 |
+|---|---|---|
+| 저장 CYC Fig 비교 | 전체 행을 먼저 열어야 비교 가능 | 권한 확인 후 사이클·용량 점만 경량 API로 조회 |
+| 검색·저장 카드 포인트 수 | 원본 행 미로딩 시 `0 points`로 표시 | Neon 메타데이터의 정확한 `rowCount` 사용 |
+| 원본·정규화 데이터 | private B2 저장 | 변경 없음 |
+| 계정·권한·Fig 인덱스 | Neon PostgreSQL 저장 | 변경 없음 |
+| 관리자 장기 백업 | Windows archive agent | 변경 없음 |
+
+즉, **저장 위치나 기존 데이터를 옮기지 않고**, 비교 화면에 필요한 최소 데이터만 가져오도록 경로를 분리했습니다. 기존 CYC 전압·dQ/dV 화면은 필요할 때 정상적인 전체 Dataset 경로를 그대로 사용합니다.
 
 ---
 
@@ -24,6 +38,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.1.76 | 2026-09-10 | Repair Korean UI text and search-card layout; add lightweight authorized CYC comparison data and exact compact-card point counts. |
 | v0.1.75 | 2026-09-09 | Validate official B2 endpoints and regions, report the active provider, and retain Neon/B2/Windows storage separation. |
 | v0.1.74 | 2026-08-26 | Separate Neon metadata, private B2 artifacts, and SHA-256-verified Windows raw archives; remove the public administrator identifier. |
 | v0.1.73 | 2026-08-20 | Repair Search labels and verify source-file experiment-date grouping across saved Figs. |
@@ -221,20 +236,20 @@ http://localhost:4173
 화면에서 버튼을 누르면 JavaScript가 FastAPI 백엔드로 요청을 보냅니다. 백엔드는 데이터를 DB에 저장하거나 다시 불러와 화면에 전달합니다.
 
 ```text
-사용자 화면(public)
-        ↓
-JavaScript fetch 요청
-        ↓
-FastAPI 백엔드(python_backend.py)
-        ↓
-SQLite 또는 PostgreSQL DB
+사용자 브라우저 (public/)
+        |
+        v
+Render / FastAPI (python_backend.py)
+        |---- Neon PostgreSQL: 계정, 권한, Dataset/Fig 메타데이터
+        |---- private Backblaze B2: 원본 파일, Fig 재생성용 정규화 데이터
+        `---- Windows archive agent: SHA-256 검증 원본 백업
 ```
 
 | Method | Endpoint | 용도 |
 |---|---|---|
-| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
 | GET | `/api/health` | 서버 상태 확인 |
 | GET | `/api/datasets` | 저장된 데이터 목록 조회 |
+| GET | `/api/datasets/{id}/comparison-series` | 권한 확인 후 CYC 비교용 사이클·용량 점만 조회 |
 | POST | `/api/datasets` | 새 데이터 저장 |
 | PATCH | `/api/datasets/{id}` | 기존 데이터 수정 |
 | DELETE | `/api/datasets/{id}` | 데이터 삭제 |
@@ -271,13 +286,12 @@ OPENAI_REASONING_EFFORT=low
 .\scripts\set_openai_key_local.ps1
 ```
 
-| 단계 | 저장 방식 | 설명 |
+| 저장 계층 | 사용 기술 | 담당 데이터 |
 |---|---|---|
-| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
-| 로컬 개발 | `data/uploads` | 내 컴퓨터에서만 사용합니다. |
-| 연구실 공유 | Supabase Storage | 로그인 기반 포털로 확장하기 좋습니다. |
-| 운영 배포 | S3 계열 Storage | 장기 운영과 백업에 유리합니다. |
-| 현재 권장 운영 | Neon + private B2 + Windows archive | 메타데이터, 온라인 Fig 데이터, 장기 원본을 분리합니다. |
+| 로컬 개발 | SQLite + `data/uploads` | 내 컴퓨터에서만 사용하는 계정, 메타데이터, 파일 |
+| 운영 메타데이터 | Neon PostgreSQL | 계정, 권한, 조직, Dataset/Fig 인덱스, `rowCount`, B2 객체 키 |
+| 운영 파일 | private Backblaze B2 | 원본 파일과 과거 Fig를 다시 여는 데 필요한 정규화 데이터 |
+| 장기 원본 백업 | Windows archive agent | 크기와 SHA-256을 검증한 관리자 작업공간 원본 복사본 |
 
 ---
 
