@@ -305,7 +305,8 @@ class CycFigureUiTests(unittest.TestCase):
 
         self.assertIn('direction: findColumn(columns, ["direction", "step direction", "mode", "state"])', self.app_js)
         self.assertIn("function cycDirectionFromValue(value, current = NaN)", self.app_js)
-        self.assertIn("direction: cycDirectionFromValue(r[col.direction], current)", self.app_js)
+        self.assertIn("const direction = cycDirectionFromValue(r[col.direction], current);", self.app_js)
+        self.assertIn("        direction,", self.app_js)
         self.assertIn('point.direction === "charge"', self.app_js)
         self.assertIn('point.direction === "discharge"', self.app_js)
 

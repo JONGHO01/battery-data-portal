@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.2.7 - 2026-09-14
+
+- Read WBCS TestReport binary CellWeight with bounded, non-executing NRBF metadata inspection. Keep explicit filename-mass precedence and preserve raw Ah measurements and raw-file bytes; unknown/invalid mass is not guessed.
+- Route CYC neutral specific-capacity values by measured charge/discharge direction so charge points cannot become discharge maxima.
+- Advance to parser-8 for existing WRD raw-artifact/re-upload refresh paths. Keep valid parser-7 SDE results compatible; malformed-SDE checks remain active.
+- Direct read-only verification of eight supplied WRDs found valid binary weights and approximately 161–163 mAh/g for cycles 1–2. The reported sample yields 161.304 and 162.402 mAh/g through WRD, BDF and the shipped CYC display adapter. No value was fitted to a target of 160.
+- Local backend restart, real saved-artifact refresh and production deployment remain separate from source publication.
+- Verification: 282 tests and 18 subtests passed, JavaScript syntax checks and git diff checks passed. An initial Windows file-lock test-launch failure cleared on the final full run. The current saved Ah Fig opens without console errors; corrected saved-Fig browser verification awaits backend restart/reparse. Build/lint scripts are not configured; npm audit could not run because npm is unavailable (no npm dependencies were added).
+
 ## v0.2.6 - 2026-09-14
 
 - Constrain only the EIS on-screen plot wrapper to approximately 480px high and center it, matching the compact CYC preview rather than stretching with a wide monitor.

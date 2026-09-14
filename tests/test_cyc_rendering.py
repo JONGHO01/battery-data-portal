@@ -51,6 +51,30 @@ assert.equal(JSON.stringify(dataset),before);
 assert.deepEqual(normalizeSavedCycDataset(plotted).rows,plotted.rows);
 ''')
 
+    def test_neutral_specific_capacity_respects_charge_discharge_direction(self):
+        self.run_js(r'''
+const source = rows.map((row,i) => ({...row,
+  _raw:{...row._raw,'specific capacity (mAh g-1)': i === 0 ? 180 : 161.30371}}));
+const before = JSON.stringify(source);
+const fixed = normalizeSavedCycDataset({...dataset,rows:source});
+assert.deepEqual(dischargeSeries(fixed.rows),[{x:1,y:161.30371}]);
+assert.equal(fixed.rows[0].capacity,null);
+assert.equal(fixed.rows[0].chargeCapacity,180);
+assert.equal(fixed.rows[1].chargeCapacity,null);
+assert.equal(fixed.rows[0].chargeCapacityUnit,'mAh g-1');
+assert.equal(cycCapacityUnit(fixed.rows),'mAh g-1');
+assert.equal(JSON.stringify(source),before);
+''')
+
+    def test_neutral_summary_without_direction_does_not_invent_charge_capacity(self):
+        self.run_js(r'''
+const fixed = canonicalRows('cyc',['cycle','specific capacity (mAh g-1)'],[
+ {cycle:1,'specific capacity (mAh g-1)':160}
+]);
+assert.equal(fixed[0].capacity,160);
+assert.equal(fixed[0].chargeCapacity,null);
+''')
+
     def test_canonical_only_rows_work_with_legacy_metadata_columns(self):
         self.run_js(r'''
 const canonical = rows.map(({_raw,...row})=>row);

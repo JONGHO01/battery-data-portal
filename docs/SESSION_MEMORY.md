@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current CYC fix (2026-09-14): v0.2.7 reads binary TestReport CellWeight(g) with a bounded non-deserializing reader. This supersedes the earlier claim that the eight supplied WRDs lack mass: the text-only reader missed it. Raw Ah values are preserved and neutral specific capacity is routed by charge/discharge direction. Parser-8 enables existing WRD refresh/re-upload paths without refreshing valid parser-7 SDE. No real source file or saved dataset was modified in this task. Local restart and actual saved-Fig refresh remain pending.
+
 > Current EIS preview (2026-09-14): v0.2.6 caps the EIS-only screen wrapper at approximately 480px height and centers it like the compact CYC preview. SVG/export dimensions, 55:45 panels, DRT results and controls are unchanged. At 2000px viewport width the reported saved SEO Fig decreased from about 1087px to 480px high, with three panels and its matching saved fit retained. No raw data edits, calculations, server restarts or cloud changes were made for this display adjustment.
 
 > Current EIS UI (2026-09-14): v0.2.5 changes only EIS behavior in public/eis-drt.js: 55:45 panels, compact controls/status, unique frequency ranges, real initial tau limits and one guarded automatic attempt. Same-range repeated acquisitions use the first complete representative; original rows/directions remain unchanged and metadata discloses that choice. Unreliable auto fallback is never shown as success. Other modified application files contain release metadata only. Existing localhost:4174 backend remains compatible v0.2.4; no restart/cloud configuration change was made.
@@ -296,6 +298,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.7: WRD parser and router, CYC adapter in public/app.js, parser-refresh compatibility/version in python_backend.py, focused mass/CYC/artifact tests and release metadata/docs. No global styles, EIS renderer, authentication or storage settings changed.
+
 - v0.2.6: public/eis-drt.js preview wrapper; tests/test_eis_drt_ui.py regression assertions; EIS docs and release metadata. No shared stylesheet, analysis backend logic or stored data change.
 
 - v0.2.5: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; synchronized VERSION/package.json, README/CHANGELOG, app release history, index cache versions, FastAPI version metadata, and this memory. No analysis backend logic, shared CSS, raw files or database settings changed.
@@ -433,6 +437,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.7: obtain local restart approval before replacing the active backend. Verify saved WRD/Fig refresh afterwards; a B2-only raw artifact may need the normal same-file re-upload path. Do not claim a completed runtime refresh or deploy.
+
 - v0.2.6: confirm GitHub publication from refs; do not infer Render deployment. Local backend remains v0.2.5 and serves the updated static preview without restart.
 
 - v0.2.5: verify GitHub main publication from refs. Actual Render deployment is unverified. DRT CSV download-event confirmation timed out in the isolated browser; file generation/handlers remain unchanged and unit-tested, but do not claim a new end-to-end download success for this session.
@@ -511,6 +517,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.2.7: 282 tests and 18 subtests passed; JS syntax and diff checks passed. Red/green cases cover binary mass, preceding class descriptors, legacy parser recognition, charge contamination and directionless summaries. Eight actual WRDs retain their SHA-256; the reported sample passes WRD -> BDF -> shipped CYC adapter at 161.304/162.402 mAh/g. Browser opens the existing Ah Fig without console errors; corrected saved-Fig verification awaits restart/reparse. npm is unavailable and build/lint scripts are unconfigured. Check remote refs for publication status.
 
 - v0.2.6: preview-bound regression reproduced the old unrestricted wrapper, then all 8 focused EIS UI tests passed. Wide-screen browser check confirmed approximately 480px centered preview, unchanged 1080×850 SVG viewBox, three panels, restored saved fit and no console errors. Temporary viewport override was reset. A transient Windows process-launch lock affected one test attempt; a subsequent clean run passed.
 

@@ -1,18 +1,24 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.6-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.7-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.6** — compact, centered EIS screen preview like CYC. Full-resolution export, EIS 55:45 panels and DRT features are retained. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged.
+> Source release: **v0.2.7** — WRD binary CellWeight restores specific capacity (mAh/g), with charge/discharge directions kept separate. Original raw files and Ah measurements remain unchanged. Local restart and saved-data refresh are separate from source publication.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.6**이며, 운영 배포 여부와는 별개입니다. EIS 그림은 CYC처럼 **높이 약 480px 이내로 가운데 표시**해 넓은 화면에서도 한눈에 볼 수 있습니다. 저장용 해상도와 왼쪽 55% / 오른쪽 45% 배치, DRT Controls, 구간 선택·자동/수동 계산은 그대로입니다. 정적 화면은 새로고침하면 적용되며 CYC/CV, 로그인, 전역 CSS와 저장 위치는 변경하지 않았습니다.
+현재 소스 버전은 **v0.2.7**이며, 운영 배포 여부와는 별개입니다. WRD 내부에 기록된 **CellWeight(g)**를 읽어 방전 비용량을 **mAh/g**로 계산합니다. 충전값과 방전값은 방향에 맞게 분리합니다. 질량을 확인할 수 없으면 임의로 환산하지 않고 Ah를 유지합니다. 기존 EIS의 약 480px 미리보기, 포탈 배치와 저장 구조는 유지합니다.
+
+### CYC 용량 단위 수정
+
+- 계산: **비용량(mAh/g) = 원본 용량(Ah) × 1000 ÷ 파일에 설정된 질량(g)**. 파일명에 명시된 g 단위 질량은 기존 우선순위를 유지하며, 단위 없는 파일명 숫자나 면적당 로딩으로 질량을 추측하지 않습니다.
+- `parser-8`은 원본 파일을 보존하고 파생된 WRD 결과만 갱신합니다. 로컬에 원본이 있으면 새 서버 시작 시 기존 갱신 경로를 사용합니다. 원본이 B2에만 있으면 동일 파일을 다시 업로드·분석하는 기존 절차가 필요할 수 있습니다. 정상 `parser-7` SDE 데이터는 이번 변경으로 갱신하지 않습니다.
+- 소스 업로드만으로 실행 중인 로컬 서버나 기존 Fig가 바뀌었다고 볼 수 없습니다. 서버 재시작 및 저장 데이터 반영 결과를 별도로 확인해야 합니다.
 
 ## EIS DRT 사용법
 
@@ -68,6 +74,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.7 | 2026-09-14 | WRD 내부 질량을 읽어 mAh/g 복원, 충전·방전 구분, 원본 Ah 보존. |
 | v0.2.6 | 2026-09-14 | EIS 미리보기를 CYC처럼 높이 약 480px로 제한·중앙 정렬, 저장용 해상도 유지. |
 | v0.2.5 | 2026-09-14 | EIS 55:45 그래프·작은 DRT 카드, 주파수 범위 중복 제거, 실제 τ축과 자동 계산. |
 | v0.2.4 | 2026-09-14 | EIS 반복 측정 구간별 보기·DRT 계산, 원본 행 보존, 구형 서버 계산 차단. |

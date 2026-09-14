@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.6";
+const PORTAL_VERSION = "0.2.7";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.7",
+    "date": "2026-09-14",
+    "changes": [
+      "Read WRD binary CellWeight to restore mass-normalized capacity without changing raw Ah values.",
+      "Keep charge and discharge specific capacities separate; refresh older WRD parser results."
+    ]
+  },
   {
     "version": "0.2.6",
     "date": "2026-09-14",
@@ -1638,11 +1646,21 @@ function canonicalRows(type, columns, rows) {
   }
   if (type === "cyc") {
     return rows.map((r, i) => {
-      const dischargeCapacity = scaledCycValue(r, col.specificCapacity) ?? scaledCycValue(r, col.capacity);
-      const chargeCapacity = scaledCycValue(r, col.chargeSpecificCapacity) ?? scaledCycValue(r, col.chargeCapacity);
-      const dischargeUnit = cycCapacityUnitFromColumn(col.specificCapacity || col.capacity);
-      const chargeUnit = cycCapacityUnitFromColumn(col.chargeSpecificCapacity || col.chargeCapacity);
       const current = numberValue(r[col.current]);
+      const direction = cycDirectionFromValue(r[col.direction], current);
+      // WRD's neutral specific-capacity column belongs to this row's measured
+      // direction. A charge point must never become a discharge maximum.
+      const neutralSpecific = col.specificCapacity
+        && !isDischargeColumn(keyOf(col.specificCapacity))
+        && !isChargeOnlyColumn(keyOf(col.specificCapacity));
+      const chargeSpecificColumn = col.chargeSpecificCapacity
+        || (neutralSpecific && direction === "charge" ? col.specificCapacity : null);
+      const dischargeCapacity = neutralSpecific && direction === "charge" ? null
+        : scaledCycValue(r, col.specificCapacity) ?? scaledCycValue(r, col.capacity);
+      const chargeCapacity = neutralSpecific && direction === "discharge" ? null
+        : scaledCycValue(r, chargeSpecificColumn) ?? scaledCycValue(r, col.chargeCapacity);
+      const dischargeUnit = cycCapacityUnitFromColumn(col.specificCapacity || col.capacity);
+      const chargeUnit = cycCapacityUnitFromColumn(chargeSpecificColumn || col.chargeCapacity);
       return {
         index: i + 1,
         cycle: numberValue(r[col.cycle]) ?? i + 1,
@@ -1655,7 +1673,7 @@ function canonicalRows(type, columns, rows) {
         current,
         time: numberValue(r[col.time]),
         cRate: parseCRateValue(r[col.cRate]),
-        direction: cycDirectionFromValue(r[col.direction], current),
+        direction,
       };
     }).filter((r) => [r.capacity, r.chargeCapacity, r.efficiency, r.voltage].some((v) => Number.isFinite(v)));
   }

@@ -349,6 +349,13 @@ class DatasetArtifactTests(unittest.TestCase):
         }
         self.assertFalse(portal.needs_wrd_parser_refresh(dataset))
 
+    def test_mass_parser_refresh_targets_old_wrd_not_unchanged_sde(self):
+        old = {"sourceName": "sample.wrd", "parser": {"version": "parser-7"}, "rows": []}
+        self.assertTrue(portal.needs_wrd_parser_refresh(old))
+        self.assertFalse(portal.needs_sde_parser_refresh({**old, "sourceName": "sample.sde"}))
+        broken = [{"frequency": f, "zreal": f} for f in (1, 10, 100)]
+        self.assertTrue(portal.needs_sde_parser_refresh({**old, "sourceName": "sample.sde", "rows": broken}))
+
     def test_retrying_a_completed_upload_returns_the_existing_dataset(self):
         """A browser retry must not turn an already saved upload into an error."""
 

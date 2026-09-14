@@ -26,6 +26,82 @@ MIN_INCOMPLETE_VOLTAGE_SPAN = 0.05
 CONTINUATION_CAPACITY_RATIO = 0.2
 
 
+def _binary_cell_weight_g(blob: bytes) -> float | None:
+    """Read the known WBCS TestReport prefix, never deserialize .NET objects.
+
+    CellWeight is in grams (CellCapacity remains Ah). Read NRBF member names
+    and types instead of guessing a byte offset or treating a bare filename
+    number/areal loading as active mass. Unknown/truncated schemas stay unknown.
+    Structure: MS-NRBF 2.3.2.1 and 2.3.1.2 (ClassWithMembersAndTypes).
+    """
+    data = blob[:65536]
+    marker = b"\x1cWbcsFile.Sequence.TestReport"
+    record = re.search(rb"\x05...." + re.escape(marker), data, re.DOTALL)
+    if record is None:
+        return None
+    position = record.start() + 5
+
+    def take(count: int) -> bytes:
+        nonlocal position
+        if count < 0 or position + count > len(data):
+            raise ValueError("Truncated WBCS metadata")
+        value = data[position:position + count]
+        position += count
+        return value
+
+    def string() -> bytes:
+        # NRBF LengthPrefixedString; cap both prefix work and string length.
+        length = 0
+        for shift in (0, 7):
+            byte = take(1)[0]
+            length |= (byte & 127) << shift
+            if not byte & 128:
+                if length > 1024:
+                    raise ValueError("Oversized WBCS metadata string")
+                return take(length)
+        raise ValueError("Unsupported WBCS metadata string")
+
+    try:
+        string()  # verified TestReport class name
+        count = struct.unpack("<i", take(4))[0]
+        if not 5 <= count <= 128:
+            return None
+        names = [string() for _ in range(count)]
+        expected = [f"<{name}>k__BackingField".encode() for name in
+                    ("Name", "SchMaker", "ProductInfo", "CellType", "CellWeight")]
+        types = take(count)
+        if names[:5] != expected or types[:5] != bytes([1, 1, 1, 1, 0]):
+            return None
+        weight_type = None
+        for index, kind in enumerate(types):
+            if kind in (0, 7):  # Primitive / PrimitiveArray additional type
+                primitive = take(1)[0]
+                if index == 4:
+                    weight_type = primitive
+            elif kind in (3, 4):  # SystemClass / Class type descriptor only
+                string()
+                if kind == 4:
+                    take(4)
+            elif kind not in (1, 2, 5, 6):
+                return None
+        if weight_type != 6:  # CellWeight must be a Double, not guessed bytes
+            return None
+        take(4)  # LibraryId
+        for _ in range(4):  # four string members before the primitive weight
+            record = take(1)[0]
+            if record == 6:  # BinaryObjectString
+                take(4)
+                string()
+            elif record == 9:  # MemberReference; never resolve objects
+                take(4)
+            elif record != 10:  # ObjectNull
+                return None
+        mass = struct.unpack("<d", take(8))[0]
+        return mass if 0.001 <= mass <= 1 else None
+    except (ValueError, struct.error):
+        return None
+
+
 def extract_wrd_mass_g(path: Path, blob: bytes) -> float | None:
     # The filename is the most dependable place for an electrode mass.  WBCS
     # binary content can contain unrelated text such as "1g", which must not
@@ -37,6 +113,10 @@ def extract_wrd_mass_g(path: Path, blob: bytes) -> float | None:
             filename_candidates.append(value)
     if filename_candidates:
         return filename_candidates[-1]
+
+    binary_mass = _binary_cell_weight_g(blob)
+    if binary_mass is not None:
+        return binary_mass
 
     text = ""
     for match in re.finditer(rb"[ -~]{8,}", blob[:200000]):

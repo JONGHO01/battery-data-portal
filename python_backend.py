@@ -175,7 +175,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.2.6", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.2.7", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -2072,7 +2072,11 @@ def needs_sde_parser_refresh(dataset: dict) -> bool:
     # Rebuilding from the immutable raw artifact is safer than reusing any
     # earlier decoded columns, including malformed rows that are not an exact
     # frequency-to-Z' copy.
-    return saved_version != INSTRUMENT_PARSER_VERSION or has_stale_sde_zreal_mapping(dataset.get("rows") or [])
+    # parser-8 only adds WRD CellWeight metadata; do not rebuild unaffected EIS.
+    compatible = {INSTRUMENT_PARSER_VERSION}
+    if INSTRUMENT_PARSER_VERSION == "parser-8":
+        compatible.add("parser-7")
+    return saved_version not in compatible or has_stale_sde_zreal_mapping(dataset.get("rows") or [])
 
 
 def needs_wrd_parser_refresh(dataset: dict) -> bool:
@@ -2081,7 +2085,7 @@ def needs_wrd_parser_refresh(dataset: dict) -> bool:
     if Path(str(dataset.get("sourceName") or "")).suffix.lower() != ".wrd":
         return False
     parser = dataset.get("parser") if isinstance(dataset.get("parser"), dict) else {}
-    # parser-6 preserves paired charge/discharge traces. Newer uploads may
+    # parser-8 also reads binary CellWeight for specific capacity. Uploads may
     # deliberately contain exactly 5,000 *display* rows, sampled across every
     # cycle and direction for the browser. Row count is therefore not a legacy
     # signal; only an older parser version should trigger a raw-artifact rebuild.
