@@ -16,7 +16,8 @@ class CycRenderingTests(unittest.TestCase):
                  "parseCRateValue", "cycDirectionFromValue", "canonicalRows",
                  "scaleCycCapacity", "scaledCycValue", "cycCapacityUnitFromColumn",
                  "cycCapacityUnit", "cycCapacityAxisLabel", "normalizeSavedCycDataset",
-                 "median", "dischargeSeries", "cycPerformanceCapacityDomain"]
+                 "median", "dischargeSeries", "cycPerformanceCapacityDomain",
+                 "cycCapacityTickStep", "cycCapacityTickLabel", "cycCapacityLabelOffset"]
         functions = [m.group() for name in names if
                      (m := re.search(r"^function " + name + r"\([^\n]*\).*?^}", source, re.M | re.S))]
         setup = r'''
@@ -64,8 +65,30 @@ assert.equal(scaledCycValue({'q': ''},'q'),null);
 
     def test_small_ah_capacity_uses_a_visible_numeric_range(self):
         self.run_js(r'''
-assert.deepEqual(cycPerformanceCapacityDomain([{x:1,y:0.0007}],false),[0,0.0007*1.08]);
+assert.deepEqual(cycPerformanceCapacityDomain([{x:1,y:0.0007}],false),[0,0.0008]);
 assert.deepEqual(cycPerformanceCapacityDomain([{x:1,y:160}],true),[0,180]);
+''')
+
+    def test_capacity_axis_uses_round_steps_without_changing_ah_measurements(self):
+        self.run_js(r'''
+const points = [{x:1,y:0.00717},{x:2,y:0.00721},{x:3,y:0.0004}];
+const before = JSON.stringify(points);
+const domain = cycPerformanceCapacityDomain(points,false);
+assert.deepEqual(domain,[0,0.008]);
+const step = cycCapacityTickStep(domain[1],false);
+assert.equal(step,0.002);
+assert.deepEqual(Array.from({length:5},(_,i)=>cycCapacityTickLabel(i*step)),
+ ['0','0.002','0.004','0.006','0.008']);
+assert.equal(JSON.stringify(points),before);
+''')
+
+    def test_axis_labels_stay_compact_and_reserve_space_for_the_title(self):
+        self.run_js(r'''
+assert.equal(cycCapacityTickLabel(0.0006000000000000001),'0.0006');
+assert.equal(cycCapacityTickLabel(2e-8),'2e-8');
+assert.equal(cycCapacityTickLabel(180),'180');
+assert.ok(cycCapacityLabelOffset(['0','0.0008']) >= 9+6*7+16);
+assert.equal(cycCapacityTickStep(180,true),20);
 ''')
 
     def test_specific_capacity_and_legacy_numeric_strings_keep_declared_units(self):

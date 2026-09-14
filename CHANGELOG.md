@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.2.2 - 2026-09-14
+
+- Round CYC performance axes to readable 1/2/5 power-of-ten steps instead of dividing an arbitrary maximum into five intervals. The reported Ah figure now displays 0, 0.002, 0.004, 0.006, 0.008.
+- Remove floating-point label tails and reserve SVG space based on tick-label length so the Y-axis title does not overlap the numbers. Preserve specific-capacity scaling, measured values and units.
+- Verify the reported saved WRD Fig in the browser: three points retained, roughly 19 px between title and tick labels, no console warnings/errors. Full tests: 256 passed and 6 subtests passed. No original-file, DB, parser, login, EIS/CV or cloud change.
+
 ## v0.2.1 - 2026-09-14
 
 - Restore CYC graphs from canonical artifact rows even when saved metadata lists vendor headers. Ignore empty optional specific-capacity columns so measured Ah discharge data reaches the renderer.

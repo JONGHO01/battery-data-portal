@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.1";
+const PORTAL_VERSION = "0.2.2";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.2",
+    "date": "2026-09-14",
+    "changes": [
+      "Use round CYC capacity ticks and reserve space between numbers and the Y-axis title.",
+      "Keep measured Ah and specific-capacity units unchanged; no data or storage changes."
+    ]
+  },
   {
     "version": "0.2.1",
     "date": "2026-09-14",
@@ -5579,9 +5587,30 @@ function renderCycCombinedFigure(d) {
 function cycPerformanceCapacityDomain(points, isSpecificCapacity) {
   const measuredMax = Math.max(0, ...points.map((p) => p.y).filter(Number.isFinite));
   const maxCap = measuredMax > 0 ? measuredMax : 1;
-  return isSpecificCapacity
-    ? [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20]
-    : [0, maxCap * 1.08];
+  if (isSpecificCapacity) return [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20];
+  const upper = maxCap * 1.08;
+  const step = cycCapacityTickStep(upper, false);
+  return [0, Number((Math.ceil(upper / step) * step).toPrecision(12))];
+}
+
+function cycCapacityTickStep(upper, isSpecificCapacity) {
+  if (isSpecificCapacity) return Math.max(20, Math.ceil(upper / 9 / 20) * 20);
+  // About five intervals, rounded up to a readable 1/2/5 power-of-ten step.
+  const target = (Number.isFinite(upper) && upper > 0 ? upper : 1) / 5;
+  const power = 10 ** Math.floor(Math.log10(target));
+  const fraction = target / power;
+  const multiple = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  return multiple * power;
+}
+
+function cycCapacityTickLabel(value) {
+  // Remove floating-point tails without rounding small Ah readings to zero.
+  return String(Number(value.toPrecision(12)));
+}
+
+function cycCapacityLabelOffset(labels) {
+  // 12px tick text: reserve seven SVG units per character, plus a title gap.
+  return 9 + Math.max(...labels.map((label) => label.length), 1) * 7 + 20;
 }
 
 function renderCycPerformanceFigure(d) {
@@ -5611,9 +5640,13 @@ function renderCycPerformanceFigure(d) {
   const xMax = xTickMax + Math.max(1, xTickMax * 0.025);
   const xDomain = [0, xMax];
   const capDomain = cycPerformanceCapacityDomain(capPts, isSpecificCapacity);
+  const yTickStep = cycCapacityTickStep(capDomain[1], isSpecificCapacity);
+  const yTicks = Array.from({ length: Math.floor(capDomain[1] / yTickStep + 1e-9) + 1 }, (_, i) => i * yTickStep);
+  const yLabels = yTicks.map(cycCapacityTickLabel);
+  const yLabelOffset = cycCapacityLabelOffset(yLabels);
   const svgSize = figureSvgSize(style, "rate");
   const margin = {
-    left: Math.max(58, Math.round(svgSize.w * 0.14)),
+    left: Math.max(yLabelOffset + 22, Math.round(svgSize.w * 0.14)),
     right: Math.max(28, Math.round(svgSize.w * 0.08)),
     top: Math.max(44, Math.round(svgSize.h * 0.13)),
     bottom: Math.max(58, Math.round(svgSize.h * 0.14)),
@@ -5628,18 +5661,6 @@ function renderCycPerformanceFigure(d) {
   const sy = makeScale(capDomain, [plot.y + plot.h, plot.y]);
   const xTickStep = xTickMax <= 18 ? 3 : 5;
   const xTicks = Array.from({ length: Math.floor(xTickMax / xTickStep) + 1 }, (_, i) => i * xTickStep);
-  // Keep the y-axis readable even if a malformed export contains an unusually
-  // large capacity value.  A fixed 20 mAh g-1 step can otherwise create a
-  // dense black stripe of overlapping tick labels.
-  const yTickStep = isSpecificCapacity
-    ? Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20)
-    : capDomain[1] / 5;
-  const yTicks = isSpecificCapacity
-    ? Array.from({ length: Math.floor(capDomain[1] / yTickStep) + 1 }, (_, i) => i * yTickStep)
-    : Array.from({ length: 6 }, (_, i) => i * yTickStep);
-  const capacityTickLabel = (value) => isSpecificCapacity
-    ? String(value)
-    : Number(value).toPrecision(3).replace(/\.0+$/, "");
   const rateSvg = isRateFigure ? rateSegments.map((s, idx) => {
     const left = s.start;
     const right = s.end;
@@ -5663,9 +5684,9 @@ function renderCycPerformanceFigure(d) {
     <rect x="${plot.x}" y="${plot.y}" width="${plot.w}" height="${plot.h}" class="frame"/>
     ${gridSvg}
     ${xTicks.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${plot.y + plot.h}" y2="${plot.y + plot.h - 7}" class="axis"/><text x="${sx(v)}" y="${plot.y + plot.h + 18}" class="tick" text-anchor="middle">${v}</text>`).join("")}
-    ${yTicks.map((v) => `<line x1="${plot.x}" x2="${plot.x + 7}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/><text x="${plot.x - 9}" y="${sy(v) + 4}" class="tick" text-anchor="end">${capacityTickLabel(v)}</text>`).join("")}
+    ${yTicks.map((v, i) => `<line x1="${plot.x}" x2="${plot.x + 7}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/><text x="${plot.x - 9}" y="${sy(v) + 4}" class="tick cycCapacityTick" text-anchor="end">${yLabels[i]}</text>`).join("")}
     <text x="${plot.x + plot.w / 2}" y="${plot.y + plot.h + 40}" class="label" text-anchor="middle">Cycle number</text>
-    <text transform="translate(${plot.x - 48},${plot.y + plot.h / 2}) rotate(-90)" class="label" text-anchor="middle">${escapeXml(capacityAxisLabel)}</text>`;
+    <text transform="translate(${plot.x - yLabelOffset},${plot.y + plot.h / 2}) rotate(-90)" class="label cycCapacityTitle" text-anchor="middle">${escapeXml(capacityAxisLabel)}</text>`;
   const loading = loadingCaption(d);
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" class="rateFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">

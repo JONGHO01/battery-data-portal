@@ -41,8 +41,9 @@ class CycFigureUiTests(unittest.TestCase):
         # Specific capacity retains the safe 20 mAh g-1 tick logic, while a
         # raw Ah column needs its own numeric scale rather than that unit.
         self.assertIn("const isSpecificCapacity = capacityUnit === \"mAh g-1\";", self.app_js)
-        self.assertIn("Math.max(20, Math.ceil(capDomain[1] / 9 / 20) * 20)", self.app_js)
-        self.assertIn(": capDomain[1] / 5;", self.app_js)
+        self.assertIn("Math.max(20, Math.ceil(upper / 9 / 20) * 20)", self.app_js)
+        self.assertIn("cycCapacityTickStep(capDomain[1], isSpecificCapacity)", self.app_js)
+        self.assertIn("plot.x - yLabelOffset", self.app_js)
 
     def test_cyc_figure_style_controls_support_grid_line_and_marker_size(self):
         html = (ROOT / "public" / "index.html").read_text(encoding="utf-8")

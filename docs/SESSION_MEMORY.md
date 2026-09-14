@@ -1,5 +1,9 @@
 # Session Memory
 
+> Current display fix (2026-09-14): v0.2.2 uses round CYC Y ticks and label-length-aware title spacing. The reported 7,153-row WRD Fig renders 0/0.002/0.004/0.006/0.008 Ah, retains three discharge points, and has about 19 px of title/tick clearance. Source values/units, parser, DB, storage, login and EIS/CV are unchanged. Running backend remains 0.2.1; the static fix requires browser refresh only.
+
+> Local restart verified (2026-09-14): after the user confirmed completing the administrator raw-access setting and explicitly requested restart, the identified project-owned 4174 process was stopped and the official launcher started it again. Independent health returned ok=true/version=0.2.1. The authenticated administrator Dataset-access form was reopened for the user. No secret value was read, changed or submitted; successful confirmation with the user's password remains user-side verification. No cloud settings or application code changed. Earlier local restart-pending/version notes below are historical; GitHub main already contains the CYC fix at cfcfe7f.
+
 > Current CYC fix (2026-09-14): v0.2.1 restores saved CYC performance from BDF/vendor row shapes. Blank specific-capacity values previously became zero and hid measured Ah discharge values; the 1 Ah axis floor also hid small capacities. Frontend-only behavior fix; backend change is version metadata only. No source artifacts, database records, cloud settings or credentials were edited. Existing 4174 backend remains 0.2.0 without restart; the static frontend fix is already browser-verified. GitHub publication must be verified separately.
 
 > Local launch verified (2026-09-14): at the user's request to open the closed portal, the safe launcher returned PORTAL_READY on http://localhost:4174 with version 0.2.0. An independent health check returned ok=true/version=0.2.0, and the browser displayed the existing home workspace with 52 Datasets. Earlier notes about the 4174 backend still running 0.1.78 are historical and superseded for this local process. No code, credentials, cloud settings, GitHub refs, or stored experiment content were deliberately edited in this launch task; actual DRT fitting and production Neon/B2 remain separately unverified.
@@ -23,6 +27,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed CYC Y-axis readability correction; preserve Ah rather than guessing an active mass for mAh/g. Finalize scoped GitHub synchronization after release checks.
 
 Completed local CYC blank-graph correction: the reported 7,180-row WRD Dataset now displays three measured discharge cycles with an Ah axis, plus populated voltage and dQ/dV views. Preserve EIS/CV, login, global layout and storage. Finalize scoped GitHub synchronization under standing authorization; no server restart is required for this frontend fix.
 
@@ -272,6 +278,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.2: `public/app.js` CYC axis helpers/rendering; `tests/test_cyc_rendering.py` and `tests/test_cyc_figure_ui.py`; synchronized version/cache/README/changelog metadata. Preserve the previous local-restart note. No runtime or experiment files are included.
+
 - v0.2.1: `public/app.js` CYC-only column/missing-value/axis correction; new `tests/test_cyc_rendering.py`; synchronized release metadata in `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md` and this memory.
 
 - v0.2.0: add `backend/analysis/eis_drt.py`, `public/eis-drt.js`, `tests/test_eis_drt.py`, `tests/test_eis_drt_api.py`, `tests/test_eis_drt_ui.py`, `scripts/verify_eis_drt_server.py`, `docs/EIS_DRT.md`. EIS-only wiring in `python_backend.py`, `public/app.js`, `public/index.html`; one SciPy pin in `requirements.txt`; synchronized `VERSION`, `package.json`, `README.md`, `CHANGELOG.md`, and this memory. No experiment files or test-server runtime state are included.
@@ -469,6 +477,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-09-14 Y-axis: three red cases confirmed old decimal maximum/missing label helpers; focused CYC checks pass 55 and full pytest passes **256 tests and 6 subtests**. Browser confirms readable ticks, retained points, positive title/tick clearance and no warnings/errors. Original rows and units are unchanged. The optional incremental Definition-of-Done reference remains absent; project test, syntax and runtime checks serve as the completion gate.
 
 - 2026-09-14 CYC: four reproduction tests failed before the fix; five regression cases now cover canonical/vendor/legacy rows, empty capacity, small Ah axes, units, non-mutation and repeated normalization. Full pytest: **254 passed, 6 subtests passed**. Browser verified the reported 7,180-row Dataset: three discharge points, voltage and dQ/dV paths with no NaN/Infinity. No upload or save action was used in validation. The incremental skill's optional Definition-of-Done reference file is absent; existing project checks and runtime verification were used instead.
 
