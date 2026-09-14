@@ -75,6 +75,30 @@ const EisDrt = (() => {
     }
     return [...ranges.values()];
   }
+  const assignmentOptions=['Unassigned','R_SEI','R_ct','R_ion','Diffusion','Other'];
+  const candidateLabels=[
+    ['HF','고주파 계면·피막 관련 영역','High-frequency interfacial / film process'],
+    ['MF','전하전달 관련 영역','Charge-transfer process'],
+    ['LF','이온수송·확산 관련 영역','Low-frequency transport / diffusion process']
+  ];
+  // Relative visual guides only. Quantiles of log-time anchors move with the
+  // measured span and in-band peaks; they are not physical process boundaries.
+  function interpretationBands(points,peaks=[]) {
+    const bounds=tauBounds(points);if(!bounds||bounds.data[0]>=bounds.data[1])return [];
+    const [lo,hi]=bounds.data;
+    const anchors=[lo,...new Set(peaks.map(p=>number(p.tau_peak)).filter(t=>t>lo&&t<hi)),hi].sort((a,b)=>a-b).map(Math.log);
+    const at=q=>{const n=q*(anchors.length-1),i=Math.floor(n);return Math.exp(anchors[i]+(anchors[Math.min(i+1,anchors.length-1)]-anchors[i])*(n-i));};
+    const edges=[lo,at(1/3),at(2/3),hi];
+    return candidateLabels.map(([short,ko,en],i)=>({short,ko,en,min:edges[i],max:edges[i+1]}));
+  }
+  function assignmentContext(datasetId,runId,result) {
+    if(!datasetId||!runId||!result)return null;
+    return JSON.stringify([datasetId,runId,result.metadata?.spectrumIndex??null,(result.peaks||[]).map(p=>[p.Peak,p.tau_peak,p.f_peak,p.R_region])]);
+  }
+  function readAssignments(record,context,peaks=[]) {
+    if(!context||record?.context!==context||record.source!=='user')return {};
+    return Object.fromEntries(peaks.filter(p=>assignmentOptions.slice(1).includes(record.values?.[p.Peak])).map(p=>[p.Peak,record.values[p.Peak]]));
+  }
   function coordinates(points) {
     const measured = points.filter(p=>p.z_real_ohm !== null && p.z_imag_ohm !== null);
     return {left:measured.map(p=>({...p,x:p.z_real_ohm,y:-p.z_imag_ohm})),right:measured.map(p=>({...p,x:p.z_real_ohm,y:p.z_imag_ohm}))};
@@ -108,7 +132,7 @@ const EisDrt = (() => {
   function path(points,sx,sy) {
     return points.map((p,i)=>`${i && p.spectrumIndex === points[i-1].spectrumIndex && p.sweep === points[i-1].sweep ? 'L':'M'}${sx(p.x).toFixed(3)},${sy(p.y).toFixed(3)}`).join(' ');
   }
-  function plot({x,y,w,h,title,xlabel,ylabel,points,fit=[],color,id,logX=false,band=null,empty='',domains=null,showGrid=true,connectPoints=true,markerSize=4}) {
+  function plot({x,y,w,h,title,xlabel,ylabel,points,fit=[],color,id,logX=false,band=null,empty='',domains=null,showGrid=true,connectPoints=true,markerSize=4,guide=[],peaks=[],assignments={}}) {
     const all = [...points,...fit];
     const xx = all.map(p=>logX ? Math.log10(p.x) : p.x), yy = all.map(p=>p.y);
     const range = (values,zero) => {
@@ -148,6 +172,19 @@ const EisDrt = (() => {
       if (hf) content+=`<circle cx="${sx(hf.x)}" cy="${sy(hf.y)}" r="4" fill="${color}"/><text x="${Math.min(x+w-60,sx(hf.x)+8)}" y="${Math.max(y+14,sy(hf.y)-8)}" font-size="11" fill="${color}">HF start</text>`;
     } else content+=text(x+w/2,y+h/2,empty,'middle',12);
     if (fit.length) content+=`<path class="eis-drt-fit" d="${path(fit,sx,sy)}" fill="none" stroke="#dc6b32" stroke-width="2" stroke-dasharray="7 4"/>`;
+    if(id==='drt') {
+      for(const p of peaks) {
+        if(!(p.tau_peak>0)||!points.length)continue;
+        const nearest=points.reduce((a,b)=>Math.abs(Math.log(b.x/p.tau_peak))<Math.abs(Math.log(a.x/p.tau_peak))?b:a);
+        const name=assignmentOptions.slice(1).includes(assignments[p.Peak])?`${p.Peak} → ${assignments[p.Peak]}`:p.Peak;
+        content+=text(Math.max(x+20,Math.min(x+w-24,sx(p.tau_peak))),Math.max(y+14,sy(nearest.y)-9),name,'middle',11);
+      }
+      guide.forEach((region,i)=>{
+        const a=Math.max(x,Math.min(x+w,sx(region.min))),b=Math.max(a,Math.min(x+w,sx(region.max)));
+        content+=`<g data-drt-guide="${region.short}"><title>${esc(region.ko+' / '+region.en+' — 해석 후보, 확정 아님')}</title><rect x="${a}" y="${y+h+44}" width="${b-a}" height="15" fill="${['#d9efef','#e6eafa','#faeadb'][i]}"/>${text((a+b)/2,y+h+55,region.short,'middle',10)}</g>`;
+      });
+      if(guide.length)content+=text(x+w/2,y+h+72,'해석 후보 영역 · 확정적 저항 할당 아님','middle',10);
+    }
     content+=text(x+w/2,y+h+38,xlabel,'middle',14);
     content+=`<text transform="translate(${x-52},${y+h/2}) rotate(-90)" text-anchor="middle" font-size="14">${esc(ylabel)}</text></g>`;
     return content;
@@ -159,7 +196,7 @@ const EisDrt = (() => {
     const side=only?Math.min(w-136,h-228):(w-190)*.55;
     const nx=only?Math.round((w-side)/2):68,ny=110;
     const panelGap=90,plotHeight=only?side:h-190;
-    const rx=nx+side+panelGap,rw=(w-190)*.45,gap=90,rh=(plotHeight-gap)/2;
+    const rx=nx+side+panelGap,rw=(w-190)*.45,gap=130,rh=(plotHeight-gap)/2;
     const coords=coordinates(points);
     const chartStyle={showGrid:options.showGrid!==false,connectPoints:options.connectPoints!==false,markerSize:options.markerSize};
     const byRow=new Map(points.map(p=>[p.rowIndex,p]));
@@ -167,7 +204,7 @@ const EisDrt = (() => {
     let panels=plot({...chartStyle,x:nx,y:ny,w:side,h:plotHeight,title:'Nyquist plot',xlabel:"Re(Z) / Ω",ylabel:"-Im(Z) / Ω",points:coords.left,fit:fit.map(p=>({...p,y:-p.y})),color,id:'left',empty:'유효한 Re(Z), Im(Z)가 없습니다.',domains:options.leftDomains});
     if (!only) {
       const bounds=tauBounds(points);
-      panels+=plot({...chartStyle,x:rx,y:ny,w:rw,h:rh,title:'DRT — nonnegative RC model',xlabel:'τ / s',ylabel:'γ(ln τ) / Ω',points:(result?.drt||[]).map(p=>({x:p.tau_s,y:p.gamma_ohm})),color,id:'drt',logX:true,domains:bounds?{x:bounds.grid.map(Math.log10)}:null,band:result?.metadata.measuredTimeBand,empty:bounds?'DRT 계산 전':'유효한 주파수가 필요합니다.'});
+      panels+=plot({...chartStyle,x:rx,y:ny,w:rw,h:rh,title:'DRT — nonnegative RC model',xlabel:'τ / s',ylabel:'γ(ln τ) / Ω',points:(result?.drt||[]).map(p=>({x:p.tau_s,y:p.gamma_ohm})),color,id:'drt',logX:true,domains:bounds?{x:bounds.grid.map(Math.log10)}:null,band:result?.metadata.measuredTimeBand,empty:bounds?'DRT 계산 전':'유효한 주파수가 필요합니다.',guide:interpretationBands(points,result?.peaks),peaks:result?.peaks,assignments:options.assignments});
       panels+=plot({...chartStyle,x:rx,y:ny+rh+gap,w:rw,h:rh,title:'Nyquist — Im(Z)',xlabel:'Re(Z) / Ω',ylabel:'Im(Z) / Ω',points:coords.right,fit,color,id:'imag'});
       panels+=`<text x="${rx}" y="${ny+rh+gap-3}" font-size="10">Same EIS data, original imaginary sign</text>`;
     }
@@ -206,7 +243,9 @@ const EisDrt = (() => {
     host.innerHTML=`<div data-eis-plot style="width:100%;max-width:${previewWidth}px;margin:0 auto"></div><div data-eis-controls></div>`;
     const plotHost=host.querySelector('[data-eis-plot]'),controls=host.querySelector('[data-eis-controls]');
     const current=()=>host.contains(controls)&&cache.get(d)===entry&&JSON.stringify(normalizeRows(d.rows))===signature;
-    const draw=()=>{plotHost.innerHTML=svg(points,entry.result,{...options,title:entry.spectrumIndex===null ? title : `${title} · 구간 ${entry.spectrumIndex+1}`});applyAnnotationsToSvg();};
+    const context=()=>assignmentContext(d.id,entry.runId,entry.result);
+    const assignments=()=>readAssignments(entry.assignmentDraft||d.figureEdits?.eisDrtAssignments,context(),entry.result?.peaks);
+    const draw=()=>{plotHost.innerHTML=svg(points,entry.result,{...options,assignments:assignments(),title:entry.spectrumIndex===null ? title : `${title} · 구간 ${entry.spectrumIndex+1}`});applyAnnotationsToSvg();};
     draw();
     const spectrumControl=`<label>측정 구간 <select data-eis-spectrum name="spectrum">${ranges.length?ranges.map(r=>`<option value="${r.spectrumIndex}" ${entry.spectrumIndex===r.spectrumIndex?'selected':''}>${r.label}</option>`).join(''):'<option value="">주파수 없음</option>'}</select></label>`;
     const acquisitionInfo=`<details style="margin:8px 0;font-size:12px"><summary>측정 메타데이터 · 동일 범위 ${selectedRange?.indices.length||0}회</summary><p>같은 범위는 첫 유효 측정을 대표로 사용합니다. 평균·삭제하지 않습니다. 선택된 원본 측정: ${(entry.spectrumIndex??0)+1}</p>${(selectedRange?.indices||[]).map(i=>`<div>원본 측정 ${i+1}: ${fmt(spectra[i][0].frequency_Hz)} → ${fmt(spectra[i].at(-1).frequency_Hz)} Hz · ${spectra[i].length}점</div>`).join('')}</details>`;
@@ -218,6 +257,9 @@ const EisDrt = (() => {
     }
     controls.innerHTML=`<section data-drt-card style="box-sizing:border-box;width:100%;max-width:780px;margin:12px 0;padding:16px;border:1px solid #cbdfe4;border-radius:12px;background:#f8fcfd"><h3 style="margin:0 0 12px">DRT Controls</h3><form data-drt-form>${spectrumControl}<label>λ mode <select name="mode"><option value="auto">자동</option><option value="manual">수동</option></select></label><label>λ 수동 슬라이더 <input name="lambdaSlider" type="range" min="-6" max="1" step="0.1" value="${Math.log10(Math.max(1e-6,entry.settings.lambda))}"></label><label>현재 λ <input name="lambda" type="number" min="0" max="10" step="any" value="${entry.settings.lambda}" required></label><label>M (20–200) <input name="M" type="number" min="20" max="200" step="1" value="${entry.settings.M}" required></label><label style="display:flex;gap:8px;align-items:center"><input name="includeL" type="checkbox" ${entry.settings.includeL?'checked':''}> 직렬 L 포함</label><button type="submit" style="width:auto;max-width:180px;justify-self:start;padding:9px 18px">DRT 계산·저장</button></form><p data-drt-status role="status" style="font-size:13px;line-height:1.7;margin:10px 0 0"></p>${acquisitionInfo}</section><div data-drt-result></div>`;
     const form=controls.querySelector('form'),status=controls.querySelector('[data-drt-status]'),details=controls.querySelector('[data-drt-result]');
+    const legend=`<section aria-label="DRT 해석 후보 영역" style="max-width:950px;font-size:12px;margin:12px 0"><strong>해석 후보 영역 — 확정적 저항 할당 아님</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:8px 0">${candidateLabels.map(([short,ko,en])=>`<div style="padding:8px;border:1px solid #dbe5eb;border-radius:8px"><strong>${short} · ${ko}</strong><br>${en}</div>`).join('')}</div><span>HF → MF → LF: 짧은 τ → 긴 τ. 경계는 현재 측정 범위와 대역 내 피크에 따른 시각적 가이드이며, 피크가 없으면 로그 범위를 균등 분할합니다. 대역 밖은 해석 주의.</span></section>`;
+    // Insert before the controls without changing the portal or shared styles.
+    if(controls.insertAdjacentHTML)controls.insertAdjacentHTML('afterbegin',legend);
     const selector=controls.querySelector('[data-eis-spectrum]');
     if(selector)selector.onchange=()=>{
       if(entry.pending)return;
@@ -240,10 +282,34 @@ const EisDrt = (() => {
     const showResult=()=>{
       const r=entry.result;if(!r){details.replaceChildren();return;}
       const m=r.metadata;
+      const names=assignments();
+      const peakTable=`<section data-peak-card style="max-width:950px;font-size:13px;margin:12px 0"><h3>DRT Peaks · 사용자 해석</h3><p>Assignment는 직접 선택한 해석입니다. R_region은 이웃 최소값 사이 γ(ln τ) 적분값이며, 이름을 지정해도 계산값은 바뀌지 않습니다.</p><div style="overflow-x:auto"><table><thead><tr><th>Peak</th><th>tau_peak / s</th><th>f_peak / Hz</th><th>R_region / Ω</th><th>Assignment</th></tr></thead><tbody>${r.peaks.map(p=>`<tr><td>${esc(p.Peak)}</td><td>${fmt(p.tau_peak)}</td><td>${fmt(p.f_peak)}</td><td>${fmt(p.R_region)}</td><td><select data-peak-assignment data-peak="${esc(p.Peak)}" aria-label="${esc(p.Peak)} Assignment" style="width:auto;min-width:125px" ${!context()||entry.savingAssignments?'disabled':''}>${assignmentOptions.map(a=>`<option value="${a}" ${(names[p.Peak]||'Unassigned')===a?'selected':''}>${a}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="5">검출된 피크가 없습니다.</td></tr>'}</tbody></table></div><p><button type="button" data-save-assignments style="width:auto" ${!context()||!r.peaks.length||entry.savingAssignments?'disabled':''}>Assignment 저장</button> <button type="button" data-export="peaks">피크 CSV</button> <span role="status">${esc(entry.assignmentNote||'선택 후 Assignment 저장을 누르세요. 새 계산 결과는 Unassigned로 시작합니다.')}</span></p></section>`;
       const displayWarnings=r.warnings.map(warningText);
-details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · Series inductance L: <strong>${fmt(m.L*1e6)} µH</strong> (${m.includeL?'포함':'제외, 정확히 0'})</p><p>relative_complex_RMSE_percent: <strong>${fmt(r.relative_complex_RMSE_percent)}%</strong> · λ=${fmt(m.lambda)} · M=${m.M}</p><p>측정 시간 대역: ${fmt(m.measuredTimeBand[0])}–${fmt(m.measuredTimeBand[1])} s. 대역 밖 — 해석 주의.</p><p>제외 ${r.quality.excludedCount}행 · 중복 주파수 ${r.quality.duplicateFrequencyCount}행 (평균·삭제하지 않음)</p><ul>${displayWarnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul><p>피크 구간은 이웃 최소값 사이의 수치적 구간입니다. 피크 위치만으로 SEI·전하 전달·이온 수송을 확정하지 않습니다. Rs는 피크가 아닙니다.</p><table><thead><tr><th>Peak</th><th>tau_peak / s</th><th>f_peak / Hz</th><th>R_region / Ω</th></tr></thead><tbody>${r.peaks.map(p=>`<tr><td>${esc(p.Peak)}</td><td>${fmt(p.tau_peak)}</td><td>${fmt(p.f_peak)}</td><td>${fmt(p.R_region)}</td></tr>`).join('')}</tbody></table><p>선택 구간 저항: ln(τ) 좌표에서 경계 보간 후 적분</p><label>τ 시작 / s <input data-tau-a type="number" step="any" value="${m.tau_min}"></label><label>τ 끝 / s <input data-tau-b type="number" step="any" value="${m.tau_max}"></label><button type="button" data-integrate>구간 적분</button><output data-integral></output><p><button type="button" data-export="drt">DRT CSV</button> <button type="button" data-export="fit">재구성 CSV</button> <button type="button" data-export="metadata">메타데이터 JSON</button> <button type="button" data-expand>DRT 확대</button></p>`;
+      details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · Series inductance L: <strong>${fmt(m.L*1e6)} µH</strong> (${m.includeL?'포함':'제외, 정확히 0'})</p><p>relative_complex_RMSE_percent: <strong>${fmt(r.relative_complex_RMSE_percent)}%</strong> · λ=${fmt(m.lambda)} · M=${m.M}</p><p>측정 시간 대역: ${fmt(m.measuredTimeBand[0])}–${fmt(m.measuredTimeBand[1])} s. 대역 밖 — 해석 주의.</p><p>제외 ${r.quality.excludedCount}행 · 중복 주파수 ${r.quality.duplicateFrequencyCount}행 (평균·삭제하지 않음)</p><ul>${displayWarnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul><p>피크 구간은 이웃 최소값 사이의 수치적 구간입니다. 피크 위치만으로 SEI·전하 전달·이온 수송을 확정하지 않습니다. Rs는 피크가 아닙니다.</p><p>선택 구간 저항: ln(τ) 좌표에서 경계 보간 후 적분</p><label>τ 시작 / s <input data-tau-a type="number" step="any" value="${m.tau_min}"></label><label>τ 끝 / s <input data-tau-b type="number" step="any" value="${m.tau_max}"></label><button type="button" data-integrate>구간 적분</button><output data-integral></output><p><button type="button" data-export="drt">DRT CSV</button> <button type="button" data-export="fit">재구성 CSV</button> <button type="button" data-export="metadata">메타데이터 JSON</button> <button type="button" data-expand>DRT 확대</button></p>`;
       const reasons=document.createElement('p');
-      details.innerHTML=`<details style="font-size:13px;max-width:950px"><summary>분석 상세 · 오차 ${fmt(r.relative_complex_RMSE_percent)}% · 피크 ${r.peaks.length}개 · export</summary>${details.innerHTML}</details>`;
+      // The editable peak table is visible; numerical diagnostics stay collapsed.
+      details.innerHTML=peakTable+`<details style="font-size:13px;max-width:950px"><summary>분석 상세 · 오차 ${fmt(r.relative_complex_RMSE_percent)}% · 피크 ${r.peaks.length}개 · export</summary>${details.innerHTML}</details>`;
+      details.querySelectorAll('[data-peak-assignment]').forEach(select=>select.onchange=()=>{
+        if(!current()||!context()||entry.savingAssignments)return;
+        if(!assignmentOptions.includes(select.value))return;
+        const values={...assignments()};
+        if(select.value==='Unassigned')delete values[select.dataset.peak];else values[select.dataset.peak]=select.value;
+        entry.assignmentDraft={context:context(),source:'user',values};
+        entry.assignmentNote='미저장 변경 · Assignment 저장을 누르세요.';draw();showResult();
+      });
+      details.querySelector('[data-save-assignments]').onclick=async()=>{
+        if(!current()||!context()||entry.savingAssignments)return;
+        const record={context:context(),source:'user',values:assignments()};
+        entry.savingAssignments=true;entry.assignmentNote='저장 중…';showResult();
+        try {
+          const response=await fetchJsonWithTimeout(`/api/datasets/${encodeURIComponent(d.id)}`,{method:'PATCH',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({figureEdits:{eisDrtAssignments:record}})},15000);
+          if(!current()||context()!==record.context)return;
+          if(!response.res.ok)throw Error(apiErrorMessage(response.body,'Assignment 저장 실패'));
+          d.figureEdits={...(d.figureEdits||{}),eisDrtAssignments:record};
+          entry.assignmentDraft=record;entry.assignmentNote='Assignment 저장 완료';
+        } catch(error){if(current()&&context()===record.context)entry.assignmentNote=`미저장 · ${error.message}`;}
+        finally {entry.savingAssignments=false;if(current())showResult();}
+      };
       const reasonLabels={missing_or_nonfinite_frequency:'주파수 누락·비유한값',nonpositive_frequency:'0 이하 주파수',missing_or_nonfinite_impedance:'임피던스 누락·비유한값'};
       reasons.textContent='제외 사유: '+(Object.entries(r.quality.excludedReasons||{}).map(([key,count])=>`${reasonLabels[key]||key} ${count}행`).join(' · ')||'없음');
       details.prepend(reasons);
@@ -254,13 +320,15 @@ details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · 
       };
       details.querySelectorAll('[data-export]').forEach(button=>button.onclick=()=>{
         const kind=button.dataset.export;
-        if(kind==='metadata')download('eis-drt-metadata.json',JSON.stringify({...m,quality:r.quality,warnings:r.warnings},null,2),'application/json');
+        const peakRows=r.peaks.map(p=>({...p,Assignment:assignments()[p.Peak]||'Unassigned'}));
+        if(kind==='metadata')download('eis-drt-metadata.json',JSON.stringify({...m,quality:r.quality,warnings:r.warnings,peaks:peakRows,assignmentSource:'user interpretation, not automatic identification',assignmentContext:context()},null,2),'application/json');
+        else if(kind==='peaks')download('eis-drt-peaks.csv',csv(['Peak','tau_peak','f_peak','R_region','Assignment'],peakRows));
         else if(kind==='drt')download('eis-drt.csv',csv(['tau_s','gamma_ohm'],r.drt));
         else download('eis-reconstruction.csv',csv(['frequency_Hz','z_real_raw_ohm','z_imag_raw_ohm','z_real_fit_ohm','z_imag_fit_ohm','residual_real','residual_imag'],r.reconstruction));
       });
       details.querySelector('[data-expand]').onclick=()=>{
         const dialog=document.createElement('dialog');
-        dialog.innerHTML=`<button type="button">닫기</button><svg viewBox="0 0 950 600" width="900" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">${plot({x:85,y:55,w:800,h:450,title:'DRT — nonnegative RC model',xlabel:'τ / s',ylabel:'γ(ln τ) / Ω',points:r.drt.map(p=>({x:p.tau_s,y:p.gamma_ohm})),color:options.color,id:'drt',logX:true,band:m.measuredTimeBand})}</svg>`;
+        dialog.innerHTML=`<button type="button">닫기</button><svg viewBox="0 0 950 600" width="900" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">${plot({x:85,y:55,w:800,h:440,title:'DRT — nonnegative RC model',xlabel:'τ / s',ylabel:'γ(ln τ) / Ω',points:r.drt.map(p=>({x:p.tau_s,y:p.gamma_ohm})),color:options.color,id:'drt',logX:true,band:m.measuredTimeBand,guide:interpretationBands(points,r.peaks),peaks:r.peaks,assignments:assignments()})}</svg>${legend}`;
         host.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();dialog.onclose=()=>dialog.remove();dialog.showModal();
       };
     };
@@ -296,6 +364,7 @@ details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · 
         if(entry.settings.mode==='auto'&&response.body.result?.metadata?.autoSelectionReliable!==true)throw Error('자동 λ 선택이 불확실합니다. 수동 λ를 선택하고 계산 버튼을 누르세요.');
         if(!matches(response.body.result,points))throw Error('저장된 데이터와 현재 표시 데이터가 다릅니다. 표 저장 또는 Dataset 새로고침 후 다시 계산하세요.');
         entry.result=response.body.result;
+        entry.runId=response.body.id;entry.assignmentDraft=null;entry.assignmentNote='';
         entry.settings.lambda=entry.result.metadata.lambda;
         form.elements.lambda.value=entry.settings.lambda;
         form.elements.lambdaSlider.value=Math.log10(Math.max(1e-6,entry.settings.lambda));
@@ -320,6 +389,7 @@ details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · 
         if(saved){
           if(saved.result.metadata.mode==='auto'&&saved.result.metadata.autoSelectionReliable!==true){entry.autoAttempted=true;setStatus('not calculated','이전 자동 λ 선택 불확실 · 수동 계산이 필요합니다.');return;}
           entry.result=saved.result;
+          entry.runId=saved.id;entry.assignmentDraft=null;entry.assignmentNote='';
           const m=saved.result.metadata;
           entry.settings={M:m.M,lambda:m.lambda,includeL:m.includeL,mode:m.mode};
           form.elements.M.value=m.M;form.elements.lambda.value=m.lambda;
@@ -332,6 +402,6 @@ details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · 
       }).catch(()=>{if(current())setStatus('not calculated','저장 결과 확인 실패 · 계산 버튼으로 다시 시도하세요.');});
     }
   }
-  return {normalizeRows,coordinates,matches,integrate,csv,svg,render,frequencyRanges,tauBounds};
+  return {normalizeRows,coordinates,matches,integrate,csv,svg,render,frequencyRanges,tauBounds,interpretationBands,assignmentContext,readAssignments};
 })();
 if (typeof module !== 'undefined') module.exports=EisDrt;

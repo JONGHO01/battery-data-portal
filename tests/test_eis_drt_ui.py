@@ -7,6 +7,82 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DrtUiTests(unittest.TestCase):
+    def test_candidate_bands_follow_measurement_and_peaks_without_assigning_physics(self):
+        self.js(r'''
+const points=drt.normalizeRows([1e5,1e2,.1].map(frequency=>({frequency,zreal:5,zimag:-2})));
+const bounds=drt.tauBounds(points), before=JSON.stringify(points);
+const peaks=[{Peak:'P1',tau_peak:.0001},{Peak:'P2',tau_peak:.01},{Peak:'P3',tau_peak:.5}];
+const guide=drt.interpretationBands(points,peaks),empty=drt.interpretationBands(points,[]);
+assert.equal(guide.length,3);assert.equal(guide[0].min,bounds.data[0]);assert.equal(guide[2].max,bounds.data[1]);
+assert.equal(guide[0].max,guide[1].min);assert.equal(guide[1].max,guide[2].min);
+assert.notEqual(guide[0].max,empty[0].max);
+assert.deepEqual(drt.interpretationBands([],peaks),[]);
+const shifted=drt.normalizeRows([1e6,1e3,1].map(frequency=>({frequency,zreal:5,zimag:-2})));
+const moved=drt.interpretationBands(shifted,peaks.map(p=>({...p,tau_peak:p.tau_peak/10})));
+assert.ok(Math.abs(moved[0].max/guide[0].max-.1)<1e-10);
+assert.equal(JSON.stringify(points),before);
+const result={drt:[{tau_s:.0001,gamma_ohm:3},{tau_s:.01,gamma_ohm:5},{tau_s:.5,gamma_ohm:2}],peaks,metadata:{measuredTimeBand:bounds.data}};
+const svg=drt.svg(points,result,{w:1100,h:850,title:'test',date:''});
+assert.match(svg,/data-drt-guide/);assert.match(svg,/해석 후보/);
+assert.match(svg,/>P1</);assert.doesNotMatch(svg,/→ R_SEI/);
+assert.match(drt.svg(points,result,{w:1100,h:850,title:'test',date:'',assignments:{P1:'R_SEI'}}),/P1 → R_SEI/);
+''')
+
+    def test_manual_assignments_are_allowlisted_and_bound_to_dataset_run_and_peaks(self):
+        self.js(r'''
+const result={metadata:{spectrumIndex:0},peaks:[{Peak:'P1',tau_peak:.01,f_peak:15.9,R_region:12}]};
+const context=drt.assignmentContext('dataset-1','run-1',result);
+assert.ok(context);assert.equal(drt.assignmentContext('dataset-1',null,result),null);
+assert.deepEqual(drt.readAssignments(null,context,result.peaks),{});
+const record={context,source:'user',values:{P1:'R_ct',P2:'R_SEI'}};
+assert.deepEqual(drt.readAssignments(record,context,result.peaks),{P1:'R_ct'});
+assert.deepEqual(drt.readAssignments({...record,source:'automatic'},context,result.peaks),{});
+assert.deepEqual(drt.readAssignments({...record,values:{P1:'<script>bad</script>'}},context,result.peaks),{});
+for(const other of [drt.assignmentContext('dataset-2','run-1',result),drt.assignmentContext('dataset-1','run-2',result),drt.assignmentContext('dataset-1','run-1',{...result,metadata:{spectrumIndex:1}})])
+ assert.deepEqual(drt.readAssignments(record,other,result.peaks),{});
+const restored=JSON.parse(JSON.stringify(record));assert.deepEqual(drt.readAssignments(restored,context,result.peaks),{P1:'R_ct'});
+''')
+
+    def test_assignment_ui_save_failure_restore_and_new_run_reset(self):
+        self.js(r'''
+const values={M:{value:100},lambda:{value:.001},includeL:{checked:true,style:{}},mode:{value:'manual'},lambdaSlider:{value:-3}};
+values[Symbol.iterator]=function*(){yield* Object.values(this);};
+const form={elements:values,style:{},addEventListener(){}},status={},plot={},select={dataset:{peak:'P1'},value:'Unassigned'},save={};
+const details={replaceChildren(){this.innerHTML='';},prepend(){},querySelector:s=>s==='[data-save-assignments]'?save:{},querySelectorAll:s=>s==='[data-peak-assignment]'?[select]:[]};
+const controls={insertAdjacentHTML(position,html){this.innerHTML=html+this.innerHTML;},querySelector:s=>s==='form'?form:s==='[data-drt-status]'?status:s==='[data-eis-spectrum]'?{}:details};
+const nodes={figureCanvas:{contains:n=>n===controls,querySelector:s=>s==='[data-eis-plot]'?plot:controls},figureTitle:{},figureSubtitle:{},metaGrid:{}};
+global.$=id=>nodes[id];global.currentFigureStyle=()=>({});global.syncFigureControls=()=>{};
+global.figureSvgSize=()=>({w:1100,h:850});global.figureDatasetLabel=()=> 'test';
+global.normalizeHexColor=()=> '#14888a';global.cleanNyquistBounds=()=>({x:[0,10],y:[-5,5]});
+global.resolveFigureAxisDomains=(x,y)=>({x,y});global.applyAnnotationsToSvg=()=>{};
+global.authHeaders=x=>x;global.apiErrorMessage=()=> 'save denied';global.document={createElement:()=>({})};
+const rows=[1,10,100].map(frequency=>({frequency,zreal:5,zimag:-2}));
+const result={metadata:{spectrumIndex:0,mode:'manual',lambda:.001,Rs:5,L:0,measuredTimeBand:[.001,.2]},
+ reconstruction:drt.normalizeRows(rows).map(p=>({...p,z_real_raw_ohm:p.z_real_ohm,z_imag_raw_ohm:p.z_imag_ohm})),
+ drt:[{tau_s:.001,gamma_ohm:1},{tau_s:.01,gamma_ohm:3},{tau_s:.2,gamma_ohm:1}],
+ peaks:[{Peak:'P1',tau_peak:.01,f_peak:15.9,R_region:12}],warnings:[],quality:{},relative_complex_RMSE_percent:0};
+let fail=true,payload,run='run-1';
+global.fetchJsonWithTimeout=async(url,options)=>{
+ if(options?.method==='PATCH'){payload=JSON.parse(options.body);return {res:{ok:!fail},body:fail?{}:{figureEdits:payload.figureEdits}};}
+ return {res:{ok:true},body:[{id:run,analysisName:'eis-drt',result}]};
+};
+async function check(){
+ const d={id:'dataset-1',rows,figureEdits:{style:{markerSize:8}}};drt.render(d);await new Promise(setImmediate);
+ assert.match(details.innerHTML,/<th>Assignment<\/th>/);assert.match(details.innerHTML,/value="Unassigned" selected/);
+ assert.match(controls.innerHTML,/High-frequency interfacial \/ film process/);
+ select.value='R_ct';select.onchange();assert.match(plot.innerHTML,/P1 → R_ct/);
+ await save.onclick();assert.match(details.innerHTML,/save denied/);assert.equal(d.figureEdits.eisDrtAssignments,undefined);
+ fail=false;await save.onclick();assert.equal(payload.figureEdits.eisDrtAssignments.values.P1,'R_ct');
+ assert.deepEqual(Object.keys(payload.figureEdits),['eisDrtAssignments']);assert.equal(d.figureEdits.style.markerSize,8);
+ const restored=JSON.parse(JSON.stringify(d));drt.render(restored);await new Promise(setImmediate);
+ assert.match(plot.innerHTML,/P1 → R_ct/);
+ select.value='Unassigned';select.onchange();await save.onclick();assert.doesNotMatch(plot.innerHTML,/P1 →/);
+ run='run-2';drt.render(JSON.parse(JSON.stringify(d)));await new Promise(setImmediate);
+ assert.doesNotMatch(plot.innerHTML,/P1 →/);assert.match(details.innerHTML,/value="Unassigned" selected/);
+}
+check().catch(e=>{console.error(e);process.exitCode=1;});
+''')
+
     def test_unique_ranges_initial_tau_and_analysis_panel_geometry(self):
         self.js(r'''
 const rows=[100000,10,.1,.1,10,100000,1000,10,1].map(frequency=>({frequency,zreal:5,zimag:-2}));

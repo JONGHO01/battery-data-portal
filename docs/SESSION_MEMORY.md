@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current EIS addition (2026-09-14): v0.2.8 adds relative HF/MF/LF interpretation-candidate bands and a visible five-column peak table. Only explicit allowlisted user assignments label P peaks; the solver/raw data are unchanged. Assignments use existing Dataset figureEdits PATCH, scoped to dataset/run/segment/peak values, with failure feedback and CSV/JSON/SVG support. Latest saved assignment set per Dataset only; new runs are unassigned. Full suite: 285 tests and 18 subtests passed. Browser confirmed bands, bilingual guide, three neutral peaks, temporary Other label and removal, and successful save with every peak Unassigned. No physical identity, calculation or raw-row change was made to the real experiment. Local backend not restarted; prior CYC restart/reparse remains pending. GitHub publication must be verified from refs.
+
 > Current CYC fix (2026-09-14): v0.2.7 reads binary TestReport CellWeight(g) with a bounded non-deserializing reader. This supersedes the earlier claim that the eight supplied WRDs lack mass: the text-only reader missed it. Raw Ah values are preserved and neutral specific capacity is routed by charge/discharge direction. Parser-8 enables existing WRD refresh/re-upload paths without refreshing valid parser-7 SDE. No real source file or saved dataset was modified in this task. Local restart and actual saved-Fig refresh remain pending.
 
 > Current EIS preview (2026-09-14): v0.2.6 caps the EIS-only screen wrapper at approximately 480px height and centers it like the compact CYC preview. SVG/export dimensions, 55:45 panels, DRT results and controls are unchanged. At 2000px viewport width the reported saved SEO Fig decreased from about 1087px to 480px high, with three panels and its matching saved fit retained. No raw data edits, calculations, server restarts or cloud changes were made for this display adjustment.
@@ -37,6 +39,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed v0.2.8 EIS-only DRT candidate guide and manual assignments. Preserve the approximately 480px preview, portal structure, CYC/CV and solver. No automatic resistance identification.
 
 Completed the EIS preview-size correction requested after v0.2.5. Preserve global layout/CSS and other pages; synchronize the scoped v0.2.6 source release after verification.
 
@@ -298,6 +302,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/version files and this memory. public/app.js, public/index.html and python_backend.py changes are release metadata only.
+
 - v0.2.7: WRD parser and router, CYC adapter in public/app.js, parser-refresh compatibility/version in python_backend.py, focused mass/CYC/artifact tests and release metadata/docs. No global styles, EIS renderer, authentication or storage settings changed.
 
 - v0.2.6: public/eis-drt.js preview wrapper; tests/test_eis_drt_ui.py regression assertions; EIS docs and release metadata. No shared stylesheet, analysis backend logic or stored data change.
@@ -517,6 +523,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+v0.2.8: 285 tests / 18 subtests passed; node syntax checks and git diff --check passed. Tests cover candidate-band scaling with frequency/peaks, allowlisted manual assignments, context mismatch, save failure, restore and new-run reset. Browser verified the reported saved SEO figure, no console errors, manual Other then Unassigned and neutral assignment save. No build/lint scripts exist; npm unavailable, no dependencies added. Published/deployed status is separate.
 
 - v0.2.7: 282 tests and 18 subtests passed; JS syntax and diff checks passed. Red/green cases cover binary mass, preceding class descriptors, legacy parser recognition, charge contamination and directionless summaries. Eight actual WRDs retain their SHA-256; the reported sample passes WRD -> BDF -> shipped CYC adapter at 161.304/162.402 mAh/g. Browser opens the existing Ah Fig without console errors; corrected saved-Fig verification awaits restart/reparse. npm is unavailable and build/lint scripts are unconfigured. Check remote refs for publication status.
 

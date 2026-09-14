@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.2.8 - 2026-09-14
+
+- Add EIS-only HF/MF/LF interpretation-candidate bands under the DRT axis with Korean/English explanations. Boundaries follow measured log-time limits and in-band peak anchors, never universal physical cutoffs.
+- Keep P1/P2/P3 neutral by default. Explicit user-only Assignment supports Unassigned, R_SEI, R_ct, R_ion, Diffusion and Other; the solver and raw data are unchanged.
+- Show a five-column peak table, save assignments through the existing authorized Dataset figure-edits endpoint, and include choices in SVG/enlargement, peak CSV and metadata JSON. Bind labels to Dataset, analysis run, segment and peak values; reject unknown labels and stale assignments.
+- Preserve the compact preview, global layout, other analysis pages and storage schema. Other application-file edits are release metadata only.
+- Verification: 285 tests and 18 subtests passed; JS syntax and diff checks passed. Browser confirmed guide/peak controls, manual label removal and neutral assignment save, without altering raw measurements or assigning experimental mechanisms. Build/lint scripts are not configured; npm is unavailable and no dependency was added.
+
 ## v0.2.7 - 2026-09-14
 
 - Read WBCS TestReport binary CellWeight with bounded, non-executing NRBF metadata inspection. Keep explicit filename-mass precedence and preserve raw Ah measurements and raw-file bytes; unknown/invalid mass is not guessed.

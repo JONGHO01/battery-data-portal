@@ -1,18 +1,18 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.7-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.8-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.7** — WRD binary CellWeight restores specific capacity (mAh/g), with charge/discharge directions kept separate. Original raw files and Ah measurements remain unchanged. Local restart and saved-data refresh are separate from source publication.
+> Source release: **v0.2.8** — DRT interpretation-candidate bands and manual peak assignments. No automatic physical resistance identification. Raw data, solver and portal structure remain unchanged; source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.7**이며, 운영 배포 여부와는 별개입니다. WRD 내부에 기록된 **CellWeight(g)**를 읽어 방전 비용량을 **mAh/g**로 계산합니다. 충전값과 방전값은 방향에 맞게 분리합니다. 질량을 확인할 수 없으면 임의로 환산하지 않고 Ah를 유지합니다. 기존 EIS의 약 480px 미리보기, 포탈 배치와 저장 구조는 유지합니다.
+현재 소스 버전은 **v0.2.8**이며, 운영 배포 여부와는 별개입니다. EIS DRT에 **해석 후보 영역**과 피크별 **Assignment**를 추가했습니다. 초기값은 Unassigned이며, 사용자가 직접 선택한 이름만 표시·저장합니다. 기존 EIS의 약 480px 미리보기, CYC 용량 처리, 포탈 배치와 저장 구조는 유지합니다.
 
 ### CYC 용량 단위 수정
 
@@ -26,6 +26,7 @@
 2. **DRT Controls → 측정 구간**에서 고주파–저주파 범위를 고릅니다. 같은 범위의 반복 측정 방향은 접힌 메타데이터에 보존됩니다. 저장 결과가 없고 입력이 완전하면 자동 λ 계산을 한 번 시도합니다. 필요하면 수동 모드에서 M, λ, 직렬 L을 조절하고 **DRT 계산·저장**을 누릅니다.
 3. 왼쪽은 −Im(Z), 오른쪽 아래는 실제 Im(Z)입니다. 측정값은 마커, 재구성은 주황 점선입니다. Rs·L·오차와 중립적 P1/P2 피크를 확인합니다.
 4. τ 구간을 입력해 ln(τ)에 대한 저항 적분을 계산하고 DRT CSV·재구성 CSV·메타데이터 JSON 또는 기존 SVG·PNG를 저장합니다.
+5. **DRT Peaks → Assignment**에서 Unassigned / R_SEI / R_ct / R_ion / Diffusion / Other를 선택하고 **Assignment 저장**을 누릅니다. 피크 CSV·메타데이터 JSON과 그래프에도 현재 선택이 반영됩니다. 새 계산 결과에는 이전 피크 이름을 자동 이월하지 않습니다. HF/MF/LF 안내는 현재 측정 범위·피크 기반의 시각적 가이드이며 물리적 판정이 아닙니다.
 
 계산 결과는 기존 Dataset 분석 기록에 별도로 저장되며 원본 행을 덮어쓰지 않습니다. 주파수가 없으면 Nyquist만 표시합니다. 중복 주파수는 유지하며 측정 대역 밖 결과와 불명확한 자동 λ 선택에는 경고합니다. 자세한 모델·제한·검증은 [EIS DRT 설명](docs/EIS_DRT.md)을 참고하세요.
 
@@ -74,6 +75,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.8 | 2026-09-14 | DRT 해석 후보 band, 사용자 피크 할당·저장·export. 자동 저항 할당 없음. |
 | v0.2.7 | 2026-09-14 | WRD 내부 질량을 읽어 mAh/g 복원, 충전·방전 구분, 원본 Ah 보존. |
 | v0.2.6 | 2026-09-14 | EIS 미리보기를 CYC처럼 높이 약 480px로 제한·중앙 정렬, 저장용 해상도 유지. |
 | v0.2.5 | 2026-09-14 | EIS 55:45 그래프·작은 DRT 카드, 주파수 범위 중복 제거, 실제 τ축과 자동 계산. |

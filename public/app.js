@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.7";
+const PORTAL_VERSION = "0.2.8";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.8",
+    "date": "2026-09-14",
+    "changes": [
+      "Add relative DRT interpretation-candidate bands, never automatic resistance identities.",
+      "Let users assign, save and export peak meanings with analysis-specific provenance."
+    ]
+  },
   {
     "version": "0.2.7",
     "date": "2026-09-14",

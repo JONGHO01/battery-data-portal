@@ -1,5 +1,13 @@
 # EIS-only DRT analysis
 
+## Interpretation candidates and manual assignments (v0.2.8)
+
+HF/MF/LF bands below the DRT X axis are **interpretation candidates, not confirmed resistance identities**. The Korean/English legend describes interfacial/film, charge-transfer and transport/diffusion candidates. Bands cover only the measured time band. Internal boundaries are the one-third and two-thirds quantiles (linear interpolation) of sorted log-time anchors: measured endpoints plus unique in-band peak times. Without peaks this is an equal log-range split. These relative visual boundaries have no universal physical meaning, do not change peak integration intervals, and never assign a mechanism.
+
+The visible peak table has Peak, tau_peak / s, f_peak / Hz, R_region / Ω and Assignment. Defaults are Unassigned. Users select R_SEI, R_ct, R_ion, Diffusion or Other, then press Assignment 저장. Only allowlisted user choices appear beside neutral P labels; Unassigned removes the physical name. R_region remains the gamma integral between neighboring numerical minima, not peak height or a guide-band resistance.
+
+Assignments use `figureEdits.eisDrtAssignments` through the existing permission-checked Dataset PATCH. They are bound to Dataset ID, saved analysis-run ID, spectrum index and peak values. Only the latest explicitly saved assignment set is retained per Dataset; a new calculation starts unassigned. Unknown labels and mismatched contexts are ignored. Failed saves retain a visibly unsaved draft. Current choices appear in SVG/enlargement, peak CSV and metadata JSON; save before leaving to retain them. No raw-data, solver, endpoint, schema, authentication or storage-provider change is required.
+
 ## Compact screen preview (v0.2.6)
 
 The EIS plot wrapper, not the SVG itself, now has a centered responsive width corresponding to approximately 480px height. On narrower screens it shrinks further to fit. This follows the compact CYC preview: the three-panel 55:45 layout, full-resolution SVG/viewBox, calculation, axes and exports are unchanged. No global stylesheet or other analysis page is modified. The existing DRT enlargement remains available in analysis details.
