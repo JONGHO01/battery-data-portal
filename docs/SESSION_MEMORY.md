@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current EIS preview (2026-09-14): v0.2.6 caps the EIS-only screen wrapper at approximately 480px height and centers it like the compact CYC preview. SVG/export dimensions, 55:45 panels, DRT results and controls are unchanged. At 2000px viewport width the reported saved SEO Fig decreased from about 1087px to 480px high, with three panels and its matching saved fit retained. No raw data edits, calculations, server restarts or cloud changes were made for this display adjustment.
+
 > Current EIS UI (2026-09-14): v0.2.5 changes only EIS behavior in public/eis-drt.js: 55:45 panels, compact controls/status, unique frequency ranges, real initial tau limits and one guarded automatic attempt. Same-range repeated acquisitions use the first complete representative; original rows/directions remain unchanged and metadata discloses that choice. Unreliable auto fallback is never shown as success. Other modified application files contain release metadata only. Existing localhost:4174 backend remains compatible v0.2.4; no restart/cloud configuration change was made.
 
 > Current EIS verification (2026-09-14): v0.2.4 source is published at ae8e0b5. On the follow-up check, localhost:4174 was stopped (connection refused); the official launcher started it without terminating any existing process. Independent health confirms v0.2.4 and eisDrtSpectrumSelection=true. Actual SEO file chooser, 366-row inspection, Fig generation and reopening passed; saved Fig count remained 60. One selected 61-point DRT analysis was saved through the normal UI, with 19.16% error and warnings retained. Original source rows were not edited. The unspecified other failing file is still unknown, so no claim covers all uploads. Earlier restart-pending notes below are historical.
@@ -33,6 +35,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed the EIS preview-size correction requested after v0.2.5. Preserve global layout/CSS and other pages; synchronize the scoped v0.2.6 source release after verification.
 
 Completed the EIS-only layout/range/automatic-calculation refinement. Keep global CSS, portal shell, login/routes and CYC/CV unchanged. Verify scoped GitHub publication separately from Render deployment.
 
@@ -292,6 +296,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.6: public/eis-drt.js preview wrapper; tests/test_eis_drt_ui.py regression assertions; EIS docs and release metadata. No shared stylesheet, analysis backend logic or stored data change.
+
 - v0.2.5: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; synchronized VERSION/package.json, README/CHANGELOG, app release history, index cache versions, FastAPI version metadata, and this memory. No analysis backend logic, shared CSS, raw files or database settings changed.
 
 - v0.2.4: backend/analysis/eis_drt.py; public/eis-drt.js; python_backend.py (health capability/version); EIS labels in public/app.js; focused EIS tests and label expectations; isolated smoke fixture; synchronized release files and docs/EIS_DRT.md. No experimental raw files, real analysis records, shared parser, schema or storage settings changed.
@@ -427,6 +433,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.6: confirm GitHub publication from refs; do not infer Render deployment. Local backend remains v0.2.5 and serves the updated static preview without restart.
+
 - v0.2.5: verify GitHub main publication from refs. Actual Render deployment is unverified. DRT CSV download-event confirmation timed out in the isolated browser; file generation/handlers remain unchanged and unit-tested, but do not claim a new end-to-end download success for this session.
 
 - v0.2.4: local startup and selected-segment capability are verified. If upload failure recurs, obtain the exact failing file/path and action; the reported stored SEO source now passes through Fig generation and reopening. Do not infer Render deployment from GitHub push.
@@ -503,6 +511,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.2.6: preview-bound regression reproduced the old unrestricted wrapper, then all 8 focused EIS UI tests passed. Wide-screen browser check confirmed approximately 480px centered preview, unchanged 1080×850 SVG viewBox, three panels, restored saved fit and no console errors. Temporary viewport override was reset. A transient Windows process-launch lock affected one test attempt; a subsequent clean run passed.
 
 - v0.2.5: 268 tests and 18 subtests passed. Browser synthetic repeated-range automatic/manual calculation, initial tau axis, gamma scaling, 3-column compact controls, result invalidation and expanded peak details passed. A discovered stale current-lambda field was reproduced by a failing regression and corrected; focused 8 EIS tests then passed. Build/lint scripts are absent. Existing real account/experiment data were not touched; no 4174 restart.
 

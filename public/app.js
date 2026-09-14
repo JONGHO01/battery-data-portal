@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.5";
+const PORTAL_VERSION = "0.2.6";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.6",
+    "date": "2026-09-14",
+    "changes": [
+      "Keep the EIS screen preview centered at about 480px high, similar to CYC.",
+      "Preserve exported SVG dimensions, panel ratios, analysis data and DRT controls."
+    ]
+  },
   {
     "version": "0.2.5",
     "date": "2026-09-14",

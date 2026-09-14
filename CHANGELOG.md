@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.2.6 - 2026-09-14
+
+- Constrain only the EIS on-screen plot wrapper to approximately 480px high and center it, matching the compact CYC preview rather than stretching with a wide monitor.
+- Preserve the full-resolution SVG/viewBox, internal 55:45 panel geometry, DRT controls, calculation, axes, data and export handlers. No global CSS or CYC/CV behavior change; other application-file changes are release metadata only.
+- Add regression assertions for preview bounds and unchanged exported SVG dimensions. Browser verification at 2000px viewport width: height reduced from about 1087px to 480px; all three plots and the restored DRT result retained.
+
 ## v0.2.5 - 2026-09-14
 
 - EIS-only 55:45 analysis panels with larger right DRT/signed-Im plots, compact DRT Controls, compact status and collapsible detailed results/exports. No global CSS, header/sidebar, routing, login or CYC/CV behavior changes.

@@ -1,5 +1,9 @@
 # EIS-only DRT analysis
 
+## Compact screen preview (v0.2.6)
+
+The EIS plot wrapper, not the SVG itself, now has a centered responsive width corresponding to approximately 480px height. On narrower screens it shrinks further to fit. This follows the compact CYC preview: the three-panel 55:45 layout, full-resolution SVG/viewBox, calculation, axes and exports are unchanged. No global stylesheet or other analysis page is modified. The existing DRT enlargement remains available in analysis details.
+
 ## EIS layout and range selection (v0.2.5)
 
 The EIS-only SVG uses a 55:45 left/right plot-width split, enlarged stacked right plots, and a minimum combined canvas height of 850 units. Inline component styles fill the existing analysis area without editing global CSS or portal layout. A maximum-780px DRT Controls card groups the range, automatic/manual lambda, slider/value, M, L and a bounded calculate button. Detailed warnings, peak integration and exports remain expandable.

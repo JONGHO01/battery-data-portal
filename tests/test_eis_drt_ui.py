@@ -76,6 +76,9 @@ async function check(){
  assert.match(status.textContent,/controlled failure/);assert.equal(values.M.disabled,false);
  const repeated=[...rows,...[...rows].reverse()];
  drt.render({rows:repeated});
+ assert.match(nodes.figureCanvas.innerHTML,/max-width:621px/);
+ assert.match(nodes.figureCanvas.innerHTML,/margin:0 auto/);
+ assert.match(plot.innerHTML,/viewBox="0 0 1100 850"/);
  assert.match(controls.innerHTML,/DRT Controls/);
  assert.equal((controls.innerHTML.match(/100 Hz – 1 Hz/g)||[]).length,1);
  const selected=form.onsubmit({preventDefault(){}});

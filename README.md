@@ -1,18 +1,18 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.5-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.6-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.5** — EIS-only 55:45 panels, compact DRT controls, unique frequency ranges and guarded initial automatic fitting. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
+> Source release: **v0.2.6** — compact, centered EIS screen preview like CYC. Full-resolution export, EIS 55:45 panels and DRT features are retained. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.5**이며, 운영 배포 여부와는 별개입니다. EIS 분석 영역만 **왼쪽 55% / 오른쪽 45%**로 정리하고 DRT Controls를 작은 카드로 묶었습니다. 같은 주파수 범위는 한 번만 표시하며 첫 유효 측정을 대표로 사용합니다. 원본은 평균·삭제하지 않습니다. 유효한 데이터는 자동 λ 계산을 한 번 시도하고, 불확실하면 수동 계산을 안내합니다. 기존 v0.2.4 백엔드는 그대로 사용할 수 있으며 정적 화면은 새로고침하면 적용됩니다. CYC/CV, 로그인, 포탈 레이아웃과 저장 위치는 그대로입니다.
+현재 소스 버전은 **v0.2.6**이며, 운영 배포 여부와는 별개입니다. EIS 그림은 CYC처럼 **높이 약 480px 이내로 가운데 표시**해 넓은 화면에서도 한눈에 볼 수 있습니다. 저장용 해상도와 왼쪽 55% / 오른쪽 45% 배치, DRT Controls, 구간 선택·자동/수동 계산은 그대로입니다. 정적 화면은 새로고침하면 적용되며 CYC/CV, 로그인, 전역 CSS와 저장 위치는 변경하지 않았습니다.
 
 ## EIS DRT 사용법
 
@@ -68,6 +68,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.6 | 2026-09-14 | EIS 미리보기를 CYC처럼 높이 약 480px로 제한·중앙 정렬, 저장용 해상도 유지. |
 | v0.2.5 | 2026-09-14 | EIS 55:45 그래프·작은 DRT 카드, 주파수 범위 중복 제거, 실제 τ축과 자동 계산. |
 | v0.2.4 | 2026-09-14 | EIS 반복 측정 구간별 보기·DRT 계산, 원본 행 보존, 구형 서버 계산 차단. |
 | v0.2.3 | 2026-09-14 | CYC 전압·전류·dQ/dV·통합 성능의 Y축 눈금 정리. 실제 WRD 8개 읽기 전용 검증. |

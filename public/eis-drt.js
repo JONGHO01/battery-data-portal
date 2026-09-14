@@ -200,7 +200,10 @@ const EisDrt = (() => {
     $('figureSubtitle').textContent=`${d.cell?.date||''} ${d.cell?.material||''} ${points.length} points`;
     $('metaGrid').innerHTML=[['Material',d.cell?.material],['Electrolyte',d.cell?.electrolyte],['Condition',d.cell?.condition],['Owner',d.ownerName||d.ownerId],['Notes',d.cell?.notes]].map(([k,v])=>`<div class="metaItem"><strong>${k}</strong>${esc(v||'-')}</div>`).join('');
     const host=$('figureCanvas');
-    host.innerHTML='<div data-eis-plot></div><div data-eis-controls></div>';
+    // Match the compact CYC preview height without resizing the exported SVG.
+    const previewHeight=options.onlyNyquist?size.h:Math.max(size.h,850);
+    const previewWidth=Math.round(size.w*Math.min(1,480/previewHeight));
+    host.innerHTML=`<div data-eis-plot style="width:100%;max-width:${previewWidth}px;margin:0 auto"></div><div data-eis-controls></div>`;
     const plotHost=host.querySelector('[data-eis-plot]'),controls=host.querySelector('[data-eis-controls]');
     const current=()=>host.contains(controls)&&cache.get(d)===entry&&JSON.stringify(normalizeRows(d.rows))===signature;
     const draw=()=>{plotHost.innerHTML=svg(points,entry.result,{...options,title:entry.spectrumIndex===null ? title : `${title} · 구간 ${entry.spectrumIndex+1}`});applyAnnotationsToSvg();};
