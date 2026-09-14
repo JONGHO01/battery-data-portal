@@ -1,5 +1,9 @@
 # Session Memory
 
+> Current CYC fix (2026-09-14): v0.2.1 restores saved CYC performance from BDF/vendor row shapes. Blank specific-capacity values previously became zero and hid measured Ah discharge values; the 1 Ah axis floor also hid small capacities. Frontend-only behavior fix; backend change is version metadata only. No source artifacts, database records, cloud settings or credentials were edited. Existing 4174 backend remains 0.2.0 without restart; the static frontend fix is already browser-verified. GitHub publication must be verified separately.
+
+> Local launch verified (2026-09-14): at the user's request to open the closed portal, the safe launcher returned PORTAL_READY on http://localhost:4174 with version 0.2.0. An independent health check returned ok=true/version=0.2.0, and the browser displayed the existing home workspace with 52 Datasets. Earlier notes about the 4174 backend still running 0.1.78 are historical and superseded for this local process. No code, credentials, cloud settings, GitHub refs, or stored experiment content were deliberately edited in this launch task; actual DRT fitting and production Neon/B2 remain separately unverified.
+
 > Current source release (2026-09-10): v0.2.0 adds EIS-only nonnegative RC-DRT and signed-Im Nyquist, reconstruction, integral resistance, saved analysis and exports. The existing 4174 backend was last verified as v0.1.78 and was not restarted; restart approval remains pending. New server behavior was exercised on a disposable synthetic-data server, not the real database. Verify GitHub publication from refs. Render and real Neon/B2 access remain unverified.
 
 > Standing authorization (2026-09-10): promptly commit and push completed, verified future portal changes to JONGHO01/battery-data-portal main without a separate upload prompt. Follow the scoped, secret-free, fast-forward-only rules in AGENTS.md. This supersedes historical per-upload approval notes, not restart, destructive-data, or hosting-configuration boundaries.
@@ -19,6 +23,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed local CYC blank-graph correction: the reported 7,180-row WRD Dataset now displays three measured discharge cycles with an Ah axis, plus populated voltage and dQ/dV views. Preserve EIS/CV, login, global layout and storage. Finalize scoped GitHub synchronization under standing authorization; no server restart is required for this frontend fix.
 
 Implement the user's strict EIS-only specification: replace combined-EIS right Bode panels with DRT and actual Im(Z), retaining left Nyquist size/axes/HF and raw sweep order. Do not change header/sidebar/routes/login/global CSS/global state/CYC/CV/storage. Implementation and isolated verification are complete for v0.2.0; follow the standing GitHub upload policy. Existing local-backend restart is a separate pending permission, not implied by upload authorization.
 
@@ -266,6 +272,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.1: `public/app.js` CYC-only column/missing-value/axis correction; new `tests/test_cyc_rendering.py`; synchronized release metadata in `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md` and this memory.
+
 - v0.2.0: add `backend/analysis/eis_drt.py`, `public/eis-drt.js`, `tests/test_eis_drt.py`, `tests/test_eis_drt_api.py`, `tests/test_eis_drt_ui.py`, `scripts/verify_eis_drt_server.py`, `docs/EIS_DRT.md`. EIS-only wiring in `python_backend.py`, `public/app.js`, `public/index.html`; one SciPy pin in `requirements.txt`; synchronized `VERSION`, `package.json`, `README.md`, `CHANGELOG.md`, and this memory. No experiment files or test-server runtime state are included.
 
 - v0.1.80 publication: AGENTS.md records standing scoped GitHub authorization; README.md separates source release, runtime version, and verified/unverified storage status; CHANGELOG.md releases the accumulated fixes; this memory carries the latest audit and handoff.
@@ -391,6 +399,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.1: no CYC implementation work remains after local browser and automated checks. Verify the GitHub commit/ref before reporting publication. Render deployment and production Neon/B2 are outside this fix's verification; the running backend version label updates only at a separately authorized restart.
+
 - v0.2.0: verify ordinary fast-forward GitHub publication. Do not assume the existing 4174 backend has new code: restarting it requires explicit approval. Production Render/Neon/B2 behavior and actual instrument-file DRT accuracy are not yet verified. Native file-picker interaction during an in-flight calculation and PPT export were not browser-tested; the stale-response case has an executable event regression. See `docs/EIS_DRT.md` for calculation limits.
 
 - v0.1.80 backend changes are tested but not loaded into the current 4174 process. A restart approval question was sent; do not treat silence as approval. The project launcher skill prohibits terminating the current listener without user override. Apply restart once approved, then verify health version and an upload. Current frontend is served immediately. No Render deployment or GitHub push has occurred.
@@ -459,6 +469,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-09-14 CYC: four reproduction tests failed before the fix; five regression cases now cover canonical/vendor/legacy rows, empty capacity, small Ah axes, units, non-mutation and repeated normalization. Full pytest: **254 passed, 6 subtests passed**. Browser verified the reported 7,180-row Dataset: three discharge points, voltage and dQ/dV paths with no NaN/Infinity. No upload or save action was used in validation. The incremental skill's optional Definition-of-Done reference file is absent; existing project checks and runtime verification were used instead.
 
 - 2026-09-10 v0.2.0 final: `.venv/Scripts/python.exe -m pytest -q` → **249 passed, 6 subtests passed** (15.79 s). Focused DRT suite: **17 passed**. `node --check` on both JS files, Python AST parsing, `pip check` and `git diff --check` passed. `npm` is absent; bundled pnpm with dependency auto-install disabled ran the existing `check` script successfully. Actual `run build` and `run lint` attempts reported **Missing script**; neither is claimed successful. No scripts were invented or dependencies installed by those verification attempts. Final EIS style regression also passed: grid/measurement connections can be disabled while reconstruction remains, and marker size is respected.
 - 2026-09-10 v0.2.0 browser fixture: synthetic two-RC data yielded Rs≈2.991 Ω, L≈1.001 µH, R regions≈5.004/15.15 Ω and RMSE≈1.091%; saved results/checkbox state restored after reload. L disabled became exactly zero and showed expected model-mismatch warning. Missing-frequency data retained both Nyquists and did not POST a DRT request. Three panels, two dashed reconstructions, tooltips, log-time integral, enlarged DRT, CSV/JSON/SVG/PNG downloads, and CYC/CV/home/upload/organization/member rendering were checked. Test-only isolated SQLite/local storage; no live data mutations or cloud checks.

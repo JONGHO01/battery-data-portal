@@ -1,18 +1,18 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.0-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.1-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.0** — EIS-only DRT analysis, signed-Im Nyquist, reconstruction and exports. Existing portal layout, authentication, CYC/CV, and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
+> Source release: **v0.2.1** — restore saved CYC capacity graphs and correctly scale small Ah values. Existing portal layout, authentication, EIS/CV, and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.0**이며, 운영 배포 여부와는 별개입니다. EIS 통합 Fig의 오른쪽 두 패널만 DRT와 실제 Im(Z) Nyquist로 교체했습니다. 왼쪽 Nyquist, 포탈 전체 폭·사이드바·로그인·CYC/CV·원본 저장 구조는 유지합니다. 새 서버 계산은 의존성 설치와 서버 재시작 후 적용됩니다.
+현재 소스 버전은 **v0.2.1**이며, 운영 배포 여부와는 별개입니다. 저장한 CYC Fig가 빈 그래프로 보이는 문제를 수정했습니다. 빈 비 용량 칸 대신 실제 방전용량을 읽고, 작은 Ah 값에 맞게 축을 표시합니다. 파일을 다시 업로드할 필요 없이 페이지를 새로고침한 뒤 저장한 Fig를 열면 됩니다. 원본 파일·DB·저장 구조·로그인·전체 화면 구성과 기존 EIS DRT 기능은 변경하지 않았습니다.
 
 ## EIS DRT 사용법
 
@@ -68,6 +68,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.1 | 2026-09-14 | 저장 CYC 그래프 복구, 빈 용량 칸 처리와 작은 Ah 축 범위 수정. 원본 파일 유지. |
 | v0.2.0 | 2026-09-10 | EIS 전용 DRT·실제 Im(Z) Nyquist, 재구성 검증, 구간 저항 적분, CSV/메타데이터 저장. |
 | v0.1.80 | 2026-09-10 | Recover cleanly from upload failures and offload blocking inspection work. |
 | v0.1.79 | 2026-09-10 | Explicit Korean refresh label and spelling tests for six refresh buttons. |

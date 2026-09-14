@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.2.1 - 2026-09-14
+
+- Restore CYC graphs from canonical artifact rows even when saved metadata lists vendor headers. Ignore empty optional specific-capacity columns so measured Ah discharge data reaches the renderer.
+- Keep blank/null/boolean capacities out of discharge summaries; scale small Ah values to their measured range instead of forcing a 1 Ah maximum.
+- Add five executable JavaScript regression cases via pytest, covering raw/canonical/legacy shapes, units, non-mutation, repeated rendering and small-capacity axes.
+- Verify the reported 7,180-row WRD Dataset in the local browser: three discharge cycles, voltage profiles and dQ/dV render without re-uploading or rewriting source files. No database migration, cloud configuration, login, global layout or EIS/CV change.
+
 ## v0.2.0 - 2026-09-10
 
 - Preserve the existing EIS grid, point-connection and marker-size controls in the new renderer; add an executable regression and browser toggle check.

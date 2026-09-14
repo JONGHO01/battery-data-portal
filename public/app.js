@@ -1,9 +1,18 @@
-const PORTAL_VERSION = "0.2.0";
+const PORTAL_VERSION = "0.2.1";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.1",
+    "date": "2026-09-14",
+    "changes": [
+      "Restore saved CYC graphs when optional specific-capacity cells are empty or artifact columns differ from saved headers.",
+      "Keep measured Ah units and scale small capacities visibly; do not invent zero discharge cycles from missing values.",
+      "Preserve original files, storage, login, layout and EIS/CV behavior."
+    ]
+  },
   {
     "version": "0.2.0",
     "date": "2026-09-10",
@@ -1546,6 +1555,15 @@ function smartManagerEisColumns(columns, rows) {
 }
 
 function canonicalRows(type, columns, rows) {
+  if (type === "cyc") {
+    // Artifact rows use BDF keys, while saved metadata may still list vendor
+    // headers. Include actual keys; an empty optional specific-capacity
+    // column must not hide a measured Ah discharge column.
+    columns = [...new Set([...columns, ...rows.flatMap((row) => Object.keys(row))])]
+      .filter((column) => rows.some((row) => Object.hasOwn(row, column)))
+      .filter((column) => !isCapacityColumn(keyOf(column))
+        || rows.some((row) => scaledCycValue(row, column) !== null));
+  }
   const col = {
     frequency: findColumn(columns, ["frequency", "freq", "hz", "\uc8fc\ud30c\uc218"]),
     zreal: findColumn(columns, ["zreal", "real", "re", "zr", "zprime", "\uc2e4\uc218"]),
@@ -1656,6 +1674,8 @@ function dqdvAxisLabel(unit) {
 
 function scaledCycValue(row, columnName) {
   if (!columnName) return null;
+  const raw = row[columnName];
+  if (raw == null || typeof raw === "boolean" || (typeof raw === "string" && !raw.trim())) return null;
   const value = numberValue(row[columnName]);
   return Number.isFinite(value) ? scaleCycCapacity(value, columnName) : null;
 }
@@ -3771,6 +3791,8 @@ function dischargeSeries(rows) {
   const finalCapacityByCycle = new Map();
   for (const row of rows || []) {
     const cycle = Number(row?.cycle);
+    if (row?.capacity == null || typeof row.capacity === "boolean"
+      || (typeof row.capacity === "string" && !row.capacity.trim())) continue;
     const capacity = Number(row?.capacity);
     if (!Number.isFinite(cycle) || cycle < 1 || !Number.isFinite(capacity)) continue;
     const wholeCycle = Math.round(cycle);
@@ -5554,6 +5576,14 @@ function renderCycCombinedFigure(d) {
   renderCycAlternativeFigure(d, "combined");
 }
 
+function cycPerformanceCapacityDomain(points, isSpecificCapacity) {
+  const measuredMax = Math.max(0, ...points.map((p) => p.y).filter(Number.isFinite));
+  const maxCap = measuredMax > 0 ? measuredMax : 1;
+  return isSpecificCapacity
+    ? [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20]
+    : [0, maxCap * 1.08];
+}
+
 function renderCycPerformanceFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
@@ -5580,10 +5610,7 @@ function renderCycPerformanceFigure(d) {
   const xTickMax = Math.max(5, Math.ceil(maxRateCycle / 5) * 5);
   const xMax = xTickMax + Math.max(1, xTickMax * 0.025);
   const xDomain = [0, xMax];
-  const maxCap = Math.max(...capPts.map((p) => p.y).filter(Number.isFinite), 1);
-  const capDomain = isSpecificCapacity
-    ? [0, maxCap <= 180 ? 180 : Math.ceil(maxCap * 1.05 / 20) * 20]
-    : [0, maxCap * 1.08];
+  const capDomain = cycPerformanceCapacityDomain(capPts, isSpecificCapacity);
   const svgSize = figureSvgSize(style, "rate");
   const margin = {
     left: Math.max(58, Math.round(svgSize.w * 0.14)),
