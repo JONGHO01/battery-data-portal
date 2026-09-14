@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.2.3 - 2026-09-14
+
+- Extend round Y-axis ticks to CYC voltage profiles, voltage/current trends, dQ/dV and combined performance views. Keep custom axis limits and plotted values unchanged, include zero when in range, and preserve small signed readings without duplicate labels.
+- Keep CYC capacity units unchanged; no guessed mass conversion, parser change, database write or cloud configuration change. Eight local WRD files were parsed read-only; their matching saved Fig was checked in the browser without re-uploading.
+
 ## v0.2.2 - 2026-09-14
 
 - Round CYC performance axes to readable 1/2/5 power-of-ten steps instead of dividing an arbitrary maximum into five intervals. The reported Ah figure now displays 0, 0.002, 0.004, 0.006, 0.008.

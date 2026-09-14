@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current display fix (2026-09-14): v0.2.3 extends readable Y ticks to CYC voltage/current, dQ/dV and combined performance. Domain limits, units and source values remain unchanged. Eight requested local WRD files parse to three charge/discharge cycles each; mass is unavailable, so Ah is retained. No experimental files or database records were changed or re-uploaded.
+
 > Current display fix (2026-09-14): v0.2.2 uses round CYC Y ticks and label-length-aware title spacing. The reported 7,153-row WRD Fig renders 0/0.002/0.004/0.006/0.008 Ah, retains three discharge points, and has about 19 px of title/tick clearance. Source values/units, parser, DB, storage, login and EIS/CV are unchanged. Running backend remains 0.2.1; the static fix requires browser refresh only.
 
 > Local restart verified (2026-09-14): after the user confirmed completing the administrator raw-access setting and explicitly requested restart, the identified project-owned 4174 process was stopped and the official launcher started it again. Independent health returned ok=true/version=0.2.1. The authenticated administrator Dataset-access form was reopened for the user. No secret value was read, changed or submitted; successful confirmation with the user's password remains user-side verification. No cloud settings or application code changed. Earlier local restart-pending/version notes below are historical; GitHub main already contains the CYC fix at cfcfe7f.
@@ -27,6 +29,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed v0.2.3 CYC Y-axis readability across the remaining views; finish scoped publication after release checks. Older completed tasks below are historical.
 
 Completed CYC Y-axis readability correction; preserve Ah rather than guessing an active mass for mAh/g. Finalize scoped GitHub synchronization after release checks.
 
@@ -103,6 +107,8 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- v0.2.3: frontend-only axis behavior change; backend version metadata requires a separate restart to appear in health. Actual-file parsing and saved-Fig browser checks completed; no restart or production connectivity claim.
 
 - v0.2.0 EIS code: `public/eis-drt.js` owns the isolated renderer/cache/controls; `backend/analysis/eis_drt.py` owns bounded nonnegative RC fitting. Existing analysis API/storage is reused via one EIS-only branch. SciPy 1.17.1 was added and installed in the project virtual environment; impedance.py was not installed or required. No shared parser, global CSS, route, login, or schema changes.
 - Final verification: 249 tests and 6 subtests passed, including 17 focused EIS tests. Browser synthetic-data checks passed for calculation/save/reopen, L-off, missing frequency, three panels, CSV/JSON/SVG/PNG downloads and major existing pages. The initial full-suite failure on literal Korean release strings was corrected to the existing app.js Unicode-escape convention, then the full suite passed. Final EIS style regression also passed: grid/measurement connections can be disabled while reconstruction remains, and marker size is respected.
@@ -278,6 +284,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.3: `public/app.js`, `tests/test_cyc_rendering.py`, synchronized release files and documentation. Original WRD files and runtime artifacts are excluded.
+
 - v0.2.2: `public/app.js` CYC axis helpers/rendering; `tests/test_cyc_rendering.py` and `tests/test_cyc_figure_ui.py`; synchronized version/cache/README/changelog metadata. Preserve the previous local-restart note. No runtime or experiment files are included.
 
 - v0.2.1: `public/app.js` CYC-only column/missing-value/axis correction; new `tests/test_cyc_rendering.py`; synchronized release metadata in `VERSION`, `package.json`, `python_backend.py`, `public/index.html`, `README.md`, `CHANGELOG.md` and this memory.
@@ -407,6 +415,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.3: verify the remote commit before reporting GitHub publication. Production deployment remains separately unverified. File names have no explicit mass unit; do not infer mAh/g or interpret the low third discharge as degradation without checking experiment completion.
+
 - v0.2.1: no CYC implementation work remains after local browser and automated checks. Verify the GitHub commit/ref before reporting publication. Render deployment and production Neon/B2 are outside this fix's verification; the running backend version label updates only at a separately authorized restart.
 
 - v0.2.0: verify ordinary fast-forward GitHub publication. Do not assume the existing 4174 backend has new code: restarting it requires explicit approval. Production Render/Neon/B2 behavior and actual instrument-file DRT accuracy are not yet verified. Native file-picker interaction during an in-flight calculation and PPT export were not browser-tested; the stale-response case has an executable event regression. See `docs/EIS_DRT.md` for calculation limits.
@@ -477,6 +487,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-09-14 all CYC Y axes: the new round-tick reproduction failed before implementation. Full suite passed **258 tests and 6 subtests**; JavaScript syntax and diff checks passed. Eight real WRD files parsed read-only (7,153–7,449 retained rows, three cycles each). Browser voltage ticks: 2.5/3/3.5/4 V; dQ/dV ticks: -0.6/-0.4/-0.2/0/0.2, three curves retained, no NaN/Infinity or console warnings/errors. Native companion .cyc files were not treated as supported data uploads.
 
 - 2026-09-14 Y-axis: three red cases confirmed old decimal maximum/missing label helpers; focused CYC checks pass 55 and full pytest passes **256 tests and 6 subtests**. Browser confirms readable ticks, retained points, positive title/tick clearance and no warnings/errors. Original rows and units are unchanged. The optional incremental Definition-of-Done reference remains absent; project test, syntax and runtime checks serve as the completion gate.
 

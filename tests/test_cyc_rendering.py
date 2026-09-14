@@ -17,11 +17,13 @@ class CycRenderingTests(unittest.TestCase):
                  "scaleCycCapacity", "scaledCycValue", "cycCapacityUnitFromColumn",
                  "cycCapacityUnit", "cycCapacityAxisLabel", "normalizeSavedCycDataset",
                  "median", "dischargeSeries", "cycPerformanceCapacityDomain",
-                 "cycCapacityTickStep", "cycCapacityTickLabel", "cycCapacityLabelOffset"]
+                 "cycCapacityTickStep", "cycCapacityTickLabel", "cycCapacityLabelOffset",
+                 "cycReadableAxisTicks", "drawPaperAxes", "makeScale", "axisTicks", "integerTicks"]
         functions = [m.group() for name in names if
                      (m := re.search(r"^function " + name + r"\([^\n]*\).*?^}", source, re.M | re.S))]
         setup = r'''
 const assert = require('node:assert/strict');
+const fmt = (n,d=4) => Number.isFinite(n) ? Number(n).toPrecision(d) : '';
 const columns = ['cycle','direction','specific capacity (mAh g-1)',
   'charge Q (Ah)','discharge Q (Ah)','voltage (V)','current (A)'];
 const rows = [
@@ -61,6 +63,35 @@ assert.equal(cycCapacityUnit(plotted.rows),'Ah');
         self.run_js(r'''
 assert.deepEqual(dischargeSeries([null,'',undefined,false].map(capacity=>({cycle:1,capacity}))),[]);
 assert.equal(scaledCycValue({'q': ''},'q'),null);
+''')
+
+    def test_all_cyc_y_axes_use_round_ticks_inside_unchanged_limits(self):
+        self.run_js(r'''
+assert.deepEqual(cycReadableAxisTicks([2.36,4.32]),[2.5,3,3.5,4]);
+assert.deepEqual(cycReadableAxisTicks([-0.795,0.276]),[-0.6,-0.4,-0.2,0,0.2]);
+assert.deepEqual(cycReadableAxisTicks([-0.8,0.3]),[-0.8,-0.6,-0.4,-0.2,0,0.2]);
+for (const domain of [[-9e-8,3e-8],[1e8,1e8+0.01],[-4,-2],[0,0.008]]) {
+ const before = JSON.stringify(domain);
+ const values = cycReadableAxisTicks(domain);
+ assert.ok(values.length >= 3 && values.length <= 9);
+ assert.ok(values.every(v=>v>=domain[0] && v<=domain[1]));
+ assert.equal(new Set(values.map(cycCapacityTickLabel)).size,values.length);
+ assert.equal(JSON.stringify(domain),before);
+}
+assert.deepEqual(cycReadableAxisTicks([3,3]),[3]);
+assert.deepEqual(cycReadableAxisTicks([NaN,4]),[]);
+''')
+
+    def test_paper_axes_render_round_left_and_right_labels_without_rescaling_data(self):
+        self.run_js(r'''
+const axes = drawPaperAxes({x:100,y:100,w:600,h:400,xDomain:[0,1],
+ yDomain:[2.36,4.32],y2Domain:[-0.795,0.276],xlabel:'Cycle',ylabel:'Voltage (V)'});
+const labels = cls => [...axes.svg.matchAll(new RegExp('class="tick '+cls+'"[^>]*>([^<]+)<','g'))].map(m=>m[1]);
+assert.deepEqual(labels('cycYAxisTick'),['2.5','3','3.5','4']);
+assert.deepEqual(labels('cycY2AxisTick'),['-0.6','-0.4','-0.2','0','0.2']);
+assert.equal(axes.sy(2.36),500);
+assert.equal(axes.sy(4.32),100);
+assert.ok(!axes.svg.includes('NaN'));
 ''')
 
     def test_small_ah_capacity_uses_a_visible_numeric_range(self):

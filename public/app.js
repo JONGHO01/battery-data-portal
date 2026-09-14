@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.2";
+const PORTAL_VERSION = "0.2.3";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.3",
+    "date": "2026-09-14",
+    "changes": [
+      "Use readable round Y-axis ticks for CYC voltage, current, dQ/dV and combined performance views.",
+      "Preserve axis limits, measured values and units; validate eight real WRD files without re-uploading."
+    ]
+  },
   {
     "version": "0.2.2",
     "date": "2026-09-14",
@@ -3399,7 +3407,7 @@ function ticks(min, max, count = 5) {
   return Array.from({ length: count }, (_, i) => min + step * i);
 }
 
-function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "", showXTickLabels = true, showXLabel = true, yLabelOffset = 58 }) {
+function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, logX = false, logY = false, line = true, extra = "", showXTickLabels = true, showXLabel = true, yLabelOffset = 58, readableY = false }) {
   const sx = logX ? logScale(xDomain, [x, x + w]) : makeScale(xDomain, [x, x + w]);
   const sy = logY ? logScale(yDomain, [y + h, y]) : makeScale(yDomain, [y + h, y]);
   const path = points.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(2)},${sy(p.y).toFixed(2)}`).join(" ");
@@ -3407,13 +3415,14 @@ function panel({ x, y, w, h, xlabel, ylabel, title, xDomain, yDomain, points, lo
   const xt = logX
     ? logTicks(xDomain)
     : ticks(xDomain[0], xDomain[1]);
-  const yt = logY ? logTicks(yDomain) : ticks(yDomain[0], yDomain[1]);
+  const yt = logY ? logTicks(yDomain) : readableY ? cycReadableAxisTicks(yDomain) : ticks(yDomain[0], yDomain[1]);
+  if (readableY) yLabelOffset = Math.max(yLabelOffset, 1 + cycCapacityLabelOffset(yt.map(cycCapacityTickLabel)));
   return `
     <g class="plot">
       <text x="${x}" y="${y - 18}" class="panelTitle">${title}</text>
       <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/>
       ${xt.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${y}" y2="${y + h}" class="grid"/>${showXTickLabels ? `<text x="${sx(v)}" y="${y + h + 23}" class="tick" text-anchor="middle">${logX ? formatLogTick(v) : fmt(v, 3)}</text>` : ""}`).join("")}
-      ${yt.map((v) => `<line x1="${x}" x2="${x + w}" y1="${sy(v)}" y2="${sy(v)}" class="grid"/><text x="${x - 10}" y="${sy(v) + 4}" class="tick" text-anchor="end">${logY ? formatLogTick(v) : fmt(v, 3)}</text>`).join("")}
+      ${yt.map((v) => `<line x1="${x}" x2="${x + w}" y1="${sy(v)}" y2="${sy(v)}" class="grid"/><text x="${x - 10}" y="${sy(v) + 4}" class="tick" text-anchor="end">${logY ? formatLogTick(v) : readableY ? cycCapacityTickLabel(v) : fmt(v, 3)}</text>`).join("")}
       <line x1="${x}" x2="${x + w}" y1="${y + h}" y2="${y + h}" class="axis"/>
       <line x1="${x}" x2="${x}" y1="${y}" y2="${y + h}" class="axis"/>
       ${line ? `<path d="${path}" class="seriesLine"/>` : ""}
@@ -4633,6 +4642,20 @@ function cycStyle(seriesColor = "#0f766e", showGrid = true) {
     </style>`;
 }
 
+function cycReadableAxisTicks(domain) {
+  const [min, max] = domain;
+  if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) return [];
+  if (max === min) return [min];
+  const target = (max - min) / 5;
+  const power = 10 ** Math.floor(Math.log10(target));
+  const fraction = target / power;
+  const step = (fraction < Math.sqrt(2) ? 1 : fraction < Math.sqrt(10) ? 2 : fraction < Math.sqrt(50) ? 5 : 10) * power;
+  const start = Math.ceil(min / step - 1e-9);
+  const end = Math.floor(max / step + 1e-9);
+  return Array.from({ length: Math.max(0, Math.min(12, end - start + 1)) }, (_, i) => Number(((start + i) * step).toPrecision(15)))
+    .filter(value => value >= min && value <= max);
+}
+
 function drawPaperAxes({ x, y, w, h, xDomain, yDomain, y2Domain, xlabel, ylabel, y2label, integerX = false, xTicks = null, yTicks = null, xlabelOffset = 54, ylabelOffset = 72 }) {
   const sx = makeScale(xDomain, [x, x + w]);
   const sy = makeScale(yDomain, [y + h, y]);
@@ -4641,14 +4664,15 @@ function drawPaperAxes({ x, y, w, h, xDomain, yDomain, y2Domain, xlabel, ylabel,
   parts.push(`<line x1="${x}" x2="${x + w}" y1="${y + h}" y2="${y + h}" class="axis"/><line x1="${x}" x2="${x}" y1="${y}" y2="${y + h}" class="axis"/>`);
   if (y2Domain) parts.push(`<line x1="${x + w}" x2="${x + w}" y1="${y}" y2="${y + h}" class="axis"/>`);
   const xTickValues = xTicks || (integerX ? integerTicks(xDomain[0], xDomain[1], 6) : axisTicks(xDomain, 6));
-  const yTickValues = yTicks || axisTicks(yDomain, 6);
+  const yTickValues = yTicks || cycReadableAxisTicks(yDomain);
+  ylabelOffset = Math.max(ylabelOffset, 6 + cycCapacityLabelOffset(yTickValues.map(cycCapacityTickLabel)));
   parts.push(xTickValues.map((v) => `<line x1="${sx(v)}" x2="${sx(v)}" y1="${y + h}" y2="${y + h + 8}" class="axis"/><text x="${sx(v)}" y="${y + h + 35}" class="tick" text-anchor="middle">${integerX ? Math.round(v) : fmt(v, 3)}</text>`).join(""));
   parts.push(yTickValues.map((v) => {
     const isBoundary = Math.abs(v - yDomain[0]) < 1e-9 || Math.abs(v - yDomain[1]) < 1e-9;
     const grid = isBoundary ? "" : `<line x1="${x}" x2="${x + w}" y1="${sy(v)}" y2="${sy(v)}" class="grid"/>`;
-    return `<line x1="${x - 8}" x2="${x}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/>${grid}<text x="${x - 15}" y="${sy(v) + 5}" class="tick" text-anchor="end">${fmt(v, 3)}</text>`;
+    return `<line x1="${x - 8}" x2="${x}" y1="${sy(v)}" y2="${sy(v)}" class="axis"/>${grid}<text x="${x - 15}" y="${sy(v) + 5}" class="tick cycYAxisTick" text-anchor="end">${cycCapacityTickLabel(v)}</text>`;
   }).join(""));
-  if (y2Domain) parts.push(axisTicks(y2Domain, 6).map((v) => `<line x1="${x + w}" x2="${x + w + 7}" y1="${sy2(v)}" y2="${sy2(v)}" class="axis"/><text x="${x + w + 13}" y="${sy2(v) + 5}" class="tick">${fmt(v, 3)}</text>`).join(""));
+  if (y2Domain) parts.push(cycReadableAxisTicks(y2Domain).map((v) => `<line x1="${x + w}" x2="${x + w + 7}" y1="${sy2(v)}" y2="${sy2(v)}" class="axis"/><text x="${x + w + 13}" y="${sy2(v) + 5}" class="tick cycY2AxisTick">${cycCapacityTickLabel(v)}</text>`).join(""));
   parts.push(`<text x="${x + w / 2}" y="${y + h + xlabelOffset}" class="label" text-anchor="middle">${xlabel}</text>`);
   parts.push(`<text transform="translate(${x - ylabelOffset},${y + h / 2}) rotate(-90)" class="label" text-anchor="middle">${ylabel}</text>`);
   if (y2label) parts.push(`<text transform="translate(${x + w + 86},${y + h / 2}) rotate(90)" class="label" text-anchor="middle">${y2label}</text>`);
@@ -5488,6 +5512,7 @@ function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific
     xlabel: "Cycle number",
     ylabel: capacityAxisLabel,
     title: "Cycling performance",
+    readableY: true,
     xDomain: domains.x,
     yDomain: domains.y,
     points,
@@ -5605,7 +5630,7 @@ function cycCapacityTickStep(upper, isSpecificCapacity) {
 
 function cycCapacityTickLabel(value) {
   // Remove floating-point tails without rounding small Ah readings to zero.
-  return String(Number(value.toPrecision(12)));
+  return String(Number(value.toPrecision(15)));
 }
 
 function cycCapacityLabelOffset(labels) {
