@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.3";
+const PORTAL_VERSION = "0.2.4";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.4",
+    "date": "2026-09-14",
+    "changes": [
+      "Separate repeated EIS measurement segments for viewing and DRT fitting without changing raw rows.",
+      "Require segment selection and a compatible backend; preserve source row indices and fit warnings."
+    ]
+  },
   {
     "version": "0.2.3",
     "date": "2026-09-14",
@@ -2285,7 +2293,7 @@ function updateFigureChoices() {
   if (question) question.textContent = "\uc5b4\ub5a4 Fig\ub97c \ub9cc\ub4e4\uc5b4 \ub4dc\ub9b4\uae4c\uc694?";
   if (createBtn) createBtn.classList.remove("hidden");
   const options = {
-    eis: [["eis-combined", "Nyquist + Bode \ud1b5\ud569 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
+    eis: [["eis-combined", "Nyquist + DRT \ud1b5\ud569 Fig"], ["nyquist", "Nyquist plot"], ["bode", "Bode magnitude/phase"]],
     cyc: [["cycling-performance", "\uc140 \uc131\ub2a5 \ud14c\uc2a4\ud2b8: capacity/efficiency vs cycle"], ["voltage-profile", "\uc804\uc555/\uc804\ub958 \uac70\ub3d9: voltage-capacity/time \ub610\ub294 voltage/current vs cycle"], ["dqdv", "dQ/dV \ud53c\ud06c: \uc804\uc555\uc5d0 \ub530\ub978 \uc6a9\ub7c9 \ubcc0\ud654"]],
     cv: [["cv-curve", "CV curve: current vs voltage"], ["cv-comparison", "Scan rate \ube44\uad50 Fig"]],
     unknown: [["table-preview", "\ud45c \ud615\ud0dc\ub85c \ubbf8\ub9ac\ubcf4\uae30"]],
@@ -2329,7 +2337,7 @@ function updateCreateFigureButton() {
     "cycling-performance": "\uc131\ub2a5 Fig \uc0dd\uc131",
     "voltage-profile": "\uc804\uc555/\uc804\ub958 Fig \uc0dd\uc131",
     dqdv: "dQ/dV Fig \uc0dd\uc131",
-    "eis-combined": "Nyquist + Bode Fig \uc0dd\uc131",
+    "eis-combined": "Nyquist + DRT Fig \uc0dd\uc131",
     nyquist: "Nyquist Fig \uc0dd\uc131",
     bode: "Bode Fig \uc0dd\uc131",
     "cv-curve": "CV Fig \uc0dd\uc131",
@@ -8189,7 +8197,7 @@ function figureLabel(d) {
     "cyc-combined": "\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
     "nyquist": "Nyquist Fig",
     "bode": "Bode Fig",
-    "eis-combined": "Nyquist + Bode Fig",
+    "eis-combined": "Nyquist + DRT Fig",
     "cv-curve": "CV Fig",
     "cv-comparison": "CV \ube44\uad50 Fig",
     "table-preview": "\ud45c \ubbf8\ub9ac\ubcf4\uae30",

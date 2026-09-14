@@ -18,7 +18,7 @@ class EisUiEncodingTests(unittest.TestCase):
             "mag</code>: \\uc784\\ud53c\\ub358\\uc2a4 \\ud06c\\uae30",
             "phase</code>: \\uc704\\uc0c1\\uac01(degree)",
             "\\uc5b4\\ub5a4 Fig\\ub97c \\ub9cc\\ub4e4\\uc5b4 \\ub4dc\\ub9b4\\uae4c\\uc694?",
-            "Nyquist + Bode \\ud1b5\\ud569 Fig",
+            "Nyquist + DRT \\ud1b5\\ud569 Fig",
         ]
 
         for label in expected_labels:

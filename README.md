@@ -1,23 +1,23 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.3-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.4-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.3** — readable Y-axis ticks across CYC performance, voltage/current and dQ/dV views. Measured units, axis limits, portal layout, authentication, EIS/CV and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
+> Source release: **v0.2.4** — separate repeated EIS measurement segments before DRT fitting. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.3**이며, 운영 배포 여부와는 별개입니다. CYC 성능뿐 아니라 전압·전류·dQ/dV의 Y축 눈금도 읽기 쉬운 일정 간격으로 표시합니다. 확인한 전압 그래프는 `2.5 · 3 · 3.5 · 4 V`, dQ/dV는 `−0.6 · −0.4 · −0.2 · 0 · 0.2`로 표시됩니다. 원본 값·단위·축 범위는 유지하며 질량 정보 없이 mAh/g로 임의 변환하지 않습니다. **새로고침 후 기존 Fig를 다시 열면 적용됩니다.** 원본 파일·DB·저장 구조·로그인·전체 화면 구성과 EIS/CV는 변경하지 않았습니다.
+현재 소스 버전은 **v0.2.4**이며, 운영 배포 여부와는 별개입니다. 여러 번 측정된 EIS 파일은 **측정 구간 선택**에서 나눠 보고, 한 구간을 선택한 뒤 DRT를 계산합니다. 서로 다른 구간 사이의 연결선을 끊고, 전체 구간을 한 스펙트럼처럼 잘못 계산하지 않도록 막습니다. 원본 점을 삭제하거나 평균 내지 않으며, 구간을 나눠도 큰 오차와 해석 주의 경고는 유지합니다. **새 백엔드 적용에는 서버 재시작이 필요합니다.** CYC의 읽기 쉬운 Y축 눈금, CV, 로그인, 화면 구조와 저장 위치는 그대로입니다.
 
 ## EIS DRT 사용법
 
 1. 저장된 EIS 통합 Fig를 엽니다. 표를 편집했다면 먼저 표를 저장합니다.
-2. Fig 아래의 **DRT 설정**에서 M, λ, 직렬 L 포함 여부를 선택하고 **DRT 계산·저장**을 누릅니다. 기본값은 시작값이며 항상 최적은 아닙니다.
+2. 여러 측정 구간이 있으면 **측정 구간 선택**에서 하나를 고릅니다. **DRT 설정**에서 M, λ, 직렬 L 포함 여부를 선택하고 **DRT 계산·저장**을 누릅니다. 기본값은 시작값이며 항상 최적은 아닙니다.
 3. 왼쪽은 −Im(Z), 오른쪽 아래는 실제 Im(Z)입니다. 측정값은 마커, 재구성은 주황 점선입니다. Rs·L·오차와 중립적 P1/P2 피크를 확인합니다.
 4. τ 구간을 입력해 ln(τ)에 대한 저항 적분을 계산하고 DRT CSV·재구성 CSV·메타데이터 JSON 또는 기존 SVG·PNG를 저장합니다.
 
@@ -68,6 +68,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.4 | 2026-09-14 | EIS 반복 측정 구간별 보기·DRT 계산, 원본 행 보존, 구형 서버 계산 차단. |
 | v0.2.3 | 2026-09-14 | CYC 전압·전류·dQ/dV·통합 성능의 Y축 눈금 정리. 실제 WRD 8개 읽기 전용 검증. |
 | v0.2.2 | 2026-09-14 | CYC Y축 눈금 간격 정리, 숫자와 축 제목 겹침 해소. 측정값·단위 유지. |
 | v0.2.1 | 2026-09-14 | 저장 CYC 그래프 복구, 빈 용량 칸 처리와 작은 Ah 축 범위 수정. 원본 파일 유지. |

@@ -17,6 +17,59 @@ def spectrum(two=False, pure=False):
 
 
 class DrtTests(unittest.TestCase):
+    def test_spectra_partition_keeps_sweeps_direction_invalid_rows_and_input_order(self):
+        from backend.analysis.eis_drt import normalized_point, partition_spectra
+        rows = [{"frequency": f, "zreal": 5, "zimag": -2, "_raw": {"sweep": 1}}
+                for f in [100, 10, None, 1, 1, 10, 100]]
+        rows += [{"frequency": f, "zreal": 6, "zimag": -3, "sweep": " 2 "}
+                 for f in [1000, 100, 10, 20, 30]]
+        before = copy.deepcopy(rows)
+        points = [normalized_point(row, index) for index, row in enumerate(rows)]
+        groups = partition_spectra(points)
+        self.assertEqual([[p["rowIndex"] for p in group] for group in groups],
+                         [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11]])
+        self.assertEqual(points[0]["sweep"], "1")
+        self.assertEqual(points[7]["sweep"], "2")
+        self.assertEqual([p for group in groups for p in group], points)
+        self.assertEqual(rows, before)
+
+    def test_spectrum_selection_fits_only_selected_rows_with_original_indices(self):
+        rows = [dict(row, sweep=1) for row in spectrum()[:12]]
+        rows += [dict(row, sweep=2, z_real_ohm=row["z_real_ohm"] + 50) for row in spectrum()[:12]]
+        rows.insert(15, {"sweep": 2, "frequency_Hz": None})
+        before = copy.deepcopy(rows)
+        result = fit_drt(rows, {"M": 20, "spectrumIndex": 1})
+        self.assertEqual(result["metadata"]["spectrumIndex"], 1)
+        self.assertEqual(result["metadata"]["spectrumCount"], 2)
+        self.assertEqual(result["quality"]["inputCount"], 13)
+        self.assertEqual(result["quality"]["excludedCount"], 1)
+        self.assertEqual(result["quality"]["duplicateFrequencyCount"], 0)
+        self.assertEqual([p["rowIndex"] for p in result["reconstruction"]],
+                         [i for i in range(12, 25) if i != 15])
+        self.assertTrue(all(p["z_real_raw_ohm"] > 50 for p in result["reconstruction"]))
+        self.assertEqual(rows, before)
+
+    def test_three_bidirectional_sweeps_form_six_complete_spectra(self):
+        from backend.analysis.eis_drt import normalized_point, partition_spectra
+        descending = np.logspace(5, -1, 61).tolist()
+        rows = [{"frequency": frequency, "zreal": 5, "zimag": -2, "sweep": sweep}
+                for sweep in (1, 2, 3) for frequency in descending + list(reversed(descending))]
+        groups = partition_spectra([normalized_point(row, index) for index, row in enumerate(rows)])
+        self.assertEqual([len(group) for group in groups], [61] * 6)
+        self.assertEqual([p["rowIndex"] for group in groups for p in group], list(range(366)))
+        self.assertEqual([group[0]["sweep"] for group in groups], ["1", "1", "2", "2", "3", "3"])
+
+    def test_omitted_spectrum_selection_keeps_legacy_all_rows(self):
+        rows = spectrum()[:8] * 2
+        result = fit_drt(rows, {"M": 20})
+        self.assertEqual(len(result["reconstruction"]), 16)
+        self.assertEqual(result["quality"]["duplicateFrequencyCount"], 8)
+
+    def test_invalid_spectrum_selection_rejected_without_coercion(self):
+        for index in [True, False, "0", 0.0, None, -1, 1, 999]:
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, "spectrumIndex"):
+                fit_drt(spectrum()[:8], {"M": 20, "spectrumIndex": index})
+
     def test_sign_headers_and_no_double_inversion(self):
         variants = [{"frequency": 10, "Re(Z)": 5, key: value} for key,value in
                     [("Im(Z)",-2), ("Z''",-2), ("-Im(Z)",2), ("-Z''",2)]]

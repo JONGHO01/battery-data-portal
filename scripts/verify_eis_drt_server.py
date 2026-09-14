@@ -23,6 +23,7 @@ def main():
         z=3+1j*w*1e-6+5/(1+1j*w*1e-4)+15/(1+1j*w*.1)
         eis=[dict(frequency_Hz=float(a),z_real_ohm=float(b.real),z_imag_ohm=float(b.imag)) for a,b in zip(f,z)]
         fixtures=[("EIS-TWO-RC","eis","eis-combined",eis),
+                  ("EIS-REPEATED","eis","eis-combined",eis+list(reversed(eis))),
                   ("EIS-NO-FREQUENCY","eis","eis-combined",[{"zreal":5,"zimag":-2},{"zreal":6,"zimag":-3}]),
                   ("CYC-UNCHANGED","cyc","cycling-performance",[{"cycle":i,"capacity":150-i} for i in range(1,8)]),
                   ("CV-UNCHANGED","cv","cv-curve",[{"voltage":i/10,"current":float(np.sin(i/4))} for i in range(21)])]

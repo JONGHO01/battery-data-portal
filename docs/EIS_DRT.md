@@ -1,4 +1,12 @@
-# EIS-only DRT analysis (v0.2.0)
+# EIS-only DRT analysis
+
+## Repeated measurements and upload checks (v0.2.4)
+
+The EIS view splits acquisition-order data at an explicit sweep change, a repeated positive frequency, or a reversal of frequency direction. These are inferred measurement segments, not automatically identified physical cycles. No points are sorted, averaged or removed. All-segment viewing breaks the connecting line at every boundary; select one segment to calculate DRT. Prior aggregate fits are not displayed in all-segment mode.
+
+The existing authorized analyses POST accepts optional `parameters.spectrumIndex`: a **zero-based integer** identifying this deterministic segmentation of original Dataset rows. Boolean, string, fractional, negative and out-of-range values return the existing controlled HTTP 400. The server selects the segment before quality normalization and preserves original `rowIndex` in reconstruction. Result metadata add `spectrumIndex` and `spectrumCount`. Omitting the parameter preserves legacy API behavior; the current UI does not submit an unselected multi-segment fit. No schema or storage migration is required.
+
+Before selected-segment POST, the browser requires GET /api/health to advertise eisDrtSpectrumSelection=true. It also verifies returned selection metadata before displaying a fit, so an older running backend cannot silently save or show an aggregate result as a selected segment. Restart an existing local backend only with user approval. Browser upload inspection of the reported stored SEO source completed successfully; an unspecified separate upload failure has not been reproduced. Inspecting does not finalize a duplicate Dataset or Fig.
 
 ## Scope and data flow
 

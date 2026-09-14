@@ -175,7 +175,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.2.3", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.2.4", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -3251,6 +3251,7 @@ def validate_runtime_configuration() -> None:
 def health():
     return {
         "ok": True,
+        "eisDrtSpectrumSelection": True,
         "environment": os.environ.get("APP_ENV", "local"),
         "database": "postgresql" if USE_POSTGRES else "sqlite",
         "accountStorePersistent": account_store_is_persistent(),

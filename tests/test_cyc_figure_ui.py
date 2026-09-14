@@ -390,7 +390,7 @@ class CycFigureUiTests(unittest.TestCase):
             r"\uc800\uc7a5\ub41c Fig\ub97c \ubd88\ub7ec\uc654\uc2b5\ub2c8\ub2e4.",
             r"\uc131\ub2a5 \ud14c\uc2a4\ud2b8 Fig",
             r"\uc804\uc555 \ud504\ub85c\ud30c\uc77c Fig",
-            r"Nyquist + Bode Fig",
+            r"Nyquist + DRT Fig",
         ):
             self.assertIn(escaped_label, saved_list)
         self.assertIn("function renderSavedList()", saved_list)

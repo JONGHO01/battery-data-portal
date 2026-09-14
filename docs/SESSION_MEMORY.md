@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current EIS fix (2026-09-14): v0.2.4 separates repeated measurement segments for viewing and DRT calculation, retains original rows and reconstruction indices, and blocks selected-segment POST to a backend without eisDrtSpectrumSelection. The real 366-row SEO source contains six 61-point segments; individual reconstruction errors remain 5.8–19.2%, not validated physical fits. Local backend remains v0.2.1; restart approval and the user's failing upload path are pending. GitHub source publication must be checked from refs.
+
 > Current display fix (2026-09-14): v0.2.3 extends readable Y ticks to CYC voltage/current, dQ/dV and combined performance. Domain limits, units and source values remain unchanged. Eight requested local WRD files parse to three charge/discharge cycles each; mass is unavailable, so Ah is retained. No experimental files or database records were changed or re-uploaded.
 
 > Current display fix (2026-09-14): v0.2.2 uses round CYC Y ticks and label-length-aware title spacing. The reported 7,153-row WRD Fig renders 0/0.002/0.004/0.006/0.008 Ah, retains three discharge points, and has about 19 px of title/tick clearance. Source values/units, parser, DB, storage, login and EIS/CV are unchanged. Running backend remains 0.2.1; the static fix requires browser refresh only.
@@ -29,6 +31,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Implement and verify EIS repeated-segment correction. The reported stored SEO file passed actual file-chooser/inspection testing; an unspecified separate upload failure is unresolved, not silently declared fixed.
 
 Completed v0.2.3 CYC Y-axis readability across the remaining views; finish scoped publication after release checks. Older completed tasks below are historical.
 
@@ -284,6 +288,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.4: backend/analysis/eis_drt.py; public/eis-drt.js; python_backend.py (health capability/version); EIS labels in public/app.js; focused EIS tests and label expectations; isolated smoke fixture; synchronized release files and docs/EIS_DRT.md. No experimental raw files, real analysis records, shared parser, schema or storage settings changed.
+
 - v0.2.3: `public/app.js`, `tests/test_cyc_rendering.py`, synchronized release files and documentation. Original WRD files and runtime artifacts are excluded.
 
 - v0.2.2: `public/app.js` CYC axis helpers/rendering; `tests/test_cyc_rendering.py` and `tests/test_cyc_figure_ui.py`; synchronized version/cache/README/changelog metadata. Preserve the previous local-restart note. No runtime or experiment files are included.
@@ -415,6 +421,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.4: obtain approval before restarting the existing 4174 server; refresh and verify health capability afterward. Ask for the actual failing upload file/path and action; the stored SEO source passed inspection only (no duplicate Dataset/Fig finalization). Do not infer Render deployment from GitHub push.
+
 - v0.2.3: verify the remote commit before reporting GitHub publication. Production deployment remains separately unverified. File names have no explicit mass unit; do not infer mAh/g or interpret the low third discharge as degradation without checking experiment completion.
 
 - v0.2.1: no CYC implementation work remains after local browser and automated checks. Verify the GitHub commit/ref before reporting publication. Render deployment and production Neon/B2 are outside this fix's verification; the running backend version label updates only at a separately authorized restart.
@@ -487,6 +495,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.2.4: full pytest suite: 266 passed, 18 subtests passed; both JavaScript syntax checks passed. Tests cover boundaries, retained row indices, invalid spectrumIndex HTTP 400, UI selection/stale-result handling, and preventing POST to an incompatible backend. Isolated synthetic selected-segment fitting and restoration passed in browser; real SEO six-segment display and read-only per-segment calculations passed. pnpm audit could not run without a lockfile; no frontend dependencies or lockfile were introduced.
 
 - 2026-09-14 all CYC Y axes: the new round-tick reproduction failed before implementation. Full suite passed **258 tests and 6 subtests**; JavaScript syntax and diff checks passed. Eight real WRD files parsed read-only (7,153–7,449 retained rows, three cycles each). Browser voltage ticks: 2.5/3/3.5/4 V; dQ/dV ticks: -0.6/-0.4/-0.2/0/0.2, three curves retained, no NaN/Infinity or console warnings/errors. Native companion .cyc files were not treated as supported data uploads.
 

@@ -7,6 +7,22 @@ from tests.test_eis_drt import spectrum
 
 
 class DrtApiTests(unittest.TestCase):
+    def test_health_advertises_spectrum_selection_capability(self):
+        self.assertIs(portal.health()["eisDrtSpectrumSelection"], True)
+
+    def test_selected_spectrum_provenance_and_invalid_index_controlled_error(self):
+        rows = [dict(row, sweep=sweep) for sweep in (1, 2) for row in spectrum()[:8]]
+        item = {"id": "DRT-SELECT", "dataType": "eis", "rows": rows}
+        result, provenance = portal.run_dataset_analysis(item, "eis-drt", {"M": 20, "spectrumIndex": 1})
+        self.assertEqual(result["metadata"]["spectrumIndex"], 1)
+        self.assertEqual(result["metadata"]["spectrumCount"], 2)
+        self.assertEqual([p["rowIndex"] for p in result["reconstruction"]], list(range(8, 16)))
+        self.assertEqual(provenance["sourceDatasetId"], "DRT-SELECT")
+        for index in [True, "1", -1, 2]:
+            with self.subTest(index=index), self.assertRaises(HTTPException) as raised:
+                portal.run_dataset_analysis(item, "eis-drt", {"M": 20, "spectrumIndex": index})
+            self.assertEqual(raised.exception.status_code, 400)
+
     def test_existing_analysis_dispatch_preserves_review_rows_and_provenance(self):
         rows = spectrum()
         rows[0]["analysis_include"] = False

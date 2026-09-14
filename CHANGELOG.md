@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.2.4 - 2026-09-14
+
+- Split repeated EIS acquisition data at sweep changes, repeated frequencies and direction reversals. Break cross-segment lines and require one selected segment before DRT fitting; do not sort, average or delete source points.
+- Add optional validated spectrumIndex to the existing protected analysis operation and preserve original row indices. Check the health capability before selected-segment submission; an older running server requires an approved restart.
+- Restore only matching selected-segment analyses, keep uncertainty warnings, and correct combined EIS labels to Nyquist + DRT. No CYC/CV, shared parser, login, storage configuration or schema changes.
+- Verification: 266 tests and 18 subtests passed. Synthetic selected-segment fitting/restoration passed in an isolated browser/server; a real 366-row SEO file separated into six 61-point segments and parsed through the local file chooser. The unspecified upload failure was not reproduced. Real segment reconstruction errors remain about 5.8–19.2%; no physical-validity claim.
+- JavaScript syntax checks passed. Package audit could not run because this dependency-free frontend has no pnpm lockfile; no security-audit success is claimed. Existing localhost backend and production deployment are separate from this source release.
+
 ## v0.2.3 - 2026-09-14
 
 - Extend round Y-axis ticks to CYC voltage profiles, voltage/current trends, dQ/dV and combined performance views. Keep custom axis limits and plotted values unchanged, include zero when in range, and preserve small signed readings without duplicate labels.

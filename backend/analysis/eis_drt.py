@@ -55,7 +55,51 @@ def normalized_point(row, index=0):
         canonical_present = "z_imag_ohm" in row or "zimag" in row
         if not canonical_present or (neg is not None and zi == neg):
             zi = -neg if neg is not None else None
-    return {"frequency_Hz":f,"z_real_ohm":zr,"z_imag_ohm":zi,"rowIndex":index}
+    sweep = row.get("sweep")
+    if sweep is None or not str(sweep).strip():
+        sweep = raw.get("sweep")
+    sweep = str(sweep).strip() if sweep is not None else None
+    return {"frequency_Hz":f,"z_real_ohm":zr,"z_imag_ohm":zi,"rowIndex":index,"sweep":sweep or None}
+
+
+def partition_spectra(points):
+    """Split acquisition-order points without sorting, averaging or dropping rows.
+
+    Explicit sweep changes, repeated positive frequencies and reversals of the
+    frequency direction start a new segment. Invalid frequencies stay visible
+    in their segment but do not contribute to frequency-direction inference.
+    """
+    groups, current, seen = [], [], set()
+    previous_frequency, direction, last_sweep = None, 0, None
+    for point in points:
+        frequency = _number(point.get("frequency_Hz"))
+        valid_frequency = frequency is not None and frequency > 0
+        sweep = point.get("sweep")
+        sweep = str(sweep).strip() if sweep is not None else None
+        sweep = sweep or None
+        step = 0
+        if valid_frequency and previous_frequency is not None:
+            step = 1 if frequency > previous_frequency else -1 if frequency < previous_frequency else 0
+        boundary = bool(current) and (
+            (sweep is not None and last_sweep is not None and sweep != last_sweep)
+            or (valid_frequency and frequency in seen)
+            or (step and direction and step != direction)
+        )
+        if boundary:
+            groups.append(current)
+            current, seen = [], set()
+            previous_frequency, direction, step = None, 0, 0
+        current.append(point)
+        if sweep is not None:
+            last_sweep = sweep
+        if valid_frequency:
+            if step:
+                direction = step
+            previous_frequency = frequency
+            seen.add(frequency)
+    if current:
+        groups.append(current)
+    return groups
 
 
 def normalize_eis(rows):
@@ -99,7 +143,17 @@ def fit_drt(rows, settings=None):
         raise ValueError("Invalid includeL or lambda mode.")
     if not isinstance(rows,list) or len(rows) > 2000:
         raise ValueError("DRT supports at most 2000 source rows per calculation; no automatic subsampling is applied.")
-    points, quality = normalize_eis(rows)
+    spectra = partition_spectra([normalized_point(row, index) for index, row in enumerate(rows)])
+    spectrum_index = settings.get("spectrumIndex")
+    if "spectrumIndex" in settings:
+        if isinstance(spectrum_index, bool) or not isinstance(spectrum_index, int) or not 0 <= spectrum_index < len(spectra):
+            raise ValueError("spectrumIndex must be an integer identifying an available spectrum (zero-based).")
+        selected_indices = [point["rowIndex"] for point in spectra[spectrum_index]]
+        points, quality = normalize_eis([rows[index] for index in selected_indices])
+        for point in points:
+            point["rowIndex"] = selected_indices[point["rowIndex"]]
+    else:
+        points, quality = normalize_eis(rows)
     if len(points) < 3 or len({p["frequency_Hz"] for p in points}) < 3:
         raise ValueError("DRT requires frequency, Re(Z), Im(Z) at three distinct positive frequencies.")
     f = np.array([p["frequency_Hz"] for p in points])
@@ -189,7 +243,8 @@ def fit_drt(rows, settings=None):
                 "Rs":rs,"L":inductance,"includeL":include_l,"variableCount":len(x),"mode":mode,
                 "autoSelectionReliable":auto_reliable,"Z0":z0,"signConvention":"Z = Re(Z) + i Im(Z)",
                 "excludedCount":quality["excludedCount"],"densityMeasure":"d(ln tau)","solver":"scipy.optimize.lsq_linear/bvls",
-                "measuredTimeBand":band,"peakRegions":"neighboring local minima; editable intervals, not physical assignments"}
+                "measuredTimeBand":band,"peakRegions":"neighboring local minima; editable intervals, not physical assignments",
+                "spectrumIndex":spectrum_index,"spectrumCount":len(spectra)}
     reconstruction = [{"frequency_Hz":float(fi),"z_real_raw_ohm":float(zi.real),"z_imag_raw_ohm":float(zi.imag),
                        "z_real_fit_ohm":float(fit.real),"z_imag_fit_ohm":float(fit.imag),
                        "residual_real":float((fit-zi).real),"residual_imag":float((fit-zi).imag),"rowIndex":p["rowIndex"]}

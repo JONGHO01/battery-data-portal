@@ -7,14 +7,27 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DrtUiTests(unittest.TestCase):
+    def test_frequency_return_legs_and_explicit_sweeps_are_not_connected(self):
+        self.js('''
+const rows=[100,10,1,1,10,100,100,10,1].map((frequency,i)=>({frequency,zreal:i+1,zimag:-2,sweep:i<6?1:2}));
+const before=JSON.stringify(rows),points=drt.normalizeRows(rows);
+assert.deepEqual(points.map(p=>p.spectrumIndex),[0,0,0,1,1,1,2,2,2]);
+assert.equal(JSON.stringify(rows),before);
+const svg=drt.svg(points,null,{w:1100,h:720,title:'test',date:''});
+const paths=[...svg.matchAll(/class="eis-drt-measured-line" d="([^"]+)"/g)];
+assert.equal((paths[0][1].match(/M/g)||[]).length,3);
+assert.deepEqual(drt.normalizeRows([100,10,1,10,100].map(frequency=>({frequency,zreal:1,zimag:-2}))).map(p=>p.spectrumIndex),[0,0,0,1,1]);
+''')
+
     def test_file_change_discards_inflight_result_and_missing_frequency_does_not_post(self):
         self.js('''
-const nodes={}; let fileChanged, resolveRequest, requests=0;
+const nodes={}; let fileChanged, resolveRequest, requests=0,lastOptions,supportsSelection=true;
 const values={M:{value:100},lambda:{value:.001},includeL:{checked:true,style:{}},mode:{value:'manual'},lambdaSlider:{value:-3}};
 values[Symbol.iterator]=function*(){yield* Object.values(this);};
 const form={elements:values,style:{},addEventListener(){}};
 const status={textContent:''},details={replaceChildren(){this.innerHTML='';}},plot={innerHTML:''};
-const controls={innerHTML:'',querySelector(s){return s==='form'?form:s==='[data-drt-status]'?status:details;}};
+const selector={value:'',disabled:false};
+const controls={innerHTML:'',querySelector(s){return s==='form'?form:s==='[data-drt-status]'?status:s==='[data-eis-spectrum]'?selector:details;}};
 nodes.figureCanvas={contains:n=>n===controls,querySelector:s=>s==='[data-eis-plot]'?plot:controls};
 for(const id of ['figureTitle','figureSubtitle','metaGrid'])nodes[id]={};
 nodes.smartFile={addEventListener(name,callback){fileChanged=callback;}};
@@ -23,7 +36,7 @@ global.figureSvgSize=()=>({w:1100,h:720});global.figureDatasetLabel=()=> 'test';
 global.normalizeHexColor=()=> '#14888a';global.cleanNyquistBounds=()=>({x:[0,10],y:[-5,5]});
 global.resolveFigureAxisDomains=(x,y)=>({x,y});global.applyAnnotationsToSvg=()=>{};
 global.authHeaders=x=>x;global.apiErrorMessage=()=> 'controlled failure';
-global.fetchJsonWithTimeout=()=>{requests++;return new Promise(resolve=>resolveRequest=resolve);};
+global.fetchJsonWithTimeout=(url,options)=>{if(url==='/api/health')return Promise.resolve({res:{ok:true},body:{eisDrtSpectrumSelection:supportsSelection}});requests++;lastOptions=options;return new Promise(resolve=>resolveRequest=resolve);};
 async function check(){
  drt.render({rows:[{zreal:5,zimag:-2}]});
  await form.onsubmit({preventDefault(){}});
@@ -37,6 +50,18 @@ async function check(){
  drt.render({rows:[...rows]});const failed=form.onsubmit({preventDefault(){}});
  resolveRequest({res:{ok:false},body:{}});await failed;
  assert.equal(status.textContent,'controlled failure');assert.equal(values.M.disabled,false);
+ const repeated=[...rows,...[...rows].reverse()];
+ drt.render({rows:repeated});const oldRequests=requests;
+ const blocked=form.onsubmit({preventDefault(){}});
+ assert.equal(requests,oldRequests);await blocked;assert.match(status.textContent,/측정 구간/);
+ selector.value='1';selector.onchange();
+ const selected=form.onsubmit({preventDefault(){}});
+ await Promise.resolve();
+ assert.equal(JSON.parse(lastOptions.body).parameters.spectrumIndex,1);
+ resolveRequest({res:{ok:false},body:{}});await selected;
+ supportsSelection=false;const beforeLegacy=requests;
+ const legacy=form.onsubmit({preventDefault(){}});await Promise.resolve();
+ assert.equal(requests,beforeLegacy);await legacy;assert.match(status.textContent,/재시작/);
 }
 check().catch(e=>{console.error(e);process.exitCode=1;});
 ''')
