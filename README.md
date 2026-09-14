@@ -1,23 +1,23 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.4-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.5-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.4** — separate repeated EIS measurement segments before DRT fitting. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
+> Source release: **v0.2.5** — EIS-only 55:45 panels, compact DRT controls, unique frequency ranges and guarded initial automatic fitting. Original rows, CYC/CV, portal layout, authentication and Neon/B2 storage remain unchanged. GitHub source and running-server versions must be verified separately.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.4**이며, 운영 배포 여부와는 별개입니다. 여러 번 측정된 EIS 파일은 **측정 구간 선택**에서 나눠 보고, 한 구간을 선택한 뒤 DRT를 계산합니다. 서로 다른 구간 사이의 연결선을 끊고, 전체 구간을 한 스펙트럼처럼 잘못 계산하지 않도록 막습니다. 원본 점을 삭제하거나 평균 내지 않으며, 구간을 나눠도 큰 오차와 해석 주의 경고는 유지합니다. **새 백엔드 적용에는 서버 재시작이 필요합니다.** CYC의 읽기 쉬운 Y축 눈금, CV, 로그인, 화면 구조와 저장 위치는 그대로입니다.
+현재 소스 버전은 **v0.2.5**이며, 운영 배포 여부와는 별개입니다. EIS 분석 영역만 **왼쪽 55% / 오른쪽 45%**로 정리하고 DRT Controls를 작은 카드로 묶었습니다. 같은 주파수 범위는 한 번만 표시하며 첫 유효 측정을 대표로 사용합니다. 원본은 평균·삭제하지 않습니다. 유효한 데이터는 자동 λ 계산을 한 번 시도하고, 불확실하면 수동 계산을 안내합니다. 기존 v0.2.4 백엔드는 그대로 사용할 수 있으며 정적 화면은 새로고침하면 적용됩니다. CYC/CV, 로그인, 포탈 레이아웃과 저장 위치는 그대로입니다.
 
 ## EIS DRT 사용법
 
 1. 저장된 EIS 통합 Fig를 엽니다. 표를 편집했다면 먼저 표를 저장합니다.
-2. 여러 측정 구간이 있으면 **측정 구간 선택**에서 하나를 고릅니다. **DRT 설정**에서 M, λ, 직렬 L 포함 여부를 선택하고 **DRT 계산·저장**을 누릅니다. 기본값은 시작값이며 항상 최적은 아닙니다.
+2. **DRT Controls → 측정 구간**에서 고주파–저주파 범위를 고릅니다. 같은 범위의 반복 측정 방향은 접힌 메타데이터에 보존됩니다. 저장 결과가 없고 입력이 완전하면 자동 λ 계산을 한 번 시도합니다. 필요하면 수동 모드에서 M, λ, 직렬 L을 조절하고 **DRT 계산·저장**을 누릅니다.
 3. 왼쪽은 −Im(Z), 오른쪽 아래는 실제 Im(Z)입니다. 측정값은 마커, 재구성은 주황 점선입니다. Rs·L·오차와 중립적 P1/P2 피크를 확인합니다.
 4. τ 구간을 입력해 ln(τ)에 대한 저항 적분을 계산하고 DRT CSV·재구성 CSV·메타데이터 JSON 또는 기존 SVG·PNG를 저장합니다.
 
@@ -68,6 +68,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.5 | 2026-09-14 | EIS 55:45 그래프·작은 DRT 카드, 주파수 범위 중복 제거, 실제 τ축과 자동 계산. |
 | v0.2.4 | 2026-09-14 | EIS 반복 측정 구간별 보기·DRT 계산, 원본 행 보존, 구형 서버 계산 차단. |
 | v0.2.3 | 2026-09-14 | CYC 전압·전류·dQ/dV·통합 성능의 Y축 눈금 정리. 실제 WRD 8개 읽기 전용 검증. |
 | v0.2.2 | 2026-09-14 | CYC Y축 눈금 간격 정리, 숫자와 축 제목 겹침 해소. 측정값·단위 유지. |

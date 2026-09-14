@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current EIS UI (2026-09-14): v0.2.5 changes only EIS behavior in public/eis-drt.js: 55:45 panels, compact controls/status, unique frequency ranges, real initial tau limits and one guarded automatic attempt. Same-range repeated acquisitions use the first complete representative; original rows/directions remain unchanged and metadata discloses that choice. Unreliable auto fallback is never shown as success. Other modified application files contain release metadata only. Existing localhost:4174 backend remains compatible v0.2.4; no restart/cloud configuration change was made.
+
 > Current EIS verification (2026-09-14): v0.2.4 source is published at ae8e0b5. On the follow-up check, localhost:4174 was stopped (connection refused); the official launcher started it without terminating any existing process. Independent health confirms v0.2.4 and eisDrtSpectrumSelection=true. Actual SEO file chooser, 366-row inspection, Fig generation and reopening passed; saved Fig count remained 60. One selected 61-point DRT analysis was saved through the normal UI, with 19.16% error and warnings retained. Original source rows were not edited. The unspecified other failing file is still unknown, so no claim covers all uploads. Earlier restart-pending notes below are historical.
 
 > Current display fix (2026-09-14): v0.2.3 extends readable Y ticks to CYC voltage/current, dQ/dV and combined performance. Domain limits, units and source values remain unchanged. Eight requested local WRD files parse to three charge/discharge cycles each; mass is unavailable, so Ah is retained. No experimental files or database records were changed or re-uploaded.
@@ -31,6 +33,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed the EIS-only layout/range/automatic-calculation refinement. Keep global CSS, portal shell, login/routes and CYC/CV unchanged. Verify scoped GitHub publication separately from Render deployment.
 
 Implement and verify EIS repeated-segment correction. The reported stored SEO file passed actual file-chooser/inspection testing; an unspecified separate upload failure is unresolved, not silently declared fixed.
 
@@ -288,6 +292,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.2.5: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; synchronized VERSION/package.json, README/CHANGELOG, app release history, index cache versions, FastAPI version metadata, and this memory. No analysis backend logic, shared CSS, raw files or database settings changed.
+
 - v0.2.4: backend/analysis/eis_drt.py; public/eis-drt.js; python_backend.py (health capability/version); EIS labels in public/app.js; focused EIS tests and label expectations; isolated smoke fixture; synchronized release files and docs/EIS_DRT.md. No experimental raw files, real analysis records, shared parser, schema or storage settings changed.
 
 - v0.2.3: `public/app.js`, `tests/test_cyc_rendering.py`, synchronized release files and documentation. Original WRD files and runtime artifacts are excluded.
@@ -421,6 +427,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
+- v0.2.5: verify GitHub main publication from refs. Actual Render deployment is unverified. DRT CSV download-event confirmation timed out in the isolated browser; file generation/handlers remain unchanged and unit-tested, but do not claim a new end-to-end download success for this session.
+
 - v0.2.4: local startup and selected-segment capability are verified. If upload failure recurs, obtain the exact failing file/path and action; the reported stored SEO source now passes through Fig generation and reopening. Do not infer Render deployment from GitHub push.
 
 - v0.2.3: verify the remote commit before reporting GitHub publication. Production deployment remains separately unverified. File names have no explicit mass unit; do not infer mAh/g or interpret the low third discharge as degradation without checking experiment completion.
@@ -495,6 +503,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.2.5: 268 tests and 18 subtests passed. Browser synthetic repeated-range automatic/manual calculation, initial tau axis, gamma scaling, 3-column compact controls, result invalidation and expanded peak details passed. A discovered stale current-lambda field was reproduced by a failing regression and corrected; focused 8 EIS tests then passed. Build/lint scripts are absent. Existing real account/experiment data were not touched; no 4174 restart.
 
 - v0.2.4: full pytest suite: 266 passed, 18 subtests passed; both JavaScript syntax checks passed. Tests cover boundaries, retained row indices, invalid spectrumIndex HTTP 400, UI selection/stale-result handling, and preventing POST to an incompatible backend. Isolated synthetic selected-segment fitting and restoration passed in browser; real SEO six-segment display and read-only per-segment calculations passed. pnpm audit could not run without a lockfile; no frontend dependencies or lockfile were introduced.
 

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.2.5 - 2026-09-14
+
+- EIS-only 55:45 analysis panels with larger right DRT/signed-Im plots, compact DRT Controls, compact status and collapsible detailed results/exports. No global CSS, header/sidebar, routing, login or CYC/CV behavior changes.
+- Deduplicate range options by actual minimum/maximum frequency, always high to low. Keep acquisition direction as metadata; use the first complete acquisition for each range without averaging or deleting raw points.
+- Use frequency-derived tau bounds even before fitting, scale gamma from zero to its measured maximum plus padding, retain the same highest-frequency marker in both sign conventions.
+- Restore a matching saved result first; otherwise attempt automatic lambda once for complete bounded input. Unreliable automatic selection is not displayed as success; clear stale/failed results and synchronize the current lambda field after calculation.
+- Verification: 268 tests and 18 subtests passed; browser synthetic repeated-range automatic/manual calculation, initial tau axis, gamma scaling and compact controls passed. Build/lint scripts are not configured; separate JavaScript syntax checks are used. Only release metadata changes outside the EIS module/tests/docs.
+
 ## v0.2.4 - 2026-09-14
 
 - Follow-up runtime verification: the stopped local server was started with the official launcher; health confirms v0.2.4 and segment selection support. Actual SEO upload inspection, Fig generation/reopening and a selected 61-point DRT calculation completed. Original rows were not edited; the 19.16% reconstruction warning remains. No additional behavior change was needed.

@@ -7,6 +7,30 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DrtUiTests(unittest.TestCase):
+    def test_unique_ranges_initial_tau_and_analysis_panel_geometry(self):
+        self.js(r'''
+const rows=[100000,10,.1,.1,10,100000,1000,10,1].map(frequency=>({frequency,zreal:5,zimag:-2}));
+const points=drt.normalizeRows(rows),before=JSON.stringify(points),ranges=drt.frequencyRanges(points);
+assert.equal(ranges.length,2);assert.equal(ranges[0].label,'100 kHz – 0.1 Hz');
+assert.deepEqual(ranges[0].indices,[0,1]);assert.equal(ranges[0].spectrumIndex,0);
+assert.equal(JSON.stringify(points),before);
+const selected=points.filter(p=>p.spectrumIndex===0),bounds=drt.tauBounds(selected);
+assert.ok(Math.abs(bounds.grid[0]-.1/(2*Math.PI*100000))<1e-16);
+assert.ok(Math.abs(bounds.grid[1]-10/(2*Math.PI*.1))<1e-12);
+const svg=drt.svg(selected,null,{w:1100,h:850,title:'test',date:''});
+assert.match(svg,/DRT 계산 전/);assert.match(svg,/Same EIS data, original imaginary sign/);
+const panel=id=>svg.match(new RegExp('data-eis-panel="'+id+'"[^>]*'))[0];
+assert.ok(Math.abs(Number(panel('drt').match(/data-x-min="([^"]+)/)[1])-Math.log10(bounds.grid[0]))<1e-10);
+assert.doesNotMatch(svg.match(/data-eis-panel="drt"[\s\S]*?<\/g>/)[0],/eis-drt-measured-line/);
+const widths=[...svg.matchAll(/data-plot-width="([^"]+)"/g)].map(m=>Number(m[1]));
+assert.ok(Math.abs(widths[0]/widths[1]-55/45)<.01);
+assert.ok(Number(panel('drt').match(/data-plot-height="([^"]+)/)[1])>=260);
+const result={drt:[{tau_s:bounds.grid[0],gamma_ohm:4000},{tau_s:bounds.grid[1],gamma_ohm:20}],metadata:{measuredTimeBand:bounds.data}};
+const fitted=drt.svg(selected,result,{w:1100,h:850,title:'test',date:''});
+const axis=fitted.match(/data-eis-panel="drt"[^>]+/)[0];
+assert.match(axis,/data-y-min="0"/);assert.ok(Number(axis.match(/data-y-max="([^"]+)/)[1])>4000);
+''')
+
     def test_frequency_return_legs_and_explicit_sweeps_are_not_connected(self):
         self.js('''
 const rows=[100,10,1,1,10,100,100,10,1].map((frequency,i)=>({frequency,zreal:i+1,zimag:-2,sweep:i<6?1:2}));
@@ -40,24 +64,23 @@ global.fetchJsonWithTimeout=(url,options)=>{if(url==='/api/health')return Promis
 async function check(){
  drt.render({rows:[{zreal:5,zimag:-2}]});
  await form.onsubmit({preventDefault(){}});
- assert.equal(requests,0);assert.equal(status.textContent,'DRT 계산에는 frequency, Re(Z), Im(Z)가 필요합니다.');
+ assert.equal(requests,0);assert.match(status.textContent,/frequency/);
  const rows=[1,10,100].map(frequency=>({frequency,zreal:5,zimag:-2}));
- drt.render({rows});const pending=form.onsubmit({preventDefault(){}});
+ drt.render({rows});const pending=form.onsubmit({preventDefault(){}});await Promise.resolve();
  assert.equal(requests,1);fileChanged();
  resolveRequest({res:{ok:true},body:{result:{reconstruction:[]}}});await pending;
  assert.match(status.textContent,/선택 파일이 변경/);assert.doesNotMatch(plot.innerHTML,/class="eis-drt-fit"/);
  assert.equal(details.innerHTML,'');assert.ok(values.M.disabled);
- drt.render({rows:[...rows]});const failed=form.onsubmit({preventDefault(){}});
+ drt.render({rows:[...rows]});const failed=form.onsubmit({preventDefault(){}});await Promise.resolve();
  resolveRequest({res:{ok:false},body:{}});await failed;
- assert.equal(status.textContent,'controlled failure');assert.equal(values.M.disabled,false);
+ assert.match(status.textContent,/controlled failure/);assert.equal(values.M.disabled,false);
  const repeated=[...rows,...[...rows].reverse()];
- drt.render({rows:repeated});const oldRequests=requests;
- const blocked=form.onsubmit({preventDefault(){}});
- assert.equal(requests,oldRequests);await blocked;assert.match(status.textContent,/측정 구간/);
- selector.value='1';selector.onchange();
+ drt.render({rows:repeated});
+ assert.match(controls.innerHTML,/DRT Controls/);
+ assert.equal((controls.innerHTML.match(/100 Hz – 1 Hz/g)||[]).length,1);
  const selected=form.onsubmit({preventDefault(){}});
  await Promise.resolve();
- assert.equal(JSON.parse(lastOptions.body).parameters.spectrumIndex,1);
+ assert.equal(JSON.parse(lastOptions.body).parameters.spectrumIndex,0);
  resolveRequest({res:{ok:false},body:{}});await selected;
  supportsSelection=false;const beforeLegacy=requests;
  const legacy=form.onsubmit({preventDefault(){}});await Promise.resolve();
@@ -70,6 +93,47 @@ check().catch(e=>{console.error(e);process.exitCode=1;});
         script = "const assert=require('node:assert/strict'); const drt=require('./public/eis-drt.js');\n" + body
         p = subprocess.run(["node","-"],input=script,text=True,encoding="utf-8",capture_output=True,cwd=ROOT)
         self.assertEqual(p.returncode,0,p.stderr)
+
+    def test_auto_calculation_once_and_unreliable_lambda_not_success(self):
+        self.js('''
+const nodes={},values={M:{value:100},lambda:{value:.001},includeL:{checked:true,style:{}},mode:{value:'auto'},lambdaSlider:{value:-3}};
+values[Symbol.iterator]=function*(){yield* Object.values(this);};
+const form={elements:values,style:{},addEventListener(){}},status={},details={replaceChildren(){this.innerHTML='';}},plot={};
+const selector={value:'0'},controls={querySelector:s=>s==='form'?form:s==='[data-drt-status]'?status:s==='[data-eis-spectrum]'?selector:details};
+nodes.figureCanvas={contains:n=>n===controls,querySelector:s=>s==='[data-eis-plot]'?plot:controls};
+for(const id of ['figureTitle','figureSubtitle','metaGrid'])nodes[id]={};
+global.$=id=>nodes[id];global.currentFigureStyle=()=>({});global.syncFigureControls=()=>{};
+global.figureSvgSize=()=>({w:1100,h:850});global.figureDatasetLabel=()=> 'test';
+global.normalizeHexColor=()=> '#14888a';global.cleanNyquistBounds=()=>({x:[0,10],y:[-5,5]});
+global.resolveFigureAxisDomains=(x,y)=>({x,y});global.applyAnnotationsToSvg=()=>{};
+global.authHeaders=x=>x;global.apiErrorMessage=()=> 'failure';let posts=0;
+global.fetchJsonWithTimeout=async(url,options)=>{
+ if(url==='/api/health')return {res:{ok:true},body:{eisDrtSpectrumSelection:true}};
+ if(options?.method!=='POST')return {res:{ok:true},body:[]};
+ posts++;assert.equal(JSON.parse(options.body).parameters.mode,'auto');
+ return {res:{ok:true},body:{result:{metadata:{spectrumIndex:0,autoSelectionReliable:false}}}};
+};
+async function check(){
+ const d={id:'test',rows:[1,10,100].map(frequency=>({frequency,zreal:5,zimag:-2}))};
+ drt.render(d);await new Promise(setImmediate);
+ assert.equal(posts,1);assert.match(status.textContent,/자동 λ/);assert.doesNotMatch(status.textContent,/completed/);
+ assert.doesNotMatch(plot.innerHTML,/eis-drt-fit/);assert.equal(values.M.disabled,false);
+ drt.render(d);await new Promise(setImmediate);assert.equal(posts,1);
+ drt.render({id:'incomplete',rows:[...d.rows,{frequency:1,zreal:5}]});await new Promise(setImmediate);
+ assert.equal(posts,1);
+ global.document={createElement:()=>({})};
+ details.prepend=()=>{};details.querySelector=()=>({});details.querySelectorAll=()=>[];
+ const good=drt.normalizeRows(d.rows);
+ global.fetchJsonWithTimeout=async(url,options)=>url==='/api/health'?{res:{ok:true},body:{eisDrtSpectrumSelection:true}}:options?.method!=='POST'?{res:{ok:true},body:[]}:{res:{ok:true},body:{result:{
+  metadata:{spectrumIndex:0,autoSelectionReliable:true,lambda:7.5e-6,Rs:5,L:0,measuredTimeBand:[.001,.2]},
+  reconstruction:good.map(p=>({...p,z_real_raw_ohm:p.z_real_ohm,z_imag_raw_ohm:p.z_imag_ohm})),
+  drt:[],warnings:[],peaks:[],quality:{},relative_complex_RMSE_percent:0
+ }}};
+ drt.render({id:'complete',rows:d.rows});await new Promise(setImmediate);
+ assert.match(status.textContent,/completed/);assert.equal(Number(values.lambda.value),7.5e-6);
+}
+check().catch(e=>{console.error(e);process.exitCode=1;});
+''')
 
     def test_signed_coordinates_headers_and_missing_frequency(self):
         self.js('''
@@ -84,6 +148,9 @@ assert.equal(drt.normalizeRows([legacy])[0].z_imag_ohm,-2);
 assert.equal(drt.normalizeRows([{...legacy,z_imag_ohm:-2}])[0].z_imag_ohm,-2);
 const points=drt.normalizeRows([{zreal:5,zimag:-2}]);
 assert.equal(drt.coordinates(points).left.length,1); assert.equal(points[0].frequency_Hz,null);
+const missing=drt.svg(points,null,{w:1100,h:850,title:'missing',date:''});
+const drtPanel=missing.split('data-eis-panel="drt"')[1].split('</g>')[0];
+assert.match(drtPanel,/유효한 주파수/);assert.doesNotMatch(drtPanel,/>1.778<|>3.162<|>5.623</);
 ''')
 
     def test_sweep_order_tooltips_three_panel_export(self):

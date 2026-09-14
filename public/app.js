@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.4";
+const PORTAL_VERSION = "0.2.5";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.5",
+    "date": "2026-09-14",
+    "changes": [
+      "Resize EIS panels to 55:45 and group DRT controls in a compact card.",
+      "Deduplicate frequency ranges, use measured tau bounds and attempt reliable automatic DRT once."
+    ]
+  },
   {
     "version": "0.2.4",
     "date": "2026-09-14",
