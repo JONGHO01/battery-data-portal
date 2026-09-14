@@ -1,6 +1,6 @@
 # Session Memory
 
-> Current EIS fix (2026-09-14): v0.2.4 separates repeated measurement segments for viewing and DRT calculation, retains original rows and reconstruction indices, and blocks selected-segment POST to a backend without eisDrtSpectrumSelection. The real 366-row SEO source contains six 61-point segments; individual reconstruction errors remain 5.8–19.2%, not validated physical fits. Local backend remains v0.2.1; restart approval and the user's failing upload path are pending. GitHub source publication must be checked from refs.
+> Current EIS verification (2026-09-14): v0.2.4 source is published at ae8e0b5. On the follow-up check, localhost:4174 was stopped (connection refused); the official launcher started it without terminating any existing process. Independent health confirms v0.2.4 and eisDrtSpectrumSelection=true. Actual SEO file chooser, 366-row inspection, Fig generation and reopening passed; saved Fig count remained 60. One selected 61-point DRT analysis was saved through the normal UI, with 19.16% error and warnings retained. Original source rows were not edited. The unspecified other failing file is still unknown, so no claim covers all uploads. Earlier restart-pending notes below are historical.
 
 > Current display fix (2026-09-14): v0.2.3 extends readable Y ticks to CYC voltage/current, dQ/dV and combined performance. Domain limits, units and source values remain unchanged. Eight requested local WRD files parse to three charge/discharge cycles each; mass is unavailable, so Ah is retained. No experimental files or database records were changed or re-uploaded.
 
@@ -421,7 +421,7 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Remaining Work
 
-- v0.2.4: obtain approval before restarting the existing 4174 server; refresh and verify health capability afterward. Ask for the actual failing upload file/path and action; the stored SEO source passed inspection only (no duplicate Dataset/Fig finalization). Do not infer Render deployment from GitHub push.
+- v0.2.4: local startup and selected-segment capability are verified. If upload failure recurs, obtain the exact failing file/path and action; the reported stored SEO source now passes through Fig generation and reopening. Do not infer Render deployment from GitHub push.
 
 - v0.2.3: verify the remote commit before reporting GitHub publication. Production deployment remains separately unverified. File names have no explicit mass unit; do not infer mAh/g or interpret the low third discharge as degradation without checking experiment completion.
 

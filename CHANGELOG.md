@@ -4,6 +4,8 @@
 
 ## v0.2.4 - 2026-09-14
 
+- Follow-up runtime verification: the stopped local server was started with the official launcher; health confirms v0.2.4 and segment selection support. Actual SEO upload inspection, Fig generation/reopening and a selected 61-point DRT calculation completed. Original rows were not edited; the 19.16% reconstruction warning remains. No additional behavior change was needed.
+
 - Split repeated EIS acquisition data at sweep changes, repeated frequencies and direction reversals. Break cross-segment lines and require one selected segment before DRT fitting; do not sort, average or delete source points.
 - Add optional validated spectrumIndex to the existing protected analysis operation and preserve original row indices. Check the health capability before selected-segment submission; an older running server requires an approved restart.
 - Restore only matching selected-segment analyses, keep uncertainty warnings, and correct combined EIS labels to Nyquist + DRT. No CYC/CV, shared parser, login, storage configuration or schema changes.
