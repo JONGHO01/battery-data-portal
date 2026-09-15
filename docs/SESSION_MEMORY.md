@@ -1,5 +1,7 @@
 # Session Memory
 
+> Local CYC restart completed (2026-09-15): user explicitly approved restart and existing CYC reanalysis. Identified project-owned PID 23420 was stopped and the official 4174 launcher started v0.2.9; independent health confirms SQLite/local storage unchanged. Startup refreshed all eight supplied 260911 WRD Datasets to parser-8. Saved Fig count remains 60. Browser reopened 088.wrd with Specific capacity (mAh g-1), 0–180 ticks in steps of 20, and three discharge points. Its first two cycles are 161.304/162.402 mAh/g; the third remains the measured low value 8.316, not forced to 160. All eight original-file SHA-256 values are unchanged and all eight stored raw artifacts match their registered hashes. This supersedes historical CYC restart-pending notes below. No real EIS fit was recalculated; existing EIS results still require an explicit new calculation to apply rc-drt-2 detection. Source release 0.2.9 was already published at 98b093b; this task changes runtime and this memory only, not application code or Render.
+
 > Current EIS refinement (2026-09-15): v0.2.9 supersedes the 480px preview cap below. Graph-first full-width 55:45 desktop layout, stacked narrow layout, thin controls, compact major/minor peak table, original raw editor folded with Show/Hide and restored outside EIS. rc-drt-2 detection uses unchanged gamma, 5% prominence / 2.5 half-prominence-width samples / 0.25 decade prominence-ranked spacing. All qualifying candidates remain stored/exportable; at most five are major. Integration uses nearest minima and log-midpoint/outer-grid fallbacks. Existing API/solver/raw data are unchanged. Old saved results carry a previous-criteria notice. Local health verified 0.2.5; restart and real EIS recalculation approval requested but not received. Source tests and UI checks do not imply the running backend has the new detector. Prior CYC restart/reparse also remains pending.
 
 > Current EIS addition (2026-09-14): v0.2.8 adds relative HF/MF/LF interpretation-candidate bands and a visible five-column peak table. Only explicit allowlisted user assignments label P peaks; the solver/raw data are unchanged. Assignments use existing Dataset figureEdits PATCH, scoped to dataset/run/segment/peak values, with failure feedback and CSV/JSON/SVG support. Latest saved assignment set per Dataset only; new runs are unassigned. Full suite: 285 tests and 18 subtests passed. Browser confirmed bands, bilingual guide, three neutral peaks, temporary Other label and removal, and successful save with every peak Unassigned. No physical identity, calculation or raw-row change was made to the real experiment. Local backend not restarted; prior CYC restart/reparse remains pending. GitHub publication must be verified from refs.
@@ -41,6 +43,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Completed approved local restart and saved CYC mass-normalized refresh; leave the verified CYC Fig open. No further CYC restart is pending.
 
 Complete and verify v0.2.9 EIS-only UI cleanup and conservative peak detection, then scoped GitHub synchronization. Do not restart existing local service or recalculate real analyses without the pending approval.
 
@@ -306,6 +310,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- 2026-09-15 runtime-only CYC activation: `docs/SESSION_MEMORY.md` records the approved restart and verified saved-Dataset refresh. No application/version files changed.
+
 v0.2.9: behavior only in `public/eis-drt.js` and `backend/analysis/eis_drt.py`; regressions in `tests/test_eis_drt_ui.py` and `tests/test_eis_drt_peak_detection.py`. Remaining touched files are version/release metadata and session memory. No global CSS, router, sidebar, header, CYC/CV behavior or database migration.
 
 v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/version files and this memory. public/app.js, public/index.html and python_backend.py changes are release metadata only.
@@ -529,6 +535,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- 2026-09-15: launcher and independent health report v0.2.9 on localhost:4174; eight saved WRDs report parser-8 refresh provenance. Read-only stored-row checks give first two discharge maxima approximately 161–163 mAh/g. Browser confirms 088.wrd uses mAh/g and readable 20-unit ticks. Eight original hashes unchanged, eight stored raw-artifact hashes valid, saved Fig count 60. No new build/lint/test run is required for this runtime-only activation; v0.2.9 source tests remain the previously recorded results.
 
 v0.2.9: final full suite passed 296 tests / 24 subtests (22.19s); JavaScript syntax and diff checks passed. New independent synthetic tests first failed with missing peak_regions; now verify prominence cutoff, width, physical log-distance, prominence-over-height selection, repeatability, input immutability and ln(tau) integrals. Desktop canvas measured about 660px high / 1200px viewport, with 55:45 panels. Browser verified compact controls, default raw collapse, Show/Hide, CYC editor restoration and no console errors; viewport override reset. No actual EIS refit under the new detector yet because the local backend remains 0.2.5. No build/lint scripts or dependency lockfile; no new dependency. Check final refs for GitHub publication.
 
