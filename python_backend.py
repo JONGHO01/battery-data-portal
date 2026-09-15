@@ -175,7 +175,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.2.9", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.3.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -656,8 +656,8 @@ def can_view_row(conn, user: dict, row) -> bool:
         return False
     if user_field(user, "role") == "admin" or row["owner_id"] == user["id"]:
         return True
-    organization_id = row_organization_id(row)
-    return bool(organization_id and organization_can_view(conn, user, organization_id))
+    # Organization membership is not permission to read another owner's data.
+    return False
 
 
 def can_edit_row(conn, user: dict, row) -> bool:
@@ -665,8 +665,7 @@ def can_edit_row(conn, user: dict, row) -> bool:
         return False
     if user_field(user, "role") == "admin" or row["owner_id"] == user["id"]:
         return True
-    organization_id = row_organization_id(row)
-    return bool(organization_id and organization_can_edit(conn, user, organization_id))
+    return False
 
 
 def can_see(user, dataset_row, conn=None) -> bool:
@@ -1739,6 +1738,8 @@ def init_db() -> None:
     with connect() as conn:
         for statement in schema:
             execute(conn, statement)
+        from backend.data_workspace_api import ensure_schema as ensure_workspace_schema
+        ensure_workspace_schema(conn, execute)
         ensure_dataset_hierarchy_columns(conn)
         ensure_dataset_provenance_columns(conn)
         ensure_dataset_row_storage_columns(conn)
@@ -1880,7 +1881,7 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
     item.update(resolve_dataset_hierarchy(conn, item, actor_user))
     database_rows, row_count, rows_storage = database_rows_payload(item)
 
-    execute(
+    saved_row = execute(
         conn,
         """
         INSERT INTO datasets(
@@ -1915,6 +1916,7 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
           parser_json = excluded.parser_json,
           analysis_provenance_json = excluded.analysis_provenance_json,
           organization_id = excluded.organization_id
+        WHERE datasets.owner_id = excluded.owner_id
         """,
         (
             item["id"],
@@ -1944,6 +1946,8 @@ def save_dataset(conn, payload: dict, migrate: bool = False, actor_user: dict | 
             item["organizationId"],
         ),
     )
+    if saved_row.rowcount != 1:
+        raise HTTPException(403, 'Dataset 소유권을 변경할 수 없습니다.')
     item["rowCount"] = row_count
     item["rowsStorage"] = rows_storage
     return item
@@ -3888,9 +3892,15 @@ def get_cell_workspace(cell_record_id: str, user=Depends(get_current_user)):
         reports = execute(conn, "SELECT * FROM reports WHERE cell_record_id = ? ORDER BY updated_at DESC", (cell_record_id,)).fetchall()
         count_rows = execute(
             conn,
-            "SELECT dataset_group_id, data_type, COUNT(*) AS count FROM datasets WHERE cell_record_id = ? GROUP BY dataset_group_id, data_type",
-            (cell_record_id,),
+            "SELECT dataset_group_id, data_type, COUNT(*) AS count FROM datasets WHERE cell_record_id = ? AND (? = 'admin' OR owner_id = ?) GROUP BY dataset_group_id, data_type",
+            (cell_record_id, user_field(user, 'role'), user['id']),
         ).fetchall()
+        groups = [r for r in groups if can_view_row(conn, user, r)]
+        segments = [r for r in segments if can_view_row(conn, user, r)]
+        figures = [r for r in figures if can_view_row(conn, user, r)]
+        reports = [r for r in reports if can_view_row(conn, user, r)]
+        if metadata_row and not can_view_row(conn, user, metadata_row):
+            metadata_row = None
 
     group_types: dict[str, dict[str, int]] = {}
     for row in count_rows:
@@ -4217,6 +4227,10 @@ def create_dataset_analysis(dataset_id: str, payload: dict = Body(default_factor
 
 @app.post("/api/datasets", status_code=201)
 def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_current_user)):
+    payload = dict(payload)
+    # Artifact locations are server-issued, never client-controlled references.
+    for protected in ('rawArtifact', 'parsedArtifact', 'analysisProvenance', 'parser'):
+        payload.pop(protected, None)
     current = now_iso()
     upload_id = str(payload.pop("uploadId", "") or "").strip()
     payload["ownerId"] = user["id"]
@@ -4225,6 +4239,13 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
     payload["updatedAt"] = current
     try:
         with connect() as conn:
+            requested_id = str(payload.get('id') or '')
+            if requested_id:
+                existing_id = execute(conn, 'SELECT * FROM datasets WHERE id = ?', (requested_id,)).fetchone()
+                if existing_id and existing_id['owner_id'] != user['id']:
+                    raise HTTPException(403, '다른 사용자의 Dataset ID를 사용할 수 없습니다.')
+                if existing_id:
+                    raise HTTPException(409, '기존 Dataset은 수정 경로를 사용해주세요.')
             if upload_id:
                 session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (upload_id,)).fetchone()
                 if not session or session["owner_id"] != user["id"]:
@@ -5183,6 +5204,10 @@ def export_ppt(payload: dict = Body(default_factory=dict), user=Depends(get_curr
         content=body,
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
     )
+
+
+from backend.data_workspace_api import install as install_data_workspace
+install_data_workspace(app, sys.modules[__name__])
 
 
 @app.get("/{file_path:path}")

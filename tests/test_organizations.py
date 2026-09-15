@@ -1,12 +1,8 @@
-import os
 import tempfile
 import unittest
-
-
-_TEMP_DIR = tempfile.mkdtemp(prefix="battery-portal-organization-test-")
-os.environ["DATA_DIR"] = _TEMP_DIR
-os.environ["STORAGE_BACKEND"] = "local"
-os.environ["BOOTSTRAP_ADMIN_PASSWORD"] = "test-only-admin-password"
+from contextlib import contextmanager
+from pathlib import Path
+from unittest.mock import patch
 
 import python_backend as portal
 
@@ -14,6 +10,33 @@ import python_backend as portal
 class OrganizationRoleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.temp_dir = tempfile.TemporaryDirectory(prefix="battery-portal-organization-test-")
+        cls.addClassCleanup(cls.temp_dir.cleanup)
+        root = Path(cls.temp_dir.name)
+        settings = patch.multiple(
+            portal, DATA_DIR=root, UPLOAD_DIR=root / "uploads", ARTIFACT_DIR=root / "storage",
+            USERS_JSON=root / "users.json", DATASETS_JSON=root / "datasets.json",
+            SQLITE_DB=root / "test.sqlite3", USE_POSTGRES=False, DATABASE_URL="",
+            STORAGE_BACKEND="local", REQUIRE_DURABLE_STORAGE=False, DATABASE_ROWS_MODE="full",
+            BOOTSTRAP_ADMIN_ID="organization-test-admin", BOOTSTRAP_ADMIN_NAME="Test Admin",
+            BOOTSTRAP_ADMIN_PASSWORD="test-only-admin-password", APP_ENV="local",
+        )
+        settings.start()
+        cls.addClassCleanup(settings.stop)
+        original_connect = portal.connect
+
+        @contextmanager
+        def closing_connect():
+            connection = original_connect()
+            try:
+                with connection:
+                    yield connection
+            finally:
+                connection.close()
+
+        connections = patch.object(portal, "connect", closing_connect)
+        connections.start()
+        cls.addClassCleanup(connections.stop)
         portal.init_db()
         with portal.connect() as conn:
             for user_id in ("org-owner", "org-researcher", "org-viewer"):
@@ -37,7 +60,7 @@ class OrganizationRoleTests(unittest.TestCase):
             self.assertFalse(portal.organization_can_edit(conn, viewer, organization["id"]))
             self.assertTrue(portal.organization_can_edit(conn, researcher, organization["id"]))
 
-    def test_organization_project_is_visible_to_members_and_editable_by_researchers(self):
+    def test_organization_project_is_private_to_its_owner_despite_membership(self):
         owner = {"id": "org-owner", "name": "Owner", "role": "user"}
         researcher = {"id": "org-researcher", "name": "Researcher", "role": "user"}
         viewer = {"id": "org-viewer", "name": "Viewer", "role": "user"}
@@ -49,12 +72,13 @@ class OrganizationRoleTests(unittest.TestCase):
         with portal.connect() as conn:
             row = portal.execute(conn, "SELECT * FROM projects WHERE id = ?", (project["id"],)).fetchone()
             self.assertEqual(project["organizationId"], organization["id"])
-            self.assertTrue(portal.can_view_row(conn, researcher, row))
-            self.assertTrue(portal.can_edit_row(conn, researcher, row))
-            self.assertTrue(portal.can_view_row(conn, viewer, row))
+            self.assertFalse(portal.can_view_row(conn, researcher, row))
+            self.assertFalse(portal.can_edit_row(conn, researcher, row))
+            self.assertFalse(portal.can_view_row(conn, viewer, row))
             self.assertFalse(portal.can_edit_row(conn, viewer, row))
+            self.assertTrue(portal.can_edit_row(conn, owner, row))
 
-    def test_researcher_can_add_shared_dataset_but_viewer_cannot_change_it(self):
+    def test_members_cannot_add_to_another_owners_project_or_view_its_dataset(self):
         owner = {"id": "org-owner", "name": "Owner", "role": "user"}
         researcher = {"id": "org-researcher", "name": "Researcher", "role": "user"}
         viewer = {"id": "org-viewer", "name": "Viewer", "role": "user"}
@@ -64,7 +88,10 @@ class OrganizationRoleTests(unittest.TestCase):
             portal.upsert_organization_member(conn, organization["id"], viewer["id"], "viewer", owner)
 
         project = portal.create_project({"name": "Shared CYC", "organizationId": organization["id"]}, owner)
-        campaign = portal.create_campaign(project["id"], {"name": "Batch A"}, researcher)
+        with self.assertRaises(portal.HTTPException) as denied:
+            portal.create_campaign(project["id"], {"name": "Unauthorized batch"}, researcher)
+        self.assertEqual(denied.exception.status_code, 403)
+        campaign = portal.create_campaign(project["id"], {"name": "Batch A"}, owner)
         dataset = portal.create_dataset(
             {
                 "dataType": "cyc",
@@ -75,12 +102,14 @@ class OrganizationRoleTests(unittest.TestCase):
                 "columns": ["Cycle", "Discharge capacity"],
                 "rows": [{"Cycle": 1, "Discharge capacity": 150.0}],
             },
-            researcher,
+            owner,
         )
 
         self.assertEqual(dataset["organizationId"], organization["id"])
         visible = portal.list_datasets(viewer)
-        self.assertIn(dataset["id"], [item["id"] for item in visible])
+        self.assertNotIn(dataset["id"], [item["id"] for item in visible])
+        self.assertNotIn(dataset["id"], [item["id"] for item in portal.list_datasets(researcher)])
+        self.assertIn(dataset["id"], [item["id"] for item in portal.list_datasets(owner)])
         with self.assertRaises(portal.HTTPException) as denied:
             portal.update_dataset(dataset["id"], {"figureKind": "cyc-performance"}, viewer)
         self.assertEqual(denied.exception.status_code, 403)
@@ -150,7 +179,7 @@ class OrganizationRoleTests(unittest.TestCase):
         self.assertEqual(figure["figureKind"], "eis-combined")
         self.assertTrue((portal.DATA_DIR / figure["artifact"]["localPath"]).exists())
 
-    def test_sqlite_member_row_keeps_shared_project_permissions(self):
+    def test_sqlite_member_row_does_not_gain_another_owners_project_permissions(self):
         owner = {"id": "org-owner", "name": "Owner", "role": "user"}
         researcher = {"id": "org-researcher", "name": "Researcher", "role": "user"}
         with portal.connect() as conn:
@@ -162,7 +191,8 @@ class OrganizationRoleTests(unittest.TestCase):
             researcher_row = portal.execute(conn, "SELECT * FROM users WHERE id = ?", (researcher["id"],)).fetchone()
             project_row = portal.execute(conn, "SELECT * FROM projects WHERE id = ?", (project["id"],)).fetchone()
             self.assertEqual(portal.organization_role(conn, researcher_row, organization["id"]), "researcher")
-            self.assertTrue(portal.can_edit_row(conn, researcher_row, project_row))
+            self.assertFalse(portal.can_view_row(conn, researcher_row, project_row))
+            self.assertFalse(portal.can_edit_row(conn, researcher_row, project_row))
 
     def test_admin_user_directory_includes_signup_date_and_organization_memberships(self):
         """Administrators need a safe, complete view of registered accounts."""

@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battery Data Portal</title>
-  <link rel="stylesheet" href="/style.css?portal=0.2.9" />
+  <link rel="stylesheet" href="/style.css?portal=0.3.0" />
+  <link rel="stylesheet" href="/data-workspace.css?portal=0.3.0" />
   </head>
   <body>
     <div class="busyOverlay hidden" id="busyOverlay">
@@ -48,6 +49,7 @@
           <div class="menuPanel">
             <button type="button" class="menuItem" data-view="upload">파일 업로드 · 정규화</button>
             <button type="button" class="menuItem" data-view="search" data-search-type="all">Dataset Explorer</button>
+            <button type="button" class="menuItem" data-view="files">데이터 관리 · 전처리 · 채팅</button>
           </div>
         </div>
         <div class="menuGroup">
@@ -256,6 +258,7 @@
           </div>
         </section>
 
+        <section id="filesView" class="view"></section>
         <section id="searchView" class="view">
           <div class="searchHero">
             <span class="eyebrow">Search Lab</span>
@@ -792,7 +795,8 @@
       </section>
     </main>
 
-  <script src="/eis-drt.js?portal=0.2.9"></script>
-  <script src="/app.js?portal=0.2.9"></script>
+  <script src="/eis-drt.js?portal=0.3.0"></script>
+  <script src="/data-workspace.js?portal=0.3.0"></script>
+  <script src="/app.js?portal=0.3.0"></script>
   </body>
 </html>

@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current source v0.3.0 (2026-09-15): implement the confirmed local-first data workspace foundation. Ordinary users see only their own research data, global administrators see all; organization roles no longer grant access to other owners. New file metadata, downloads, preprocessing previews and immutable recipe/fingerprint versions are implemented. Chat is explicitly a local keyword-search helper, NOT an LLM. No external AI transmission, persistent chat, independent processed-artifact snapshots or training-dataset creation is implemented. Local 4174 remains v0.2.9; a NEW restart approval was requested but not received. The previous CYC restart was already completed and is not pending. Browser confirms the new menu and honest restart-required message; no claim that new backend APIs are live. Earlier task and version notes below are historical where superseded.
+
 > Local CYC restart completed (2026-09-15): user explicitly approved restart and existing CYC reanalysis. Identified project-owned PID 23420 was stopped and the official 4174 launcher started v0.2.9; independent health confirms SQLite/local storage unchanged. Startup refreshed all eight supplied 260911 WRD Datasets to parser-8. Saved Fig count remains 60. Browser reopened 088.wrd with Specific capacity (mAh g-1), 0–180 ticks in steps of 20, and three discharge points. Its first two cycles are 161.304/162.402 mAh/g; the third remains the measured low value 8.316, not forced to 160. All eight original-file SHA-256 values are unchanged and all eight stored raw artifacts match their registered hashes. This supersedes historical CYC restart-pending notes below. No real EIS fit was recalculated; existing EIS results still require an explicit new calculation to apply rc-drt-2 detection. Source release 0.2.9 was already published at 98b093b; this task changes runtime and this memory only, not application code or Render.
 
 > Current EIS refinement (2026-09-15): v0.2.9 supersedes the 480px preview cap below. Graph-first full-width 55:45 desktop layout, stacked narrow layout, thin controls, compact major/minor peak table, original raw editor folded with Show/Hide and restored outside EIS. rc-drt-2 detection uses unchanged gamma, 5% prominence / 2.5 half-prominence-width samples / 0.25 decade prominence-ranked spacing. All qualifying candidates remain stored/exportable; at most five are major. Integration uses nearest minima and log-midpoint/outer-grid fallbacks. Existing API/solver/raw data are unchanged. Old saved results carry a previous-criteria notice. Local health verified 0.2.5; restart and real EIS recalculation approval requested but not received. Source tests and UI checks do not imply the running backend has the new detector. Prior CYC restart/reparse also remains pending.
@@ -43,6 +45,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+v0.3.0 source foundation is implemented and tested. Finish scoped publication; next activate via approved local restart, then verify real UI workflows. Do not equate admin access with external-AI transmission or training consent.
 
 Completed approved local restart and saved CYC mass-normalized refresh; leave the verified CYC Fig open. No further CYC restart is pending.
 
@@ -133,6 +137,8 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- Latest v0.3.0: owner isolation, Dataset ID takeover protection, scoped data workspace and additive profile/version tables. Full disposable-data suite: 318 tests passed. UI module is served by the existing process, but new API registration/schema require restart. No live research data was deliberately modified during these tests.
 
 - v0.2.3: frontend-only axis behavior change; backend version metadata requires a separate restart to appear in health. Actual-file parsing and saved-Fig browser checks completed; no restart or production connectivity claim.
 
@@ -270,6 +276,9 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Important User Requirements
 
+- Confirmed: regular users access only their own datasets; global admin can aggregate/view all. File classification must preserve original names and permit varying materials/metadata. Future integrated model datasets are intended, but read access is not training consent.
+- Actual AI connection and research-data transmission scope require explicit agreement and a configured server-side API key. Current new workflow makes no model calls.
+
 - Keep explanations direct and understandable for a coding beginner; inspect and implement where possible instead of giving circular guidance.
 - Keep the portal data hierarchy as `Organization (optional) -> Project -> Campaign / experiment batch -> Cell -> Dataset group -> CYC / EIS / CV`, with figures and reports attached as derived artifacts.
 - Preserve original files and analysis provenance. Do not replace raw experimental files with normalized output.
@@ -309,6 +318,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 - Treat an SDE parser-version mismatch as a safe reparse signal when its immutable local raw artifact is available. Do not substitute arbitrary graph limits for malformed stored impedance columns.
 
 ## Files Changed
+
+v0.3.0: backend/data_workspace.py, backend/data_workspace_api.py, public/data-workspace.js and scoped CSS; integration in python_backend.py/public/app.js/public/index.html; ownership/workspace regression tests; docs/DATA_WORKSPACE.md and synchronized release metadata.
 
 - 2026-09-15 runtime-only CYC activation: `docs/SESSION_MEMORY.md` records the approved restart and verified saved-Dataset refresh. No application/version files changed.
 
@@ -455,6 +466,10 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- Current v0.3.0: obtain local restart approval and verify live file listing, downloads and preprocessing UI. API workflows passed disposable SQLite tests, not live Neon/B2.
+- Later phases: actual LLM integration after external-transmission approval; persistent isolated conversations; independent immutable processed artifacts; richer preprocessing and explicit training-consent/versioned aggregate datasets. Saved recipes currently regenerate only against an unchanged input fingerprint.
+- Historical restart/deployment items below are superseded by the current-source note where conflicting.
+
 - v0.2.7: obtain local restart approval before replacing the active backend. Verify saved WRD/Fig refresh afterwards; a B2-only raw artifact may need the normal same-file re-upload path. Do not claim a completed runtime refresh or deploy.
 
 - v0.2.6: confirm GitHub publication from refs; do not infer Render deployment. Local backend remains v0.2.5 and serves the updated static preview without restart.
@@ -535,6 +550,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.0: unittest discovery passed 318 tests (31.764s), including new owner/organization isolation, Dataset ID takeover, profile revision, preview/version/export, unchanged source and changed-input rejection checks. Node syntax checks passed for app.js/data-workspace.js; git diff --check passed. Build/lint scripts and dependency lockfile are absent; no dependency added. Browser verified new navigation and clear old-backend restart message, not live new-API success.
 
 - 2026-09-15: launcher and independent health report v0.2.9 on localhost:4174; eight saved WRDs report parser-8 refresh provenance. Read-only stored-row checks give first two discharge maxima approximately 161–163 mAh/g. Browser confirms 088.wrd uses mAh/g and readable 20-unit ticks. Eight original hashes unchanged, eight stored raw-artifact hashes valid, saved Fig count 60. No new build/lint/test run is required for this runtime-only activation; v0.2.9 source tests remain the previously recorded results.
 

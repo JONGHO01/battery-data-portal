@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.9";
+const PORTAL_VERSION = "0.3.0";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.0",
+    "date": "2026-09-15",
+    "changes": [
+      "Restrict research data to its owner and global administrators, including organization workspaces.",
+      "Add file classification, protected downloads and previewed preprocessing recipes. Local search helper only; external AI is disabled."
+    ]
+  },
   {
     "version": "0.2.9",
     "date": "2026-09-15",
@@ -759,6 +767,7 @@ function setLoginSuccess(text) {
 }
 
 function applyUser(user) {
+  window.DataWorkspace?.reset();
   clearAdminRawAccess();
   state.user = user;
   if (user) {
@@ -826,6 +835,11 @@ function openWorkspaceView(viewName) {
     setSearchType(state.searchType || "all");
   }
   activateView(viewName);
+  if (viewName === 'files') window.DataWorkspace?.open({
+    headers: authHeaders, rawHeaders: adminRawHeaders, user: () => state.user,
+    openRawAccess: () => openWorkspaceView('adminRawData'),
+    openFigure: (id) => { state.selectedId = id; openWorkspaceView('figure'); },
+  }).catch((error) => setStatus(error.message));
   if (viewName === "search") renderSearchResults();
   if (viewName === "electrodeCalc") renderElectrodeCalc();
   if (viewName === "analysisLab") {
@@ -2147,7 +2161,7 @@ function activateView(viewName, moduleName = state.activeFigureModule) {
   const view = $(`${viewName}View`);
   if (view) view.classList.add("active");
   const wideOnly = viewName === "electrodeCalc" || viewName === "savedFigures" || viewName === "cycRecord" || viewName === "search" || viewName === "analysisLab" || viewName === "organization" || viewName === "feedbackAdmin" || viewName === "releaseHistory" || viewName === "users" || viewName === "adminRawData";
-  $("dataWorkspace")?.classList.toggle("calcOnly", wideOnly);
+  $("dataWorkspace")?.classList.toggle("calcOnly", wideOnly || viewName === 'files');
   $("workspaceToolbar")?.classList.toggle("hidden", viewName !== "figure");
 }
 

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.3.0 - 2026-09-15
+
+- Restrict Dataset and hierarchy access to the owner and global administrators. Remove organization-based research-data sharing and reject Dataset ID takeover, including concurrent upserts.
+- Add a scoped file workspace: authorized search, metadata classification with revision checks, protected source downloads, local keyword chat helper, preprocessing preview and explicitly approved recipe versions.
+- Preserve source rows/artifacts. Recipe exports verify the complete input fingerprint and reject changed inputs instead of silently exporting different results. This is not independent processed-artifact archival.
+- Add workspace_profiles and workspace_versions tables without rewriting existing research data. No external LLM connection, chat-history persistence, training consent or training-dataset creation is included.
+- Add ownership, input-validation, source-integrity and workspace API regression tests. Runtime restart and production deployment are separate from source publication.
+- Verification: 318 tests passed; app/workspace JavaScript syntax and diff checks passed. Browser confirms the new menu and explicit restart-required state on the older local backend. Build/lint scripts and dependency lockfile are not configured; no dependency was added. Live new-API UI verification awaits restart approval.
+
 ## v0.2.9 - 2026-09-15
 
 - Remove the 480px EIS preview cap. Use the analysis width with 55:45 panels on desktop, readable stacked plots in narrow panes, compact controls and a five-column peak table. Fold the original raw editor by default; preserve its DOM/listeners and restore it when leaving EIS.
