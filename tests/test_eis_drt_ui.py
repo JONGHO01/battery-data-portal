@@ -7,6 +7,47 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DrtUiTests(unittest.TestCase):
+    def test_raw_table_is_collapsed_and_restored_without_rebuilding_editor(self):
+        self.js(r'''
+class Element {
+ constructor(){this.children=[];this.dataset={};this.style={};this.open=false;}
+ append(...nodes){for(const node of nodes){node.remove();this.children.push(node);node.parentElement=this;}}
+ before(node){node.remove();const parent=this.parentElement;parent.children.splice(parent.children.indexOf(this),0,node);node.parentElement=parent;}
+ remove(){if(this.parentElement){const a=this.parentElement.children;a.splice(a.indexOf(this),1);this.parentElement=null;}}
+ setAttribute(k,v){this[k]=v;}
+}
+const parent=new Element(),host=new Element(),raw=new Element();parent.append(host,raw);
+parent.querySelector=()=>raw;host.querySelector=()=>null;
+let changed,disconnected=false;global.MutationObserver=class{constructor(fn){changed=fn;}observe(){}disconnect(){disconnected=true;}};
+global.document={createElement:()=>new Element()};
+const editHandler=()=>{};raw.onclick=editHandler;
+const entry={};drt.foldRawData({rows:Array(61)},host,entry);
+const fold=parent.children[1],summary=fold.children[0],button=summary.children[0];
+assert.equal(fold.open,false);assert.match(summary.textContent,/Raw EIS Data \(61 points\)/);assert.equal(button.textContent,'Show');
+button.onclick({preventDefault(){},stopPropagation(){}});assert.equal(fold.open,true);assert.equal(button.textContent,'Hide');
+assert.equal(fold.children[1],raw);assert.equal(raw.onclick,editHandler);
+changed();assert.equal(parent.children[1],raw);assert.ok(disconnected);assert.equal(raw.onclick,editHandler);
+''')
+
+    def test_graph_first_screen_size_and_major_peak_limit(self):
+        self.js(r'''
+const size=drt.screenSize(1800,1200);
+assert.equal(size.w,1800);assert.ok(size.h>=600&&size.h<=720);
+const peaks=Array.from({length:8},(_,i)=>({Peak:'P'+(i+1),tau_peak:10**(i-6),prominence:i+1}));
+const before=JSON.stringify(peaks),groups=drt.peakGroups(peaks);
+assert.equal(groups.major.length,5);assert.equal(groups.minor.length,3);
+assert.deepEqual(groups.major.map(p=>p.Peak),['P4','P5','P6','P7','P8']);
+assert.equal(JSON.stringify(peaks),before);
+const points=drt.normalizeRows([1e5,1,.1].map(frequency=>({frequency,zreal:5,zimag:-2})));
+const svg=drt.svg(points,{drt:peaks.map(p=>({tau_s:p.tau_peak,gamma_ohm:p.prominence})),peaks,metadata:{}},{...size,screen:true,title:'test',date:''});
+assert.doesNotMatch(svg,/>P1<|>P2<|>P3</);assert.match(svg,/>P8</);
+const height=Number(svg.match(/data-eis-panel="drt"[^>]*data-plot-height="([^"]+)/)[1]);
+assert.ok(height>=200);
+const narrow=drt.svg(points,null,{...drt.screenSize(543,1000),screen:true,title:'test',date:''});
+assert.match(narrow,/viewBox="0 0 543 1300"/);
+assert.ok(Number(narrow.match(/data-eis-panel="drt"[^>]*data-plot-width="([^"]+)/)[1])>=400);
+''')
+
     def test_candidate_bands_follow_measurement_and_peaks_without_assigning_physics(self):
         self.js(r'''
 const points=drt.normalizeRows([1e5,1e2,.1].map(frequency=>({frequency,zreal:5,zimag:-2})));
@@ -152,10 +193,12 @@ async function check(){
  assert.match(status.textContent,/controlled failure/);assert.equal(values.M.disabled,false);
  const repeated=[...rows,...[...rows].reverse()];
  drt.render({rows:repeated});
- assert.match(nodes.figureCanvas.innerHTML,/max-width:621px/);
- assert.match(nodes.figureCanvas.innerHTML,/margin:0 auto/);
- assert.match(plot.innerHTML,/viewBox="0 0 1100 850"/);
+ assert.doesNotMatch(nodes.figureCanvas.innerHTML,/max-width:621px/);
+ assert.match(nodes.figureCanvas.innerHTML,/data-eis-plot/);
+ assert.match(plot.innerHTML,/viewBox="0 0 1100 680"/);
  assert.match(controls.innerHTML,/DRT Controls/);
+ assert.doesNotMatch(controls.innerHTML,/λ 수동 슬라이더|max-width:780px/);
+ assert.match(controls.innerHTML,/height:32px/);
  assert.equal((controls.innerHTML.match(/100 Hz – 1 Hz/g)||[]).length,1);
  const selected=form.onsubmit({preventDefault(){}});
  await Promise.resolve();

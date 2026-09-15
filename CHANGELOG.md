@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.2.9 - 2026-09-15
+
+- Remove the 480px EIS preview cap. Use the analysis width with 55:45 panels on desktop, readable stacked plots in narrow panes, compact controls and a five-column peak table. Fold the original raw editor by default; preserve its DOM/listeners and restore it when leaving EIS.
+- Detect directly on unchanged gamma using scipy.signal.find_peaks with 5% maximum-density prominence and 2.5-sample half-prominence width. Suppress candidates within 0.25 log10 decade by prominence, not height. These are conservative defaults, not physical identities or universal optima.
+- Label at most five major peaks; retain all qualifying minor peaks in a disclosure and exports. Integrate original gamma in ln(tau) between nearest minima, with log-midpoint/outer-grid fallbacks. Record detection criteria in rc-drt-2 metadata; do not modify fitting, source rows or existing saved analyses.
+- Keep old saved results explicitly marked as previous detection criteria until recalculated. Existing API, manual assignments and data storage stay intact; non-EIS application-file edits are release metadata only.
+- Verification: final full suite passed 296 tests / 24 subtests; JavaScript syntax and git diff checks passed. Desktop analysis canvas measured about 660px high in a 1200px viewport (55%), with 55:45 panels. Browser verified compact controls, raw Show/Hide and CYC editor restoration; no console errors. No build/lint scripts or dependency lockfile are configured; no dependencies added. Local 0.2.5 backend restart/recalculation is pending separate user approval.
+
 ## v0.2.8 - 2026-09-14
 
 - Add EIS-only HF/MF/LF interpretation-candidate bands under the DRT axis with Korean/English explanations. Boundaries follow measured log-time limits and in-band peak anchors, never universal physical cutoffs.

@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.2.8";
+const PORTAL_VERSION = "0.2.9";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.2.9",
+    "date": "2026-09-15",
+    "changes": [
+      "Prioritize full-width EIS graphs with compact controls, major peak table and collapsed raw data.",
+      "Detect DRT peaks conservatively by prominence, width and log-time distance without smoothing gamma."
+    ]
+  },
   {
     "version": "0.2.8",
     "date": "2026-09-14",

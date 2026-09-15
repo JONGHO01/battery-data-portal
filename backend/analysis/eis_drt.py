@@ -129,6 +129,47 @@ def integrate_region(tau, gamma, tau_a, tau_b):
     return float(np.trapezoid(np.interp(grid,u,gamma),grid))
 
 
+def peak_regions(tau, gamma, prominence_fraction=.05, min_width=2.5, min_distance_decades=.25):
+    """Detect on unmodified density; width is half-prominence width in log-grid samples.
+
+    Defaults are conservative heuristics, not universally optimal physics.
+    Distance suppression deliberately ranks prominence, not peak height.
+    """
+    tau, gamma = np.asarray(tau, dtype=float), np.asarray(gamma, dtype=float)
+    if (tau.ndim != 1 or gamma.shape != tau.shape or len(tau) < 3
+            or not np.all(np.isfinite(tau)) or not np.all(np.isfinite(gamma))
+            or np.any(tau <= 0) or np.any(np.diff(tau) <= 0) or np.any(gamma < 0)):
+        raise ValueError("Peak detection requires finite nonnegative density on an increasing positive tau grid.")
+    if not (0 <= prominence_fraction <= 1 and min_width >= 0 and min_distance_decades >= 0):
+        raise ValueError("Invalid peak detection thresholds.")
+    log_tau = np.log10(tau)
+    if not np.allclose(np.diff(log_tau), np.diff(log_tau)[0], rtol=1e-6, atol=1e-12):
+        raise ValueError("Peak width requires an evenly spaced log(tau) grid.")
+    if gamma.max() <= 0:
+        return []
+    indices, props = find_peaks(gamma, prominence=prominence_fraction*float(gamma.max()), width=min_width)
+    kept = []
+    for k in sorted(range(len(indices)), key=lambda k: (-props["prominences"][k], indices[k])):
+        if all(abs(log_tau[indices[k]]-log_tau[indices[j]]) >= min_distance_decades-1e-12 for j in kept):
+            kept.append(k)
+    kept.sort(key=lambda k: indices[k])
+    minima, _ = find_peaks(-gamma)
+    peaks = []
+    for position, k in enumerate(kept):
+        index = indices[k]
+        left = minima[minima < index]
+        right = minima[minima > index]
+        a = float(tau[left[-1]]) if len(left) else (float(np.sqrt(tau[indices[kept[position-1]]]*tau[index])) if position else float(tau[0]))
+        b = float(tau[right[0]]) if len(right) else (float(np.sqrt(tau[index]*tau[indices[kept[position+1]]])) if position+1 < len(kept) else float(tau[-1]))
+        peaks.append({"Peak":f"P{position+1}","tau_peak":float(tau[index]),"f_peak":float(1/(2*np.pi*tau[index])),
+                      "tau_a":a,"tau_b":b,"R_region":integrate_region(tau,gamma,a,b),
+                      "prominence":float(props["prominences"][k]),"width_samples":float(props["widths"][k])})
+    # UI prioritizes five prominent candidates, but every qualifying peak is retained.
+    major = {p["Peak"] for p in sorted(peaks, key=lambda p: (-p["prominence"],p["tau_peak"]))[:5]}
+    ordered = [p for p in peaks if p["Peak"] in major]+[p for p in peaks if p["Peak"] not in major]
+    return [dict(p, Peak=f"P{i+1}", major=i<5) for i,p in enumerate(ordered)]
+
+
 def fit_drt(rows, settings=None):
     settings = settings or {}
     m = settings.get("M",100)
@@ -233,17 +274,13 @@ def fit_drt(rows, settings=None):
         warnings.append("Reconstruction error exceeds 5%; this nonnegative RC model may not describe the measured spectrum.")
     band = [float(1/w.max()),float(1/w.min())]
     warnings.append("Outside measured time band: interpret with caution. Peaks do not establish SEI, charge transfer, or ionic transport mechanisms.")
-    peak_indices,_ = find_peaks(gamma,prominence=max(float(np.max(gamma))*.02,z0*1e-5))
-    boundaries = [0]+[int(left+np.argmin(gamma[left:right+1])) for left,right in zip(peak_indices[:-1],peak_indices[1:])]+[m-1]
-    peaks = [{"Peak":f"P{k+1}","tau_peak":float(tau[index]),"f_peak":float(1/(2*np.pi*tau[index])),
-              "tau_a":float(tau[boundaries[k]]),"tau_b":float(tau[boundaries[k+1]]),
-              "R_region":integrate_region(tau,gamma,tau[boundaries[k]],tau[boundaries[k+1]])}
-             for k,index in enumerate(peak_indices)]
-    metadata = {"analysisVersion":"rc-drt-1","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
+    peaks = peak_regions(tau,gamma)
+    metadata = {"analysisVersion":"rc-drt-2","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
                 "Rs":rs,"L":inductance,"includeL":include_l,"variableCount":len(x),"mode":mode,
                 "autoSelectionReliable":auto_reliable,"Z0":z0,"signConvention":"Z = Re(Z) + i Im(Z)",
                 "excludedCount":quality["excludedCount"],"densityMeasure":"d(ln tau)","solver":"scipy.optimize.lsq_linear/bvls",
-                "measuredTimeBand":band,"peakRegions":"neighboring local minima; editable intervals, not physical assignments",
+                "measuredTimeBand":band,"peakRegions":"nearest local minima; log-midpoint fallback, grid edges for outer fallback; not physical assignments",
+                "peakDetection":{"prominenceFraction":.05,"minWidthSamples":2.5,"minDistanceDecades":.25,"majorLimit":5,"smoothing":False},
                 "spectrumIndex":spectrum_index,"spectrumCount":len(spectra)}
     reconstruction = [{"frequency_Hz":float(fi),"z_real_raw_ohm":float(zi.real),"z_imag_raw_ohm":float(zi.imag),
                        "z_real_fit_ohm":float(fit.real),"z_imag_fit_ohm":float(fit.imag),

@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current EIS refinement (2026-09-15): v0.2.9 supersedes the 480px preview cap below. Graph-first full-width 55:45 desktop layout, stacked narrow layout, thin controls, compact major/minor peak table, original raw editor folded with Show/Hide and restored outside EIS. rc-drt-2 detection uses unchanged gamma, 5% prominence / 2.5 half-prominence-width samples / 0.25 decade prominence-ranked spacing. All qualifying candidates remain stored/exportable; at most five are major. Integration uses nearest minima and log-midpoint/outer-grid fallbacks. Existing API/solver/raw data are unchanged. Old saved results carry a previous-criteria notice. Local health verified 0.2.5; restart and real EIS recalculation approval requested but not received. Source tests and UI checks do not imply the running backend has the new detector. Prior CYC restart/reparse also remains pending.
+
 > Current EIS addition (2026-09-14): v0.2.8 adds relative HF/MF/LF interpretation-candidate bands and a visible five-column peak table. Only explicit allowlisted user assignments label P peaks; the solver/raw data are unchanged. Assignments use existing Dataset figureEdits PATCH, scoped to dataset/run/segment/peak values, with failure feedback and CSV/JSON/SVG support. Latest saved assignment set per Dataset only; new runs are unassigned. Full suite: 285 tests and 18 subtests passed. Browser confirmed bands, bilingual guide, three neutral peaks, temporary Other label and removal, and successful save with every peak Unassigned. No physical identity, calculation or raw-row change was made to the real experiment. Local backend not restarted; prior CYC restart/reparse remains pending. GitHub publication must be verified from refs.
 
 > Current CYC fix (2026-09-14): v0.2.7 reads binary TestReport CellWeight(g) with a bounded non-deserializing reader. This supersedes the earlier claim that the eight supplied WRDs lack mass: the text-only reader missed it. Raw Ah values are preserved and neutral specific capacity is routed by charge/discharge direction. Parser-8 enables existing WRD refresh/re-upload paths without refreshing valid parser-7 SDE. No real source file or saved dataset was modified in this task. Local restart and actual saved-Fig refresh remain pending.
@@ -39,6 +41,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+Complete and verify v0.2.9 EIS-only UI cleanup and conservative peak detection, then scoped GitHub synchronization. Do not restart existing local service or recalculate real analyses without the pending approval.
 
 Completed v0.2.8 EIS-only DRT candidate guide and manual assignments. Preserve the approximately 480px preview, portal structure, CYC/CV and solver. No automatic resistance identification.
 
@@ -302,6 +306,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+v0.2.9: behavior only in `public/eis-drt.js` and `backend/analysis/eis_drt.py`; regressions in `tests/test_eis_drt_ui.py` and `tests/test_eis_drt_peak_detection.py`. Remaining touched files are version/release metadata and session memory. No global CSS, router, sidebar, header, CYC/CV behavior or database migration.
+
 v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/version files and this memory. public/app.js, public/index.html and python_backend.py changes are release metadata only.
 
 - v0.2.7: WRD parser and router, CYC adapter in public/app.js, parser-refresh compatibility/version in python_backend.py, focused mass/CYC/artifact tests and release metadata/docs. No global styles, EIS renderer, authentication or storage settings changed.
@@ -523,6 +529,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+v0.2.9: final full suite passed 296 tests / 24 subtests (22.19s); JavaScript syntax and diff checks passed. New independent synthetic tests first failed with missing peak_regions; now verify prominence cutoff, width, physical log-distance, prominence-over-height selection, repeatability, input immutability and ln(tau) integrals. Desktop canvas measured about 660px high / 1200px viewport, with 55:45 panels. Browser verified compact controls, default raw collapse, Show/Hide, CYC editor restoration and no console errors; viewport override reset. No actual EIS refit under the new detector yet because the local backend remains 0.2.5. No build/lint scripts or dependency lockfile; no new dependency. Check final refs for GitHub publication.
 
 v0.2.8: 285 tests / 18 subtests passed; node syntax checks and git diff --check passed. Tests cover candidate-band scaling with frequency/peaks, allowlisted manual assignments, context mismatch, save failure, restore and new-run reset. Browser verified the reported saved SEO figure, no console errors, manual Other then Unassigned and neutral assignment save. No build/lint scripts exist; npm unavailable, no dependencies added. Published/deployed status is separate.
 

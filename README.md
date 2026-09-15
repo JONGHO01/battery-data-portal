@@ -1,18 +1,22 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.2.8-2f80ed)
+![Version](https://img.shields.io/badge/version-0.2.9-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.2.8** — DRT interpretation-candidate bands and manual peak assignments. No automatic physical resistance identification. Raw data, solver and portal structure remain unchanged; source publication is separate from deployment.
+> Source release: **v0.2.9** — Graph-first EIS layout and conservative DRT peak detection. Raw gamma, fitting, portal shell and other analysis pages remain unchanged. Source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.2.8**이며, 운영 배포 여부와는 별개입니다. EIS DRT에 **해석 후보 영역**과 피크별 **Assignment**를 추가했습니다. 초기값은 Unassigned이며, 사용자가 직접 선택한 이름만 표시·저장합니다. 기존 EIS의 약 480px 미리보기, CYC 용량 처리, 포탈 배치와 저장 구조는 유지합니다.
+현재 소스 버전은 **v0.2.9**이며, 운영 배포 여부와는 별개입니다. EIS 그래프는 넓은 화면에서 55:45로 확대하고, 좁은 창에서는 축소 대신 세로로 배치합니다. 컨트롤·피크 표는 간결하게, 원시 표는 기본 접힘으로 표시합니다. CYC/CV, 전역 CSS, 포탈 배치와 저장 구조는 변경하지 않습니다.
+
+- DRT 피크 기본 조건: prominence ≥ 최대 γ의 **5%**, half-prominence width ≥ **2.5 log-grid samples**, 최소 거리 **0.25 log10 decade**. 가까운 후보는 prominence가 큰 쪽을 유지합니다. 보편적 최적값이 아닌 보수적인 기본 기준입니다.
+- γ를 smoothing하거나 지우지 않습니다. 주요 피크 최대 5개를 표시하고 나머지 검출 피크는 접어서 보존합니다. R_region은 양옆 최소점(없으면 이웃 피크의 로그 중간점, 바깥쪽은 격자 끝)을 경계로 원본 γ를 d(ln τ) 적분한 값입니다.
+- Assignment는 기본 Unassigned이며 자동 물리적 할당은 하지 않습니다. 기존 분석 결과는 그대로 보존하며 새 검출 기준은 업데이트된 서버에서 재계산할 때 적용됩니다. prominence 변경 검증은 내부 검출 함수 테스트로 수행하며 별도 설정 UI/API는 추가하지 않았습니다.
 
 ### CYC 용량 단위 수정
 
@@ -75,6 +79,7 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.2.9 | 2026-09-15 | 그래프 우선 EIS 배치, 원시 표 접힘, prominence·폭·거리 기반 보수적 DRT 피크 검출. |
 | v0.2.8 | 2026-09-14 | DRT 해석 후보 band, 사용자 피크 할당·저장·export. 자동 저항 할당 없음. |
 | v0.2.7 | 2026-09-14 | WRD 내부 질량을 읽어 mAh/g 복원, 충전·방전 구분, 원본 Ah 보존. |
 | v0.2.6 | 2026-09-14 | EIS 미리보기를 CYC처럼 높이 약 480px로 제한·중앙 정렬, 저장용 해상도 유지. |
