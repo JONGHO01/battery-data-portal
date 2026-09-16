@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current preview fix v0.3.3 (2026-09-16): integrated CYC record graphs alone now use a responsive 260-400px SVG display height. Preserve original viewBox, analysis, standalone figures, portal shell and EIS/CV. Saved 085 record visually verified; desktop2000x1000=380px, narrow780x900=342px for all three graphs, viewport override reset, no console errors. 331 tests plus app.js syntax and whitespace checks pass. No raw data, DB or server restart. GitHub synchronization follows standing authorization; deployment is not inferred from publication.
+
 > Current CYC source v0.3.2 (2026-09-16): dQ/dV now accumulates measured delta-Q into 5 mV voltage bins, preserving capacity area rather than averaging unstable tiny-dV derivatives. Keep charge positive/discharge negative; no peak clipping or smoothing. Null charge/discharge fields no longer hide charge curves; missing-voltage rows and capacity resets are not bridged. Axis title/legend spacing fixed. Read-only 082 WRD first discharge delta-Q=161.62095685 mAh/g; old integral magnitude=142.97084404, new=161.62095685. Browser verified saved 088 with both charge/discharge curves and no console errors. No raw files/DB/server process were changed. Full verification/publication recorded after completion; backend activation remains separately pending.
 
 > Current CYC source v0.3.1 (2026-09-16): constant explicit C-rate segments are retained and labelled on performance graphs. Exact C-rate: value C experiment conditions are accepted as a fallback; missing values show C-rate: not specified. No source rows, capacities, live DB or server process were changed. Browser verified the missing-rate case on the saved 088 WRD; it has no C-rate column/condition, so the actual numeric rate was requested and remains unknown. 321 tests passed; app.js syntax passed. This is a frontend fix served by existing 4174; newer backend activation remains separately pending.
@@ -323,6 +325,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.3: `public/style.css` changes only `.cycRecordChart svg` sizing; `tests/test_cyc_integrated_record_ui.py` protects bounded preview height; remaining files are synchronized release metadata/documentation.
+
 - v0.3.2: `public/app.js` dQ/dV binning, null-safe charge selection and margins; `tests/test_dqdv_numerics.py` nine numerical regressions; existing CYC legend contract updated. Synchronized release metadata/docs only outside this scope.
 
 v0.3.1: public/app.js CYC-only display helpers, tests/test_cyc_rate_labels.py and the explicit-rate contract in tests/test_cyc_figure_ui.py; synchronized version/release metadata. No parser changes.
@@ -474,6 +478,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.3: no further local preview changes required; actual C-rate remains unknown and must not be assigned from capacity alone. Cloud deployment is separate from source publication.
+
 - v0.3.2 dQ/dV is verified on existing local 4174 without backend restart. Do not force lower/smoother peaks: signed 5 mV bin heights reflect measured capacity concentration. A push is not proof of Render deployment.
 
 - Current CYC label: obtain the actual charging/discharging rate and exact dataset for the user's five-point screenshot before writing experimental conditions. Do not infer 0.1 C from ~160 mAh/g or unrelated selected-cell metadata.
@@ -562,6 +568,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.3: full unittest suite 331 passed; JavaScript syntax and diff whitespace checks passed. Saved 085 integrated record shows all three compact graphs on wide/narrow screens with unchanged SVG viewBoxes and no console errors. No build/lint scripts exist.
 
 - v0.3.2: `python -B -m unittest discover -s tests -q` passed 330 tests; `node --check public/app.js` and `git diff --check` passed. Eight real WRDs retain identical SHA-256 and first-discharge bin integrals match delta-Q within 1e-6. Browser confirms saved 082/088 charge and discharge traces, visible unit title/voltage label and non-overlapping legend; no console errors. No build/lint scripts configured. GitHub target fetched with HEAD/main initially equal; publication must be verified by remote hash.
 

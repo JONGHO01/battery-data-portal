@@ -4198,8 +4198,9 @@ pre {
 .cycRecordChart svg {
   display: block;
   width: 100%;
-  height: auto;
-  min-height: 300px;
+  /* Screen preview only: keep the original viewBox/export geometry intact. */
+  height: clamp(260px, 38vh, 400px);
+  min-height: 0;
 }
 
 .cycRecordTableWrap {

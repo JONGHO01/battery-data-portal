@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.3.3 - 2026-09-16
+
+- Limit only integrated CYC record SVG previews to clamp(260px, 38vh, 400px), instead of unbounded full-card-width scaling. Preserve aspect ratio, existing two-column/narrow-screen layout, and all three graphs.
+- Preserve individual CYC figures, EIS/CV, SVG viewBox/export geometry, raw data, calculations, and portal shell. Backend version metadata only; no server restart.
+- Verification: 331 unittest cases passed; app.js syntax and diff whitespace checks passed. Browser verified the saved 085 integrated record with all three previews at 380px in a 2000x1000 viewport and 342px at 780x900, without console errors; temporary viewport override reset. No build/lint scripts configured.
+
 ## v0.3.2 - 2026-09-16
 
 - Replace averages of tiny-voltage pointwise derivatives with capacity-conserving finite-volume 5 mV dQ/dV bins. Consecutive measured increments are distributed by voltage overlap; exact plateaus retain their capacity in one bin. No smoothing or peak clipping is applied.

@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.2";
+const PORTAL_VERSION = "0.3.3";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.3",
+    "date": "2026-09-16",
+    "changes": ["Limit integrated CYC record graph previews to a responsive 260-400px height; preserve analysis and SVG geometry."]
+  },
   {
     "version": "0.3.2",
     "date": "2026-09-16",

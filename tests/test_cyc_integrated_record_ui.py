@@ -1,6 +1,7 @@
 """Regression checks for the saved CYC integrated-record workspace."""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -23,6 +24,13 @@ class CycIntegratedRecordUiTests(unittest.TestCase):
         self.assertIn('captureCycRecordPanel(dataset, "voltage-profile")', self.app_js)
         self.assertIn('captureCycRecordPanel(dataset, "dqdv")', self.app_js)
         self.assertIn('function captureCycRecordPanel(dataset, figureKind)', self.app_js)
+
+    def test_record_preview_height_is_bounded_without_changing_svg_geometry(self):
+        css = (ROOT / "public/style.css").read_text(encoding="utf-8")
+        rule = re.search(r"\.cycRecordChart svg\s*\{([^}]+)\}", css).group(1)
+        self.assertIn("height: clamp(260px, 38vh, 400px);", rule)
+        self.assertIn("min-height: 0;", rule)
+        self.assertIn("width: 100%;", rule)
 
     def test_integrated_record_keeps_electrode_metadata_linked_to_cyc(self):
         self.assertIn('function renderCycRecordElectrode(dataset)', self.app_js)
