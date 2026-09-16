@@ -4027,6 +4027,39 @@ pre {
   font-size: 13px;
 }
 
+.importConfirmDialog {
+  width: min(560px, calc(100vw - 48px));
+  max-height: 80vh;
+  overflow: auto;
+  border: 1px solid #d8e8ef;
+  border-radius: 12px;
+  padding: 24px;
+  color: var(--ink);
+}
+
+.importConfirmDialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.importConfirmDialog p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.importConfirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.importConfirmActions button {
+  width: auto;
+}
+
+.importConfirmActions button:last-child {
+  background: #b42318;
+}
+
 .cycRecordContent {
   display: grid;
   gap: 16px;

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.5 - 2026-09-16
+
+- Add owner-scoped duplicate-filename confirmation for single/batch/legacy CSV imports. Cancel preserves originals; confirmation names exact Dataset targets and warns of permanent removal.
+- Commit a fresh source before purging approved old raw/parsed/analysis/Fig/report records and artifacts. Preserve existing datasets API behavior; reject stale/forged confirmations and consumed import sessions. Report partial deletion explicitly, with strict cloud deletion errors.
+- Use a compact portal HTML dialog with cancel focused by default. Preserve other-user files, PC originals, analysis, portal layout and other pages. Local activation requires an approved backend restart; old servers show an explicit update message, not an unsafe fallback.
+- Verification: final full suite 349 tests passed, app.js syntax and diff whitespace checks passed. Isolated browser harness verified cancel (one request, old record retained) and confirm (two requests, new record returned), with a 560px dialog and no console errors. Temporary test tabs/servers closed; real portal files and DB unchanged. No build/lint scripts or committed dependency lockfile; no packages added or dependency audit claimed.
+
 ## v0.3.4 - 2026-09-16
 
 - Add previous/next graph buttons and current CYC record position to the integrated view. Follow filtered authorized gallery order across dates, skipping other types, without wrapping at either endpoint.

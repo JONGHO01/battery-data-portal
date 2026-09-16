@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current imports v0.3.5 (2026-09-16): upload UI uses additive POST /api/dataset-imports, prompting on the same authenticated owner's normalized full source filename (extension included, all own projects/types). Explicit target IDs/names/revisions are validated server-side. Cancel aborts that file; confirmation commits a fresh Dataset/artifacts before permanently purging approved old portal records and files. Partial deletion is reported, cloud deletion is strict, consumed sessions cannot replay, and late revision changes block deletion. PC originals/external backups and other owners are untouched. HTML dialog defaults to cancel; batch/single/legacy CSV paths and stale comparison selections are covered. Final 349 tests, syntax/whitespace checks and isolated dialog cancel/confirm browser QA pass. Real DB/files unchanged; temporary QA servers/tabs closed. Existing localhost:4174 is 0.2.9 and NOT restarted: a new restart approval was asked but not received. New frontend uploads show an update-required message until backend activation; never silently fall back to unconfirmed legacy saves. See docs/DUPLICATE_IMPORTS.md.
+
 > Current navigation v0.3.4 (2026-09-16): integrated CYC view has previous/next graph buttons, position and gallery return in its header. Uses currently filtered authorized CYC records in gallery date-descending/stable-within-date order; no wrap and no cross-type navigation. Late hydration cannot overwrite a different selection or closed view. Browser verified 085 (2/65) -> 088 (1/65, previous disabled) -> 085; three graphs preserved, no console errors. 334 tests and syntax/whitespace checks pass. No data writes or server restart; source publication is not proof of deployment.
 
 > Current preview fix v0.3.3 (2026-09-16): integrated CYC record graphs alone now use a responsive 260-400px SVG display height. Preserve original viewBox, analysis, standalone figures, portal shell and EIS/CV. Saved 085 record visually verified; desktop2000x1000=380px, narrow780x900=342px for all three graphs, viewport override reset, no console errors. 331 tests plus app.js syntax and whitespace checks pass. No raw data, DB or server restart. GitHub synchronization follows standing authorization; deployment is not inferred from publication.
@@ -327,6 +329,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.5: `python_backend.py` additive import/guarded strict-delete flow; `public/app.js` confirmation and upload integration; `public/style.css` scoped dialog; import backend/helper tests and disposable browser harness; `docs/DUPLICATE_IMPORTS.md` contract and deletion limits; synchronized release metadata.
+
 - v0.3.4: `public/app.js` integrated CYC navigation/late-response guard; `public/style.css` scoped navigation styles; `tests/test_cyc_record_navigation.py` ordering, endpoint/filter and wiring regression checks; synchronized release metadata/docs.
 
 - v0.3.3: `public/style.css` changes only `.cycRecordChart svg` sizing; `tests/test_cyc_integrated_record_ui.py` protects bounded preview height; remaining files are synchronized release metadata/documentation.
@@ -482,6 +486,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.5: obtain NEW approval before restarting existing 4174 to enable the import API (current live backend 0.2.9). Then verify activation read-only; do not test permanent deletion against real experiments without exact-target confirmation. GitHub publication follows standing authorization and must be verified by remote hash; it does not prove deployment. Browser QA uses synthetic data only.
+
 - v0.3.4 navigation is complete locally; GitHub synchronization uses standing authorization and must be verified from the remote commit. Do not restart the existing server or infer cloud deployment from source publication.
 
 - v0.3.3: no further local preview changes required; actual C-rate remains unknown and must not be assigned from capacity alone. Cloud deployment is separate from source publication.
@@ -574,6 +580,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.5: final `python -B -m unittest discover -s tests -q`: 349 tests passed (39.239s); `node --check public/app.js` and `git diff --check` pass. Test DB verifies owner isolation, stale/forged confirmations, identical-file/new-ID replacement, multirecord cleanup, workspace cascades, save/delete failures. Browser fake-API harness confirms cancel/replace and no console errors. An earlier transient Windows file-lock run failed; the final full run is clean. No build/lint scripts, lockfile or dependency audit; no new dependencies. Real server/data unchanged.
 
 - v0.3.4: 334 unittest cases passed (42.585s), `node --check public/app.js` and `git diff --check` passed. Real browser previous/next round-trip and first-record disabled button confirmed; no console errors. Build/lint scripts absent. Remote main fetched with no divergence before publication.
 

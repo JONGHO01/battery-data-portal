@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.4";
+const PORTAL_VERSION = "0.3.5";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.5",
+    "date": "2026-09-16",
+    "changes": ["Confirm duplicate upload filenames per owner; persist a new source before permanently deleting approved old records and artifacts."]
+  },
   {
     "version": "0.3.4",
     "date": "2026-09-16",
@@ -1873,15 +1878,78 @@ function baseNameWithoutExtension(filename) {
   return String(filename || "").replace(/\.[^.]+$/, "").trim() || "batch-file";
 }
 
+function confirmImportReplacement(message) {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "importConfirmDialog";
+    const heading = document.createElement("h2");
+    heading.id = "importConfirmTitle";
+    heading.textContent = "\uc911\ubcf5 \ud30c\uc77c \uad50\uccb4 \ud655\uc778";
+    dialog.setAttribute("aria-labelledby", heading.id);
+    const description = document.createElement("p");
+    description.textContent = message;
+    const actions = document.createElement("div");
+    actions.className = "importConfirmActions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "secondaryAction";
+    cancel.textContent = "\ucde8\uc18c \u00b7 \uae30\uc874 \ud30c\uc77c \uc720\uc9c0";
+    const replace = document.createElement("button");
+    replace.type = "button";
+    replace.textContent = "\uae30\uc874 \ud30c\uc77c \uc644\uc804 \uc0ad\uc81c \ud6c4 \uad50\uccb4";
+    let accepted = false;
+    cancel.addEventListener("click", () => dialog.close());
+    replace.addEventListener("click", () => { accepted = true; dialog.close(); });
+    dialog.addEventListener("close", () => { dialog.remove(); resolve(accepted); }, { once: true });
+    actions.append(cancel, replace);
+    dialog.append(heading, description, actions);
+    document.body.append(dialog);
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
+async function postDatasetImport(payload) {
+  const send = (value) => fetchJsonWithTimeout("/api/dataset-imports", {
+    method: "POST", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(value),
+  });
+  let result = await send(payload);
+  const conflicts = result.body?.detail?.conflicts;
+  if (result.res.status === 409 && result.body?.detail?.code === "duplicate_source_name" && Array.isArray(conflicts)) {
+    const targets = conflicts.map((item) => `${item.sourceName} [${item.id}]`).join("\n");
+    const message = `\uac19\uc740 \ud30c\uc77c\uba85\uc758 \uae30\uc874 \uae30\ub85d ${conflicts.length}\uac1c\uac00 \uc788\uc2b5\ub2c8\ub2e4.\n${targets}\n\n\uc0c8 \ud30c\uc77c \uc800\uc7a5 \ud6c4 \uc704 \uae30\ub85d\uc744 \uc644\uc804 \uc0ad\uc81c\ud558\uace0 \uad50\uccb4\ud560\uae4c\uc694?\n\ud3ec\ud0c8\uc758 \uae30\uc874 \uc6d0\ubcf8\u00b7\ubd84\uc11d\u00b7Fig\u00b7\ubcf4\uace0\uc11c\u00b7\uc804\ucc98\ub9ac \uae30\ub85d\uc740 \ubcf5\uad6c\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. PC \uc6d0\ubcf8\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4.\n\ucde8\uc18c\ud558\uba74 \uae30\uc874 \ud30c\uc77c\uc744 \uc720\uc9c0\ud558\uace0 \uc774 \uc5c5\ub85c\ub4dc\ub97c \uc911\ub2e8\ud569\ub2c8\ub2e4.`;
+    if (!await confirmImportReplacement(message)) {
+      return { res: { ok: false, status: 409 }, body: { detail: "\uad50\uccb4\ub97c \ucde8\uc18c\ud588\uc2b5\ub2c8\ub2e4. \uae30\uc874 \ud30c\uc77c\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4." } };
+    }
+    result = await send({ ...payload, replaceExisting: conflicts });
+    if (result.res.status === 409 && result.body?.detail?.code === "duplicate_source_name") {
+      result.body = { detail: "\uae30\uc874 \ubaa9\ub85d\uc774 \ubcc0\uacbd\ub418\uc5b4 \uad50\uccb4\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694." };
+    }
+  }
+  if ([404, 405].includes(result.res.status)) {
+    result.body = { detail: "\uc911\ubcf5 \ud30c\uc77c \ud655\uc778 API\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc11c\ubc84\ub97c \uc5c5\ub370\uc774\ud2b8/\uc7ac\uc2dc\uc791\ud558\uace0 \ud30c\uc77c\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574\uc8fc\uc138\uc694." };
+  }
+  if (!result.res.ok) return result;
+  const deleted = new Set(result.body.deletedIds || []);
+  state.datasets = state.datasets.filter((item) => !deleted.has(item.id));
+  state.filtered = state.filtered.filter((item) => !deleted.has(item.id));
+  if (state.compareIds) state.compareIds = state.compareIds.filter((id) => !deleted.has(id));
+  for (const id of deleted) {
+    if (state.annotations) delete state.annotations[id];
+  }
+  const saved = result.body.dataset;
+  if (result.body.deleteFailures?.length) {
+    saved.replacementWarning = `\uc0c8 \ud30c\uc77c\uc740 \uc800\uc7a5\ud588\uc9c0\ub9cc \uae30\uc874 ${result.body.deleteFailures.length}\uac1c \uae30\ub85d\uc758 \uc0ad\uc81c\ub97c \uc644\ub8cc\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc800\uc7a5\ub41c Fig \ubaa9\ub85d\uc5d0\uc11c \ud655\uc778\ud574\uc8fc\uc138\uc694.`;
+  }
+  return { res: result.res, body: saved };
+}
+
 async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
   const rows = canonicalRows(dataType, analysis.columns, analysis.rows);
   if (!rows.length) {
     throw new Error("\uc774 \ud30c\uc77c\uc5d0\uc11c Fig\uc5d0 \uc0ac\uc6a9\ud560 \uc22b\uc790 \ub370\uc774\ud130\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.");
   }
-  const { res, body: saved } = await fetchJsonWithTimeout("/api/datasets", {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({
+  const { res, body: saved } = await postDatasetImport({
       cell,
       rows,
       columns: analysis.columns,
@@ -1894,7 +1962,6 @@ async function saveDatasetFromInspection(analysis, dataType, cell, figureKind) {
       quality: analysis.quality || {},
       parser: analysis.parser || {},
       ...hierarchySelectionPayload(),
-    }),
   });
   if (!res.ok) {
     throw new Error(apiErrorMessage(saved, "Dataset \uc800\uc7a5 \uc911 \uc11c\ubc84 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ud398\uc774\uc9c0\ub97c \uc0c8\ub85c\uace0\uce68\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694."));
@@ -2005,6 +2072,7 @@ async function createBatchFigures() {
         } catch (error) {
           note = `Dataset\uc740 \uc800\uc7a5\ud588\uc9c0\ub9cc Fig \uae30\ub85d\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`;
         }
+        if (saved.replacementWarning) note = [note, saved.replacementWarning].filter(Boolean).join(" ");
         state.batchFigureResults.push({ ok: true, fileName: file.name, dataType, datasetId: saved.id, note });
       } catch (error) {
         state.batchFigureResults.push({ ok: false, fileName: file.name, message: error.message || "\ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4." });
@@ -2467,10 +2535,7 @@ async function createSmartFigure() {
       return;
     }
     const cell = collectCellForm();
-    const { res, body: saved } = await fetchJsonWithTimeout("/api/datasets", {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({
+    const { res, body: saved } = await postDatasetImport({
         cell,
         rows,
         columns: state.analysis.columns,
@@ -2483,7 +2548,6 @@ async function createSmartFigure() {
         quality: state.analysis.quality || {},
         parser: state.analysis.parser || {},
         ...hierarchySelectionPayload(),
-      }),
     });
     if (!res.ok) {
       const message = apiErrorMessage(saved, "\ub370\uc774\ud130\uc14b \uc800\uc7a5 \uc911 \uc11c\ubc84 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \ud398\uc774\uc9c0\ub97c \uc0c8\ub85c\uace0\uce68\ud55c \ub4a4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
@@ -2497,7 +2561,7 @@ async function createSmartFigure() {
     renderAnalysis();
     showDatasetImmediately(saved);
     showModule(["cyc", "cv", "eis"].includes(dataType) ? dataType : "figure");
-    setStatus(`${dataType.toUpperCase()} Fig \uc0dd\uc131 \uc644\ub8cc`);
+    setStatus(saved.replacementWarning || `${dataType.toUpperCase()} Fig \uc0dd\uc131 \uc644\ub8cc`);
   } catch (error) {
     setStatus("Fig \uc0dd\uc131 \uc2e4\ud328");
     setAnalysisMessage(`Fig \uc0dd\uc131 \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error.message}`);
@@ -7086,21 +7150,15 @@ async function saveDataset(ev) {
   setStatus("Parsing...");
   const rows = parseCsv(await file.text());
   const cell = Object.fromEntries(["date", "cellId", "sampleName", "material", "electrolyte", "condition", "notes"].map((k) => [k, fd.get(k)]));
-  const res = await fetch("/api/datasets", {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ cell, rows, ...hierarchySelectionPayload() }),
-  });
+  const { res, body: saved } = await postDatasetImport({ cell, rows, sourceName: file.name, ...hierarchySelectionPayload() });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || "\uc800\uc7a5 \uc2e4\ud328");
+    throw new Error(apiErrorMessage(saved, "\uc800\uc7a5 \uc2e4\ud328"));
   }
-  const saved = await res.json();
   state.datasets.unshift(saved);
   await loadHierarchy();
   form.reset();
   showDatasetImmediately(saved);
-  setStatus("Saved");
+  setStatus(saved.replacementWarning || "Saved");
 }
 
 function download(name, text, type) {

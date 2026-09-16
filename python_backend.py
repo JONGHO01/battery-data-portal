@@ -27,6 +27,7 @@ import secrets
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.parse
 import urllib.error
 import urllib.request
@@ -175,7 +176,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.3.4", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.3.5", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -2343,7 +2344,7 @@ def read_object_storage_bytes(object_name: str) -> bytes | None:
                 pass
 
 
-def delete_from_object_storage(object_name: str) -> None:
+def delete_from_object_storage(object_name: str, strict: bool = False) -> None:
     """Remove one durable artifact when object storage is configured.
 
     A missing object is treated as already cleaned up. In durable production mode
@@ -2355,7 +2356,7 @@ def delete_from_object_storage(object_name: str) -> None:
         return
     configuration_issues = storage_configuration_issues()
     if configuration_issues:
-        if REQUIRE_DURABLE_STORAGE:
+        if REQUIRE_DURABLE_STORAGE or strict:
             raise HTTPException(status_code=503, detail="Durable object storage is not configured; file deletion was not completed.")
         print(
             f"Storage warning: object storage delete was skipped because configuration is invalid "
@@ -2377,7 +2378,7 @@ def delete_from_object_storage(object_name: str) -> None:
         )
         client.delete_object(Bucket=S3_BUCKET, Key=object_name)
     except Exception as exc:
-        if REQUIRE_DURABLE_STORAGE:
+        if REQUIRE_DURABLE_STORAGE or strict:
             raise HTTPException(status_code=503, detail="Could not delete the file from durable object storage. Please try again.") from exc
         print(f"Storage warning: object storage delete failed and local cleanup will continue: {exc}", file=sys.stderr)
 
@@ -2584,12 +2585,15 @@ def delete_local_upload_path(local_path_value: str) -> None:
         candidate.unlink(missing_ok=True)
 
 
-def delete_artifact(artifact: dict) -> None:
+def delete_artifact(artifact: dict, strict: bool = False) -> None:
     """Delete both durable and local copies of one known artifact."""
 
     if not isinstance(artifact, dict):
         return
-    delete_from_object_storage(str(artifact.get("objectKey") or ""))
+    if strict:
+        delete_from_object_storage(str(artifact.get("objectKey") or ""), strict=True)
+    else:
+        delete_from_object_storage(str(artifact.get("objectKey") or ""))
     delete_local_data_path(str(artifact.get("localPath") or ""))
 
 
@@ -4227,6 +4231,10 @@ def create_dataset_analysis(dataset_id: str, payload: dict = Body(default_factor
 
 @app.post("/api/datasets", status_code=201)
 def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_current_user)):
+    return finalize_dataset(payload, user)
+
+
+def finalize_dataset(payload: dict, user: dict, force_new_source: bool = False):
     payload = dict(payload)
     # Artifact locations are server-issued, never client-controlled references.
     for protected in ('rawArtifact', 'parsedArtifact', 'analysisProvenance', 'parser'):
@@ -4260,6 +4268,8 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                 session_rows = json_loads(session["canonical_rows_json"], [])
                 if isinstance(session_rows, list) and session_rows:
                     payload["rows"] = session_rows
+                if session["consumed_dataset_id"] and force_new_source:
+                    raise HTTPException(409, "이미 저장한 업로드입니다. 목록을 확인하거나 파일을 다시 선택해주세요.")
                 if session["consumed_dataset_id"]:
                     existing = execute(
                         conn,
@@ -4273,14 +4283,14 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
                         reused["reusedExistingSource"] = True
                         return reused
 
-                existing_source = find_dataset_by_source_hash(
+                existing_source = None if force_new_source else find_dataset_by_source_hash(
                     conn,
                     user["id"],
                     str(payload.get("dataType") or "").strip().lower(),
                     str(session["sha256"] or ""),
                 )
                 # The lookup already restricts the match to this authenticated owner.
-                if existing_source:
+                if existing_source and not force_new_source:
                     if needs_sde_parser_refresh(existing_source) or needs_wrd_parser_refresh(existing_source):
                         # A retry after an instrument-parser refresh must replace
                         # stale normalized rows instead of silently reusing a Fig.
@@ -4317,6 +4327,57 @@ def create_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_
             ),
         ) from exc
     return item
+
+
+def import_title_key(value: str) -> str:
+    # Full original filename, including extension; never a client filesystem path.
+    return unicodedata.normalize("NFKC", value.replace("\\", "/").split("/")[-1]).strip().casefold()
+
+
+@app.post("/api/dataset-imports", status_code=201)
+def import_dataset(payload: dict = Body(default_factory=dict), user=Depends(get_current_user)):
+    """Confirm exact owner-scoped duplicates, commit new source, then purge old ones.
+
+    Storage and SQL cannot share a transaction. A partial purge is returned
+    explicitly; it never rolls back the already committed replacement file.
+    """
+    payload = dict(payload)
+    confirmed = payload.pop("replaceExisting", None)
+    if confirmed is not None and (not isinstance(confirmed, list) or len(confirmed) > 1000
+            or any(not isinstance(x, dict) or set(x) != {"id", "sourceName", "updatedAt"}
+                   or any(not isinstance(v, str) for v in x.values()) for x in confirmed)):
+        raise HTTPException(422, "교체 대상 목록을 확인해주세요.")
+    with connect() as conn:
+        upload_id = payload.get("uploadId")
+        if upload_id:
+            session = execute(conn, "SELECT * FROM upload_sessions WHERE id = ?", (str(upload_id),)).fetchone()
+            if not session or session["owner_id"] != user["id"]:
+                raise HTTPException(404, "업로드를 찾을 수 없습니다.")
+            if session["consumed_dataset_id"]:
+                raise HTTPException(409, "이미 저장한 업로드입니다. 목록을 확인하거나 파일을 다시 선택해주세요.")
+            payload["sourceName"] = session["filename"]
+        name = payload.get("sourceName")
+        if not isinstance(name, str) or not name.strip() or len(name) > 500:
+            raise HTTPException(422, "원본 파일명을 확인해주세요.")
+        title_key = import_title_key(name)
+        candidates = execute(conn,
+            "SELECT id, source_name, updated_at FROM datasets WHERE owner_id = ? ORDER BY id", (user["id"],)).fetchall()
+        conflicts = [{"id": row["id"], "sourceName": row["source_name"], "updatedAt": row["updated_at"]}
+                     for row in candidates if import_title_key(row["source_name"] or "") == title_key]
+        if (conflicts or confirmed) and confirmed != conflicts:
+            raise HTTPException(409, {"code": "duplicate_source_name", "conflicts": conflicts})
+    # Never reuse the old Dataset ID or same-hash artifacts during replacement.
+    payload["id"] = "IMPORT-" + secrets.token_hex(16)
+    saved = finalize_dataset(payload, user, force_new_source=True)
+    deleted, failures = [], []
+    for target in conflicts:
+        try:
+            delete_dataset_checked(target["id"], user, expected=target, strict=True)
+            deleted.append(target["id"])
+        except Exception as exc:
+            failures.append(target["id"])
+            print(f"Confirmed import cleanup failed: {type(exc).__name__}", file=sys.stderr)
+    return {"dataset": saved, "deletedIds": deleted, "deleteFailures": failures}
 
 
 @app.patch("/api/datasets/{dataset_id}")
@@ -4364,8 +4425,18 @@ def update_dataset(dataset_id: str, payload: dict = Body(default_factory=dict), 
 
 @app.delete("/api/datasets/{dataset_id}")
 def delete_dataset(dataset_id: str, user=Depends(get_current_user)):
+    return delete_dataset_checked(dataset_id, user)
+
+
+def delete_dataset_checked(dataset_id: str, user: dict, expected: dict | None = None, strict: bool = False):
     with connect() as conn:
-        row = execute(conn, "SELECT * FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+        if expected and not USE_POSTGRES:
+            execute(conn, "BEGIN IMMEDIATE")
+        lock = " FOR UPDATE" if expected and USE_POSTGRES else ""
+        row = execute(conn, "SELECT * FROM datasets WHERE id = ?" + lock, (dataset_id,)).fetchone()
+        if row and expected and (row["owner_id"] != user["id"] or row["source_name"] != expected["sourceName"]
+                                 or row["updated_at"] != expected["updatedAt"]):
+            raise HTTPException(409, "확인 후 기존 파일이 변경되어 삭제하지 않았습니다.")
         if row and not can_edit_row(conn, user, row):
             raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
         if not row:
@@ -4385,9 +4456,12 @@ def delete_dataset(dataset_id: str, user=Depends(get_current_user)):
         # Object-storage failures in durable mode raise before database rows are
         # removed, so a dataset is never silently detached from its source data.
         for artifact in artifacts:
-            delete_artifact(artifact)
+            if strict:
+                delete_artifact(artifact, strict=True)
+            else:
+                delete_artifact(artifact)
         for upload in upload_rows:
-            delete_from_object_storage(object_key_from_storage_url(str(upload["storage_url"] or "")))
+            delete_from_object_storage(object_key_from_storage_url(str(upload["storage_url"] or "")), strict=strict)
             delete_local_upload_path(str(upload["local_path"] or ""))
 
         execute(conn, "DELETE FROM analysis_runs WHERE dataset_id = ?", (dataset_id,))
