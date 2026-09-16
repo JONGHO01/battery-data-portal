@@ -1,18 +1,20 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.3.5-2f80ed)
+![Version](https://img.shields.io/badge/version-0.3.6-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.3.5** — Confirm duplicate filenames before replacement; save the new file before removing approved old portal records. Source publication is separate from deployment.
+> Source release: **v0.3.6** — Add multiple independent figure annotations and edit selected text separately; serialize rapid saves. Source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.3.5**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+현재 소스 버전은 **v0.3.6**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+
+Fig의 **글 추가** 버튼 또는 Enter는 항상 새 문구를 추가합니다. 기존 문구를 클릭한 뒤 **선택 글 수정**으로 내용만 바꿀 수 있고, 각각 드래그로 이동할 수 있습니다. 연속 저장은 순서대로 처리하며, 저장 실패 시 상태 메시지를 확인하고 **Fig 저장**으로 다시 시도하세요. 페이지를 닫거나 새로고침하기 전에 저장 완료를 확인하세요.
 
 파일 업로드 시 본인의 동일 원본 파일명(확장자 포함, 대소문자 무시)이 있으면 교체 확인창을 표시합니다. 취소하면 기존 파일을 보존하고 해당 업로드를 중단합니다. 승인하면 새 파일 저장 후 확인한 기존 원본·분석·Fig·보고서·전처리 기록을 포탈에서 영구 삭제합니다. PC 원본과 외부 오프라인 백업은 건드리지 않습니다. 새 서버 API가 필요하며, 구버전 서버에서는 재시작 안내를 표시합니다. 자세한 계약과 실패 처리는 [파일 교체 안내](docs/DUPLICATE_IMPORTS.md)를 참고하세요.
 
@@ -91,6 +93,7 @@ CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.3.6 | 2026-09-16 | 여러 Fig 문구 추가, 선택 문구 수정 분리, 연속 저장 순서 보장. |
 | v0.3.5 | 2026-09-16 | 사용자별 동일 파일명 교체 확인, 새 파일 저장 후 기존 기록·파일 영구 삭제. |
 | v0.3.4 | 2026-09-16 | 통합창 이전·다음 CYC 기록 이동, 현재 위치와 경계 버튼 표시. |
 | v0.3.3 | 2026-09-16 | 통합 CYC 기록의 그래프 미리보기 높이 제한, 원본과 개별 Fig 크기 유지. |

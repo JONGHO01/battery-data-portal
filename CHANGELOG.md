@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.6 - 2026-09-16
+
+- Keep Add text and Enter as append actions, with a separate selected-text update button. Offset new annotations, retain individual dragging, font sizing, existing storage shape and SVG/export rendering. Ignore Enter during IME composition.
+- Snapshot and serialize per-Dataset Fig saves. Do not let an older response discard newer annotation/style edits. Existing authorization and API endpoints remain unchanged.
+- Add regression coverage for repeated additions, selection-only edits, empty/escaped input, clearing, event bindings and rapid-save persistence; isolated browser checks use no experimental data.
+- Verification: 355 unittest cases, JavaScript syntax and whitespace checks passed. Isolated browser verified three labels via button/Enter, selected-only edit, drag and reopen, without console errors. Live static HTML/JS serve the new controls/version; existing tab is not refreshed to avoid disrupting work. No backend restart or real data writes. No build/lint scripts or dependency lockfile; no dependencies added or audit claimed.
+
 ## v0.3.5 - 2026-09-16
 
 - Add owner-scoped duplicate-filename confirmation for single/batch/legacy CSV imports. Cancel preserves originals; confirmation names exact Dataset targets and warns of permanent removal.

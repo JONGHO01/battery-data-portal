@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.5";
+const PORTAL_VERSION = "0.3.6";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.6",
+    "date": "2026-09-16",
+    "changes": ["Always append new figure text; edit selected text separately and preserve rapid additions with ordered saves."]
+  },
   {
     "version": "0.3.5",
     "date": "2026-09-16",
@@ -4408,7 +4413,21 @@ function clampFontSize(value) {
 async function saveFigureEdits(silent = true) {
   const d = state.datasets.find((x) => x.id === state.selectedId);
   if (!d) return;
-  const figureEdits = { ...(d.figureEdits || {}), annotations: currentAnnotations(), layout: currentLayoutEdits(), style: currentFigureStyle() };
+  // Capture each edit before waiting; serialize writes so rapid additions cannot
+  // reach the Dataset/Fig store out of order or share a mutable annotations array.
+  const figureEdits = JSON.parse(JSON.stringify({ ...(d.figureEdits || {}), annotations: currentAnnotations(), layout: currentLayoutEdits(), style: currentFigureStyle() }));
+  const queues = state.figureSaveQueues ||= new Map();
+  const previous = queues.get(d.id) || Promise.resolve();
+  const task = previous.catch(() => {}).then(() => persistFigureEdits(d, figureEdits, silent));
+  queues.set(d.id, task);
+  try {
+    await task;
+  } finally {
+    if (queues.get(d.id) === task) queues.delete(d.id);
+  }
+}
+
+async function persistFigureEdits(d, figureEdits, silent) {
   try {
     const res = await fetch(`/api/datasets/${encodeURIComponent(d.id)}`, {
       method: "PATCH",
@@ -4419,18 +4438,22 @@ async function saveFigureEdits(silent = true) {
     if (!res.ok) throw new Error(saved.error || "Fig \uc218\uc815 \uc800\uc7a5 \uc2e4\ud328");
     state.datasets = state.datasets.map((item) => item.id === saved.id ? saved : item);
     state.filtered = state.filtered.map((item) => item.id === saved.id ? saved : item);
-    state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
-    state.figureStyles[saved.id] = {
-      seriesColor: normalizeHexColor(saved.figureEdits?.style?.seriesColor),
-      rateColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.rateColorOverrides),
-      seriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.seriesColorOverrides),
-      dqdvSeriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.dqdvSeriesColorOverrides),
-      aspectRatio: normalizeFigureAspectRatio(saved.figureEdits?.style?.aspectRatio),
-      showGrid: saved.figureEdits?.style?.showGrid !== false,
-      connectPoints: saved.figureEdits?.style?.connectPoints !== false,
-      markerSize: normalizeFigureMarkerSize(saved.figureEdits?.style?.markerSize),
-      axisRanges: normalizeFigureAxisRanges(saved.figureEdits?.style?.axisRanges),
-    };
+    if (JSON.stringify(state.annotations[saved.id]) === JSON.stringify(figureEdits.annotations)) {
+      state.annotations[saved.id] = Array.isArray(saved.figureEdits?.annotations) ? saved.figureEdits.annotations : [];
+    }
+    if (JSON.stringify(state.figureStyles[saved.id]) === JSON.stringify(figureEdits.style)) {
+      state.figureStyles[saved.id] = {
+        seriesColor: normalizeHexColor(saved.figureEdits?.style?.seriesColor),
+        rateColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.rateColorOverrides),
+        seriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.seriesColorOverrides),
+        dqdvSeriesColorOverrides: normalizeProfileSeriesColorOverrides(saved.figureEdits?.style?.dqdvSeriesColorOverrides),
+        aspectRatio: normalizeFigureAspectRatio(saved.figureEdits?.style?.aspectRatio),
+        showGrid: saved.figureEdits?.style?.showGrid !== false,
+        connectPoints: saved.figureEdits?.style?.connectPoints !== false,
+        markerSize: normalizeFigureMarkerSize(saved.figureEdits?.style?.markerSize),
+        axisRanges: normalizeFigureAxisRanges(saved.figureEdits?.style?.axisRanges),
+      };
+    }
     const figureRes = await fetch("/api/figures", {
       method: "POST",
       headers: authHeaders({ "Content-Type": "application/json" }),
@@ -4526,7 +4549,9 @@ function selectAnnotation(idx) {
   const ann = state.selectedAnnotation === null ? null : currentAnnotations()[state.selectedAnnotation];
   if (input && ann) input.value = ann.text;
   if (sizeInput) sizeInput.value = ann ? clampFontSize(ann.size) : clampFontSize(sizeInput.value);
-  if (button) button.textContent = ann ? "\uae00 \uc218\uc815" : "\uae00 \ucd94\uac00";
+  if (button) button.textContent = "\uae00 \ucd94\uac00";
+  const updateButton = $("updateAnnotation");
+  if (updateButton) updateButton.hidden = !ann;
   for (const el of document.querySelectorAll(".userAnnotation")) {
     const selected = Number(el.dataset.annotationIndex) === state.selectedAnnotation;
     el.classList.toggle("selected", selected);
@@ -4535,20 +4560,27 @@ function selectAnnotation(idx) {
   }
 }
 
-function addOrUpdateAnnotation() {
+function addOrUpdateAnnotation(append = false) {
   const input = $("annotationText");
   const text = input?.value.trim();
   const size = clampFontSize($("annotationSize")?.value);
   if (!state.selectedId) return setStatus("\uba3c\uc800 \ud30c\uc77c \ubd84\uc11d \ud6c4 Fig\ub97c \uc0dd\uc131\ud558\uac70\ub098, \uae30\uc874 Fig\ub97c \uc120\ud0dd\ud558\uc138\uc694.");
   if (!text) return setStatus("\ucd94\uac00\ud560 \uae00\uc744 \uc785\ub825\ud558\uc138\uc694.");
   const annotations = currentAnnotations();
-  if (state.selectedAnnotation !== null && annotations[state.selectedAnnotation]) {
+  if (!append && state.selectedAnnotation !== null && annotations[state.selectedAnnotation]) {
     annotations[state.selectedAnnotation].text = text;
     annotations[state.selectedAnnotation].size = size;
   } else {
     const svg = document.getElementById("paperFigure");
     const view = svg?.viewBox?.baseVal;
-    annotations.push({ text, x: view ? view.width * 0.62 : 355, y: view ? view.height * 0.22 : 82, size });
+    const width = view?.width || 572;
+    const height = view?.height || 373;
+    const step = Math.max(28, size + 8);
+    const slotsPerColumn = Math.max(1, Math.floor(height * 0.65 / step));
+    const slot = annotations.length;
+    annotations.push({ text,
+      x: width * (0.62 - (Math.floor(slot / slotsPerColumn) % 3) * 0.2),
+      y: height * 0.22 + (slot % slotsPerColumn) * step, size });
     state.selectedAnnotation = annotations.length - 1;
   }
   renderCurrent();
@@ -4565,6 +4597,8 @@ function clearAnnotations() {
   if (sizeInput) sizeInput.value = 13;
   const button = $("addAnnotation");
   if (button) button.textContent = "\uae00 \ucd94\uac00";
+  const updateButton = $("updateAnnotation");
+  if (updateButton) updateButton.hidden = true;
   renderCurrent();
   saveFigureEdits(false);
 }
@@ -8304,7 +8338,8 @@ document.addEventListener("DOMContentLoaded", () => {
   on("saveFigureEdits", "click", () => saveFigureEdits(false));
   on("compareCycFigures", "click", renderCycComparison);
   on("clearCompareSelection", "click", clearCompareSelection);
-  on("addAnnotation", "click", addOrUpdateAnnotation);
+  on("addAnnotation", "click", () => addOrUpdateAnnotation(true));
+  on("updateAnnotation", "click", () => addOrUpdateAnnotation());
   on("decreaseAnnotationSize", "click", () => changeAnnotationSize(-1));
   on("increaseAnnotationSize", "click", () => changeAnnotationSize(1));
   on("annotationSize", "change", () => changeAnnotationSize(0));
@@ -8323,7 +8358,12 @@ document.addEventListener("DOMContentLoaded", () => {
   on("resetFigureAxisRange", "click", resetFigureAxisRange);
   on("figureAxisRangeTarget", "change", changeFigureAxisRangeTarget);
   on("clearAnnotations", "click", clearAnnotations);
-  on("annotationText", "keydown", (event) => { if (event.key === "Enter") addOrUpdateAnnotation(); });
+  on("annotationText", "keydown", (event) => {
+    if (event.key === "Enter" && !event.isComposing) {
+      event.preventDefault();
+      addOrUpdateAnnotation(true);
+    }
+  });
   on("smartFile", "change", () => resetAnalysisForNewFile());
   on("inspectFile", "click", () => inspectSelectedFile());
   on("batchCreateFigures", "click", createBatchFigures);
