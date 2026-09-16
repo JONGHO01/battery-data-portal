@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.3.2 - 2026-09-16
+
+- Replace averages of tiny-voltage pointwise derivatives with capacity-conserving finite-volume 5 mV dQ/dV bins. Consecutive measured increments are distributed by voltage overlap; exact plateaus retain their capacity in one bin. No smoothing or peak clipping is applied.
+- Preserve acquisition-index order rather than sorting resettable step times; do not bridge missing measurements or cumulative-capacity resets.
+- Treat empty charge/discharge capacity cells as missing, not zero, restoring charge curves. Preserve signed discharge and measured capacity units.
+- Reserve left margin for the dQ/dV unit title and move the legend below the voltage axis label. Keep portal shell, EIS/CV, storage and original files unchanged; backend change is version metadata only.
+- Independent analytic regression tests reproduce sampling-density sensitivity, lost capacity, reset spikes and missing charge curves. Read-only 082 WRD verification: first-discharge delta-Q 161.62095685 mAh/g, old bin integral magnitude 142.97084404, corrected 161.62095685. Existing local server is not restarted.
+- Verification: 330 unittest cases passed; JavaScript syntax and git diff whitespace checks passed. All eight supplied WRD first-discharge integrals match measured delta-Q within 1e-6 and source SHA-256 hashes are unchanged. Browser confirmed both charge/discharge traces on saved 082 and 088, with visible unit/voltage labels and separate legends. No build/lint scripts are configured.
+
 ## v0.3.1 - 2026-09-16
 
 - Preserve a single explicit C-rate segment and render it above CYC performance plots. Previously both inference and rendering required multiple rates.

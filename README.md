@@ -1,18 +1,20 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.3.1-2f80ed)
+![Version](https://img.shields.io/badge/version-0.3.2-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.3.1** — Restore constant C-rate labels above CYC performance plots. Unknown rates remain explicitly unspecified. Source publication is separate from deployment.
+> Source release: **v0.3.2** — Conserve dQ/dV capacity in 5 mV voltage bins and restore missing charge traces. Source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.3.1**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+현재 소스 버전은 **v0.3.2**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+
+dQ/dV는 연속 측정점의 용량 증가량을 5 mV 전압 bin에 분배한 뒤 bin 폭으로 나눕니다. 충전은 양수, 방전은 음수이며 원본을 평활화하거나 피크를 잘라내지 않습니다. 결측점과 누적 용량 카운터 초기화 경계는 미분으로 연결하지 않습니다. 이는 유한 전압 구간의 평균값으로, 피크 높이는 전압 해상도에 영향을 받습니다. 축 범위를 줄여 본 경우에도 원본 값은 유지됩니다.
 
 CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 실험 조건에 정확히 `C-rate: 0.1 C`처럼 입력된 값을 표시할 수 있습니다. 근거가 없으면 `C-rate: not specified`로 표시하며, 용량 값으로 C-rate를 추측하지 않습니다.
 
@@ -85,6 +87,7 @@ CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.3.2 | 2026-09-16 | 용량 보존형 5 mV dQ/dV 계산, 충전 곡선 누락 수정, 축·범례 간격 개선. |
 | v0.3.1 | 2026-09-16 | CYC 단일 C-rate 상단 라벨 복구, 명시적 실험 조건 표시와 미입력 안내. |
 | v0.3.0 | 2026-09-15 | 소유자별 데이터 격리, 파일 분류·다운로드, 전처리 레시피 버전, 로컬 검색 도우미(AI 미연결). |
 | v0.2.9 | 2026-09-15 | 그래프 우선 EIS 배치, 원시 표 접힘, prominence·폭·거리 기반 보수적 DRT 피크 검출. |

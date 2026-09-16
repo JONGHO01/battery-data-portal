@@ -103,7 +103,7 @@ class CycFigureUiTests(unittest.TestCase):
         self.assertIn("dqdvSeriesColorOverrides", self.app_js)
         self.assertIn("style.rateColorOverrides = {", self.app_js)
         self.assertIn("syncDqdvSeriesControls(analysis, style);", self.app_js)
-        self.assertIn("const legendTop = y + h + 34;", self.app_js)
+        self.assertIn("const legendTop = y + h + 76;", self.app_js)
         self.assertIn('on("dqdvSeriesSelect", "change", changeDqdvSeriesSelection)', self.app_js)
         self.assertIn('on("dqdvSeriesColor", "input", changeDqdvSeriesColor)', self.app_js)
         self.assertIn('on("dqdvSeriesColorReset", "click", resetDqdvSeriesColor)', self.app_js)

@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current CYC source v0.3.2 (2026-09-16): dQ/dV now accumulates measured delta-Q into 5 mV voltage bins, preserving capacity area rather than averaging unstable tiny-dV derivatives. Keep charge positive/discharge negative; no peak clipping or smoothing. Null charge/discharge fields no longer hide charge curves; missing-voltage rows and capacity resets are not bridged. Axis title/legend spacing fixed. Read-only 082 WRD first discharge delta-Q=161.62095685 mAh/g; old integral magnitude=142.97084404, new=161.62095685. Browser verified saved 088 with both charge/discharge curves and no console errors. No raw files/DB/server process were changed. Full verification/publication recorded after completion; backend activation remains separately pending.
+
 > Current CYC source v0.3.1 (2026-09-16): constant explicit C-rate segments are retained and labelled on performance graphs. Exact C-rate: value C experiment conditions are accepted as a fallback; missing values show C-rate: not specified. No source rows, capacities, live DB or server process were changed. Browser verified the missing-rate case on the saved 088 WRD; it has no C-rate column/condition, so the actual numeric rate was requested and remains unknown. 321 tests passed; app.js syntax passed. This is a frontend fix served by existing 4174; newer backend activation remains separately pending.
 
 > Current source v0.3.0 (2026-09-15): implement the confirmed local-first data workspace foundation. Ordinary users see only their own research data, global administrators see all; organization roles no longer grant access to other owners. New file metadata, downloads, preprocessing previews and immutable recipe/fingerprint versions are implemented. Chat is explicitly a local keyword-search helper, NOT an LLM. No external AI transmission, persistent chat, independent processed-artifact snapshots or training-dataset creation is implemented. Local 4174 remains v0.2.9; a NEW restart approval was requested but not received. The previous CYC restart was already completed and is not pending. Browser confirms the new menu and honest restart-required message; no claim that new backend APIs are live. Earlier task and version notes below are historical where superseded.
@@ -321,6 +323,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.2: `public/app.js` dQ/dV binning, null-safe charge selection and margins; `tests/test_dqdv_numerics.py` nine numerical regressions; existing CYC legend contract updated. Synchronized release metadata/docs only outside this scope.
+
 v0.3.1: public/app.js CYC-only display helpers, tests/test_cyc_rate_labels.py and the explicit-rate contract in tests/test_cyc_figure_ui.py; synchronized version/release metadata. No parser changes.
 
 v0.3.0: backend/data_workspace.py, backend/data_workspace_api.py, public/data-workspace.js and scoped CSS; integration in python_backend.py/public/app.js/public/index.html; ownership/workspace regression tests; docs/DATA_WORKSPACE.md and synchronized release metadata.
@@ -470,6 +474,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.2 dQ/dV is verified on existing local 4174 without backend restart. Do not force lower/smoother peaks: signed 5 mV bin heights reflect measured capacity concentration. A push is not proof of Render deployment.
+
 - Current CYC label: obtain the actual charging/discharging rate and exact dataset for the user's five-point screenshot before writing experimental conditions. Do not infer 0.1 C from ~160 mAh/g or unrelated selected-cell metadata.
 
 - Current v0.3.0: obtain local restart approval and verify live file listing, downloads and preprocessing UI. API workflows passed disposable SQLite tests, not live Neon/B2.
@@ -556,6 +562,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.2: `python -B -m unittest discover -s tests -q` passed 330 tests; `node --check public/app.js` and `git diff --check` passed. Eight real WRDs retain identical SHA-256 and first-discharge bin integrals match delta-Q within 1e-6. Browser confirms saved 082/088 charge and discharge traces, visible unit title/voltage label and non-overlapping legend; no console errors. No build/lint scripts configured. GitHub target fetched with HEAD/main initially equal; publication must be verified by remote hash.
 
 - v0.3.0: unittest discovery passed 318 tests (31.764s), including new owner/organization isolation, Dataset ID takeover, profile revision, preview/version/export, unchanged source and changed-input rejection checks. Node syntax checks passed for app.js/data-workspace.js; git diff --check passed. Build/lint scripts and dependency lockfile are absent; no dependency added. Browser verified new navigation and clear old-backend restart message, not live new-API success.
 

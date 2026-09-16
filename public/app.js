@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.3.1";
+const PORTAL_VERSION = "0.3.2";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.2",
+    "date": "2026-09-16",
+    "changes": [
+      "Conserve incremental capacity in 5 mV dQ/dV bins instead of averaging unstable pointwise derivatives.",
+      "Restore nullable charge-capacity traces; separate axis labels from legends without altering raw data."
+    ]
+  },
   {
     "version": "0.3.1",
     "date": "2026-09-16",
@@ -5368,38 +5376,55 @@ function cycVoltageCurrentTrendPanel({ x, y, w, h, trend }) {
 
 function dqdvCurveFromPoints(points) {
   if (points.length < 8) return [];
-  const ordered = [...points].sort((left, right) => {
-    if (Number.isFinite(left.time) && Number.isFinite(right.time) && left.time !== right.time) return left.time - right.time;
-    return left.index - right.index;
-  });
-  const unique = [];
-  for (const point of ordered) {
-    const previous = unique[unique.length - 1];
-    if (!previous || Math.abs(point.voltage - previous.voltage) > 1e-7 || Math.abs(point.capacity - previous.capacity) > 1e-7) unique.push(point);
-  }
-  if (unique.length < 8) return [];
-  const raw = [];
-  for (let index = 1; index < unique.length - 1; index += 1) {
-    const left = unique[index - 1];
-    const right = unique[index + 1];
-    const deltaVoltage = right.voltage - left.voltage;
-    const deltaCapacity = right.capacity - left.capacity;
-    if (!Number.isFinite(deltaVoltage) || !Number.isFinite(deltaCapacity) || Math.abs(deltaVoltage) < 1e-5) continue;
-    const value = deltaCapacity / deltaVoltage;
-    if (Number.isFinite(value)) raw.push({ x: (left.voltage + right.voltage) / 2, y: value });
-  }
-  if (raw.length < 4) return [];
+  // Finite-volume incremental capacity, not an average of tiny-dV derivatives.
+  // Each measured delta-Q contributes once, so sum(y * binWidth) conserves Q.
+  // Preserve acquisition order: step-local time may reset inside a cycle.
+  const valid = (p) => Number.isFinite(p?.voltage) && Number.isFinite(p?.capacity);
+  const ordered = [...points].sort((a, b) => Number.isFinite(a.index) && Number.isFinite(b.index) ? a.index - b.index : 0);
+  const measured = ordered.filter(valid);
+  if (measured.length < 8) return [];
+  const sign = Math.sign(measured.at(-1).voltage - measured[0].voltage);
+  if (!sign) return [];
+  const binWidth = 0.005;
   const bins = new Map();
-  for (const point of raw) {
-    const key = Math.round(point.x / 0.005);
-    const values = bins.get(key) || [];
-    values.push(point.y);
-    bins.set(key, values);
+  const add = (key, q) => bins.set(key, (bins.get(key) || 0) + sign * q / binWidth);
+  for (let index = 1; index < ordered.length; index += 1) {
+    const left = ordered[index - 1], right = ordered[index];
+    if (!valid(left) || !valid(right)) continue;
+    const deltaQ = right.capacity - left.capacity;
+    // Canonical capacities are cumulative magnitudes; do not differentiate
+    // across a counter reset or missing measurement.
+    if (deltaQ < 0 || !Number.isFinite(deltaQ)) continue;
+    const low = Math.min(left.voltage, right.voltage);
+    const high = Math.max(left.voltage, right.voltage);
+    const span = high - low;
+    const first = Math.floor(low / binWidth);
+    const last = Math.max(first, Math.ceil(high / binWidth) - 1);
+    if (last - first > 10000) continue;
+    if (span < 1e-12) {
+      add(first, deltaQ); // Constant-voltage capacity stays in its measured bin.
+    } else {
+      for (let key = first; key <= last; key += 1) {
+        const overlap = Math.max(0, Math.min(high, (key + 1) * binWidth) - Math.max(low, key * binWidth));
+        if (overlap > 0) add(key, deltaQ * overlap / span);
+      }
+    }
   }
-  return [...bins.entries()].map(([key, values]) => ({
-    x: key * 0.005,
-    y: values.reduce((sum, value) => sum + value, 0) / values.length,
+  return [...bins.entries()].map(([key, value]) => ({
+    x: (key + 0.5) * binWidth,
+    y: value,
   })).sort((left, right) => left.x - right.x);
+}
+
+function cycDqdvCapacity(row) {
+  // Number(null) is zero and previously hid the entire charge curve.
+  const values = cycDirectionFromValue(row?.direction, Number(row?.current)) === "charge"
+    ? [row?.chargeCapacity, row?.capacity] : [row?.capacity, row?.chargeCapacity];
+  for (const value of values) {
+    if (value == null || typeof value === "boolean" || String(value).trim() === "") continue;
+    if (Number.isFinite(Number(value))) return Number(value);
+  }
+  return NaN;
 }
 
 function orientDqdvCurve(curve, direction) {
@@ -5415,8 +5440,8 @@ function cycDqdvReadiness(rows) {
   (rows || []).forEach((row) => {
     const rawCycle = Number(row?.cycle);
     const cycle = Math.round(rawCycle);
-    const voltage = Number(row?.voltage);
-    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
+    const voltage = row?.voltage == null || String(row.voltage).trim() === "" ? NaN : Number(row.voltage);
+    const capacity = cycDqdvCapacity(row);
     if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6 || !Number.isFinite(voltage) || !Number.isFinite(capacity)) return;
 
     const current = Number(row?.current);
@@ -5447,9 +5472,9 @@ function cycDqdvSeries(rows, rateSegments = []) {
   (rows || []).forEach((row, index) => {
     const rawCycle = Number(row?.cycle);
     const cycle = Math.round(rawCycle);
-    const voltage = Number(row?.voltage);
-    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
-    if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6 || !Number.isFinite(voltage) || !Number.isFinite(capacity)) return;
+    const voltage = row?.voltage == null || String(row.voltage).trim() === "" ? NaN : Number(row.voltage);
+    const capacity = cycDqdvCapacity(row);
+    if (!Number.isFinite(rawCycle) || rawCycle < 1 || Math.abs(rawCycle - cycle) > 1e-6) return;
     const points = byCycle.get(cycle) || [];
     const current = Number(row?.current);
     points.push({
@@ -5496,8 +5521,8 @@ function dqdvReadinessSummary(analysis) {
 function dqdvUnavailableMessage(rows) {
   const sourcePoints = (rows || []).filter((row) => {
     const cycle = Number(row?.cycle);
-    const voltage = Number(row?.voltage);
-    const capacity = Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity);
+    const voltage = row?.voltage == null || String(row.voltage).trim() === "" ? NaN : Number(row.voltage);
+    const capacity = cycDqdvCapacity(row);
     return Number.isFinite(cycle) && cycle >= 1 && Number.isFinite(voltage) && Number.isFinite(capacity);
   });
   if (!sourcePoints.length) {
@@ -5554,7 +5579,7 @@ function cycDqdvPanel({ x, y, w, h, analysis, style }) {
   const legendColumns = Math.min(3, Math.max(1, analysis.series.length));
   const legendRows = Math.ceil(analysis.series.length / legendColumns);
   const legendRowHeight = 20;
-  const legendTop = y + h + 34;
+  const legendTop = y + h + 76;
   const legendHeight = 18 + legendRows * legendRowHeight;
   const legendColumnWidth = Math.max(160, Math.floor((w - 28) / legendColumns));
   const lines = analysis.series.map((series, index) => {
@@ -5571,7 +5596,7 @@ function cycDqdvPanel({ x, y, w, h, analysis, style }) {
     const dashAttribute = dash ? ` stroke-dasharray="${dash}"` : "";
     return `<line x1="${lx}" x2="${lx + 16}" y1="${ly}" y2="${ly}" class="profileLegendLine" stroke="${color}"${dashAttribute}/><text x="${lx + 22}" y="${ly + 4}" class="profileLegend">${figureTraceLabel(series)}</text>`;
   }).join("");
-  return `<g><text x="${x}" y="${y - 32}" class="panelTitle">dQ/dV</text><text x="${x}" y="${y - 17}" class="caption">Raw within-cycle voltage-capacity trace only</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>${axes.svg}${lines}<rect x="${x}" y="${legendTop - 12}" width="${w}" height="${legendHeight}" rx="5" class="profileLegendPanel"/>${legend}</g>`;
+  return `<g><text x="${x}" y="${y - 32}" class="panelTitle">dQ/dV</text><text x="${x}" y="${y - 17}" class="caption">5 mV capacity bins; charge + / discharge -; no peak clipping</text><rect x="${x}" y="${y}" width="${w}" height="${h}" class="frame"/>${axes.svg}${lines}<rect x="${x}" y="${legendTop - 12}" width="${w}" height="${legendHeight}" rx="5" class="profileLegendPanel"/>${legend}</g>`;
 }
 
 function cycPerformancePanel({ x, y, w, h, points, capacityAxisLabel = "Specific capacity (mAh g-1)" }) {
@@ -5661,7 +5686,7 @@ function renderCycDqdvFigure(d) {
   const analysis = cycDqdvSeries(rows, rateSegments);
   syncDqdvSeriesControls(analysis, style);
   const svgSize = figureSvgSize(style, "paper");
-  const padX = Math.max(72, Math.round(svgSize.w * 0.1));
+  const padX = Math.max(108, Math.round(svgSize.w * 0.12));
   const plotY = Math.max(118, Math.round(svgSize.h * 0.2));
   const plotW = Math.max(380, svgSize.w - padX * 2);
   const plotH = Math.max(300, Math.round(svgSize.h * 0.58));
