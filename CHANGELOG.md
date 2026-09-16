@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.1 - 2026-09-16
+
+- Preserve a single explicit C-rate segment and render it above CYC performance plots. Previously both inference and rendering required multiple rates.
+- Display an explicitly declared constant condition (for example C-rate: 0.1 C) when no rate is available from plotted rows. Missing rate information produces C-rate: not specified, never a fabricated number. Temperature conditions and filename digits do not provide this fallback.
+- Preserve capacity values, raw artifacts, portal shell and EIS/CV. Backend change is version metadata only; existing server was not restarted.
+- Verification: 321 unittest cases passed after behavior changes; app.js syntax check passed. Browser confirmed the missing-rate notice above the unchanged saved WRD graph with no console errors. The screenshot's exact rate still requires user confirmation. No build/lint scripts are configured.
+
 ## v0.3.0 - 2026-09-15
 
 - Restrict Dataset and hierarchy access to the owner and global administrators. Remove organization-based research-data sharing and reject Dataset ID takeover, including concurrent upserts.

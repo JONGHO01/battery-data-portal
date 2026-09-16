@@ -26,7 +26,7 @@ class CycFigureUiTests(unittest.TestCase):
     def test_cyc_figure_prioritizes_an_explicit_c_rate_column(self):
         self.assertIn('cRate: findColumn(columns, ["crate", "cratec", "ratec"', self.app_js)
         self.assertIn("const explicitSegments = explicitCRateSegments(rows, minCycle, maxCycle);", self.app_js)
-        self.assertIn("if (explicitSegments.length >= 2) return explicitSegments;", self.app_js)
+        self.assertIn("if (explicitSegments.length >= 1) return explicitSegments;", self.app_js)
 
     def test_c_rate_filename_ignores_sample_index_before_fractional_rate(self):
         self.assertIn("const firstFractionalRate = labels.findIndex", self.app_js)

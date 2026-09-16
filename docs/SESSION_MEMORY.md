@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current CYC source v0.3.1 (2026-09-16): constant explicit C-rate segments are retained and labelled on performance graphs. Exact C-rate: value C experiment conditions are accepted as a fallback; missing values show C-rate: not specified. No source rows, capacities, live DB or server process were changed. Browser verified the missing-rate case on the saved 088 WRD; it has no C-rate column/condition, so the actual numeric rate was requested and remains unknown. 321 tests passed; app.js syntax passed. This is a frontend fix served by existing 4174; newer backend activation remains separately pending.
+
 > Current source v0.3.0 (2026-09-15): implement the confirmed local-first data workspace foundation. Ordinary users see only their own research data, global administrators see all; organization roles no longer grant access to other owners. New file metadata, downloads, preprocessing previews and immutable recipe/fingerprint versions are implemented. Chat is explicitly a local keyword-search helper, NOT an LLM. No external AI transmission, persistent chat, independent processed-artifact snapshots or training-dataset creation is implemented. Local 4174 remains v0.2.9; a NEW restart approval was requested but not received. The previous CYC restart was already completed and is not pending. Browser confirms the new menu and honest restart-required message; no claim that new backend APIs are live. Earlier task and version notes below are historical where superseded.
 
 > Local CYC restart completed (2026-09-15): user explicitly approved restart and existing CYC reanalysis. Identified project-owned PID 23420 was stopped and the official 4174 launcher started v0.2.9; independent health confirms SQLite/local storage unchanged. Startup refreshed all eight supplied 260911 WRD Datasets to parser-8. Saved Fig count remains 60. Browser reopened 088.wrd with Specific capacity (mAh g-1), 0–180 ticks in steps of 20, and three discharge points. Its first two cycles are 161.304/162.402 mAh/g; the third remains the measured low value 8.316, not forced to 160. All eight original-file SHA-256 values are unchanged and all eight stored raw artifacts match their registered hashes. This supersedes historical CYC restart-pending notes below. No real EIS fit was recalculated; existing EIS results still require an explicit new calculation to apply rc-drt-2 detection. Source release 0.2.9 was already published at 98b093b; this task changes runtime and this memory only, not application code or Render.
@@ -319,6 +321,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+v0.3.1: public/app.js CYC-only display helpers, tests/test_cyc_rate_labels.py and the explicit-rate contract in tests/test_cyc_figure_ui.py; synchronized version/release metadata. No parser changes.
+
 v0.3.0: backend/data_workspace.py, backend/data_workspace_api.py, public/data-workspace.js and scoped CSS; integration in python_backend.py/public/app.js/public/index.html; ownership/workspace regression tests; docs/DATA_WORKSPACE.md and synchronized release metadata.
 
 - 2026-09-15 runtime-only CYC activation: `docs/SESSION_MEMORY.md` records the approved restart and verified saved-Dataset refresh. No application/version files changed.
@@ -465,6 +469,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - `docs/ARCHITECTURE_V0.15.md`, `PRODUCTION_RUNBOOK.md`, `.env.example`, `render.yaml`, `railway.json`, `fly.toml`: architecture and deployment preparation.
 
 ## Remaining Work
+
+- Current CYC label: obtain the actual charging/discharging rate and exact dataset for the user's five-point screenshot before writing experimental conditions. Do not infer 0.1 C from ~160 mAh/g or unrelated selected-cell metadata.
 
 - Current v0.3.0: obtain local restart approval and verify live file listing, downloads and preprocessing UI. API workflows passed disposable SQLite tests, not live Neon/B2.
 - Later phases: actual LLM integration after external-transmission approval; persistent isolated conversations; independent immutable processed artifacts; richer preprocessing and explicit training-consent/versioned aggregate datasets. Saved recipes currently regenerate only against an unchanged input fingerprint.

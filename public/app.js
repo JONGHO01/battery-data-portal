@@ -1,9 +1,17 @@
-const PORTAL_VERSION = "0.3.0";
+const PORTAL_VERSION = "0.3.1";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.1",
+    "date": "2026-09-16",
+    "changes": [
+      "Display constant C-rate labels above CYC performance plots, not only multi-rate experiments.",
+      "Accept an explicit C-rate condition and show an unspecified notice when the rate is unavailable; preserve source measurements."
+    ]
+  },
   {
     "version": "0.3.0",
     "date": "2026-09-15",
@@ -4048,8 +4056,7 @@ function explicitCRateSegments(rows, minCycle, maxCycle) {
     previous.count += 1;
     previous.end = point.cycle;
   }
-  const distinctRates = new Set(groups.map((group) => group.rate.toFixed(4)));
-  if (groups.length < 2 || groups.length > 12 || distinctRates.size < 2) return [];
+  if (!groups.length || groups.length > 12) return [];
   return groups.map((group) => ({
     start: group.start,
     end: group.end,
@@ -4064,7 +4071,7 @@ function inferCRateSegments(d, rows, capPts) {
   const minCycle = Math.min(...cycles);
   const maxCycle = Math.max(...cycles);
   const explicitSegments = explicitCRateSegments(rows, minCycle, maxCycle);
-  if (explicitSegments.length >= 2) return explicitSegments;
+  if (explicitSegments.length >= 1) return explicitSegments;
   const parsedLabels = parseCRateLabels(d);
   const parsedSegments = fiveCycleSegments(parsedLabels, minCycle, maxCycle);
   if (hasRateStepPattern(capPts, parsedSegments)) return parsedSegments;
@@ -5710,6 +5717,14 @@ function cycCapacityLabelOffset(labels) {
   return 9 + Math.max(...labels.map((label) => label.length), 1) * 7 + 20;
 }
 
+function declaredConstantCRate(d) {
+  // Require an explicitly declared condition, not temperature, filename digits
+  // or a measured capacity/current ratio without a rated 1C reference.
+  const condition = String(d.cell?.condition || "").trim();
+  const match = condition.match(/^C[-\s]?rate\s*[:=]\s*(\d+(?:\.\d+)?)\s*C?$/i);
+  return match ? formatExplicitCRate(Number(match[1])) : "";
+}
+
 function renderCycPerformanceFigure(d) {
   const style = currentFigureStyle();
   syncFigureControls(style);
@@ -5720,11 +5735,11 @@ function renderCycPerformanceFigure(d) {
   const capacityUnit = cycCapacityUnit(rows);
   const isSpecificCapacity = capacityUnit === "mAh g-1";
   const rateSegments = cRateFigureSegments(inferCRateSegments(d, rows, capPts), capPts);
-  const isRateFigure = rateSegments.length >= 2;
+  const isRateFigure = rateSegments.length >= 1;
   const detectedCRates = explicitCRateValues(rows);
   const cRateText = isRateFigure
     ? rateSegments.map((segment) => segment.label).join(" | ")
-    : detectedCRates.map(formatExplicitCRate).join(" | ");
+    : detectedCRates.map(formatExplicitCRate).join(" | ") || declaredConstantCRate(d);
   $("figureTitle").textContent = title;
   const cycleCount = new Set(capPts.map((point) => point.x)).size;
   const traceSummary = `Detected ${cycleCount} discharge cycle${cycleCount === 1 ? "" : "s"} from ${d.rows.length.toLocaleString()} raw points`;
@@ -5768,7 +5783,8 @@ function renderCycPerformanceFigure(d) {
     const bx = boundary === null ? null : sx(boundary);
     const line = bx === null ? "" : `<line x1="${bx.toFixed(2)}" x2="${bx.toFixed(2)}" y1="${plot.y}" y2="${plot.y + plot.h}" class="rateLine"/>`;
     return `${line}${movableWrap(`rate-${idx}`, cx, plot.y - 10, `<text class="rateLabel" text-anchor="middle">${escapeXml(s.label)}</text>`)}`;
-  }).join("") : "";
+  }).join("") : movableWrap("rate-unspecified", plot.x + plot.w / 2, plot.y - 10,
+    `<text class="rateLabel" text-anchor="middle">${escapeXml(cRateText || "C-rate: not specified")}</text>`);
   const capPath = capPts.map((p, idx) => {
     const prev = capPts[idx - 1];
     const command = !prev || Math.abs(p.x - prev.x) > 1.5 ? "M" : "L";
