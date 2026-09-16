@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current navigation v0.3.4 (2026-09-16): integrated CYC view has previous/next graph buttons, position and gallery return in its header. Uses currently filtered authorized CYC records in gallery date-descending/stable-within-date order; no wrap and no cross-type navigation. Late hydration cannot overwrite a different selection or closed view. Browser verified 085 (2/65) -> 088 (1/65, previous disabled) -> 085; three graphs preserved, no console errors. 334 tests and syntax/whitespace checks pass. No data writes or server restart; source publication is not proof of deployment.
+
 > Current preview fix v0.3.3 (2026-09-16): integrated CYC record graphs alone now use a responsive 260-400px SVG display height. Preserve original viewBox, analysis, standalone figures, portal shell and EIS/CV. Saved 085 record visually verified; desktop2000x1000=380px, narrow780x900=342px for all three graphs, viewport override reset, no console errors. 331 tests plus app.js syntax and whitespace checks pass. No raw data, DB or server restart. GitHub synchronization follows standing authorization; deployment is not inferred from publication.
 
 > Current CYC source v0.3.2 (2026-09-16): dQ/dV now accumulates measured delta-Q into 5 mV voltage bins, preserving capacity area rather than averaging unstable tiny-dV derivatives. Keep charge positive/discharge negative; no peak clipping or smoothing. Null charge/discharge fields no longer hide charge curves; missing-voltage rows and capacity resets are not bridged. Axis title/legend spacing fixed. Read-only 082 WRD first discharge delta-Q=161.62095685 mAh/g; old integral magnitude=142.97084404, new=161.62095685. Browser verified saved 088 with both charge/discharge curves and no console errors. No raw files/DB/server process were changed. Full verification/publication recorded after completion; backend activation remains separately pending.
@@ -325,6 +327,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.4: `public/app.js` integrated CYC navigation/late-response guard; `public/style.css` scoped navigation styles; `tests/test_cyc_record_navigation.py` ordering, endpoint/filter and wiring regression checks; synchronized release metadata/docs.
+
 - v0.3.3: `public/style.css` changes only `.cycRecordChart svg` sizing; `tests/test_cyc_integrated_record_ui.py` protects bounded preview height; remaining files are synchronized release metadata/documentation.
 
 - v0.3.2: `public/app.js` dQ/dV binning, null-safe charge selection and margins; `tests/test_dqdv_numerics.py` nine numerical regressions; existing CYC legend contract updated. Synchronized release metadata/docs only outside this scope.
@@ -478,6 +482,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.4 navigation is complete locally; GitHub synchronization uses standing authorization and must be verified from the remote commit. Do not restart the existing server or infer cloud deployment from source publication.
+
 - v0.3.3: no further local preview changes required; actual C-rate remains unknown and must not be assigned from capacity alone. Cloud deployment is separate from source publication.
 
 - v0.3.2 dQ/dV is verified on existing local 4174 without backend restart. Do not force lower/smoother peaks: signed 5 mV bin heights reflect measured capacity concentration. A push is not proof of Render deployment.
@@ -568,6 +574,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.4: 334 unittest cases passed (42.585s), `node --check public/app.js` and `git diff --check` passed. Real browser previous/next round-trip and first-record disabled button confirmed; no console errors. Build/lint scripts absent. Remote main fetched with no divergence before publication.
 
 - v0.3.3: full unittest suite 331 passed; JavaScript syntax and diff whitespace checks passed. Saved 085 integrated record shows all three compact graphs on wide/narrow screens with unchanged SVG viewBoxes and no console errors. No build/lint scripts exist.
 

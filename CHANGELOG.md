@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.3.4 - 2026-09-16
+
+- Add previous/next graph buttons and current CYC record position to the integrated view. Follow filtered authorized gallery order across dates, skipping other types, without wrapping at either endpoint.
+- Keep gallery return, compact graph sizes, raw data, analysis and portal shell unchanged. Guard asynchronous row loading against a changed selection or closed view.
+- Verification: 334 unittest cases passed, JavaScript syntax and diff whitespace checks passed. Browser confirmed saved CYC 085 (2/65) to 088 (1/65, previous disabled) and back, with all three graphs and no console errors. No build/lint scripts configured; no server restart or raw-data writes.
+
 ## v0.3.3 - 2026-09-16
 
 - Limit only integrated CYC record SVG previews to clamp(260px, 38vh, 400px), instead of unbounded full-card-width scaling. Preserve aspect ratio, existing two-column/narrow-screen layout, and all three graphs.

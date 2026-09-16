@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.3";
+const PORTAL_VERSION = "0.3.4";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.4",
+    "date": "2026-09-16",
+    "changes": ["Navigate previous/next filtered CYC records inside the integrated view, with position and endpoint controls."]
+  },
   {
     "version": "0.3.3",
     "date": "2026-09-16",
@@ -4977,6 +4982,26 @@ function captureCycRecordPanel(dataset, figureKind) {
   }
 }
 
+function cycRecordNavigation(datasets, selectedId) {
+  // Match the visible gallery: newest date first, stable order within a date.
+  // Only the caller's filtered, authorized CYC records participate.
+  const items = datasets.filter((item) => String(item.dataType || "").toLowerCase() === "cyc")
+    .map((item) => ({ id: item.id, date: savedFigureDateKey(item) }))
+    .sort((a, b) => {
+      if (a.date === b.date) return 0;
+      if (a.date === "unknown") return 1;
+      if (b.date === "unknown") return -1;
+      return b.date.localeCompare(a.date);
+    });
+  const index = items.findIndex((item) => item.id === selectedId);
+  return {
+    index,
+    total: items.length,
+    previousId: index > 0 ? items[index - 1].id : null,
+    nextId: index >= 0 && index < items.length - 1 ? items[index + 1].id : null,
+  };
+}
+
 async function renderCycRecordView() {
   const root = $("cycRecordContent");
   if (!root) return;
@@ -4995,6 +5020,10 @@ async function renderCycRecordView() {
   } catch (error) {
     rawNotice = `<p class="cycRecordWarning">\uc6d0\ubcf8 \ub85c\uc6b0\ub370\uc774\ud130\ub97c \ub2e4\uc2dc \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud574 \uc800\uc7a5\ub41c \uc694\uc57d \uc815\ubcf4\ub9cc \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.</p>`;
   }
+  // A late response must not replace a newly selected record or a closed view.
+  if (state.selectedId !== selectedId || !$("cycRecordView")?.classList.contains("active")
+    || !state.datasets.some((item) => item.id === selectedId)) return;
+  const navigation = cycRecordNavigation(state.filtered, selectedId);
   const cell = dataset.cell || {};
   const summary = [
     cycRecordFact("\uce21\uc815\uc77c", String(cell.date || "-")),
@@ -5013,7 +5042,25 @@ async function renderCycRecordView() {
     ${renderCycRecordElectrode(dataset)}
     <section class="cycRecordSection"><div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">CYC analysis</p><h3>\uc6d0\ubcf8 \uae30\ubc18 \uadf8\ub798\ud504</h3><p>\uac01 \uadf8\ub798\ud504\ub294 \uac19\uc740 \uc800\uc7a5 CYC \uc6d0\ubcf8\uc5d0\uc11c \uadf8\ub824\uc9d1\ub2c8\ub2e4. \ud3ec\uc778\ud2b8 \uc815\ubcf4\uac00 \ubd80\uc871\ud55c \uacbd\uc6b0 \uc5b5\uc9c0\ub85c \ucd94\uc815\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.</p></div></div><div class="cycRecordCharts">${performance}${voltageProfile}${dqdv}</div></section>
     ${renderCycRecordRawPreview(dataset)}`;
-  root.querySelector("[data-cyc-record-back]")?.addEventListener("click", () => activateView("savedFigures", "cyc"));
+  const backButton = root.querySelector("[data-cyc-record-back]");
+  backButton?.insertAdjacentHTML("beforebegin", `<nav class="cycRecordNavigation" aria-label="CYC \uae30\ub85d \uc774\ub3d9">
+    <button type="button" data-cyc-record-step="previous" ${navigation.previousId === null ? "disabled" : ""}>\u2190 \uc774\uc804 \uadf8\ub798\ud504</button>
+    <span class="cycRecordPosition" aria-live="polite">${navigation.index < 0 ? "\ubaa9\ub85d \ubc16" : `${navigation.index + 1} / ${navigation.total}`}</span>
+    <button type="button" data-cyc-record-step="next" ${navigation.nextId === null ? "disabled" : ""}>\ub2e4\uc74c \uadf8\ub798\ud504 \u2192</button>
+  </nav>`);
+  if (backButton) root.querySelector(".cycRecordNavigation").append(backButton);
+  backButton?.addEventListener("click", () => activateView("savedFigures", "cyc"));
+  root.querySelectorAll("[data-cyc-record-step]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.disabled) return;
+      const current = cycRecordNavigation(state.filtered, state.selectedId);
+      const targetId = button.dataset.cycRecordStep === "previous" ? current.previousId : current.nextId;
+      if (targetId === null || !state.datasets.some((item) => item.id === targetId)) return;
+      state.selectedId = targetId;
+      state.selectedAnnotation = null;
+      await renderCycRecordView();
+    });
+  });
   root.querySelectorAll("[data-cyc-record-profile]").forEach((select) => {
     select.addEventListener("change", async () => {
       const profileId = select.value;

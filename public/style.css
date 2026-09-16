@@ -4051,6 +4051,28 @@ pre {
   border-left: 5px solid var(--accent);
 }
 
+.cycRecordNavigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.cycRecordNavigation button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.cycRecordPosition {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .cycRecordHero h2,
 .cycRecordSection h3,
 .cycRecordEmptyState h2 {
