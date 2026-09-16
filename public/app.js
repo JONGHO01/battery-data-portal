@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.6";
+const PORTAL_VERSION = "0.3.7";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.7",
+    "date": "2026-09-16",
+    "changes": ["Apply exact CYC performance/voltage axis limits, display the chosen CYC view, clip zoomed traces and preserve one-sided bounds."]
+  },
   {
     "version": "0.3.6",
     "date": "2026-09-16",
@@ -4310,11 +4315,18 @@ function normalizeFigureAxisRanges(value) {
 
 function resolveFigureAxisDomains(autoX, autoY, key) {
   const range = normalizeFigureAxisRange(currentFigureStyle().axisRanges?.[key]);
-  const xDomain = [range.xMin ?? autoX[0], range.xMax ?? autoX[1]];
-  const yDomain = [range.yMin ?? autoY[0], range.yMax ?? autoY[1]];
+  const resolve = (auto, min, max) => {
+    const domain = [min ?? auto[0], max ?? auto[1]];
+    if (domain[0] < domain[1]) return domain;
+    // A single manual bound must not silently revert to automatic limits.
+    const span = Math.max(auto[1] - auto[0], Math.abs(min ?? max ?? 1) * 0.1, 1e-9);
+    if (min !== null && max === null) return [min, min + span];
+    if (max !== null && min === null) return [max - span, max];
+    return auto;
+  };
   return {
-    x: xDomain[0] < xDomain[1] ? xDomain : autoX,
-    y: yDomain[0] < yDomain[1] ? yDomain : autoY,
+    x: resolve(autoX, range.xMin, range.xMax),
+    y: resolve(autoY, range.yMin, range.yMax),
   };
 }
 
@@ -4757,6 +4769,12 @@ function applyFigureAxisRange() {
     ...normalizeFigureAxisRanges(style.axisRanges),
     [target]: normalizeFigureAxisRange(range),
   };
+  const dataset = state.datasets.find((item) => item.id === state.selectedId);
+  const cycView = { performance: "cycling-performance", voltage: "voltage-profile", dqdv: "dqdv" }[target];
+  if (dataset?.dataType === "cyc" && cycView) {
+    state.cycFigureViewKinds ||= {};
+    state.cycFigureViewKinds[dataset.id] = cycView;
+  }
   syncFigureAxisRangeControls(style);
   setFigureAxisRangeMessage("\ucd95 \ubc94\uc704\ub97c \uc801\uc6a9\ud588\uc2b5\ub2c8\ub2e4.");
   renderCurrent();
@@ -5432,8 +5450,11 @@ function cycProfilePanel({ x, y, w, h, profile, style }) {
       </g>`;
   }
   const allPoints = profile.series.flatMap((series) => series.points);
-  const xDomain = niceBounds(allPoints.map((point) => point.x));
-  const yDomain = niceBounds(allPoints.map((point) => point.y));
+  const { x: xDomain, y: yDomain } = resolveFigureAxisDomains(
+    niceBounds(allPoints.map((point) => point.x)),
+    niceBounds(allPoints.map((point) => point.y)),
+    "voltage",
+  );
   const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"];
   const columns = Math.min(4, Math.max(1, profile.series.length));
   const legendRowHeight = 26;
@@ -5473,7 +5494,8 @@ function cycProfilePanel({ x, y, w, h, profile, style }) {
       <text x="${x}" y="${y - 18}" class="panelTitle">Voltage profile</text>
       <rect x="${x}" y="${y}" width="${w}" height="${plotH}" class="frame"/>
       ${axes.svg}
-      ${lines}
+      <defs><clipPath id="cyc-profile-clip-${x}-${y}"><rect x="${x}" y="${y}" width="${w}" height="${plotH}"/></clipPath></defs>
+      <g clip-path="url(#cyc-profile-clip-${x}-${y})">${lines}</g>
       <rect x="${x}" y="${legendTop - 16}" width="${w}" height="${legendRows * legendRowHeight + 30}" rx="4" class="profileLegendPanel"/>
       ${legend}
       <text x="${x + w / 2}" y="${legendTop + legendRows * legendRowHeight + 7}" class="profileLegendNote" text-anchor="middle">${escapeXml(legendNote)}</text>
@@ -5925,10 +5947,14 @@ function renderCycPerformanceFigure(d) {
   const maxRateCycle = Math.max(...rateSegments.map((s) => s.end).filter(Number.isFinite), Math.max(...cycleValues));
   const xTickMax = Math.max(5, Math.ceil(maxRateCycle / 5) * 5);
   const xMax = xTickMax + Math.max(1, xTickMax * 0.025);
-  const xDomain = [0, xMax];
-  const capDomain = cycPerformanceCapacityDomain(capPts, isSpecificCapacity);
+  const { x: xDomain, y: capDomain } = resolveFigureAxisDomains(
+    [0, xMax], cycPerformanceCapacityDomain(capPts, isSpecificCapacity), "performance",
+  );
+  const manualRange = normalizeFigureAxisRange(style.axisRanges?.performance);
   const yTickStep = cycCapacityTickStep(capDomain[1], isSpecificCapacity);
-  const yTicks = Array.from({ length: Math.floor(capDomain[1] / yTickStep + 1e-9) + 1 }, (_, i) => i * yTickStep);
+  const yTicks = manualRange.yMin !== null || manualRange.yMax !== null
+    ? cycReadableAxisTicks(capDomain)
+    : Array.from({ length: Math.floor(capDomain[1] / yTickStep + 1e-9) + 1 }, (_, i) => i * yTickStep);
   const yLabels = yTicks.map(cycCapacityTickLabel);
   const yLabelOffset = cycCapacityLabelOffset(yLabels);
   const svgSize = figureSvgSize(style, "rate");
@@ -5947,15 +5973,18 @@ function renderCycPerformanceFigure(d) {
   const sx = makeScale(xDomain, [plot.x, plot.x + plot.w]);
   const sy = makeScale(capDomain, [plot.y + plot.h, plot.y]);
   const xTickStep = xTickMax <= 18 ? 3 : 5;
-  const xTicks = Array.from({ length: Math.floor(xTickMax / xTickStep) + 1 }, (_, i) => i * xTickStep);
+  const xTicks = manualRange.xMin !== null || manualRange.xMax !== null
+    ? axisTicks(xDomain, 6)
+    : Array.from({ length: Math.floor(xTickMax / xTickStep) + 1 }, (_, i) => i * xTickStep);
   const rateSvg = isRateFigure ? rateSegments.map((s, idx) => {
     const left = s.start;
     const right = s.end;
+    if (right + 0.5 < xDomain[0] || left - 0.5 > xDomain[1]) return "";
     const boundary = idx ? s.start - 0.5 : null;
     const x1 = sx(Math.max(xDomain[0], left - 0.5));
     const x2 = sx(Math.min(xDomain[1], right + 0.5));
     const cx = (x1 + x2) / 2;
-    const bx = boundary === null ? null : sx(boundary);
+    const bx = boundary === null || boundary < xDomain[0] || boundary > xDomain[1] ? null : sx(boundary);
     const line = bx === null ? "" : `<line x1="${bx.toFixed(2)}" x2="${bx.toFixed(2)}" y1="${plot.y}" y2="${plot.y + plot.h}" class="rateLine"/>`;
     return `${line}${movableWrap(`rate-${idx}`, cx, plot.y - 10, `<text class="rateLabel" text-anchor="middle">${escapeXml(s.label)}</text>`)}`;
   }).join("") : movableWrap("rate-unspecified", plot.x + plot.w / 2, plot.y - 10,
@@ -5981,8 +6010,11 @@ function renderCycPerformanceFigure(d) {
       ${cycStyle(style.seriesColor, style.showGrid)}<rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
       ${rateSvg}
       ${axesSvg}
+      <defs><clipPath id="cyc-performance-clip"><rect x="${plot.x}" y="${plot.y}" width="${plot.w}" height="${plot.h}"/></clipPath></defs>
+      <g clip-path="url(#cyc-performance-clip)">
       ${style.connectPoints && capPath ? `<path d="${capPath}" class="capLine"/>` : ""}
       ${markerPoints(capPts, sx, sy, "capPt", style.markerSize)}
+      </g>
       ${movableWrap("legend", plot.x + 24, plot.y + plot.h - 44, `
         <circle class="capPt" cx="0" cy="0" r="${Math.max(2.4, style.markerSize * 0.85)}"/><text class="legend" x="10" y="3.4">Discharge capacity</text>
       `)}

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.7 - 2026-09-16
+
+- Connect CYC performance and raw voltage-profile renderers to saved axis limits. Applying a CYC target now displays that graph; other ranges and raw measurements remain unchanged. Clip zoomed traces to the plot frame and keep automatic tick behavior when no manual limits are set.
+- Honor single-sided limits outside the automatic extent by extending only the unspecified side. Preserve validation, per-graph auto reset and existing Fig persistence/export paths.
+- Add seven behavioral regression tests and a disposable browser harness with synthetic data and memory-only saves. Browser confirmed exact voltage/performance limits, automatic reset and restored saved values with no console errors.
+- Verification: 362 unittest cases passed (121.405s), JavaScript syntax and whitespace checks passed. Local static HTML/JS serve v0.3.7; existing user tab and backend process remain untouched. Temporary QA tab/server closed. No build/lint scripts, dependency additions or dependency audit; no raw file or real database writes.
+
 ## v0.3.6 - 2026-09-16
 
 - Keep Add text and Enter as append actions, with a separate selected-text update button. Offset new annotations, retain individual dragging, font sizing, existing storage shape and SVG/export rendering. Ignore Enter during IME composition.

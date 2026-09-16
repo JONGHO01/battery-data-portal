@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current axis fix v0.3.7 (2026-09-16): CYC performance and raw voltage-profile renderers now consume saved manual domains. Apply displays the selected CYC graph; clipped traces stay inside its frame. Single-sided limits outside auto extent extend only the unspecified side. Blank ranges retain existing automatic defaults. All 362 tests and syntax/whitespace checks pass. Browser synthetic/memory-only checks verified exact limits, reset and restore without console errors; QA tab/server cleaned up. Local static HTML/JS serve 0.3.7. Raw experiments, DB, portal shell and existing server are unchanged; refresh only after saving work. GitHub source publication is separate from deployment.
+
 > Current annotations v0.3.6 (2026-09-16): Add text and Enter always append; a separate selected-text update button preserves editing. New labels are offset and individually draggable. Per-Dataset snapshot/serialized saves prevent older responses from dropping later edits. Existing annotation schema and API contracts are unchanged. Full 355 tests plus syntax/whitespace checks pass, including six new tests and reproduced RED append/save-race failures; isolated browser verified three labels, selected edit, drag and memory-backed reopen without console errors. Temporary QA tab/server cleaned up. Live HTML/JS serve 0.3.6 controls; no real Fig/data writes or server restart, existing tab left intact. Refresh after saving current work. GitHub synchronization follows standing authorization; source publication does not prove backend deployment.
 
 > Current imports v0.3.5 (2026-09-16): upload UI uses additive POST /api/dataset-imports, prompting on the same authenticated owner's normalized full source filename (extension included, all own projects/types). Explicit target IDs/names/revisions are validated server-side. Cancel aborts that file; confirmation commits a fresh Dataset/artifacts before permanently purging approved old portal records and files. Partial deletion is reported, cloud deletion is strict, consumed sessions cannot replay, and late revision changes block deletion. PC originals/external backups and other owners are untouched. HTML dialog defaults to cancel; batch/single/legacy CSV paths and stale comparison selections are covered. Final 349 tests, syntax/whitespace checks and isolated dialog cancel/confirm browser QA pass. Real DB/files unchanged; temporary QA servers/tabs closed. Existing localhost:4174 is 0.2.9 and NOT restarted: a new restart approval was asked but not received. New frontend uploads show an update-required message until backend activation; never silently fall back to unconfirmed legacy saves. See docs/DUPLICATE_IMPORTS.md.
@@ -57,6 +59,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+v0.3.7 CYC axis-range fix and verification are complete locally; synchronize scoped source under standing GitHub authorization and verify remote hash. Do not restart the existing server or alter raw measurements.
 
 v0.3.0 source foundation is implemented and tested. Finish scoped publication; next activate via approved local restart, then verify real UI workflows. Do not equate admin access with external-AI transmission or training consent.
 
@@ -331,6 +335,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.7: `public/app.js` axis-domain application, CYC target view and trace clipping; `tests/test_axis_range_behavior.py` real-renderer regressions; `tests/browser_axis_ranges.py` disposable UI harness; synchronized release metadata. Backend change is version metadata only; no global CSS edits.
+
 - v0.3.5: `python_backend.py` additive import/guarded strict-delete flow; `public/app.js` confirmation and upload integration; `public/style.css` scoped dialog; import backend/helper tests and disposable browser harness; `docs/DUPLICATE_IMPORTS.md` contract and deletion limits; synchronized release metadata.
 
 - v0.3.4: `public/app.js` integrated CYC navigation/late-response guard; `public/style.css` scoped navigation styles; `tests/test_cyc_record_navigation.py` ordering, endpoint/filter and wiring regression checks; synchronized release metadata/docs.
@@ -488,6 +494,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.7: local axis work complete; verify publication by remote main hash. Existing open tabs require refresh after saving work; frontend static changes need no server restart.
+
 - v0.3.5: obtain NEW approval before restarting existing 4174 to enable the import API (current live backend 0.2.9). Then verify activation read-only; do not test permanent deletion against real experiments without exact-target confirmation. GitHub publication follows standing authorization and must be verified by remote hash; it does not prove deployment. Browser QA uses synthetic data only.
 
 - v0.3.4 navigation is complete locally; GitHub synchronization uses standing authorization and must be verified from the remote commit. Do not restart the existing server or infer cloud deployment from source publication.
@@ -582,6 +590,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.7: reproduced four failing axis behavior checks, then full `python -B -m unittest discover -s tests -q` passed 362 cases (121.405s). JavaScript syntax/whitespace checks pass. Browser tested voltage X20–120/Y3–4, performance X0–5/Y100–170, automatic reset and saved-range restoration; no console errors. Static HTML/JS show v0.3.7 without restart; no real-data writes. No build/lint scripts or dependency changes.
 
 - v0.3.5: final `python -B -m unittest discover -s tests -q`: 349 tests passed (39.239s); `node --check public/app.js` and `git diff --check` pass. Test DB verifies owner isolation, stale/forged confirmations, identical-file/new-ID replacement, multirecord cleanup, workspace cascades, save/delete failures. Browser fake-API harness confirms cancel/replace and no console errors. An earlier transient Windows file-lock run failed; the final full run is clean. No build/lint scripts, lockfile or dependency audit; no new dependencies. Real server/data unchanged.
 
