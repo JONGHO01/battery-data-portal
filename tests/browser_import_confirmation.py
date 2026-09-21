@@ -6,6 +6,11 @@ Backend persistence is separately covered by test_dataset_imports.py.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 import re
+import json
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tests.test_import_confirmation_ui import duplicate_response_body
 
 
 def main():
@@ -22,8 +27,7 @@ const authHeaders=x=>x;
 async function fetchJsonWithTimeout(url,opts){
  calls++;
  const value=JSON.parse(opts.body);
- if(!value.replaceExisting)return {res:{ok:false,status:409},body:{detail:{code:'duplicate_source_name',
- conflicts:[{id:'old',sourceName:'same.csv',updatedAt:'qa-revision'}]}}};
+ if(!value.replaceExisting)return {res:{ok:false,status:409},body:RESPONSE_BODY};
  return {res:{ok:true,status:201},body:{dataset:{id:'new'},deletedIds:['old'],deleteFailures:[]}};
 }
 ''' + helper + '''
@@ -34,6 +38,7 @@ document.getElementById('run').onclick=async()=>{
 };
 document.getElementById('reset').onclick=()=>location.reload();
 </script></html>'''
+    page = page.replace("RESPONSE_BODY", json.dumps(duplicate_response_body()))
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path == "/style.css":

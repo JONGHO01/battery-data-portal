@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.7";
+const PORTAL_VERSION = "0.3.8";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.8",
+    "date": "2026-09-21",
+    "changes": ["Read actual duplicate-import error responses, restore replacement confirmation, and avoid object-object error messages."]
+  },
   {
     "version": "0.3.7",
     "date": "2026-09-16",
@@ -788,7 +793,9 @@ function setAnalysisMessage(text, title = "\ud655\uc778 \ud544\uc694") {
 }
 
 function apiErrorMessage(body, fallback) {
-  const message = String(body?.error || body?.detail || "").replace(/\s+/g, " ").trim();
+  const detail = body?.error || body?.detail;
+  const value = typeof detail === "string" ? detail : detail?.message;
+  const message = (typeof value === "string" ? value : "").replace(/\s+/g, " ").trim();
   if (!message || message === "Internal Server Error" || message.startsWith("<")) return fallback;
   return message.slice(0, 260);
 }
@@ -1924,15 +1931,20 @@ async function postDatasetImport(payload) {
     method: "POST", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(value),
   });
   let result = await send(payload);
-  const conflicts = result.body?.detail?.conflicts;
-  if (result.res.status === 409 && result.body?.detail?.code === "duplicate_source_name" && Array.isArray(conflicts)) {
+  // The portal exception handler uses error; standard FastAPI uses detail.
+  const errorDetail = (body) => body?.error ?? body?.detail;
+  const detail = errorDetail(result.body);
+  const conflicts = detail?.conflicts;
+  const validConflicts = Array.isArray(conflicts) && conflicts.length > 0 && conflicts.every((item) =>
+    item && ["id", "sourceName", "updatedAt"].every((key) => typeof item[key] === "string"));
+  if (result.res.status === 409 && detail?.code === "duplicate_source_name" && validConflicts) {
     const targets = conflicts.map((item) => `${item.sourceName} [${item.id}]`).join("\n");
     const message = `\uac19\uc740 \ud30c\uc77c\uba85\uc758 \uae30\uc874 \uae30\ub85d ${conflicts.length}\uac1c\uac00 \uc788\uc2b5\ub2c8\ub2e4.\n${targets}\n\n\uc0c8 \ud30c\uc77c \uc800\uc7a5 \ud6c4 \uc704 \uae30\ub85d\uc744 \uc644\uc804 \uc0ad\uc81c\ud558\uace0 \uad50\uccb4\ud560\uae4c\uc694?\n\ud3ec\ud0c8\uc758 \uae30\uc874 \uc6d0\ubcf8\u00b7\ubd84\uc11d\u00b7Fig\u00b7\ubcf4\uace0\uc11c\u00b7\uc804\ucc98\ub9ac \uae30\ub85d\uc740 \ubcf5\uad6c\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. PC \uc6d0\ubcf8\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4.\n\ucde8\uc18c\ud558\uba74 \uae30\uc874 \ud30c\uc77c\uc744 \uc720\uc9c0\ud558\uace0 \uc774 \uc5c5\ub85c\ub4dc\ub97c \uc911\ub2e8\ud569\ub2c8\ub2e4.`;
     if (!await confirmImportReplacement(message)) {
       return { res: { ok: false, status: 409 }, body: { detail: "\uad50\uccb4\ub97c \ucde8\uc18c\ud588\uc2b5\ub2c8\ub2e4. \uae30\uc874 \ud30c\uc77c\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4." } };
     }
     result = await send({ ...payload, replaceExisting: conflicts });
-    if (result.res.status === 409 && result.body?.detail?.code === "duplicate_source_name") {
+    if (result.res.status === 409 && errorDetail(result.body)?.code === "duplicate_source_name") {
       result.body = { detail: "\uae30\uc874 \ubaa9\ub85d\uc774 \ubcc0\uacbd\ub418\uc5b4 \uad50\uccb4\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694." };
     }
   }

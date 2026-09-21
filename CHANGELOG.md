@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.8 - 2026-09-21
+
+- Verification: 366 unittest cases passed (92.839s), JavaScript syntax and whitespace checks passed. Isolated browser verified cancellation (one request, old record retained) and confirmed replacement (two requests), with no console errors. Live localhost serves the fixed v0.3.8 static files; existing tab/backend remain untouched. No real experiment writes/deletes, new dependencies or dependency audit. Build/lint scripts and a dependency lockfile are absent.
+- Read duplicate-import conflict objects from the portal's `error` envelope as well as FastAPI's standard `detail`. Restore cancel/confirm behavior without changing server authorization, storage, deletion rules or API responses. Reject malformed conflict lists and stop on a second conflict instead of retrying deletion.
+- Format structured errors using a string message or safe fallback rather than `[object Object]`.
+- Use the actual server exception serializer in frontend regression and disposable browser tests; the previous mock incorrectly assumed a `detail` envelope. Five reproduced failures now pass, with cancel, confirmed replacement, stale conflicts, malformed payloads and both envelope shapes covered. Real user data is not used or deleted in verification.
+
 ## v0.3.7 - 2026-09-16
 
 - Connect CYC performance and raw voltage-profile renderers to saved axis limits. Applying a CYC target now displays that graph; other ranges and raw measurements remain unchanged. Clip zoomed traces to the plot frame and keep automatic tick behavior when no manual limits are set.
