@@ -292,7 +292,8 @@ class CycFigureUiTests(unittest.TestCase):
         """A representative C-rate must retain its matching charge/discharge pair."""
 
         self.assertIn("function selectRepresentativeCycTraces", self.app_js)
-        self.assertIn("selected.push(...tracesForCycle(cycle, String(segment.label || \"\")));", self.app_js)
+        self.assertIn("selected.push(...tracesForCycle(cycle, segment));", self.app_js)
+        self.assertIn('rateLabel: String(segment?.label || "") || candidate.rateLabel || ""', self.app_js)
         self.assertIn("function orientDqdvCurve", self.app_js)
         self.assertIn("series: selectRepresentativeCycTraces(usable, rateSegments)", self.app_js)
         self.assertIn("series: selectRepresentativeCycTraces(candidates, rateSegments)", self.app_js)

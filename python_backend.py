@@ -46,6 +46,7 @@ from backend.c_rate import collect_c_rate_metadata, infer_cycle_c_rates
 from backend.schemas.bdf import PARSER_VERSION as BDF_MAPPING_VERSION
 from backend.schemas.bdf import build_column_mapping, canonicalize_rows, evaluate_quality
 from backend.parsers import PARSER_VERSION as INSTRUMENT_PARSER_VERSION, inspect_path
+from backend.parsers.wrd import read_wrd_c_rate_reference
 from backend.storage_layout import artifact_key
 from backend.analysis.common import ANALYSIS_VERSION
 from backend.analysis.dqdv import calculate_dqdv
@@ -176,7 +177,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.3.9", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.3.10", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -748,6 +749,19 @@ def database_rows_payload(item: dict) -> tuple[list, int, str]:
     return rows, row_count, "database"
 
 
+def validated_wrd_c_rate_reference(value) -> dict | None:
+    """Accept only consistent nominal-capacity evidence from the known reader."""
+    if not isinstance(value, dict) or value.get("source") != "wrd_test_report_cell_capacity":
+        return None
+    one_c, capacity = value.get("oneC_mA"), value.get("nominalCapacity_Ah")
+    if any(isinstance(number, bool) or not isinstance(number, (int, float)) for number in (one_c, capacity)):
+        return None
+    if (not math.isfinite(one_c) or not math.isfinite(capacity) or not 1e-9 <= capacity <= 100
+            or not math.isclose(one_c, capacity * 1000, rel_tol=1e-9)):
+        return None
+    return {"oneC_mA": capacity * 1000, "source": value["source"], "nominalCapacity_Ah": capacity}
+
+
 def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False) -> dict:
     """Return the browser dataset shape without always serializing raw points.
 
@@ -770,6 +784,8 @@ def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False)
     rows_truncated = False
     if include_rows and browser_safe:
         stored_rows, rows_truncated = browser_safe_dataset_rows(stored_rows, row["data_type"])
+    parser = json_loads(row["parser_json"], {}) if "parser_json" in keys else {}
+    reference = validated_wrd_c_rate_reference(parser.get("cRateReference")) if isinstance(parser, dict) else None
     return {
         "id": row["id"],
         "ownerId": row["owner_id"],
@@ -801,7 +817,8 @@ def dataset_from_row(row, include_rows: bool = True, browser_safe: bool = False)
         "parsedArtifact": json_loads(row["parsed_artifact_json"], {}) if "parsed_artifact_json" in keys else {},
         "columnMapping": json_loads(row["column_mapping_json"], {}) if "column_mapping_json" in keys else {},
         "quality": json_loads(row["quality_json"], {}) if "quality_json" in keys else {},
-        "parser": json_loads(row["parser_json"], {}) if "parser_json" in keys else {},
+        "parser": parser,
+        "cRateReference": reference if row["data_type"] == "cyc" else None,
         "analysisProvenance": json_loads(row["analysis_provenance_json"], {}) if "analysis_provenance_json" in keys else {},
     }
 
@@ -826,6 +843,15 @@ def dataset_detail_from_row(row) -> dict:
     item["rowsTruncated"] = truncated
     if provenance["rowSource"] == "parsed-artifact":
         item["rowsStorage"] = "artifact"
+    # This helper runs after the caller's Dataset authorization. Old normalized
+    # tables need only the immutable WRD header, not a reparse or persisted edit.
+    if item["dataType"] == "cyc" and str(item.get("sourceName") or "").lower().endswith(".wrd"):
+        raw_path = _artifact_local_path(item.get("rawArtifact"))
+        if raw_path is not None:
+            try:
+                item["cRateReference"] = read_wrd_c_rate_reference(raw_path)
+            except OSError:
+                pass  # Missing/unreadable optional metadata does not hide the Fig.
     return item
 
 
@@ -2919,6 +2945,8 @@ def persist_upload_session_artifacts(conn, item: dict, upload_id: str, user: dic
             "sourceUploadId": upload_id,
             "sourceSha256": session["sha256"],
             "createdAt": now_iso(),
+            **({"cRateReference": reference} if (reference := validated_wrd_c_rate_reference(
+                parsed_document["parser"].get("cRateReference"))) else {}),
         },
     }
 

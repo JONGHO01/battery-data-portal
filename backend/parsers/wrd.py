@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import struct
+import math
 from statistics import median
 from pathlib import Path
 
@@ -26,7 +27,7 @@ MIN_INCOMPLETE_VOLTAGE_SPAN = 0.05
 CONTINUATION_CAPACITY_RATIO = 0.2
 
 
-def _binary_cell_weight_g(blob: bytes) -> float | None:
+def _binary_test_report_values(blob: bytes) -> dict[str, float]:
     """Read the known WBCS TestReport prefix, never deserialize .NET objects.
 
     CellWeight is in grams (CellCapacity remains Ah). Read NRBF member names
@@ -38,7 +39,7 @@ def _binary_cell_weight_g(blob: bytes) -> float | None:
     marker = b"\x1cWbcsFile.Sequence.TestReport"
     record = re.search(rb"\x05...." + re.escape(marker), data, re.DOTALL)
     if record is None:
-        return None
+        return {}
     position = record.start() + 5
 
     def take(count: int) -> bytes:
@@ -65,27 +66,30 @@ def _binary_cell_weight_g(blob: bytes) -> float | None:
         string()  # verified TestReport class name
         count = struct.unpack("<i", take(4))[0]
         if not 5 <= count <= 128:
-            return None
+            return {}
         names = [string() for _ in range(count)]
         expected = [f"<{name}>k__BackingField".encode() for name in
                     ("Name", "SchMaker", "ProductInfo", "CellType", "CellWeight")]
         types = take(count)
         if names[:5] != expected or types[:5] != bytes([1, 1, 1, 1, 0]):
-            return None
+            return {}
         weight_type = None
+        capacity_type = None
         for index, kind in enumerate(types):
             if kind in (0, 7):  # Primitive / PrimitiveArray additional type
                 primitive = take(1)[0]
                 if index == 4:
                     weight_type = primitive
+                if index == 6:
+                    capacity_type = primitive
             elif kind in (3, 4):  # SystemClass / Class type descriptor only
                 string()
                 if kind == 4:
                     take(4)
             elif kind not in (1, 2, 5, 6):
-                return None
+                return {}
         if weight_type != 6:  # CellWeight must be a Double, not guessed bytes
-            return None
+            return {}
         take(4)  # LibraryId
         for _ in range(4):  # four string members before the primitive weight
             record = take(1)[0]
@@ -95,11 +99,50 @@ def _binary_cell_weight_g(blob: bytes) -> float | None:
             elif record == 9:  # MemberReference; never resolve objects
                 take(4)
             elif record != 10:  # ObjectNull
-                return None
+                return {}
         mass = struct.unpack("<d", take(8))[0]
-        return mass if 0.001 <= mass <= 1 else None
+        result = {"mass_g": mass} if 0.001 <= mass <= 1 else {}
+        # CellCapacity is the instrument's configured nominal capacity in Ah.
+        # Validate the known member/type before advancing past the CRate string;
+        # do not resolve arbitrary objects or guess a capacity from adjacent data.
+        if (count < 7 or names[5:7] != [b"<CRate>k__BackingField", b"<CellCapacity>k__BackingField"]
+                or types[5:7] != bytes([1, 0]) or capacity_type != 6):
+            return result
+        try:
+            record = take(1)[0]
+            if record == 6:
+                take(4)
+                string()
+            elif record == 9:
+                take(4)
+            elif record != 10:
+                return result
+            capacity = struct.unpack("<d", take(8))[0]
+            if math.isfinite(capacity) and 1e-9 <= capacity <= 100:
+                result["nominal_capacity_ah"] = capacity
+        except (ValueError, struct.error):
+            pass  # Truncated optional capacity must not hide a valid CellWeight.
+        return result
     except (ValueError, struct.error):
+        return {}
+
+
+def _binary_cell_weight_g(blob: bytes) -> float | None:
+    return _binary_test_report_values(blob).get("mass_g")
+
+
+def read_wrd_c_rate_reference(path: Path) -> dict | None:
+    """Read only the known 64 KiB metadata prefix, without parsing measurements."""
+    with path.open("rb") as handle:
+        values = _binary_test_report_values(handle.read(65536))
+    capacity = values.get("nominal_capacity_ah")
+    if capacity is None:
         return None
+    return {
+        "oneC_mA": capacity * 1000,
+        "source": "wrd_test_report_cell_capacity",
+        "nominalCapacity_Ah": capacity,
+    }
 
 
 def extract_wrd_mass_g(path: Path, blob: bytes) -> float | None:

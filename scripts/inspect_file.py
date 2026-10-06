@@ -14,6 +14,7 @@ for dep_dir in (APP_ROOT / "wheeldeps", APP_ROOT / "xlsbdeps", APP_ROOT / "pydep
         sys.path.insert(0, str(dep_dir))
 
 from backend.parsers import PARSER_VERSION, inspect_path
+from backend.parsers.wrd import read_wrd_c_rate_reference
 
 
 # This response is parsed and rendered by the browser before a Dataset is saved.
@@ -655,6 +656,11 @@ def main():
     # backend explicitly requests --full and trims only its outgoing response.
     rows = parsed_rows if args.full else limit_inspection_rows(parsed_rows, columns)
     validation = build_validation(columns, parsed_rows, sheet_name)
+    parser = {"name": parser_name, "version": PARSER_VERSION}
+    if parser_name == "wrd":
+        reference = read_wrd_c_rate_reference(path)
+        if reference is not None:
+            parser["cRateReference"] = reference
     print(json.dumps({
         "columns": columns,
         "rows": rows,
@@ -662,7 +668,7 @@ def main():
         "headerRow": header_idx + 1,
         "sheetName": sheet_name,
         "validation": validation,
-        "parser": {"name": parser_name, "version": PARSER_VERSION},
+        "parser": parser,
     }, ensure_ascii=False))
 
 

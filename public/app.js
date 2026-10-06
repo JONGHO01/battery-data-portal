@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.9";
+const PORTAL_VERSION = "0.3.10";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.10",
+    "date": "2026-10-06",
+    "changes": ["Use original WRD nominal capacity or a linked electrode reference for discharge C-rates without rewriting experiment data."]
+  },
   {
     "version": "0.3.9",
     "date": "2026-10-06",
@@ -4174,6 +4179,62 @@ function explicitCRateSegments(rows, minCycle, maxCycle) {
   }));
 }
 
+function cycCRateReference(d) {
+  const linked = d?.cell?.electrodeCalc?.oneC_mA;
+  if (linked != null && linked !== "" && typeof linked !== "boolean") {
+    const oneC_mA = Number(linked);
+    if (Number.isFinite(oneC_mA) && oneC_mA > 0) return { oneC_mA, source: "linked_electrode_calculation" };
+  }
+  const report = d?.cRateReference;
+  if (report?.source !== "wrd_test_report_cell_capacity") return null;
+  if (typeof report.oneC_mA === "boolean" || typeof report.nominalCapacity_Ah === "boolean") return null;
+  const oneC_mA = Number(report.oneC_mA);
+  const capacity = Number(report.nominalCapacity_Ah);
+  if (!(Number.isFinite(oneC_mA) && oneC_mA > 0 && Number.isFinite(capacity) && capacity > 0)) return null;
+  if (Math.abs(oneC_mA - capacity * 1000) > oneC_mA * 1e-6) return null;
+  return { oneC_mA, source: report.source };
+}
+
+function cycDischargeCurrentGroups(rows, minCycle, maxCycle) {
+  const currentsByCycle = new Map();
+  for (const row of rows || []) {
+    const cycle = row?.cycle;
+    const current = row?.current;
+    if (!Number.isFinite(cycle) || !Number.isFinite(current) || Math.abs(current) <= 1e-9
+      || cycle < minCycle || cycle > maxCycle || Math.abs(cycle - Math.round(cycle)) > 1e-6) continue;
+    if (cycDirectionFromValue(row.direction, current) !== "discharge") continue;
+    const key = Math.round(cycle);
+    const values = currentsByCycle.get(key) || [];
+    values.push(Math.abs(current));
+    currentsByCycle.set(key, values);
+  }
+  const points = [...currentsByCycle].map(([cycle, values]) => ({ cycle, current: median(values) }))
+    .sort((a, b) => a.cycle - b.cycle);
+  const groups = [];
+  for (const point of points) {
+    const last = groups[groups.length - 1];
+    if (!last || point.cycle !== last.end + 1
+      || Math.abs(point.current - last.current) / last.current > 0.02) {
+      groups.push({ start: point.cycle, end: point.cycle, current: point.current, count: 1 });
+    } else {
+      last.current = (last.current * last.count + point.current) / (last.count + 1);
+      last.count += 1;
+      last.end = point.cycle;
+    }
+  }
+  return groups;
+}
+
+function calibratedCRateSegments(d, rows, minCycle, maxCycle) {
+  const reference = cycCRateReference(d);
+  if (!reference) return [];
+  return cycDischargeCurrentGroups(rows, minCycle, maxCycle).map((group) => {
+    const cRate = group.current * 1000 / reference.oneC_mA;
+    return { ...group, cRate, label: formatExplicitCRate(Number(cRate.toPrecision(3))),
+      currentOnly: false, rateSource: reference.source, oneC_mA: reference.oneC_mA };
+  });
+}
+
 function inferCRateSegments(d, rows, capPts) {
   const cycles = [...new Set(capPts.map((p) => p.x).filter(Number.isFinite))].sort((a, b) => a - b);
   if (!cycles.length) return [];
@@ -4181,6 +4242,8 @@ function inferCRateSegments(d, rows, capPts) {
   const maxCycle = Math.max(...cycles);
   const explicitSegments = explicitCRateSegments(rows, minCycle, maxCycle);
   if (explicitSegments.length >= 1) return explicitSegments;
+  const calibratedSegments = calibratedCRateSegments(d, rows, minCycle, maxCycle);
+  if (calibratedSegments.length) return calibratedSegments;
   const parsedLabels = parseCRateLabels(d);
   const parsedSegments = fiveCycleSegments(parsedLabels, minCycle, maxCycle);
   if (hasRateStepPattern(capPts, parsedSegments)) return parsedSegments;
@@ -5227,9 +5290,10 @@ function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGro
     byCycle.set(cycle, group);
   }
   const cycles = [...byCycle.keys()].sort((left, right) => left - right);
-  const tracesForCycle = (cycle, rateLabel = "") => (byCycle.get(cycle) || []).map((candidate) => ({
+  const tracesForCycle = (cycle, segment = null) => (byCycle.get(cycle) || []).map((candidate) => ({
     ...candidate,
-    rateLabel: rateLabel || candidate.rateLabel || "",
+    rateLabel: String(segment?.label || "") || candidate.rateLabel || "",
+    ...(segment?.rateSource ? { rateSource: segment.rateSource, oneC_mA: segment.oneC_mA } : {}),
   }));
   const usableSegments = (rateSegments || []).filter((segment) => {
     const start = Number(segment?.start);
@@ -5249,13 +5313,17 @@ function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGro
     ));
     if (usedCycles.has(cycle)) continue;
     usedCycles.add(cycle);
-    selected.push(...tracesForCycle(cycle, String(segment.label || "")));
+    selected.push(...tracesForCycle(cycle, segment));
   }
   if (selected.length) return selected;
   return evenlySpacedItems(cycles, 3).flatMap((cycle) => tracesForCycle(cycle));
 }
 
 function figureTraceLabel(series) {
+  if (series.rateLabel && series.direction === "charge"
+    && ["wrd_test_report_cell_capacity", "linked_electrode_calculation"].includes(series.rateSource)) {
+    return `${series.rateLabel} discharge stage \u00b7 cycle ${series.cycle} charge`;
+  }
   const basis = series.rateLabel ? `${series.rateLabel} \u00b7 cycle ${series.cycle}` : `cycle ${series.cycle}`;
   return series.direction === "trace" ? basis : `${basis} ${series.direction}`;
 }
@@ -6148,11 +6216,14 @@ function renderExperimentInfo(d) {
     const rows = d.rows.filter((row) => Number.isFinite(row.cycle)).sort((a, b) => a.cycle - b.cycle);
     const capPts = dischargeSeries(rows);
     const segments = inferCRateSegments(d, rows, capPts);
-    const oneC = Number(savedCalc?.oneC_mA ?? manual?.sample?.oneC_mA);
+    const reference = cycCRateReference(d);
+    const oneC = reference?.oneC_mA ?? NaN;
+    const referenceText = reference
+      ? `${reference.source === "linked_electrode_calculation" ? escapeXml(savedCalc?.profileName || "Linked electrode") : "WRD TestReport \uc6d0\ubcf8 \uc124\uc815 \uc6a9\ub7c9"} \u00b7 1C ${fixed(oneC, 4)} mA` : "-";
     const segmentRows = segments.map((segment) => {
       const within = rows.filter((row) => row.cycle >= segment.start && row.cycle <= segment.end);
       const capacity = average(within.map((row) => row.capacity).filter(Number.isFinite).map((value) => Math.abs(value) < 10 ? value * 1000 : value));
-      const current = average(within.map((row) => row.current).filter(Number.isFinite).map(Math.abs));
+      const current = average(within.map((row) => row.current).filter(Number.isFinite).map((value) => Math.abs(value) * 1000));
       const rate = rateNumber(segment.label);
       const expected = Number.isFinite(oneC) && Number.isFinite(rate) ? oneC * rate : null;
       return [segment.label, `${segment.start}-${segment.end}`, capacity, current, expected];
@@ -6164,7 +6235,7 @@ function renderExperimentInfo(d) {
           <div><strong>\ub370\uc774\ud130</strong><span>${escapeXml(d.sourceName || d.id)}</span></div>
           <div><strong>\ud589 \uc218</strong><span>${d.rows.length} rows</span></div>
           <div><strong>C-rate</strong><span>${segments.map((segment) => segment.label).join(" | ") || "-"}</span></div>
-          <div><strong>\uc804\uadf9 \uacc4\uc0b0</strong><span>${savedCalc ? `${escapeXml(savedCalc.profileName || "\uae30\uc900 \uacc4\uc0b0")} \u00b7 1C ${fixed(oneC, 4)} mA` : (manual ? "\ub9e4\ub274\uc5bc \uae30\uc900" : "-")}</span></div>
+          <div><strong>1C \uae30\uc900</strong><span>${referenceText}</span></div>
         </div>
         <table><thead><tr><th>C-rate</th><th>Cycle</th><th>\ud3c9\uade0 \ubc29\uc804 \uc6a9\ub7c9 (mAh g-1)</th><th>\ud3c9\uade0 \uc804\ub958 (mA)</th><th>\uc608\uc0c1 \uc804\ub958 (mA)</th></tr></thead>
         <tbody>${segmentRows.map(([label, range, capacity, current, expected]) => `<tr><td>${escapeXml(label)}</td><td>${escapeXml(range)}</td><td>${capacity == null ? "-" : fmt(capacity, 5)}</td><td>${current == null ? "-" : fmt(current, 5)}</td><td>${expected == null ? "-" : fmt(expected, 5)}</td></tr>`).join("")}</tbody></table>

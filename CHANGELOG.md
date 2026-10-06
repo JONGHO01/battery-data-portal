@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.3.10 - 2026-10-06
+
+- Read a bounded, typed WBCS TestReport prefix to expose original nominal CellCapacity (Ah) as an optional C-rate reference. Keep CellWeight handling, raw rows, parser version and existing storage contracts unchanged; do not deserialize .NET objects.
+- Preserve the server-produced reference in new upload parser metadata. Recover it in authorized legacy local-WRD detail responses without updating DB rows, normalized artifacts or original files. Unavailable references remain unknown.
+- Prefer explicit row C-rates, then the selected Dataset's linked electrode reference, then the original report reference. Summarize only discharge currents per integer cycle using medians, preserve recovery stages, and support constant-rate experiments without requiring capacity loss. Keep actual mA labels when no reference exists.
+- Identify original-vs-linked reference provenance in the existing experiment summary and correct its measured-current units to mA. Do not use an unrelated global manual sample for current calibration. Qualify calibrated discharge-stage labels on charge traces rather than claiming a charge C-rate.
+- Verification: all 407 unittest cases passed (51.984s), plus 10 existing C-rate inference pytest cases. JavaScript/Python syntax, ASCII integrity, version synchronization and whitespace checks pass. Live 44-cycle WRD shows six calibrated discharge stages and twelve paired voltage curves without console errors. The explicitly approved local restart activated v0.3.10; 61 Dataset field fingerprints and the target raw/normalized artifact hashes are unchanged. Update an obsolete structural assertion to pass segment provenance; no new dependencies, build/lint scripts or cloud-deployment claim.
+
 ## v0.3.9 - 2026-10-06
 
 - Restore charge-capacity profiles when discharge-capacity cells are null or zero placeholders. Reject missing voltage/time/current values rather than inventing zeros; reuse direction-aware capacity selection. Preserve input rows and units.

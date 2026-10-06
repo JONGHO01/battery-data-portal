@@ -18,7 +18,9 @@ class CycProfileTraceTests(unittest.TestCase):
                  "explicitCRateSegments", "parseCRateValue", "numberValue",
                  "formatExplicitCRate", "average", "parseCRateLabels",
                  "hasStandardRateLadder", "defaultRateLabels", "tokenizeCRateBlock",
-                 "formatCRateLabel", "fiveCycleSegments", "hasRateStepPattern"]
+                 "formatCRateLabel", "fiveCycleSegments", "hasRateStepPattern",
+                 "cycCRateReference", "cycDischargeCurrentGroups", "calibratedCRateSegments",
+                 "median"]
         helpers = []
         for name in names:
             match = re.search(r"^function " + name + r"\([^\n]*\).*?^}", source, re.M | re.S)
