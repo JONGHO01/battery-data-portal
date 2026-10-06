@@ -170,6 +170,71 @@ def peak_regions(tau, gamma, prominence_fraction=.05, min_width=2.5, min_distanc
     return [dict(p, Peak=f"P{i+1}", major=i<5) for i,p in enumerate(ordered)]
 
 
+def classify_peak_regions(peaks, band):
+    """Keep all numerical peaks/integrals; rank only measured-band candidates."""
+    classified = [dict(p, interpretationEligible=bool(band[0] <= p["tau_peak"] <= band[1]),
+                       regionOutsideMeasuredBand=bool(p["tau_a"] < band[0] or p["tau_b"] > band[1]))
+                  for p in peaks]
+    eligible = [p for p in classified if p["interpretationEligible"]]
+    major = {p["Peak"] for p in sorted(eligible, key=lambda p: (-p["prominence"], p["tau_peak"]))[:5]}
+    return [dict(p, major=p["Peak"] in major) for p in classified]
+
+
+def select_lcurve(curve, fit_error_limit=.05):
+    """Clockwise corner in log(residual), log(roughness), increasing lambda.
+
+    Fit and tangent guards are conservative numerical heuristics, not a noise
+    estimate, a universal optimum or a test of electrochemical validity.
+    Return the original input index; never reorder the caller's diagnostics.
+    """
+    diagnostic = {"index": None, "reliable": False, "reason": "unclear_corner",
+                  "curvature": [None] * len(curve), "fitErrorLimit": fit_error_limit}
+    if len(curve) < 7:
+        return diagnostic
+    values = np.array([[_number(p.get("lambda")),
+                        _number(p.get("residual", p.get("residualNorm"))),
+                        _number(p.get("roughness", p.get("roughnessNorm")))] for p in curve], dtype=float)
+    if not (np.all(np.isfinite(values)) and np.all(values > 0)
+            and math.isfinite(fit_error_limit) and fit_error_limit > 0):
+        diagnostic["reason"] = "invalid_lcurve"
+        return diagnostic
+    order = np.argsort(values[:, 0])
+    lam, residual, roughness = values[order].T
+    if np.any(np.diff(lam) <= 0):
+        diagnostic["reason"] = "duplicate_lambda"
+        return diagnostic
+    if residual.min() > fit_error_limit:
+        diagnostic["reason"] = "poor_model_fit"
+        return diagnostic
+    lr, le, t = np.log(residual), np.log(roughness), np.log(lam)
+    if np.ptp(lr) <= .2 or np.ptp(le) <= .2:
+        diagnostic["reason"] = "flat_lcurve"
+        return diagnostic
+    if np.any(np.diff(lr) < -1e-5) or np.any(np.diff(le) > 1e-5):
+        diagnostic["reason"] = "nonmonotonic_lcurve"
+        return diagnostic
+    dx, dy = np.gradient(lr, t), np.gradient(le, t)
+    speed = np.hypot(dx, dy)
+    # Ordinary Cartesian signed curvature is negative at this clockwise corner.
+    curvature = (dy*np.gradient(dx, t)-dx*np.gradient(dy, t))/np.maximum(speed**3, 1e-30)
+    for i, original in enumerate(order):
+        diagnostic["curvature"][int(original)] = float(curvature[i]) if math.isfinite(curvature[i]) else None
+    # Reject high-error overregularized corners and small active-set wiggles.
+    accepted_error = fit_error_limit
+    candidates = [i for i in range(3, len(curve)-3)
+                  if math.isfinite(curvature[i]) and curvature[i] > .05
+                  and curvature[i] >= max(curvature[i-1], curvature[i+1])
+                  and dx[i] > 1e-3 and dy[i] < -1e-3 and speed[i] > .01
+                  and lr[i+1]-lr[i-1] > .005 and le[i-1]-le[i+1] > .005
+                  and residual[i] <= accepted_error]
+    if not candidates:
+        return diagnostic
+    best = max(candidates, key=lambda i: curvature[i])
+    diagnostic.update(index=int(order[best]), reliable=True, reason="clockwise_corner",
+                      acceptedErrorLimit=accepted_error)
+    return diagnostic
+
+
 def fit_drt(rows, settings=None):
     settings = settings or {}
     m = settings.get("M",100)
@@ -224,7 +289,9 @@ def fit_drt(rows, settings=None):
     for j in range(m-2):
         smooth[j,offset+j:offset+j+3] = np.array([1,-2,1])*np.sqrt(h)/h**2
     started = time.monotonic()
+    roundoff_correction = 0.0
     def solve(value):
+        nonlocal roundoff_correction
         if time.monotonic()-started > 45:
             raise ValueError("DRT calculation time limit reached; try manual lambda or a smaller M.")
         try:
@@ -234,13 +301,18 @@ def fit_drt(rows, settings=None):
             raise ValueError("DRT solver did not converge.") from exc
         if not result.success or not np.all(np.isfinite(result.x)):
             raise ValueError("DRT solver did not converge.")
-        return result.x
+        tolerance = 128*np.finfo(float).eps*max(1.0, float(np.max(np.abs(result.x))))
+        if np.min(result.x) < -tolerance:
+            raise ValueError("DRT solver violated nonnegative bounds.")
+        roundoff_correction = max(roundoff_correction, max(0.0, float(-np.min(result.x))))
+        # Project floating-point boundary roundoff only; no density smoothing.
+        return np.maximum(result.x, 0)
     warnings, curve = [],[]
     if quality["duplicateFrequencyCount"]:
         warnings.append("Duplicate frequencies retained without averaging; multiple sweeps may not describe one stationary spectrum.")
     if quality["excludedCount"]:
         warnings.append("Invalid rows excluded from this calculation only; original rows remain unchanged.")
-    auto_reliable = None
+    auto_reliable, selection = None, None
     if mode == "auto":
         solutions = []
         candidates = np.logspace(-6,1,41)
@@ -249,16 +321,11 @@ def fit_drt(rows, settings=None):
             solutions.append(solution)
             curve.append({"lambda":float(value),"residual":float(np.linalg.norm(aw@solution-bw)),
                           "roughness":float(np.linalg.norm(smooth@solution))})
-        lr = np.log(np.maximum([p["residual"] for p in curve],1e-30))
-        le = np.log(np.maximum([p["roughness"] for p in curve],1e-30))
-        t = np.log(candidates)
-        dx,dy = np.gradient(lr,t),np.gradient(le,t)
-        curvature = (dx*np.gradient(dy,t)-dy*np.gradient(dx,t))/np.maximum((dx*dx+dy*dy)**1.5,1e-30)
-        curvature[:2] = curvature[-2:] = -np.inf
-        best = int(np.argmax(curvature))
-        auto_reliable = bool(np.isfinite(curvature[best]) and curvature[best] > .05 and
-                             np.ptp(lr) > .2 and np.ptp(le) > .2 and 3 <= best <= 37 and
-                             float(q@solutions[best][offset:]) > 1e-5)
+        selection = select_lcurve(curve)
+        best = selection["index"]
+        auto_reliable = bool(selection["reliable"] and float(q@solutions[best][offset:]) > 1e-5)
+        if selection["reliable"] and not auto_reliable:
+            selection.update(index=None, reliable=False, reason="no_resolved_rc_density")
         if auto_reliable:
             lam,x = float(candidates[best]),solutions[best]
         else:
@@ -274,10 +341,16 @@ def fit_drt(rows, settings=None):
         warnings.append("Reconstruction error exceeds 5%; this nonnegative RC model may not describe the measured spectrum.")
     band = [float(1/w.max()),float(1/w.min())]
     warnings.append("Outside measured time band: interpret with caution. Peaks do not establish SEI, charge transfer, or ionic transport mechanisms.")
-    peaks = peak_regions(tau,gamma)
-    metadata = {"analysisVersion":"rc-drt-2","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
+    peaks = classify_peak_regions(peak_regions(tau,gamma), band)
+    if any(not p["interpretationEligible"] or p["regionOutsideMeasuredBand"] for p in peaks):
+        warnings.append("Peak locations outside the measured time band are retained but not major interpretation candidates; region integrals crossing the band depend on extrapolation.")
+    metadata = {"analysisVersion":"rc-drt-3","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
                 "Rs":rs,"L":inductance,"includeL":include_l,"variableCount":len(x),"mode":mode,
-                "autoSelectionReliable":auto_reliable,"Z0":z0,"signConvention":"Z = Re(Z) + i Im(Z)",
+                "autoSelectionReliable":auto_reliable,"autoSelection":selection,
+                "regularizationConvention":"lambda_squared","regularizationPenalty":lam**2,
+                "fitQuality":"poor_fit" if rmse > 5 else "numerical_fit_only", "fitWarningThresholdPercent":5,
+                "physicalValidationPerformed":False,"solverRoundoffCorrection":roundoff_correction,
+                "Z0":z0,"signConvention":"Z = Re(Z) + i Im(Z)",
                 "excludedCount":quality["excludedCount"],"densityMeasure":"d(ln tau)","solver":"scipy.optimize.lsq_linear/bvls",
                 "measuredTimeBand":band,"peakRegions":"nearest local minima; log-midpoint fallback, grid edges for outer fallback; not physical assignments",
                 "peakDetection":{"prominenceFraction":.05,"minWidthSamples":2.5,"minDistanceDecades":.25,"majorLimit":5,"smoothing":False},

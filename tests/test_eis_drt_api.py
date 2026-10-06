@@ -18,6 +18,7 @@ class DrtApiTests(unittest.TestCase):
         self.assertEqual(result["metadata"]["spectrumCount"], 2)
         self.assertEqual([p["rowIndex"] for p in result["reconstruction"]], list(range(8, 16)))
         self.assertEqual(provenance["sourceDatasetId"], "DRT-SELECT")
+        self.assertEqual(provenance["analysisVersion"], result["metadata"]["analysisVersion"])
         for index in [True, "1", -1, 2]:
             with self.subTest(index=index), self.assertRaises(HTTPException) as raised:
                 portal.run_dataset_analysis(item, "eis-drt", {"M": 20, "spectrumIndex": index})

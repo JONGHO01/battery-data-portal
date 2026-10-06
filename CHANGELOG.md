@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.3.12 - 2026-10-06
+
+- Review RC-DRT against Hansen's original Tikhonov/L-curve treatment and official pyDRTtools sources. Retain the valid Hansen lambda-squared convention, complex RC kernel, relative weighting, log-grid quadrature and second derivative; document the convention rather than silently changing manual lambda values.
+- Correct clockwise L-curve corner selection and add monotonicity, interior, tangent, local-corner and 5% numerical fit guards. Unclear/high-error choices are not accepted as automatic success. Project only machine-scale BVLS lower-bound roundoff; reject material negative solutions.
+- Retain/export every qualifying peak and all density/measurement samples. Exclude outside-measured-band peak locations from major labels, flag extrapolation-dependent region integrals, surface high fit error and old-analysis recalculation notices. No automatic resistance identity, post-smoothing, acquisition averaging or source rewriting.
+- Use rc-drt-3 consistently in result and existing analysis provenance. Portal shell, global styles, routing, parsers and other analyses are unchanged apart from required release metadata.
+- Verification: all 467 unittest cases and 10 existing inference pytest cases passed; JavaScript/Python syntax, ASCII source, version and whitespace checks passed. Isolated browser on an unsaved original-data copy verifies three default-lambda major candidates, visible 19.16% caution, rejected high-error automatic selection and cleared stale curves, without console errors. No new dependencies or build/lint scripts. Existing localhost:4174 remains v0.3.11; a new restart approval was requested but not received. No real analysis write, raw-data rewrite or cloud-deployment claim.
+
 ## v0.3.11 - 2026-10-06
 
 - Restore CYC header and integrated-record electrode information. Separate original WRD CellWeight/nominal-capacity settings, unconfirmed filename material/mass labels, and saved linked-electrode calculations; keep missing values explicit and output escaped/text-only.

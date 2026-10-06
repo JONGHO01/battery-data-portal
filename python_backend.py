@@ -177,7 +177,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Battery Data Portal", version="0.3.11", lifespan=lifespan)
+app = FastAPI(title="Battery Data Portal", version="0.3.12", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -3097,7 +3097,7 @@ def run_dataset_analysis(item: dict, analysis_name: str, parameters: dict | None
             result = fit_drt(rows, supplied_parameters)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        provenance.update({"analysisVersion":"rc-drt-1", "schemaVersion":BDF_MAPPING_VERSION,
+        provenance.update({"analysisVersion":result["metadata"]["analysisVersion"], "schemaVersion":BDF_MAPPING_VERSION,
                            "sourceDatasetId":item["id"],
                            "sourceSha256":(item.get("analysisProvenance") or {}).get("sourceSha256", "")})
         return result, provenance

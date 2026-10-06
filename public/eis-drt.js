@@ -7,7 +7,8 @@ const EisDrt = (() => {
     return {w:Math.max(480,Math.round(width||1100)),h:Math.max(680,Math.round((height||1000)*.55))};
   }
   function peakGroups(peaks=[]) {
-    const ranked=[...peaks].sort((a,b)=>(number(b.prominence)||0)-(number(a.prominence)||0)||a.tau_peak-b.tau_peak);
+    const priority=p=>Number(p.major===true||p.priorityMajor===true);
+    const ranked=peaks.filter(p=>p.interpretationEligible!==false).sort((a,b)=>priority(b)-priority(a)||(number(b.prominence)||0)-(number(a.prominence)||0)||a.tau_peak-b.tau_peak);
     const selected=new Set(ranked.slice(0,5));
     return {major:peaks.filter(p=>selected.has(p)),minor:peaks.filter(p=>!selected.has(p))};
   }
@@ -153,6 +154,7 @@ const EisDrt = (() => {
     if(text.startsWith('L-curve corner'))return 'L-curve corner가 불명확해 자동 선택을 채택하지 않았습니다. 입력한 수동 λ 결과를 표시합니다.';
     if(text.startsWith('Reconstruction error'))return '재구성 오차가 5%를 넘습니다. 비음수 RC 모델이 측정 스펙트럼을 충분히 설명하지 못할 수 있습니다.';
     if(text.startsWith('Outside measured'))return '측정 대역 밖 — 해석 주의. 피크만으로 SEI·전하 전달·이온 수송 메커니즘을 확정할 수 없습니다.';
+    if(text.startsWith('Peak locations'))return '측정 대역 밖 피크는 주요 해석 후보에서 제외했습니다. 적분 경계가 대역 밖인 R_region도 외삽에 의존합니다. 모든 계산값은 보존됩니다.';
     return text;
   };
   function path(points,sx,sy) {
@@ -243,7 +245,9 @@ const EisDrt = (() => {
       panels+=plot({...chartStyle,x:rx,y:ry+rh+gap,w:rw,h:rh,title:'Nyquist — Im(Z)',xlabel:'Re(Z) / Ω',ylabel:'Im(Z) / Ω',points:coords.right,fit,color,id:'imag'});
       panels+=`<text x="${rx}" y="${ry+rh+gap-3}" font-size="10">Same EIS data, original imaginary sign</text>`;
     }
-    return `<svg id="paperFigure" class="eisDrtFigure" style="--figure-width:${w}px;width:100%;max-width:none;height:auto" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Noto Sans KR, Arial, sans-serif" fill="#475569"><rect width="${w}" height="${h}" fill="white"/><text x="72" y="${options.screen?22:48}" font-size="18" font-weight="700" fill="#111827">${esc(title)}</text><text x="72" y="${options.screen?42:74}" font-size="14">${esc(date)}</text>${panels}<text x="72" y="${h-8}" font-size="11">○ 측정값 · 주황 점선: DRT 재구성 · 노란 영역: 측정 대역 밖 — 해석 주의</text></svg>`;
+    const poorFit=Number(result?.relative_complex_RMSE_percent)>5;
+    const footer=poorFit?`Fit RMSE: ${fmt(result.relative_complex_RMSE_percent)}% · 해석 주의: RC 모델·측정 일관성 확인 필요 · ○ 원본 측정값 / 주황 점선 재구성`:'○ 측정값 · 주황 점선: DRT 재구성 · 노란 영역: 측정 대역 밖 — 해석 주의';
+    return `<svg id="paperFigure" class="eisDrtFigure" style="--figure-width:${w}px;width:100%;max-width:none;height:auto" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Noto Sans KR, Arial, sans-serif" fill="#475569"><rect width="${w}" height="${h}" fill="white"/><text x="72" y="${options.screen?22:48}" font-size="18" font-weight="700" fill="#111827">${esc(title)}</text><text x="72" y="${options.screen?42:74}" font-size="14">${esc(date)}</text>${panels}<text x="72" y="${h-8}" font-size="11" fill="${poorFit?'#b45309':'#475569'}">${esc(footer)}</text></svg>`;
   }
   function download(name,content,type='text/csv;charset=utf-8') {
     const url=URL.createObjectURL(new Blob([content],{type}));
@@ -312,7 +316,7 @@ const EisDrt = (() => {
     const validPoints=points.filter(valid),excluded=points.length-validPoints.length;
     const missingFrequency=validPoints.length===0;
     const qualityText=`Data: ${validPoints.length} points · Range: ${selectedRange?.label||'—'}`;
-    const setStatus=(state,note='')=>{const r=entry.result,m=r?.metadata;status.textContent=`${qualityText} · DRT: ${state}${m?` · λ: ${Number(m.lambda).toExponential(1)} · Rs: ${fmt(m.Rs)} Ω · L: ${fmt(m.L*1e6)} µH · Major peaks: ${peakGroups(r.peaks).major.length} · Fit RMSE: ${fmt(r.relative_complex_RMSE_percent)}%`:''}${m&&m.analysisVersion!=='rc-drt-2'?' · 이전 피크 검출 기준: 새 기준 적용은 재계산 필요':''}${note?' · '+note:''}`;};
+    const setStatus=(state,note='')=>{const r=entry.result,m=r?.metadata;status.textContent=`${qualityText} · DRT: ${state}${m?` · λ: ${Number(m.lambda).toExponential(1)} · Rs: ${fmt(m.Rs)} Ω · L: ${fmt(m.L*1e6)} µH · Major peaks: ${peakGroups(r.peaks).major.length} · Fit RMSE: ${fmt(r.relative_complex_RMSE_percent)}%${r.relative_complex_RMSE_percent>5?' · 해석 주의: 모델·측정 일관성 확인 필요':''}`:''}${m&&m.analysisVersion!=='rc-drt-3'?' · 이전 계산 기준: 새 기준 적용은 재계산 필요':''}${note?' · '+note:''}`;};
     const syncMode=()=>{form.elements.lambda.disabled=entry.pending||form.elements.mode.value==='auto';form.elements.lambdaSlider.disabled=form.elements.lambda.disabled;};
     form.elements.mode.onchange=syncMode;
     setStatus('not calculated',missingFrequency?'frequency, Re(Z), Im(Z)가 필요합니다.':'');
@@ -323,13 +327,13 @@ const EisDrt = (() => {
       const m=r.metadata;
       const names=assignments();
       const groups=peakGroups(r.peaks);
-      const table=peaks=>`<div style="overflow-x:auto"><table><thead><tr><th>Peak</th><th>tau_peak / s</th><th>f_peak / Hz</th><th>R_region / Ω</th><th>Assignment</th></tr></thead><tbody>${peaks.map(p=>`<tr><td><details><summary>${esc(p.Peak)}</summary><small>τ: ${fmt(p.tau_a)} – ${fmt(p.tau_b)} s<br>Prominence: ${fmt(p.prominence)} Ω<br>Width: ${fmt(p.width_samples)} grid points<br>R_region = ∫ γ(ln τ) d(ln τ); 피크 높이가 아닙니다.</small></details></td><td>${fmt(p.tau_peak)}</td><td>${fmt(p.f_peak)}</td><td>${fmt(p.R_region)}</td><td><select data-peak-assignment data-peak="${esc(p.Peak)}" aria-label="${esc(p.Peak)} Assignment" style="width:auto;min-width:125px" ${!context()||entry.savingAssignments?'disabled':''}>${assignmentOptions.map(a=>`<option value="${a}" ${(names[p.Peak]||'Unassigned')===a?'selected':''}>${a}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="5">검출된 피크가 없습니다.</td></tr>'}</tbody></table></div>`;
+      const table=peaks=>`<div style="overflow-x:auto"><table><thead><tr><th>Peak</th><th>tau_peak / s</th><th>f_peak / Hz</th><th>R_region / Ω</th><th>Assignment</th></tr></thead><tbody>${peaks.map(p=>`<tr><td><details><summary>${esc(p.Peak)}${p.interpretationEligible===false?' · 대역 밖':''}</summary><small>τ: ${fmt(p.tau_a)} – ${fmt(p.tau_b)} s<br>Prominence: ${fmt(p.prominence)} Ω<br>Width: ${fmt(p.width_samples)} grid points<br>R_region = ∫ γ(ln τ) d(ln τ); 피크 높이가 아닙니다.${p.regionOutsideMeasuredBand?'<br>해석 주의: 적분 경계가 측정 대역 밖으로 이어집니다.':''}</small></details></td><td>${fmt(p.tau_peak)}</td><td>${fmt(p.f_peak)}</td><td title="${p.regionOutsideMeasuredBand?'외삽에 의존하는 적분 경계':'ln tau 적분'}">${fmt(p.R_region)}${p.regionOutsideMeasuredBand?' *':''}</td><td><select data-peak-assignment data-peak="${esc(p.Peak)}" aria-label="${esc(p.Peak)} Assignment" style="width:auto;min-width:125px" ${!context()||entry.savingAssignments?'disabled':''}>${assignmentOptions.map(a=>`<option value="${a}" ${(names[p.Peak]||'Unassigned')===a?'selected':''}>${a}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="5">검출된 주요 피크가 없습니다.</td></tr>'}</tbody></table></div>`;
       const peakTable=`<section data-peak-card style="max-width:1050px;font-size:12px;margin:8px 0"><h3 style="font-size:13px;margin:6px 0">DRT Peaks · 사용자 해석</h3>${table(groups.major)}${groups.minor.length?`<details><summary>Additional minor peaks detected (${groups.minor.length})</summary>${table(groups.minor)}</details>`:''}<p style="margin:6px 0"><button type="button" data-save-assignments style="width:auto;padding:5px 10px" ${!context()||!r.peaks.length||entry.savingAssignments?'disabled':''}>Assignment 저장</button> <button type="button" data-export="peaks" style="width:auto;padding:5px 10px">피크 CSV</button> <span role="status">${esc(entry.assignmentNote||'Assignment: 사용자 해석만 표시 · 기본 Unassigned')}</span></p></section>`;
       const displayWarnings=r.warnings.map(warningText);
       details.innerHTML=`<p>Series resistance Rs: <strong>${fmt(m.Rs)} Ω</strong> · Series inductance L: <strong>${fmt(m.L*1e6)} µH</strong> (${m.includeL?'포함':'제외, 정확히 0'})</p><p>relative_complex_RMSE_percent: <strong>${fmt(r.relative_complex_RMSE_percent)}%</strong> · λ=${fmt(m.lambda)} · M=${m.M}</p><p>측정 시간 대역: ${fmt(m.measuredTimeBand[0])}–${fmt(m.measuredTimeBand[1])} s. 대역 밖 — 해석 주의.</p><p>제외 ${r.quality.excludedCount}행 · 중복 주파수 ${r.quality.duplicateFrequencyCount}행 (평균·삭제하지 않음)</p><ul>${displayWarnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul><p>피크 구간은 이웃 최소값 사이의 수치적 구간입니다. 피크 위치만으로 SEI·전하 전달·이온 수송을 확정하지 않습니다. Rs는 피크가 아닙니다.</p><p>선택 구간 저항: ln(τ) 좌표에서 경계 보간 후 적분</p><label>τ 시작 / s <input data-tau-a type="number" step="any" value="${m.tau_min}"></label><label>τ 끝 / s <input data-tau-b type="number" step="any" value="${m.tau_max}"></label><button type="button" data-integrate>구간 적분</button><output data-integral></output><p><button type="button" data-export="drt">DRT CSV</button> <button type="button" data-export="fit">재구성 CSV</button> <button type="button" data-export="metadata">메타데이터 JSON</button> <button type="button" data-expand>DRT 확대</button></p>`;
       const reasons=document.createElement('p');
       // The editable peak table is visible; numerical diagnostics stay collapsed.
-      details.innerHTML=peakTable+`<details style="font-size:13px;max-width:950px"><summary>분석 상세 · 오차 ${fmt(r.relative_complex_RMSE_percent)}% · 피크 ${r.peaks.length}개 · export</summary>${details.innerHTML}</details>`;
+      details.innerHTML=peakTable+`<details style="font-size:13px;max-width:950px"><summary>분석 상세 · 오차 ${fmt(r.relative_complex_RMSE_percent)}% · 피크 ${r.peaks.length}개 · export</summary><p>정규화: ‖W(Ax−b)‖² + λ²‖D²x‖². 기존 수동 λ 의미는 유지됩니다. 다른 도구의 λ와 숫자만 비교하지 마세요. 작은 오차도 물리적 검증을 뜻하지 않습니다.</p>${details.innerHTML}</details>`;
       details.querySelectorAll('[data-peak-assignment]').forEach(select=>select.onchange=()=>{
         if(!current()||!context()||entry.savingAssignments)return;
         if(!assignmentOptions.includes(select.value))return;
@@ -402,7 +406,7 @@ const EisDrt = (() => {
         if(!current()||entry.revision!==requestRevision)return;
         if(!response.res.ok)throw Error(apiErrorMessage(response.body,'DRT 계산에 실패했습니다. 백엔드 버전과 입력값을 확인하세요.'));
         if(entry.spectrumIndex!==null && response.body.result?.metadata?.spectrumIndex!==entry.spectrumIndex)throw Error('현재 백엔드가 구간 선택을 지원하지 않습니다. 포탈 서버 업데이트·재시작 후 다시 계산하세요.');
-        if(entry.settings.mode==='auto'&&response.body.result?.metadata?.autoSelectionReliable!==true)throw Error('자동 λ 선택이 불확실합니다. 수동 λ를 선택하고 계산 버튼을 누르세요.');
+        if(entry.settings.mode==='auto'&&response.body.result?.metadata?.autoSelectionReliable!==true)throw Error(response.body.result?.metadata?.autoSelection?.reason==='poor_model_fit'?'자동 λ 채택 안 함: RC 모델 재구성 오차가 5%를 넘습니다. 측정 일관성을 확인한 뒤 수동 계산하세요.':'자동 λ 선택이 불확실합니다. 수동 λ를 선택하고 계산 버튼을 누르세요.');
         if(!matches(response.body.result,points))throw Error('저장된 데이터와 현재 표시 데이터가 다릅니다. 표 저장 또는 Dataset 새로고침 후 다시 계산하세요.');
         entry.result=response.body.result;
         entry.runId=response.body.id;entry.assignmentDraft=null;entry.assignmentNote='';

@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.11";
+const PORTAL_VERSION = "0.3.12";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.12",
+    "date": "2026-10-06",
+    "changes": ["Correct clockwise DRT L-curve selection and bounded-solver roundoff; disclose poor fit and extrapolation-dependent peaks without modifying measurements."]
+  },
   {
     "version": "0.3.11",
     "date": "2026-10-06",
