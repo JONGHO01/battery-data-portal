@@ -1,5 +1,7 @@
 # Session Memory
 
+> Current CYC profile fix v0.3.9 (2026-10-06): restore charge traces via direction-aware capacity selection, preserve every valid rate/current segment, and prevent missing measurements becoming zero. No absolute C-rate reference means actual measured mA labels, not minimum-current-as-1C ratios. Cycle labels separate repeated-current/recovery segments. Width-aware bottom legends clear the axis title; SVG height preserves all labels. Exact reported WRD has 31,002 rows/20 cycles/40 charge-discharge groups and no C-rate reference; read-only stored-row execution shows 14 representative curves across all seven current segments with immutable inputs. All 376 tests and syntax/whitespace checks pass; live browser confirms 14 curves, six current colors and no console errors. Portal shell, CSS, parser, API and raw data are unchanged; backend diff is version metadata only. Existing local backend is healthy v0.3.8 and was not restarted; frontend v0.3.9 is activated in the verification tab. Scoped GitHub synchronization follows standing authorization and must be verified by remote hash.
+
 > Current duplicate-response fix v0.3.8 (2026-09-21): runtime HTTPException responses use `error`, while postDatasetImport expected `detail`, hiding replacement confirmation and producing [object Object]. Frontend now accepts both envelopes, checks conflict shape, stops on repeated conflicts and formats object messages safely. Tests and browser harness use the real exception serializer. No real uploads/deletions or server restart; backend diff is version metadata only. Refresh after saving work to load the frontend fix. Full verification and scoped publication follow standing authorization.
 
 > Local launch verified (2026-09-18): at the user's local-open request, the official 4174 launcher succeeded on the safe retry after an initial readiness timeout. Independent health returns ok=true/version=0.3.7 and the browser shows the existing portal home. No existing process was terminated, credentials changed, or manual data reanalysis performed. This supersedes older notes that the running backend was 0.2.9; actual new import/workspace workflows still need separate functional verification. No application source changes, version bump, GitHub push or cloud deployment were part of this launch.
@@ -63,6 +65,8 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 ```
 
 ## Current Task
+
+v0.3.9 CYC profile correction and verification are complete locally; synchronize scoped main source under standing authorization. No raw-file reanalysis, Fig save, real-data write or server restart is authorized by this display fix.
 
 v0.3.8 duplicate-import response compatibility is implemented and verified. Publish scoped source under standing authorization; preserve user confirmation, existing records, portal layout and running server.
 
@@ -159,6 +163,8 @@ Current release: `v0.1.45`. EIS Nyquist and Bode traces must use the saved Fig s
 Maintain the Battery Portal with project-local skills, semantic versioning, and a factual `CHANGELOG.md` record for every meaningful delivered change. Render uploads must use durable object storage in production and report missing environment-variable names without exposing their values. If durable storage is incomplete, Render must keep the portal and `/api/health` online but reject Dataset artifact writes with a controlled 503; it must never treat `/tmp` as final research-file storage. A CYC/CV/EIS file that is detected successfully but cannot be finalized as a Dataset must return a specific retryable storage or persistence diagnostic rather than an opaque server error. A partial raw artifact must be cleaned when normalized-artifact finalization fails. Desktop navigation must preserve whole menu labels and use horizontal scrolling instead of vertically splitting buttons. The desktop data-registration sidebar must remain 420-450px wide so multi-file names, upload statuses, and action labels stay readable. A repeated save request for an already completed upload must return the existing Dataset rather than create a duplicate or fail. Artifact keys must compact long hierarchy and source-file names before local writes so Windows path-length limits cannot block a successfully inspected WRD/CYC save. All current portal UI terminology uses `Fig`; CYC figures ignore nonpositive cycle numbers and prioritize an explicit C-rate source column when one is present. For WBCS WRD CYC filenames that contain a fractional C-rate sequence, a preceding cell/sample number is not a C-rate label. A precise electrode mass encoded in the filename takes priority over unrelated binary-text matches. C-rate guide labels are rendered only for complete visible positive-cycle ranges, and y-axis tick density is bounded so the figure's left axis stays readable. The CYC Fig choice now renders separate performance, voltage/current behavior, and combined views. Raw CYC data uses real within-cycle voltage versus capacity/time curves with average-current labels; summary-only CYC data uses average voltage and signed current by cycle. Multiple CYC/CV/EIS files can be selected together for a sequential batch Dataset and Fig-record workflow; after any multi-file batch completes or fails, its picker must be cleared and re-enabled without hiding the per-file result summary so the next selection starts cleanly. Upload guidance, selected-file status, batch action text, and Fig-choice labels must be authored as clear Korean browser strings; do not leave mojibake literals in a user-visible upload path. The EIS inspection panel must render its Korean headings, type choices, column guide, quality review, and Fig choices directly from readable source strings rather than depending on a post-render repair pass. Saved Fig comparison controls must be rendered from the authoritative Unicode-escaped renderer so browser-facing Korean labels remain readable even when a Windows editor uses a legacy code page. Visible Korean UI strings must be encoded safely, and legacy damaged strings must be sanitized before display.
 
 ## Current Status
+
+- v0.3.9: real stored data retains all charge/discharge traces. Ten focused regressions cover nullable/zero placeholders, all seven segments, missing values, immutability, truthful current/explicit-rate labels and wide/narrow legend geometry. All 376 tests pass. Browser confirms 14 curves, six unique current colors and no console errors.
 
 - Latest v0.3.0: owner isolation, Dataset ID takeover protection, scoped data workspace and additive profile/version tables. Full disposable-data suite: 318 tests passed. UI module is served by the existing process, but new API registration/schema require restart. No live research data was deliberately modified during these tests.
 
@@ -341,6 +347,8 @@ Maintain the Battery Portal with project-local skills, semantic versioning, and 
 
 ## Files Changed
 
+- v0.3.9: `public/app.js` CYC profiles/segment labels/legend sizing; `tests/test_cyc_profile_traces.py` ten behavioral regressions; `tests/test_cyc_figure_ui.py` obsolete capacity/legend structural expectations; synchronized release metadata/docs. No global CSS, EIS implementation, data parser, API or experiment changes.
+
 - v0.3.8: `public/app.js` import response parsing/error formatting; `tests/test_import_confirmation_ui.py` actual server envelope regressions; `tests/browser_import_confirmation.py` corrected fixture; synchronized version metadata/documentation. Preserve the prior local-launch memory note.
 
 - v0.3.7: `public/app.js` axis-domain application, CYC target view and trace clipping; `tests/test_axis_range_behavior.py` real-renderer regressions; `tests/browser_axis_ranges.py` disposable UI harness; synchronized release metadata. Backend change is version metadata only; no global CSS edits.
@@ -502,6 +510,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
+- v0.3.9: verify remote main hash after publication. Do not infer Render deployment from a push or restart the healthy local backend for a static frontend fix. Absolute C-rate for an uncalibrated file still requires a real 1C reference/explicit experimental condition; never assume the minimum observed current is 1C.
+
 - v0.3.8: local fix complete; verify publication by remote main hash. User should refresh before retrying their upload. Do not confirm replacement against real user data on the user's behalf.
 
 - v0.3.7: local axis work complete; verify publication by remote main hash. Existing open tabs require refresh after saving work; frontend static changes need no server restart.
@@ -600,6 +610,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- v0.3.9: reproduced nullable-charge, missing-voltage/capacity, five-segment truncation, axis-title overlap and narrow-legend failures. Full `python -B -m unittest discover -s tests -q` passes 376 cases (43.245s), including ten new behavioral tests. First full run caught a literal non-ASCII separator, fixed using the existing Unicode-escape convention before the passing rerun. Exact stored-row read-only execution preserves input and produces seven charge/discharge pairs. Live browser confirms 14 curves, six colors, X-axis title at y467 and legend band starting y485, with no console errors. Syntax/ASCII/version/whitespace checks pass. No build/lint scripts, new dependencies, real-data writes or server restart.
 
 - v0.3.8: five RED failures reproduced the actual response-envelope mismatch; targeted 19 tests then full 366 tests passed (92.839s), with syntax/whitespace checks. Browser synthetic-only cancellation/confirmation checks pass without console errors; QA server/tab closed. Live HTML/JS serve 0.3.8; current backend remains 0.3.7 with no restart needed for this frontend fix. No real data writes, new packages or dependency audit; no build/lint scripts.
 

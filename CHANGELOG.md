@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.3.9 - 2026-10-06
+
+- Restore charge-capacity profiles when discharge-capacity cells are null or zero placeholders. Reject missing voltage/time/current values rather than inventing zeros; reuse direction-aware capacity selection. Preserve input rows and units.
+- Keep every valid current/rate segment instead of silently sampling a maximum of five. Label representative cycles to distinguish initial and recovery segments at the same current. Existing explicit C-rate/filename labels are retained; uncalibrated current ratios now show actual measured mA, never an assumed absolute C-rate.
+- Move voltage-profile legends clear of X-axis titles, use width-aware columns and enough SVG height, and give six unique current levels distinct default colors. Portal shell, global CSS, parsers, API contracts and raw files are unchanged; backend diff is version metadata only.
+- Add ten behavioral regression tests for nullable charge capacity, missing measurements, all seven segments, source immutability, honest current/explicit-rate labels, and wide/narrow legend geometry. Update only obsolete legacy legend-spacing expectations.
+- Verification: all 376 unittest cases passed (43.245s); JavaScript/Python syntax, ASCII integrity, version synchronization and whitespace checks passed. Live stored-data browser check confirms all 14 representative curves, six distinct current colors and separate X-axis/legend geometry with no console errors. The first full run caught a literal non-ASCII separator; it was converted to the required Unicode escape and the complete suite rerun successfully. No real experiment writes, server restart, new dependencies or cloud deployment. Build/lint scripts are absent.
+
 ## v0.3.8 - 2026-09-21
 
 - Verification: 366 unittest cases passed (92.839s), JavaScript syntax and whitespace checks passed. Isolated browser verified cancellation (one request, old record retained) and confirmed replacement (two requests), with no console errors. Live localhost serves the fixed v0.3.8 static files; existing tab/backend remain untouched. No real experiment writes/deletes, new dependencies or dependency audit. Build/lint scripts and a dependency lockfile are absent.

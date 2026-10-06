@@ -284,7 +284,7 @@ class CycFigureUiTests(unittest.TestCase):
 
     def test_voltage_profile_requires_real_curve_points(self):
         self.assertIn("function cycVoltageProfileSeries(rows, rateSegments = [])", self.app_js)
-        self.assertIn("Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity)", self.app_js)
+        self.assertIn("capacity: cycDqdvCapacity(row)", self.app_js)
         self.assertIn('[["charge", charge], ["discharge", discharge]]', self.app_js)
         self.assertIn("sortedPoints.length < 6 || xValues.size < 6", self.app_js)
 
@@ -325,9 +325,9 @@ class CycFigureUiTests(unittest.TestCase):
         """C-rate labels must remain readable without covering the voltage curves."""
 
         self.assertIn("const legendRowHeight = 26;", self.app_js)
-        self.assertIn("const legendReserve = 72 + legendRows * legendRowHeight;", self.app_js)
-        self.assertIn("const plotH = Math.max(150, h - legendReserve);", self.app_js)
-        self.assertIn("const legendTop = y + plotH + 56;", self.app_js)
+        self.assertIn("const legendReserve = 92 + legendRows * legendRowHeight;", self.app_js)
+        self.assertIn("const plotH = Math.max(250, h - legendReserve);", self.app_js)
+        self.assertIn("const legendTop = y + plotH + 76;", self.app_js)
         self.assertIn('class="profileLegendPanel"', self.app_js)
         self.assertIn('class="profileLegendNote"', self.app_js)
         self.assertIn(r"\uc2e4\uc120: \ucda9\uc804, \uc810\uc120: \ubc29\uc804", self.app_js)

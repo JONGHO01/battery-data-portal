@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.8";
+const PORTAL_VERSION = "0.3.9";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.9",
+    "date": "2026-10-06",
+    "changes": ["Restore measured charge curves and every current segment; do not label uncalibrated current ratios as C-rates; separate profile legends from axis titles."]
+  },
   {
     "version": "0.3.8",
     "date": "2026-09-21",
@@ -4183,7 +4188,6 @@ function inferCRateSegments(d, rows, capPts) {
   const currentRows = rows.filter((r) => Number.isFinite(r.cycle) && Number.isFinite(r.current) && r.current !== 0);
   if (currentRows.length >= 2) {
     const sorted = currentRows.sort((a, b) => a.cycle - b.cycle);
-    const ref = Math.min(...sorted.map((r) => Math.abs(r.current)).filter((v) => v > 0));
     const groups = [];
     for (const r of sorted) {
       const c = Math.abs(r.current);
@@ -4199,7 +4203,7 @@ function inferCRateSegments(d, rows, capPts) {
     const ratio = currents.length ? Math.max(...currents) / Math.min(...currents) : 1;
     const currentSegments = groups
       .filter((g) => g.end >= g.start)
-      .map((g, idx) => ({ ...g, label: parsedLabels[idx] || `${fmt(g.current / ref, 2)} C` }));
+      .map((g, idx) => ({ ...g, label: parsedLabels[idx] || `|I| ${fmt(g.current * 1000, 4)} mA`, currentOnly: !parsedLabels[idx] }));
     if (currentSegments.length >= 2 && currentSegments.length <= 8 && ratio >= 1.3 && hasRateStepPattern(capPts, currentSegments)) {
       return currentSegments;
     }
@@ -5212,7 +5216,7 @@ function evenlySpacedItems(items, maxItems) {
 }
 
 // Keep the charge/discharge pair from the same representative C-rate cycle.
-function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGroups = 5) {
+function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGroups = Infinity) {
   if (!Array.isArray(candidates) || !candidates.length) return [];
   const byCycle = new Map();
   for (const candidate of candidates) {
@@ -5252,7 +5256,7 @@ function selectRepresentativeCycTraces(candidates, rateSegments = [], maxRateGro
 }
 
 function figureTraceLabel(series) {
-  const basis = series.rateLabel || `cycle ${series.cycle}`;
+  const basis = series.rateLabel ? `${series.rateLabel} \u00b7 cycle ${series.cycle}` : `cycle ${series.cycle}`;
   return series.direction === "trace" ? basis : `${basis} ${series.direction}`;
 }
 
@@ -5336,7 +5340,7 @@ function syncProfileSeriesControls(profile, style = currentFigureStyle()) {
   select.value = state.selectedProfileSeriesKey;
   const selected = rateSeries.find((item) => cycRateColorKey(item) === state.selectedProfileSeriesKey) || rateSeries[0];
   const overrides = normalizeProfileSeriesColorOverrides(style?.rateColorOverrides);
-  color.value = cycProfileSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"]);
+  color.value = cycProfileSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed", "#64748b"]);
   reset.disabled = !overrides[state.selectedProfileSeriesKey];
   controls.hidden = false;
 }
@@ -5370,19 +5374,20 @@ function syncDqdvSeriesControls(analysis, style = currentFigureStyle()) {
   select.value = state.selectedDqdvSeriesKey;
   const selected = rateSeries.find((item) => cycRateColorKey(item) === state.selectedDqdvSeriesKey) || rateSeries[0];
   const overrides = normalizeProfileSeriesColorOverrides(style?.rateColorOverrides);
-  color.value = cycDqdvSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"]);
+  color.value = cycDqdvSeriesColor(style, selected, series, ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed", "#64748b"]);
   reset.disabled = !overrides[state.selectedDqdvSeriesKey];
   controls.hidden = false;
 }
 
 function cycVoltageProfileSeries(rows, rateSegments = []) {
+  const measuredNumber = (value) => value == null || typeof value === "boolean" || String(value).trim() === "" ? NaN : Number(value);
   const sourceRows = (rows || []).map((row) => ({
-    cycle: Number(row?.cycle),
-    voltage: Number(row?.voltage),
-    capacity: Number.isFinite(Number(row?.capacity)) ? Number(row.capacity) : Number(row?.chargeCapacity),
-    time: Number(row?.time),
-    current: Number(row?.current),
-    direction: cycDirectionFromValue(row?.direction, Number(row?.current)),
+    cycle: measuredNumber(row?.cycle),
+    voltage: measuredNumber(row?.voltage),
+    capacity: cycDqdvCapacity(row),
+    time: measuredNumber(row?.time),
+    current: measuredNumber(row?.current),
+    direction: cycDirectionFromValue(row?.direction, measuredNumber(row?.current)),
   })).filter((row) => Number.isFinite(row.cycle) && row.cycle >= 1 && Number.isFinite(row.voltage));
   const useCapacity = sourceRows.filter((row) => Number.isFinite(row.capacity)).length >= 8;
   const byCycle = new Map();
@@ -5467,14 +5472,14 @@ function cycProfilePanel({ x, y, w, h, profile, style }) {
     niceBounds(allPoints.map((point) => point.y)),
     "voltage",
   );
-  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed"];
-  const columns = Math.min(4, Math.max(1, profile.series.length));
+  const colors = ["#0f766e", "#2563eb", "#db2777", "#b45309", "#7c3aed", "#64748b"];
+  const columns = Math.min(4, Math.max(1, Math.floor((w - 24) / 210)), Math.max(1, profile.series.length));
   const legendRowHeight = 26;
   const legendRows = Math.ceil(profile.series.length / columns);
-  const legendReserve = 72 + legendRows * legendRowHeight;
-  const plotH = Math.max(150, h - legendReserve);
-  const legendTop = y + plotH + 56;
-  const legendNote = "\uc2e4\uc120: \ucda9\uc804, \uc810\uc120: \ubc29\uc804 \u00b7 0.1 C\ub294 10\uc2dc\uac04, 1 C\ub294 1\uc2dc\uac04 \uae30\uc900\uc785\ub2c8\ub2e4. Iavg\ub294 \uad6c\uac04 \ud3c9\uade0 \uc804\ub958\uc785\ub2c8\ub2e4.";
+  const legendReserve = 92 + legendRows * legendRowHeight;
+  const plotH = Math.max(250, h - legendReserve);
+  const legendTop = y + plotH + 76;
+  const legendNote = "\uc2e4\uc120: \ucda9\uc804, \uc810\uc120: \ubc29\uc804 \u00b7 Iavg: \ud3c9\uade0 \uc804\ub958";
   const axes = drawPaperAxes({
     x,
     y,
@@ -5759,7 +5764,7 @@ function cycDqdvPanel({ x, y, w, h, analysis, style }) {
     xlabelOffset: 48,
     ylabelOffset: 64,
   });
-  const colors = [normalizeHexColor(style?.seriesColor || "#0f766e"), "#2563eb", "#db2777", "#b45309", "#7c3aed"];
+  const colors = [normalizeHexColor(style?.seriesColor || "#0f766e"), "#2563eb", "#db2777", "#b45309", "#7c3aed", "#64748b"];
   const legendColumns = Math.min(3, Math.max(1, analysis.series.length));
   const legendRows = Math.ceil(analysis.series.length / legendColumns);
   const legendRowHeight = 20;
@@ -5829,17 +5834,21 @@ function renderCycAlternativeFigure(d, mode) {
   const gap = combined ? Math.max(68, Math.round(svgSize.w * 0.06)) : 0;
   const panelW = combined ? Math.max(280, Math.floor((svgSize.w - padX - rightAxisPad - gap) / 2)) : Math.max(360, svgSize.w - padX - rightAxisPad);
   const rateText = rateSegments.map((segment) => segment.label).join(" | ");
-  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", combined ? `Performance + ${electricalTitle}` : electricalTitle], ["C-rate traces", rateText || "Representative cycles"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", combined ? `Performance + ${electricalTitle}` : electricalTitle], [rateSegments.some((segment) => segment.currentOnly) ? "Measured current" : "C-rate traces", rateText || "Representative cycles"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - ${combined ? `Performance + ${electricalTitle} Fig` : `${electricalTitle} Fig`}`;
   $("metaGrid").innerHTML = metaRows.map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
   const performance = combined ? cycPerformancePanel({ x: padX, y: plotY, w: panelW, h: plotH, points: capPts, capacityAxisLabel }) : "";
   const electricalX = combined ? padX + panelW + gap : padX;
+  const profileLegendColumns = Math.min(4, Math.max(1, Math.floor((panelW - 24) / 210)), Math.max(1, profile.series.length));
+  const profileLegendRows = Math.ceil(profile.series.length / profileLegendColumns);
+  const profileHeight = Math.max(plotH, 250 + 92 + profileLegendRows * 26);
+  const figureHeight = hasRawVoltageProfile ? Math.max(svgSize.h, plotY + profileHeight + 24) : svgSize.h;
   const profilePanel = hasRawVoltageProfile
-    ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: plotH, profile, style })
+    ? cycProfilePanel({ x: electricalX, y: plotY, w: panelW, h: profileHeight, profile, style })
     : cycVoltageCurrentTrendPanel({ x: electricalX, y: plotY, w: panelW, h: plotH, trend: electricalTrend });
   $("figureCanvas").innerHTML = `
-    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${svgSize.h}" xmlns="http://www.w3.org/2000/svg">
+    <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${figureHeight}" xmlns="http://www.w3.org/2000/svg">
       ${cycStyle(style.seriesColor, style.showGrid)}
       <style>
         .seriesLine{fill:none;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:2.1}.points circle{fill:#fff;stroke:${normalizeHexColor(style.seriesColor)};stroke-width:1.6}
@@ -5847,7 +5856,7 @@ function renderCycAlternativeFigure(d, mode) {
         .voltageTrendLine{fill:none;stroke:#0f766e;stroke-width:2}.currentTrendLine{fill:none;stroke:#db2777;stroke-width:2;stroke-dasharray:5 3}.voltageTrendPt{fill:#fff;stroke:#0f766e;stroke-width:1.5}.currentTrendPt{fill:#fff;stroke:#db2777;stroke-width:1.4}
         .profileEmpty{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1}.profileEmptyTitle{font:700 13px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#334155}.profileEmptyText{font:11px "Segoe UI","Noto Sans KR",Arial,sans-serif;fill:#64748b}
       </style>
-      <rect width="${svgSize.w}" height="${svgSize.h}" fill="#fff"/>
+      <rect width="${svgSize.w}" height="${figureHeight}" fill="#fff"/>
       <text x="${padX}" y="48" class="panelTitle">${escapeXml(title)}</text>
       <text x="${padX}" y="72" class="caption">${combined ? `Cycling performance + ${electricalTitle}` : electricalTitle}</text>
       ${performance}
@@ -5880,7 +5889,7 @@ function renderCycDqdvFigure(d) {
   $("figureTitle").textContent = title;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC - dQ/dV Fig - ${dqdvReadinessSummary(analysis)}`;
   const rateText = rateSegments.map((segment) => segment.label).join(" | ");
-  $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "dQ/dV (raw trace only)"], ["C-rate traces", rateText || "Representative cycles"], ["Trace status", dqdvReadinessSummary(analysis)], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
+  $("metaGrid").innerHTML = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "dQ/dV (raw trace only)"], [rateSegments.some((segment) => segment.currentOnly) ? "Measured current" : "C-rate traces", rateText || "Representative cycles"], ["Trace status", dqdvReadinessSummary(analysis)], ["Owner", displayUserName(d)], ["Source", d.sourceName]].map(([key, value]) => `<div class="metaItem"><strong>${key}</strong>${isBadText(value) ? "-" : (value || "-")}</div>`).join("");
   $("figureCanvas").innerHTML = `
     <svg id="paperFigure" class="cycAlternativeFigure" style="--figure-width:${svgSize.w}px" viewBox="0 0 ${svgSize.w} ${figureHeight}" xmlns="http://www.w3.org/2000/svg">
       ${cycStyle(style.seriesColor, style.showGrid)}
@@ -5953,7 +5962,7 @@ function renderCycPerformanceFigure(d) {
   const cycleCount = new Set(capPts.map((point) => point.x)).size;
   const traceSummary = `Detected ${cycleCount} discharge cycle${cycleCount === 1 ? "" : "s"} from ${d.rows.length.toLocaleString()} raw points`;
   $("figureSubtitle").textContent = `${d.cell.date || ""} - CYC performance Fig - ${traceSummary}`;
-  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "CYC performance (one point per cycle)"], [cRateText ? "C-rate" : "Mode", cRateText || "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
+  const metaRows = [["Material", d.cell.material], ["Condition", d.cell.condition], ["Figure", "CYC performance (one point per cycle)"], [rateSegments.some((segment) => segment.currentOnly) ? "Measured current" : cRateText ? "C-rate" : "Mode", cRateText || "Long cycle"], ["Owner", displayUserName(d)], ["Source", d.sourceName]];
   $("metaGrid").innerHTML = metaRows.map(([k, v]) => `<div class="metaItem"><strong>${k}</strong>${isBadText(v) ? "-" : (v || "-")}</div>`).join("");
   const cycleValues = capPts.length ? capPts.map((r) => r.x) : rows.map((r) => r.cycle);
   const maxRateCycle = Math.max(...rateSegments.map((s) => s.end).filter(Number.isFinite), Math.max(...cycleValues));
