@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.3.11 - 2026-10-06
+
+- Restore CYC header and integrated-record electrode information. Separate original WRD CellWeight/nominal-capacity settings, unconfirmed filename material/mass labels, and saved linked-electrode calculations; keep missing values explicit and output escaped/text-only.
+- Expose optional, typed original CellWeight evidence from a bounded TestReport header in new-upload parser/provenance and authorized legacy local-WRD detail responses. No filename fallback, inferred active mass, measurement reparse, DB migration or live data write; parser-8 and C-rate calculations are unchanged.
+- Display linked active mass/thickness when present. Require actual areal units or a saved calculation for loading; do not convert a bare or unrelated sample mass into mg/cm2. Reject invalid/overflowing numbers and distinguish filename areal loading from total mass.
+- Verification: all 445 unittest cases passed (62.141s), plus 10 existing inference pytest cases; JavaScript/Python syntax, ASCII integrity, version synchronization and whitespace checks passed. Approved official local restart and independent health confirm v0.3.11. Live CYC displays original mass/nominal setting, unconfirmed filename material and unchanged calibrated stages, without console errors or a bogus loading caption. All 61 Dataset stored-field fingerprints and target raw/normalized hashes match the baseline. No new dependencies, build/lint scripts, portal-shell/global-CSS/other-analysis changes or cloud deployment claim.
+
 ## v0.3.10 - 2026-10-06
 
 - Read a bounded, typed WBCS TestReport prefix to expose original nominal CellCapacity (Ah) as an optional C-rate reference. Keep CellWeight handling, raw rows, parser version and existing storage contracts unchanged; do not deserialize .NET objects.

@@ -1,22 +1,24 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.3.10-2f80ed)
+![Version](https://img.shields.io/badge/version-0.3.11-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.3.10** — Recover original WRD nominal-capacity references for discharge C-rates without rewriting saved experiment data. Source publication is separate from deployment.
+> Source release: **v0.3.11** — Restore CYC electrode information with separate original settings, filename candidates and linked calculations; do not infer areal loading from a mass. Source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.3.10**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+현재 소스 버전은 **v0.3.11**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
 
 CYC 전압 프로파일은 각 유효한 전류 구간의 대표 사이클에서 충전·방전 곡선을 함께 보여줍니다. 실제 C-rate나 1C 기준이 없는 파일은 최소 전류를 임의로 1C로 놓지 않고 측정 전류(mA)로 표시합니다. 동일 전류의 초기·복귀 구간은 사이클 번호로 구분합니다. 원본 용량과 전압은 변경하지 않습니다.
 
 WRD TestReport의 설정 용량 `CellCapacity`(Ah)를 확인할 수 있으면 `1C 전류(mA) = 설정 용량(Ah) × 1000`으로 계산합니다. 이는 측정된 방전 용량의 최댓값을 기준으로 추측하는 방식이 아닙니다. 연결된 전극 계산 기준이 있으면 그 기준을 우선하며, 방전 전류의 사이클별 중앙값으로 구간을 정리합니다. API의 선택적 `cRateReference` 필드는 `oneC_mA`, `source: wrd_test_report_cell_capacity`, `nominalCapacity_Ah`를 제공합니다. 신규 업로드는 파서 메타데이터에 보존하며, 이전 로컬 WRD는 권한 확인 후 원본 앞 64 KiB를 읽어 조회 응답에만 보완합니다. DB·원본·정규화 행을 재작성하지 않습니다. 원본 기준을 확인할 수 없는 이전 클라우드 기록은 임의 환산하지 않습니다.
+
+CYC 상단과 통합창의 전극 정보는 **원본 WRD 설정**, **미확인 파일명 표기**, **연결된 전극 계산**을 구분합니다. 선택적 `electrodeInfo`는 `cellWeight_g`, `source: wrd_test_report_cell_weight`만 제공하며 원본 `CellWeight`를 순수 활물질 질량으로 단정하지 않습니다. 이전 로컬 기록도 권한 확인 후 64 KiB 헤더만 읽어 표시합니다. 면적·두께·로딩은 저장된 계산값이 있을 때만 표시하고, 단순 질량(mg)을 면적당 로딩(mg/cm²)으로 환산하지 않습니다. 등록된 소재가 없으면 파일명의 LFP/NCM 등은 ‘미확인’ 후보로만 표시합니다. 원본·측정 행·DB를 재작성하지 않습니다.
 
 Fig의 **글 추가** 버튼 또는 Enter는 항상 새 문구를 추가합니다. 기존 문구를 클릭한 뒤 **선택 글 수정**으로 내용만 바꿀 수 있고, 각각 드래그로 이동할 수 있습니다. 연속 저장은 순서대로 처리하며, 저장 실패 시 상태 메시지를 확인하고 **Fig 저장**으로 다시 시도하세요. 페이지를 닫거나 새로고침하기 전에 저장 완료를 확인하세요.
 
@@ -97,6 +99,7 @@ CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
+| v0.3.11 | 2026-10-06 | CYC 전극 정보 복원, 원본 설정·파일명 후보·연결 계산 출처 구분, 질량과 로딩 단위 오표기 방지. |
 | v0.3.10 | 2026-10-06 | WRD 원본 설정 용량·연결 전극 기준으로 방전 C-rate 계산, 저장 데이터 재작성 없이 기준 복원. |
 | v0.3.9 | 2026-10-06 | CYC 충전 곡선·전체 구간 복원, 미확정 C-rate 대신 측정 전류 표시, 축·범례 겹침 방지. |
 | v0.3.8 | 2026-09-21 | 중복 파일 응답 형식 수정, 교체 확인창 복원, 객체 오류 메시지 개선. |

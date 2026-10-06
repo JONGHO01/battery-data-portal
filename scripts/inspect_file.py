@@ -14,7 +14,7 @@ for dep_dir in (APP_ROOT / "wheeldeps", APP_ROOT / "xlsbdeps", APP_ROOT / "pydep
         sys.path.insert(0, str(dep_dir))
 
 from backend.parsers import PARSER_VERSION, inspect_path
-from backend.parsers.wrd import read_wrd_c_rate_reference
+from backend.parsers.wrd import read_wrd_c_rate_reference, read_wrd_electrode_info
 
 
 # This response is parsed and rendered by the browser before a Dataset is saved.
@@ -661,6 +661,9 @@ def main():
         reference = read_wrd_c_rate_reference(path)
         if reference is not None:
             parser["cRateReference"] = reference
+        electrode_info = read_wrd_electrode_info(path)
+        if electrode_info is not None:
+            parser["electrodeInfo"] = electrode_info
     print(json.dumps({
         "columns": columns,
         "rows": rows,

@@ -145,6 +145,15 @@ def read_wrd_c_rate_reference(path: Path) -> dict | None:
     }
 
 
+def read_wrd_electrode_info(path: Path) -> dict | None:
+    """Expose original CellWeight only, not inferred active mass or loading."""
+    with path.open("rb") as handle:
+        weight = _binary_test_report_values(handle.read(65536)).get("mass_g")
+    if weight is None:
+        return None
+    return {"cellWeight_g": weight, "source": "wrd_test_report_cell_weight"}
+
+
 def extract_wrd_mass_g(path: Path, blob: bytes) -> float | None:
     # The filename is the most dependable place for an electrode mass.  WBCS
     # binary content can contain unrelated text such as "1g", which must not

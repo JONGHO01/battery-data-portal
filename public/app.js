@@ -1,9 +1,14 @@
-const PORTAL_VERSION = "0.3.10";
+const PORTAL_VERSION = "0.3.11";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
+  {
+    "version": "0.3.11",
+    "date": "2026-10-06",
+    "changes": ["Restore CYC electrode summaries with separately sourced WRD settings, unconfirmed filename material and linked calculations; never infer areal loading from a mass."]
+  },
   {
     "version": "0.3.10",
     "date": "2026-10-06",
@@ -4972,22 +4977,28 @@ function drawPaperAxes({ x, y, w, h, xDomain, yDomain, y2Domain, xlabel, ylabel,
 }
 
 function loadingCaption(d) {
-  const savedLoading = Number(d.cell?.electrodeCalc?.activeLoading_g_cm2);
-  if (Number.isFinite(savedLoading) && savedLoading > 0) {
-    return `${fixed(savedLoading * 1000, 4)} mg cm-2`;
+  const linkedLoading = d.cell?.electrodeCalc?.activeLoading_g_cm2;
+  const savedLoading = typeof linkedLoading === "boolean" ? NaN : Number(linkedLoading);
+  const savedMilligrams = savedLoading * 1000;
+  if (Number.isFinite(savedMilligrams) && savedMilligrams > 0) {
+    return `${fixed(savedMilligrams, 4)} mg cm-2`;
   }
-  const text = [d.sourceName, d.cell?.sampleName, d.cell?.condition, d.cell?.notes].filter(Boolean).join(" ");
-  const match = text.match(/(\d+(?:\.\d+)?)\s*mg/i);
-  return match ? `${Number(match[1]).toString()} mg cm-2` : "";
+  // A bare filename/sample mass is not an areal loading. Require units.
+  const text = [d.sourceName, d.cell?.condition, d.cell?.notes].filter(Boolean).join(" ");
+  const match = text.match(/(?:^|[^a-z0-9.,+-])([+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:e[+-]?\d+)?)\s*mg\s*(?:\/\s*cm\s*(?:\^?2|\u00b2)|cm\s*(?:\^?\s*-\s*2|\u207b\u00b2))/i);
+  const loading = match ? Number(match[1].replace(",", ".")) : NaN;
+  return Number.isFinite(loading) && loading > 0 ? `${loading.toString()} mg cm-2` : "";
 }
 
 function filenameElectrodeMassLabels(sourceName) {
   const labels = [];
   const seen = new Set();
   const source = String(sourceName || "");
-  const matcher = /(\d+(?:[.,]\d+)?)\s*(mg|g)(?![a-z])/gi;
+  const matcher = /(?:^|[^a-z0-9.,+-])([+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:e[+-]?\d+)?)\s*(mg|g)(?![a-z])/gi;
   let match;
   while ((match = matcher.exec(source))) {
+    // An explicit areal unit is a loading, not a total filename mass.
+    if (/^\s*(?:\/\s*cm\s*(?:\^?2|\u00b2)|cm\s*(?:\^?\s*-\s*2|\u207b\u00b2))/i.test(source.slice(matcher.lastIndex))) continue;
     const value = Number(String(match[1]).replace(",", "."));
     const unit = String(match[2] || "").toLowerCase();
     if (!Number.isFinite(value) || value <= 0) continue;
@@ -5003,18 +5014,30 @@ function filenameElectrodeMassLabels(sourceName) {
 }
 
 function compactElectrodeSummaryValue(value, digits, unit) {
+  if (typeof value === "boolean" || value == null || value === "") return "";
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? `${fixed(number, digits)} ${unit}` : "";
 }
 
-function renderCycFigureElectrodeSummary(dataset) {
-  const summary = $("cycElectrodeSummary");
-  if (!summary) return;
-  summary.replaceChildren();
-  summary.hidden = true;
-  if (!dataset || dataset.dataType !== "cyc") return;
+function filenameElectrodeMaterialLabel(sourceName) {
+  const match = String(sourceName || "").match(/(?:^|[^a-z0-9])(LFP|N(?:CM|MC)\d*|NCA|LCO|LMO|LTO)(?=$|[^a-z0-9])/i);
+  return match ? match[1].toUpperCase() : "";
+}
 
+function cycFigureElectrodeRows(dataset) {
   const rows = [];
+  const material = String(dataset.cell?.material || "").trim();
+  const filenameMaterial = filenameElectrodeMaterialLabel(dataset.sourceName);
+  if (material) rows.push({ label: "\ub4f1\ub85d \uc18c\uc7ac", value: material });
+  else if (filenameMaterial) rows.push({ label: "\ud30c\uc77c\uba85 \uc18c\uc7ac \ud45c\uae30", value: `${filenameMaterial} (\ubbf8\ud655\uc778)` });
+  const original = dataset.electrodeInfo;
+  if (original?.source === "wrd_test_report_cell_weight" && typeof original.cellWeight_g === "number"
+    && Number.isFinite(original.cellWeight_g) && original.cellWeight_g >= 0.001 && original.cellWeight_g <= 1) {
+    rows.push({ label: "WRD \uc124\uc815 \ubb34\uac8c (CellWeight)", value: `${fixed(original.cellWeight_g * 1000, 4)} mg` });
+  }
+  // Validate the original report separately; a linked 1C must not replace it.
+  const report = cycCRateReference({ cRateReference: dataset.cRateReference });
+  if (report) rows.push({ label: "WRD \uc124\uc815 \uc6a9\ub7c9 / 1C", value: `${fixed(dataset.cRateReference.nominalCapacity_Ah * 1000, 4)} mAh \u00b7 1C ${fixed(report.oneC_mA, 4)} mA` });
   const rawMasses = filenameElectrodeMassLabels(dataset.sourceName);
   if (rawMasses.length) {
     rows.push({
@@ -5032,10 +5055,14 @@ function renderCycFigureElectrodeSummary(dataset) {
     if (profileName) savedValues.push(profileName);
     const electrodeMass = compactElectrodeSummaryValue(calc.electrodeMass_g, 6, "g");
     if (electrodeMass) savedValues.push(`\uc804\uadf9 \uc9c8\ub7c9 ${electrodeMass}`);
-    const loading = compactElectrodeSummaryValue(Number(calc.activeLoading_g_cm2) * 1000, 4, "mg cm-2");
+    const activeMass = compactElectrodeSummaryValue(calc.activeMass_g, 6, "g");
+    if (activeMass) savedValues.push(`\ud65c\ubb3c\uc9c8 \uc9c8\ub7c9 ${activeMass}`);
+    const loading = compactElectrodeSummaryValue(typeof calc.activeLoading_g_cm2 === "boolean" ? null : Number(calc.activeLoading_g_cm2) * 1000, 4, "mg cm-2");
     if (loading) savedValues.push(`loading ${loading}`);
     const area = compactElectrodeSummaryValue(calc.area_cm2, 4, "cm2");
     if (area) savedValues.push(`area ${area}`);
+    const thickness = compactElectrodeSummaryValue(calc.electrodeThickness_mm, 4, "mm");
+    if (thickness) savedValues.push(`\ub450\uaed8 ${thickness}`);
     const oneC = compactElectrodeSummaryValue(calc.oneC_mA, 4, "mA");
     if (oneC) savedValues.push(`1C ${oneC}`);
     if (savedValues.length) {
@@ -5043,7 +5070,16 @@ function renderCycFigureElectrodeSummary(dataset) {
     }
   }
 
-  if (!rows.length) return;
+  return rows.length ? rows : [{ label: "\uc804\uadf9 \uc815\ubcf4", value: "\uc804\uadf9 \uc815\ubcf4 \ubbf8\ub4f1\ub85d / \uc5f0\uacb0 \uc5c6\uc74c" }];
+}
+
+function renderCycFigureElectrodeSummary(dataset) {
+  const summary = $("cycElectrodeSummary");
+  if (!summary) return;
+  summary.replaceChildren();
+  summary.hidden = true;
+  if (!dataset || dataset.dataType !== "cyc") return;
+  const rows = cycFigureElectrodeRows(dataset);
   const title = document.createElement("strong");
   title.className = "cycElectrodeSummaryTitle";
   title.textContent = "\uac04\ub2e8 \uc804\uadf9 \uc815\ubcf4";
@@ -5061,7 +5097,7 @@ function renderCycFigureElectrodeSummary(dataset) {
   }
   const hint = document.createElement("p");
   hint.className = "cycElectrodeSummaryHint";
-  hint.textContent = "\ud30c\uc77c\uba85 \uc9c8\ub7c9 \ud45c\uae30\uc640 \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc740 \ucd9c\ucc98\ub97c \uad6c\ubd84\ud574 \ud45c\uc2dc\ud569\ub2c8\ub2e4.";
+  hint.textContent = "\uc6d0\ubcf8 \uc124\uc815\u00b7\ud30c\uc77c\uba85 \ud45c\uae30\u00b7\uc5f0\uacb0 \uacc4\uc0b0\uc744 \uad6c\ubd84\ud569\ub2c8\ub2e4. \ubb34\uac8c\ub9cc\uc73c\ub85c \uba74\uc801\u00b7\ub85c\ub529\uc744 \ucd94\uc815\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.";
   summary.append(title, rowList, hint);
   summary.hidden = false;
 }
@@ -5109,8 +5145,9 @@ function renderCycRecordElectrode(dataset) {
     </label>` : "";
   if (!calc) {
     return `<section class="cycRecordSection cycRecordElectrode">
-      <div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">Electrode link</p><h3>\uc5f0\uacb0\ub41c \uc804\uadf9 \uc815\ubcf4</h3></div></div>
-      <p class="cycRecordEmpty">\uc774 WRD \uc6d0\ubcf8\uc5d0\ub294 \uc804\uadf9 \ub85c\ub529, \uba74\uc801, 1C \uc815\ubcf4\uac00 \uc9c1\uc811 \uae30\ub85d\ub418\uc5b4 \uc788\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uc5f0\uacb0\ud558\uba74 \uc544\ub798 \uae30\ub85d\uc5d0 \uac19\uc774 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.</p>
+      <div class="cycRecordSectionHeader"><div><p class="cycRecordEyebrow">Electrode info</p><h3>\uc804\uadf9 \uc815\ubcf4</h3></div></div>
+      <p class="cycRecordEmpty">\uc5f0\uacb0\ub41c \uc804\uadf9 \uacc4\uc0b0 \ud504\ub85c\ud544\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \uc124\uc815\uacfc \ud30c\uc77c\uba85 \ud45c\uae30\ub294 \uad6c\ubd84\ud574 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4. \uba74\uc801\u00b7\ub450\uaed8\u00b7\ub85c\ub529\uc740 \uc800\uc7a5\ub41c \uc804\uadf9 \uacc4\uc0b0\uac12\uc744 \uc5f0\uacb0\ud558\uba74 \ud45c\uc2dc\ub429\ub2c8\ub2e4.</p>
+      <div class="cycRecordFacts">${cycFigureElectrodeRows(dataset).map((row) => cycRecordFact(row.label, row.value)).join("")}</div>
       ${selector}
     </section>`;
   }
