@@ -68,7 +68,7 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 
 ## Current Task
 
-v0.3.10 C-rate calibration and approved local restart are complete and verified. Synchronize scoped main source under standing authorization and verify the remote hash; no further restart or raw-file reanalysis is needed. Keep the actual 44-cycle performance view open. Older task notes below are historical where superseded by this release.
+v0.3.10 C-rate calibration and approved local restart are complete and verified. Scoped implementation commit `19e07b5963e63310570e6a99d9924455e31d6910` was pushed to main and independently matched with `git ls-remote`; no further restart or raw-file reanalysis is needed. Keep the actual 44-cycle performance view open. Older task notes below are historical where superseded by this release.
 
 v0.3.8 duplicate-import response compatibility is implemented and verified. Publish scoped source under standing authorization; preserve user confirmation, existing records, portal layout and running server.
 
@@ -518,7 +518,7 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
-- v0.3.10: verify scoped GitHub main publication by remote commit hash. Legacy cloud-only WRDs without reference metadata still need a separately scoped original-header recovery decision; do not guess their absolute rate. Local activation is complete, not pending. Other workflows newly activated by the restart and actual Render/Neon/B2 deployment are not independently verified by this CYC task.
+- v0.3.10 local activation and scoped implementation publication are verified. Legacy cloud-only WRDs without reference metadata still need a separately scoped original-header recovery decision; do not guess their absolute rate. Other workflows newly activated by the restart and actual Render/Neon/B2 deployment are not independently verified by this CYC task.
 
 - v0.3.9: verify remote main hash after publication. Do not infer Render deployment from a push or restart the healthy local backend for a static frontend fix. Absolute C-rate for an uncalibrated file still requires a real 1C reference/explicit experimental condition; never assume the minimum observed current is 1C.
 
@@ -620,6 +620,8 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 - Which real user roles and organization membership workflow should be tested first after deployment?
 
 ## Verification
+
+- Publication receipt: v0.3.10 implementation commit `19e07b5963e63310570e6a99d9924455e31d6910` fast-forwarded main from `adf3aa7`; independent remote ref matched local HEAD. Only 16 scoped source/test/document files were included; no raw experiments, DB, secrets, runtime logs or screenshot. This receipt is documentation only, not a deployment assertion.
 
 - v0.3.10: regression-first tests reproduced missing nominal-reference calibration, mixed-current bias, invalid references, unrelated manual calibration and misleading charge labels. Final unittest discovery: 407 passed (51.984s); `pytest tests/test_c_rate_inference.py -q -p no:cacheprovider`: 10 passed. First full gate failed only an obsolete source-shape assertion; updated it to preserve the segment object/provenance and reran the entire suite successfully. Node syntax, Python AST, ASCII source, version touchpoints and whitespace pass. Approved restart stopped only the identified project-owned server, then official launcher and independent health confirmed 0.3.10 on 4174. Live authorized detail shows six correct labels over 44 cycles; voltage view preserves twelve charge/discharge curves and appropriate reference qualifiers; no console errors. Pure read-only SQLite/hash audit confirms 61 Dataset safe-field fingerprints plus target raw/normalized artifacts unchanged. No real Fig save, new dependencies, build/lint scripts or cloud deployment.
 
