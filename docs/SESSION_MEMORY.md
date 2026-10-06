@@ -70,7 +70,7 @@ Browser -> Render application server -> Neon PostgreSQL (identity + metadata)
 
 ## Current Task
 
-v0.3.11 electrode-summary fix and approved localhost:4174 restart are complete and verified. Known settings/linked values and explicitly unconfirmed filename labels are displayed without editing stored research data. Finish scoped GitHub synchronization under standing authorization; do not infer cloud deployment.
+v0.3.11 electrode-summary fix, approved localhost:4174 restart and scoped GitHub synchronization are complete and verified. Implementation commit `92eba0bae33f705e4da5ec75192a026eb9b008f0` was fast-forward pushed to main and independently matched with `git ls-remote`. Known settings/linked values and explicitly unconfirmed filename labels are displayed without editing stored research data. Keep the verified CYC performance view open; do not infer cloud deployment.
 
 v0.3.10 C-rate calibration and approved local restart are complete and verified. Scoped implementation commit `19e07b5963e63310570e6a99d9924455e31d6910` was pushed to main and independently matched with `git ls-remote`; no further restart or raw-file reanalysis is needed. Keep the actual 44-cycle performance view open. Older task notes below are historical where superseded by this release.
 
@@ -526,7 +526,7 @@ v0.2.8: public/eis-drt.js; tests/test_eis_drt_ui.py; docs/EIS_DRT.md; release/ve
 
 ## Remaining Work
 
-- v0.3.11: scoped GitHub synchronization and independent remote-ref verification. Local verification/restart are complete; no reanalysis or another restart is required. Older pending restart notes are historical where superseded.
+- v0.3.11: no required work remains for electrode information. Tests, local restart, integrity comparison, live browser and implementation publication are verified. No reanalysis or another restart is required; cloud deployment remains separate. Older pending restart notes are historical where superseded.
 
 - v0.3.10 local activation and scoped implementation publication are verified. Legacy cloud-only WRDs without reference metadata still need a separately scoped original-header recovery decision; do not guess their absolute rate. Other workflows newly activated by the restart and actual Render/Neon/B2 deployment are not independently verified by this CYC task.
 
