@@ -33,12 +33,12 @@ class ConservativeDrtPeakTests(unittest.TestCase):
         peaks = self.detect(tau, gamma)
         self.assertEqual([p["tau_peak"] for p in peaks], [tau[30], tau[90]])
 
-    def test_minimum_width_uses_two_and_half_samples(self):
+    def test_explicit_sample_width_uses_two_and_half_samples(self):
         tau = 10.0 ** np.linspace(-3, 3, 121)
         gamma = np.zeros(tau.size)
         gamma[18:23] = [0, 5, 10, 5, 0]  # FWHM = 2 samples: reject.
         gamma[57:64] = [0, 3, 6, 9, 6, 3, 0]  # FWHM = 3 samples: retain.
-        peaks = self.detect(tau, gamma)
+        peaks = self.detect(tau, gamma, min_width=2.5)
         self.assertEqual([p["tau_peak"] for p in peaks], [tau[60]])
 
     def test_close_peaks_are_suppressed_by_prominence_instead_of_height(self):
@@ -48,9 +48,9 @@ class ConservativeDrtPeakTests(unittest.TestCase):
                           [0, 0, 8, 0, 10, 9, 12, 0])
         # At 30 prominence=8; at 50 height=10 but prominence=1.
         # Their separation is .20 decades, below the .25-decade default.
-        peaks = self.detect(tau, gamma)
+        peaks = self.detect(tau, gamma, min_width=2.5)
         self.assertEqual([p["tau_peak"] for p in peaks], [tau[30], tau[90]])
-        separated = self.detect(tau, gamma, min_distance_decades=.15)
+        separated = self.detect(tau, gamma, min_width=2.5, min_distance_decades=.15)
         self.assertEqual([p["tau_peak"] for p in separated],
                          [tau[30], tau[50], tau[90]])
 
@@ -61,7 +61,8 @@ class ConservativeDrtPeakTests(unittest.TestCase):
                 gamma = (8 * np.exp(-((log_tau + .6) / .025) ** 2)
                          + 4 * np.exp(-((log_tau + .4) / .025) ** 2)
                          + 6 * np.exp(-((log_tau - .4) / .025) ** 2))
-                peaks = self.detect(10.0 ** log_tau, gamma)
+                # Isolate physical distance from the separate width criterion.
+                peaks = self.detect(10.0 ** log_tau, gamma, min_width=0)
                 np.testing.assert_allclose(np.log10([p["tau_peak"] for p in peaks]),
                                            [-.6, .4], atol=1e-12)
 

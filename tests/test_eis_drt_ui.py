@@ -177,7 +177,7 @@ global.figureSvgSize=()=>({w:1100,h:720});global.figureDatasetLabel=()=> 'test';
 global.normalizeHexColor=()=> '#14888a';global.cleanNyquistBounds=()=>({x:[0,10],y:[-5,5]});
 global.resolveFigureAxisDomains=(x,y)=>({x,y});global.applyAnnotationsToSvg=()=>{};
 global.authHeaders=x=>x;global.apiErrorMessage=()=> 'controlled failure';
-global.fetchJsonWithTimeout=(url,options)=>{if(url==='/api/health')return Promise.resolve({res:{ok:true},body:{eisDrtSpectrumSelection:supportsSelection}});requests++;lastOptions=options;return new Promise(resolve=>resolveRequest=resolve);};
+global.fetchJsonWithTimeout=(url,options)=>{if(url==='/api/health')return Promise.resolve({res:{ok:true},body:{eisDrtSpectrumSelection:supportsSelection,eisDrtAnalysisVersion:'rc-drt-4'}});requests++;lastOptions=options;return new Promise(resolve=>resolveRequest=resolve);};
 async function check(){
  drt.render({rows:[{zreal:5,zimag:-2}]});
  await form.onsubmit({preventDefault(){}});
@@ -230,7 +230,7 @@ global.normalizeHexColor=()=> '#14888a';global.cleanNyquistBounds=()=>({x:[0,10]
 global.resolveFigureAxisDomains=(x,y)=>({x,y});global.applyAnnotationsToSvg=()=>{};
 global.authHeaders=x=>x;global.apiErrorMessage=()=> 'failure';let posts=0;
 global.fetchJsonWithTimeout=async(url,options)=>{
- if(url==='/api/health')return {res:{ok:true},body:{eisDrtSpectrumSelection:true}};
+ if(url==='/api/health')return {res:{ok:true},body:{eisDrtSpectrumSelection:true,eisDrtAnalysisVersion:'rc-drt-4'}};
  if(options?.method!=='POST')return {res:{ok:true},body:[]};
  posts++;assert.equal(JSON.parse(options.body).parameters.mode,'auto');
  return {res:{ok:true},body:{result:{metadata:{spectrumIndex:0,autoSelectionReliable:false}}}};
@@ -246,7 +246,7 @@ async function check(){
  global.document={createElement:()=>({})};
  details.prepend=()=>{};details.querySelector=()=>({});details.querySelectorAll=()=>[];
  const good=drt.normalizeRows(d.rows);
- global.fetchJsonWithTimeout=async(url,options)=>url==='/api/health'?{res:{ok:true},body:{eisDrtSpectrumSelection:true}}:options?.method!=='POST'?{res:{ok:true},body:[]}:{res:{ok:true},body:{result:{
+ global.fetchJsonWithTimeout=async(url,options)=>url==='/api/health'?{res:{ok:true},body:{eisDrtSpectrumSelection:true,eisDrtAnalysisVersion:'rc-drt-4'}}:options?.method!=='POST'?{res:{ok:true},body:[]}:{res:{ok:true},body:{result:{
   metadata:{spectrumIndex:0,autoSelectionReliable:true,lambda:7.5e-6,Rs:5,L:0,measuredTimeBand:[.001,.2]},
   reconstruction:good.map(p=>({...p,z_real_raw_ohm:p.z_real_ohm,z_imag_raw_ohm:p.z_imag_ohm})),
   drt:[],warnings:[],peaks:[],quality:{},relative_complex_RMSE_percent:0

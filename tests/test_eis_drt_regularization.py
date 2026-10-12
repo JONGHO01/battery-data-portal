@@ -58,6 +58,38 @@ def result_vector(result, scale):
                     + [row["gamma_ohm"] / scale for row in result["drt"]])
 
 
+def noisy_diagonal_lcurve():
+    """An ill-conditioned ridge problem with a known truth and fixed noise.
+
+    This exercises the noise/signal L-knee, not the noise-free scalar shrinkage
+    arc. Analytic derivatives independently determine Cartesian signed
+    curvature in (log residual norm, log solution norm), increasing lambda.
+    Its selected knee is not claimed to minimize the error to the truth.
+    """
+    singular = np.logspace(0, -8, 80)
+    truth = np.exp(-np.arange(80) / 12)
+    target = singular * truth + 1e-4 * np.random.default_rng(20261012).normal(size=80)
+    coefficient = np.logspace(-10, 1, 161)
+    a, p = singular[None, :] ** 2, coefficient[:, None] ** 2
+    denominator, b2 = a + p, target[None, :] ** 2
+    solution = singular[None, :] * target[None, :] / denominator
+    rho = np.sum(b2 * p ** 2 / denominator ** 2, axis=1)
+    rho_first = np.sum(4 * b2 * a * p ** 2 / denominator ** 3, axis=1)
+    rho_second = np.sum(8 * b2 * a * p ** 2 * (2 * a - p) / denominator ** 4, axis=1)
+    eta = np.sum(a * b2 / denominator ** 2, axis=1)
+    eta_first = np.sum(-4 * a * b2 * p / denominator ** 3, axis=1)
+    eta_second = np.sum(-8 * a * b2 * p * (a - 2 * p) / denominator ** 4, axis=1)
+    dx, dy = .5 * rho_first / rho, .5 * eta_first / eta
+    dxx = .5 * (rho_second / rho - (rho_first / rho) ** 2)
+    dyy = .5 * (eta_second / eta - (eta_first / eta) ** 2)
+    curvature = (dx * dyy - dy * dxx) / (dx * dx + dy * dy) ** 1.5
+    error = np.linalg.norm(solution - truth[None, :], axis=1) / np.linalg.norm(truth)
+    curve = [{"lambda": float(value), "residualNorm": float(np.sqrt(residual) / np.linalg.norm(target)),
+              "roughnessNorm": float(np.sqrt(roughness))}
+             for value, residual, roughness in zip(coefficient, rho, eta)]
+    return curve, curvature, error
+
+
 class DrtRegularizationTests(unittest.TestCase):
     def select_corner(self, curve, **settings):
         selector = getattr(eis_drt, "select_lcurve", None)
@@ -66,32 +98,38 @@ class DrtRegularizationTests(unittest.TestCase):
 
     def scalar_lcurve(self):
         # min (x-1)^2 + lambda^2*x^2 gives x=1/(1+lambda^2).
-        # Its classical clockwise log-L-curve corner is lambda=1.
+        # This noise-free concave shrinkage arc is not the noisy inverse-
+        # problem L-knee, despite its large absolute curvature near lambda=1.
         return [{"lambda": float(value),
                  "residualNorm": float(value ** 2 / (1 + value ** 2)),
                  "roughnessNorm": float(1 / (1 + value ** 2))}
                 for value in np.logspace(-3, 3, 61)]
 
-    def test_classical_clockwise_lcurve_selects_analytic_scalar_corner(self):
-        curve = self.scalar_lcurve()
-        selected = self.select_corner(curve, fit_error_limit=1.0)
+    def test_noisy_inverse_lcurve_selects_a_positive_curvature_knee(self):
+        curve, signed_curvature, error = noisy_diagonal_lcurve()
+        selected = self.select_corner(curve)
         self.assertTrue(selected["reliable"])
         self.assertIsInstance(selected["index"], int)
-        value = curve[selected["index"]]["lambda"]
-        self.assertLess(abs(np.log10(value)), .15)
+        self.assertGreater(signed_curvature[selected["index"]], 0)
+        self.assertLess(error[selected["index"]], .5)
         self.assertEqual(len(selected["curvature"]), len(curve))
 
+    def test_noise_free_concave_scalar_arc_is_not_accepted_as_an_l_knee(self):
+        selected = self.select_corner(self.scalar_lcurve(), fit_error_limit=1.0)
+        self.assertFalse(selected["reliable"])
+        self.assertIsNone(selected["index"])
+
     def test_lcurve_corner_is_independent_of_input_lambda_order(self):
-        ordered = self.scalar_lcurve()
+        ordered, _, _ = noisy_diagonal_lcurve()
         reversed_curve = list(reversed(ordered))
         shuffled = ordered[::2] + ordered[1::2]
         original = copy.deepcopy(shuffled)
         values = []
         for curve in (ordered, reversed_curve, shuffled):
-            selected = self.select_corner(curve, fit_error_limit=1.0)
+            selected = self.select_corner(curve)
             self.assertTrue(selected["reliable"])
             values.append(curve[selected["index"]]["lambda"])
-        self.assertEqual(values, [1.0, 1.0, 1.0])
+        self.assertEqual(values, [values[0]] * 3)
         self.assertEqual(shuffled, original)
 
     def test_flat_lcurve_does_not_claim_an_automatic_corner(self):

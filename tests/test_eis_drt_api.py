@@ -9,6 +9,7 @@ from tests.test_eis_drt import spectrum
 class DrtApiTests(unittest.TestCase):
     def test_health_advertises_spectrum_selection_capability(self):
         self.assertIs(portal.health()["eisDrtSpectrumSelection"], True)
+        self.assertEqual(portal.health()["eisDrtAnalysisVersion"], "rc-drt-4")
 
     def test_selected_spectrum_provenance_and_invalid_index_controlled_error(self):
         rows = [dict(row, sweep=sweep) for sweep in (1, 2) for row in spectrum()[:8]]

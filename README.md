@@ -1,18 +1,18 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.3.12-2f80ed)
+![Version](https://img.shields.io/badge/version-0.3.13-2f80ed)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
 ![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
 ![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
 
-> Source release: **v0.3.12** — Correct DRT automatic L-curve selection and floating-point bounds; distinguish numerical completion, poor fit and extrapolated peak regions. Source publication is separate from deployment.
+> Source release: **v0.3.13** — Correct positive-curvature noisy DRT L-knees, stabilize peak detection across grids and add bounded numerical KK diagnostics. Small residuals do not establish physical validity. Source publication is separate from deployment.
 
 > B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
 
 배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
 
-현재 소스 버전은 **v0.3.12**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+현재 소스 버전은 **v0.3.13**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
 
 CYC 전압 프로파일은 각 유효한 전류 구간의 대표 사이클에서 충전·방전 곡선을 함께 보여줍니다. 실제 C-rate나 1C 기준이 없는 파일은 최소 전류를 임의로 1C로 놓지 않고 측정 전류(mA)로 표시합니다. 동일 전류의 초기·복귀 구간은 사이클 번호로 구분합니다. 원본 용량과 전압은 변경하지 않습니다.
 
@@ -99,7 +99,8 @@ CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 
 
 | 버전 | 날짜 | 핵심 변경 |
 |---|---|---|
-| v0.3.12 | 2026-10-06 | DRT 자동 λ 선택 방향·수치 경계 수정, 높은 오차·외삽 피크 구분, 원본 보존. |
+| v0.3.13 | 2026-10-12 | 잡음 포함 L-curve 모서리 방향 정정, 격자 독립 피크 폭·측정 대역 기준 검출, KK 수치 진단과 물리 검증 구분. |
+| v0.3.12 | 2026-10-06 | DRT 수치 경계·오차·외삽 피크 구분. 자동 λ 방향 판단은 v0.3.13에서 재정정. |
 | v0.3.11 | 2026-10-06 | CYC 전극 정보 복원, 원본 설정·파일명 후보·연결 계산 출처 구분, 질량과 로딩 단위 오표기 방지. |
 | v0.3.10 | 2026-10-06 | WRD 원본 설정 용량·연결 전극 기준으로 방전 C-rate 계산, 저장 데이터 재작성 없이 기준 복원. |
 | v0.3.9 | 2026-10-06 | CYC 충전 곡선·전체 구간 복원, 미확정 C-rate 대신 측정 전류 표시, 축·범례 겹침 방지. |

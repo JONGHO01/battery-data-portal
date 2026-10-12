@@ -1,13 +1,18 @@
-const PORTAL_VERSION = "0.3.12";
+const PORTAL_VERSION = "0.3.13";
 const PORTAL_VERSION_LABEL = `Battery Portal v${PORTAL_VERSION}`;
 
 // Keep this short in-app release list aligned with README and CHANGELOG.md.
 // CHANGELOG.md remains the complete source for released change details.
 const RELEASE_HISTORY = [
   {
+    "version": "0.3.13",
+    "date": "2026-10-12",
+    "changes": ["Correct positive-curvature noisy DRT L-knees, stabilize physical peak widths and measured-band thresholds, and disclose bounded numerical KK diagnostics without claiming physical validation."]
+  },
+  {
     "version": "0.3.12",
     "date": "2026-10-06",
-    "changes": ["Correct clockwise DRT L-curve selection and bounded-solver roundoff; disclose poor fit and extrapolation-dependent peaks without modifying measurements."]
+    "changes": ["Add DRT fit guards, bounded-solver roundoff and extrapolated-peak warnings. The clockwise L-curve claim was superseded by the positive noisy-knee correction in v0.3.13."]
   },
   {
     "version": "0.3.11",

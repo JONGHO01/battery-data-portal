@@ -10,6 +10,8 @@ import numpy as np
 from scipy.optimize import lsq_linear
 from scipy.signal import find_peaks
 
+from backend.analysis.eis_kk import lin_kk_diagnostic
+
 
 def _number(value):
     if isinstance(value, bool) or value is None or str(value).strip() == "":
@@ -129,27 +131,40 @@ def integrate_region(tau, gamma, tau_a, tau_b):
     return float(np.trapezoid(np.interp(grid,u,gamma),grid))
 
 
-def peak_regions(tau, gamma, prominence_fraction=.05, min_width=2.5, min_distance_decades=.25):
-    """Detect on unmodified density; width is half-prominence width in log-grid samples.
+def peak_regions(tau, gamma, prominence_fraction=.05, min_width=None, min_distance_decades=.25,
+                 *, measured_band=None, min_width_decades=.2):
+    """Detect on original density with a grid-independent log-decade width.
 
     Defaults are conservative heuristics, not universally optimal physics.
-    Distance suppression deliberately ranks prominence, not peak height.
+    Explicit min_width preserves the legacy sample-width override. In-band
+    prominence and distance priority cannot be dominated by extrapolated tails.
     """
     tau, gamma = np.asarray(tau, dtype=float), np.asarray(gamma, dtype=float)
     if (tau.ndim != 1 or gamma.shape != tau.shape or len(tau) < 3
             or not np.all(np.isfinite(tau)) or not np.all(np.isfinite(gamma))
             or np.any(tau <= 0) or np.any(np.diff(tau) <= 0) or np.any(gamma < 0)):
         raise ValueError("Peak detection requires finite nonnegative density on an increasing positive tau grid.")
-    if not (0 <= prominence_fraction <= 1 and min_width >= 0 and min_distance_decades >= 0):
+    if not (0 <= prominence_fraction <= 1 and math.isfinite(min_distance_decades)
+            and min_distance_decades >= 0 and math.isfinite(min_width_decades) and min_width_decades >= 0
+            and (min_width is None or (math.isfinite(min_width) and min_width >= 0))):
         raise ValueError("Invalid peak detection thresholds.")
     log_tau = np.log10(tau)
     if not np.allclose(np.diff(log_tau), np.diff(log_tau)[0], rtol=1e-6, atol=1e-12):
         raise ValueError("Peak width requires an evenly spaced log(tau) grid.")
     if gamma.max() <= 0:
         return []
-    indices, props = find_peaks(gamma, prominence=prominence_fraction*float(gamma.max()), width=min_width)
+    inside = np.ones(len(tau), dtype=bool)
+    if measured_band is not None:
+        if (len(measured_band) != 2 or not all(math.isfinite(v) for v in measured_band)
+                or not 0 < measured_band[0] < measured_band[1]):
+            raise ValueError("Measured band must be an increasing positive time interval.")
+        inside = (tau >= measured_band[0]) & (tau <= measured_band[1])
+    reference = float(gamma[inside].max()) if np.any(inside) else 0.0
+    threshold = np.where(inside, prominence_fraction*reference, prominence_fraction*float(gamma.max()))
+    width = min_width_decades/float(log_tau[1]-log_tau[0]) if min_width is None else min_width
+    indices, props = find_peaks(gamma, prominence=threshold, width=width)
     kept = []
-    for k in sorted(range(len(indices)), key=lambda k: (-props["prominences"][k], indices[k])):
+    for k in sorted(range(len(indices)), key=lambda k: (-int(inside[indices[k]]), -props["prominences"][k], indices[k])):
         if all(abs(log_tau[indices[k]]-log_tau[indices[j]]) >= min_distance_decades-1e-12 for j in kept):
             kept.append(k)
     kept.sort(key=lambda k: indices[k])
@@ -163,7 +178,8 @@ def peak_regions(tau, gamma, prominence_fraction=.05, min_width=2.5, min_distanc
         b = float(tau[right[0]]) if len(right) else (float(np.sqrt(tau[index]*tau[indices[kept[position+1]]])) if position+1 < len(kept) else float(tau[-1]))
         peaks.append({"Peak":f"P{position+1}","tau_peak":float(tau[index]),"f_peak":float(1/(2*np.pi*tau[index])),
                       "tau_a":a,"tau_b":b,"R_region":integrate_region(tau,gamma,a,b),
-                      "prominence":float(props["prominences"][k]),"width_samples":float(props["widths"][k])})
+                      "prominence":float(props["prominences"][k]),"width_samples":float(props["widths"][k]),
+                      "width_decades":float(props["widths"][k]*(log_tau[1]-log_tau[0]))})
     # UI prioritizes five prominent candidates, but every qualifying peak is retained.
     major = {p["Peak"] for p in sorted(peaks, key=lambda p: (-p["prominence"],p["tau_peak"]))[:5]}
     ordered = [p for p in peaks if p["Peak"] in major]+[p for p in peaks if p["Peak"] not in major]
@@ -181,7 +197,7 @@ def classify_peak_regions(peaks, band):
 
 
 def select_lcurve(curve, fit_error_limit=.05):
-    """Clockwise corner in log(residual), log(roughness), increasing lambda.
+    """Positive signed-curvature knee in log(residual), log(roughness).
 
     Fit and tangent guards are conservative numerical heuristics, not a noise
     estimate, a universal optimum or a test of electrochemical validity.
@@ -215,8 +231,9 @@ def select_lcurve(curve, fit_error_limit=.05):
         return diagnostic
     dx, dy = np.gradient(lr, t), np.gradient(le, t)
     speed = np.hypot(dx, dy)
-    # Ordinary Cartesian signed curvature is negative at this clockwise corner.
-    curvature = (dy*np.gradient(dx, t)-dx*np.gradient(dy, t))/np.maximum(speed**3, 1e-30)
+    # Hansen's noisy L-knee has positive ordinary Cartesian signed curvature.
+    # A noise-free scalar shrinkage arc is concave and must not be a candidate.
+    curvature = (dx*np.gradient(dy, t)-dy*np.gradient(dx, t))/np.maximum(speed**3, 1e-30)
     for i, original in enumerate(order):
         diagnostic["curvature"][int(original)] = float(curvature[i]) if math.isfinite(curvature[i]) else None
     # Reject high-error overregularized corners and small active-set wiggles.
@@ -230,7 +247,7 @@ def select_lcurve(curve, fit_error_limit=.05):
     if not candidates:
         return diagnostic
     best = max(candidates, key=lambda i: curvature[i])
-    diagnostic.update(index=int(order[best]), reliable=True, reason="clockwise_corner",
+    diagnostic.update(index=int(order[best]), reliable=True, reason="positive_curvature_corner",
                       acceptedErrorLimit=accepted_error)
     return diagnostic
 
@@ -341,19 +358,22 @@ def fit_drt(rows, settings=None):
         warnings.append("Reconstruction error exceeds 5%; this nonnegative RC model may not describe the measured spectrum.")
     band = [float(1/w.max()),float(1/w.min())]
     warnings.append("Outside measured time band: interpret with caution. Peaks do not establish SEI, charge transfer, or ionic transport mechanisms.")
-    peaks = classify_peak_regions(peak_regions(tau,gamma), band)
+    peaks = classify_peak_regions(peak_regions(tau,gamma,measured_band=band), band)
     if any(not p["interpretationEligible"] or p["regionOutsideMeasuredBand"] for p in peaks):
         warnings.append("Peak locations outside the measured time band are retained but not major interpretation candidates; region integrals crossing the band depend on extrapolation.")
-    metadata = {"analysisVersion":"rc-drt-3","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
+    metadata = {"analysisVersion":"rc-drt-4","lambda":lam,"M":m,"tau_min":float(tau[0]),"tau_max":float(tau[-1]),
                 "Rs":rs,"L":inductance,"includeL":include_l,"variableCount":len(x),"mode":mode,
                 "autoSelectionReliable":auto_reliable,"autoSelection":selection,
                 "regularizationConvention":"lambda_squared","regularizationPenalty":lam**2,
                 "fitQuality":"poor_fit" if rmse > 5 else "numerical_fit_only", "fitWarningThresholdPercent":5,
                 "physicalValidationPerformed":False,"solverRoundoffCorrection":roundoff_correction,
+                "kkConsistency":lin_kk_diagnostic(f,z),
                 "Z0":z0,"signConvention":"Z = Re(Z) + i Im(Z)",
                 "excludedCount":quality["excludedCount"],"densityMeasure":"d(ln tau)","solver":"scipy.optimize.lsq_linear/bvls",
                 "measuredTimeBand":band,"peakRegions":"nearest local minima; log-midpoint fallback, grid edges for outer fallback; not physical assignments",
-                "peakDetection":{"prominenceFraction":.05,"minWidthSamples":2.5,"minDistanceDecades":.25,"majorLimit":5,"smoothing":False},
+                "peakDetection":{"prominenceFraction":.05,"prominenceReference":"measured-band gamma maximum for in-band candidates",
+                                 "minWidthDecades":.2,"minWidthSamples":.2/(h/np.log(10)),
+                                 "minDistanceDecades":.25,"majorLimit":5,"smoothing":False},
                 "spectrumIndex":spectrum_index,"spectrumCount":len(spectra)}
     reconstruction = [{"frequency_Hz":float(fi),"z_real_raw_ohm":float(zi.real),"z_imag_raw_ohm":float(zi.imag),
                        "z_real_fit_ohm":float(fit.real),"z_imag_fit_ohm":float(fit.imag),
