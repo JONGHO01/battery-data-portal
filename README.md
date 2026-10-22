@@ -1,424 +1,159 @@
 # Battery Data Portal
 
-![Version](https://img.shields.io/badge/version-0.3.13-2f80ed)
-![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-14a3a3)
-![Backend](https://img.shields.io/badge/backend-FastAPI-ef5b72)
-![Database](https://img.shields.io/badge/database-SQLite%20%2F%20PostgreSQL-4b6cb7)
-![Status](https://img.shields.io/badge/status-research%20prototype-f4a261)
+배터리 실험의 **프로젝트·배치·공정 조건·사진·측정 데이터·Fig**를 연결하는 연구 기록 포탈입니다.
 
-> Source release: **v0.3.13** — Correct positive-curvature noisy DRT L-knees, stabilize peak detection across grids and add bounded numerical KK diagnostics. Small residuals do not establish physical validity. Source publication is separate from deployment.
+![Repository source](https://img.shields.io/badge/repository_source-0.3.13-164b99)
+![Local development](https://img.shields.io/badge/local_development-0.3.20_Unreleased-68758a)
+![Backend](https://img.shields.io/badge/backend-FastAPI-009688)
+![Frontend](https://img.shields.io/badge/frontend-HTML_CSS_JavaScript-4169a1)
 
-> B2 endpoints are restricted to the official HTTPS service and must match `S3_REGION`. No real B2 credential is stored in this repository.
+파일을 분석하는 도구에서 출발해, 지금은 **“어떤 소재를 어떤 조건으로 가공했고, 어느 시료에서 어떤 결과가 나왔는가”**를 확인하는 실험 관리 도구로 확장하고 있습니다. CYC·CV·EIS 분석과 전극 계산도 같은 포탈에서 사용합니다.
 
-배터리 실험 데이터를 업로드하고, 검토하고, 논문/보고서용 Fig와 전극 계산표로 정리하기 위한 연구용 데이터 포털입니다.
+> **코드와 소개의 기준** · 2026-10-22 문서 정리 기준, GitHub `main`의 실행 코드는 **v0.3.13**이고 최신 로컬 개발본은 **v0.3.20 Unreleased**입니다. 아래의 실험 관리·SEM 비교·Codex 도우미는 최신 로컬 개발본 기준이며, 현재 `main`을 내려받는 것만으로 제공되지 않습니다. 이번 반영은 문서 정리이며 미반영 소스의 배포나 릴리스가 아닙니다.
 
-현재 소스 버전은 **v0.3.13**이며, 운영 배포 여부와는 별개입니다. **업로드 → 데이터 관리 · 전처리 · 채팅**에서 파일 조회·분류·다운로드와 전처리 미리보기/처리 규칙 저장을 제공합니다. 일반 사용자는 본인 데이터만, 전체 관리자는 전체 데이터를 조회합니다. 조직 관리자라는 이유만으로 타인의 실험 데이터에 접근할 수 없습니다.
+[주요 기능](#주요-기능) · [빠른 시작](#빠른-시작) · [현재 포탈 안내](docs/PORTAL_GUIDE.md) · [실행·저장 구조](docs/RUNNING.md) · [변경 이력](CHANGELOG.md)
 
-CYC 전압 프로파일은 각 유효한 전류 구간의 대표 사이클에서 충전·방전 곡선을 함께 보여줍니다. 실제 C-rate나 1C 기준이 없는 파일은 최소 전류를 임의로 1C로 놓지 않고 측정 전류(mA)로 표시합니다. 동일 전류의 초기·복귀 구간은 사이클 번호로 구분합니다. 원본 용량과 전압은 변경하지 않습니다.
+## 어떤 일을 할 수 있나요?
 
-WRD TestReport의 설정 용량 `CellCapacity`(Ah)를 확인할 수 있으면 `1C 전류(mA) = 설정 용량(Ah) × 1000`으로 계산합니다. 이는 측정된 방전 용량의 최댓값을 기준으로 추측하는 방식이 아닙니다. 연결된 전극 계산 기준이 있으면 그 기준을 우선하며, 방전 전류의 사이클별 중앙값으로 구간을 정리합니다. API의 선택적 `cRateReference` 필드는 `oneC_mA`, `source: wrd_test_report_cell_capacity`, `nominalCapacity_Ah`를 제공합니다. 신규 업로드는 파서 메타데이터에 보존하며, 이전 로컬 WRD는 권한 확인 후 원본 앞 64 KiB를 읽어 조회 응답에만 보완합니다. DB·원본·정규화 행을 재작성하지 않습니다. 원본 기준을 확인할 수 없는 이전 클라우드 기록은 임의 환산하지 않습니다.
-
-CYC 상단과 통합창의 전극 정보는 **원본 WRD 설정**, **미확인 파일명 표기**, **연결된 전극 계산**을 구분합니다. 선택적 `electrodeInfo`는 `cellWeight_g`, `source: wrd_test_report_cell_weight`만 제공하며 원본 `CellWeight`를 순수 활물질 질량으로 단정하지 않습니다. 이전 로컬 기록도 권한 확인 후 64 KiB 헤더만 읽어 표시합니다. 면적·두께·로딩은 저장된 계산값이 있을 때만 표시하고, 단순 질량(mg)을 면적당 로딩(mg/cm²)으로 환산하지 않습니다. 등록된 소재가 없으면 파일명의 LFP/NCM 등은 ‘미확인’ 후보로만 표시합니다. 원본·측정 행·DB를 재작성하지 않습니다.
-
-Fig의 **글 추가** 버튼 또는 Enter는 항상 새 문구를 추가합니다. 기존 문구를 클릭한 뒤 **선택 글 수정**으로 내용만 바꿀 수 있고, 각각 드래그로 이동할 수 있습니다. 연속 저장은 순서대로 처리하며, 저장 실패 시 상태 메시지를 확인하고 **Fig 저장**으로 다시 시도하세요. 페이지를 닫거나 새로고침하기 전에 저장 완료를 확인하세요.
-
-파일 업로드 시 본인의 동일 원본 파일명(확장자 포함, 대소문자 무시)이 있으면 교체 확인창을 표시합니다. 취소하면 기존 파일을 보존하고 해당 업로드를 중단합니다. 승인하면 새 파일 저장 후 확인한 기존 원본·분석·Fig·보고서·전처리 기록을 포탈에서 영구 삭제합니다. PC 원본과 외부 오프라인 백업은 건드리지 않습니다. 새 서버 API가 필요하며, 구버전 서버에서는 재시작 안내를 표시합니다. 자세한 계약과 실패 처리는 [파일 교체 안내](docs/DUPLICATE_IMPORTS.md)를 참고하세요.
-
-저장된 Fig의 **통합** 화면에서 **이전 그래프 / 다음 그래프**로 CYC 기록을 넘겨볼 수 있습니다. 현재 필터의 CYC 목록을 날짜 내림차순(같은 날짜는 목록 순서)으로 이동하고 위치를 표시하며 처음/마지막 버튼은 비활성화됩니다.
-
-dQ/dV는 연속 측정점의 용량 증가량을 5 mV 전압 bin에 분배한 뒤 bin 폭으로 나눕니다. 충전은 양수, 방전은 음수이며 원본을 평활화하거나 피크를 잘라내지 않습니다. 결측점과 누적 용량 카운터 초기화 경계는 미분으로 연결하지 않습니다. 이는 유한 전압 구간의 평균값으로, 피크 높이는 전압 해상도에 영향을 받습니다. 축 범위를 줄여 본 경우에도 원본 값은 유지됩니다.
-
-CYC 상단은 단일 C-rate도 표시합니다. 원본 C-rate 열이 없을 때 실험 조건에 정확히 `C-rate: 0.1 C`처럼 입력된 값을 표시할 수 있습니다. 근거가 없으면 `C-rate: not specified`로 표시하며, 용량 값으로 C-rate를 추측하지 않습니다.
-
-채팅은 현재 로컬 파일 검색 도우미이며 실제 LLM이 아닙니다. 외부 AI 연결, 대화 기록 저장, 통합 학습 데이터셋 생성은 후속 단계입니다. 원본은 유지하고 처리 규칙과 입력 해시를 저장하며, 입력이 바뀐 이전 버전의 재생성은 차단합니다. 자세한 범위와 제한은 [데이터 관리 안내](docs/DATA_WORKSPACE.md)를 참고하세요.
-
-기존 EIS는 55:45 그래프 배치와 간결한 컨트롤·기본 접힘 원시 표를 유지합니다.
-
-- DRT 피크 기본 조건: prominence ≥ 최대 γ의 **5%**, half-prominence width ≥ **2.5 log-grid samples**, 최소 거리 **0.25 log10 decade**. 가까운 후보는 prominence가 큰 쪽을 유지합니다. 보편적 최적값이 아닌 보수적인 기본 기준입니다.
-- γ를 smoothing하거나 지우지 않습니다. 주요 피크 최대 5개를 표시하고 나머지 검출 피크는 접어서 보존합니다. R_region은 양옆 최소점(없으면 이웃 피크의 로그 중간점, 바깥쪽은 격자 끝)을 경계로 원본 γ를 d(ln τ) 적분한 값입니다.
-- Assignment는 기본 Unassigned이며 자동 물리적 할당은 하지 않습니다. 기존 분석 결과는 그대로 보존하며 새 검출 기준은 업데이트된 서버에서 재계산할 때 적용됩니다. prominence 변경 검증은 내부 검출 함수 테스트로 수행하며 별도 설정 UI/API는 추가하지 않았습니다.
-
-### CYC 용량 단위 수정
-
-- 계산: **비용량(mAh/g) = 원본 용량(Ah) × 1000 ÷ 파일에 설정된 질량(g)**. 파일명에 명시된 g 단위 질량은 기존 우선순위를 유지하며, 단위 없는 파일명 숫자나 면적당 로딩으로 질량을 추측하지 않습니다.
-- `parser-8`은 원본 파일을 보존하고 파생된 WRD 결과만 갱신합니다. 로컬에 원본이 있으면 새 서버 시작 시 기존 갱신 경로를 사용합니다. 원본이 B2에만 있으면 동일 파일을 다시 업로드·분석하는 기존 절차가 필요할 수 있습니다. 정상 `parser-7` SDE 데이터는 이번 변경으로 갱신하지 않습니다.
-- 소스 업로드만으로 실행 중인 로컬 서버나 기존 Fig가 바뀌었다고 볼 수 없습니다. 서버 재시작 및 저장 데이터 반영 결과를 별도로 확인해야 합니다.
-
-## EIS DRT 사용법
-
-1. 저장된 EIS 통합 Fig를 엽니다. 표를 편집했다면 먼저 표를 저장합니다.
-2. **DRT Controls → 측정 구간**에서 고주파–저주파 범위를 고릅니다. 같은 범위의 반복 측정 방향은 접힌 메타데이터에 보존됩니다. 저장 결과가 없고 입력이 완전하면 자동 λ 계산을 한 번 시도합니다. 필요하면 수동 모드에서 M, λ, 직렬 L을 조절하고 **DRT 계산·저장**을 누릅니다.
-3. 왼쪽은 −Im(Z), 오른쪽 아래는 실제 Im(Z)입니다. 측정값은 마커, 재구성은 주황 점선입니다. Rs·L·오차와 중립적 P1/P2 피크를 확인합니다.
-4. τ 구간을 입력해 ln(τ)에 대한 저항 적분을 계산하고 DRT CSV·재구성 CSV·메타데이터 JSON 또는 기존 SVG·PNG를 저장합니다.
-5. **DRT Peaks → Assignment**에서 Unassigned / R_SEI / R_ct / R_ion / Diffusion / Other를 선택하고 **Assignment 저장**을 누릅니다. 피크 CSV·메타데이터 JSON과 그래프에도 현재 선택이 반영됩니다. 새 계산 결과에는 이전 피크 이름을 자동 이월하지 않습니다. HF/MF/LF 안내는 현재 측정 범위·피크 기반의 시각적 가이드이며 물리적 판정이 아닙니다.
-
-계산 결과는 기존 Dataset 분석 기록에 별도로 저장되며 원본 행을 덮어쓰지 않습니다. 주파수가 없으면 Nyquist만 표시합니다. 중복 주파수는 유지하며 측정 대역 밖 결과와 불명확한 자동 λ 선택에는 경고합니다. 자세한 모델·제한·검증은 [EIS DRT 설명](docs/EIS_DRT.md)을 참고하세요.
-
-## 이전 업데이트와 연결 점검
-
-- **EIS Fig 복구:** 저장된 표준 컬럼 이름을 읽어 Nyquist·Bode 그래프를 표시합니다. 원본 측정값은 바꾸지 않습니다.
-- **파일 분석 실패 처리:** 이전 파일의 결과를 지우고, 실패한 파일 선택은 유지하며, 중복 분석 요청을 막습니다.
-- **관리자 원본 확인:** 큰 데이터 표 대신 Dataset 카드를 보여주며 추가 관리자 확인 후 원본 파일을 다운로드합니다.
-
-2026-09-10 읽기 전용 점검 결과입니다. 아래는 당시 상태이며 운영 연결 성공을 보장하는 실시간 상태판이 아닙니다.
-
-| 구간 | 확인 결과 |
-|---|---|
-| 로컬 포탈 | `http://localhost:4174/` 응답 정상. `4196`은 응답하지 않음 |
-| 로컬 DB·파일 | SQLite 무결성과 연결 관계 정상. 원본·분석·Fig 참조 파일 모두 존재하며 기록된 파일 크기와 일치 |
-| 실행 버전 | 정적 프론트엔드 0.1.80 / 실행 중 백엔드 0.1.78. 백엔드 적용에는 정상 재시작 필요 |
-| 운영 Neon·B2 | Render 로딩 화면과 대시보드 로그인 제한으로 실제 연결·파일 읽기는 확인하지 못함 |
-| Windows 자동 백업 | 로컬 큐는 대기 상태이며 표준 백업 설정 파일을 확인하지 못함 |
-
-**로컬 SQLite·파일과 운영 Neon·B2는 별개입니다.** 로컬 파일이 운영 저장소로 자동 동기화되지는 않습니다. `/api/health`의 설정 상태만으로 DB 질의나 B2 파일 읽기 성공을 단정하지 않습니다. 운영 서비스 이름은 `battery-data-portal-v2`, GitHub 저장소 이름은 `battery-data-portal`입니다.
-
-앞으로 요청된 수정은 검증과 변경 기록을 마친 뒤 GitHub `main`에 올립니다. 비밀키·DB 파일·로우데이터는 제외하며, 업로드와 Render 배포 성공은 별도로 확인합니다.
-
-실제 사이트처럼 운영하려면 [PRODUCTION_RUNBOOK.md](./PRODUCTION_RUNBOOK.md)를 먼저 보면 됩니다. Render/Fly/Railway 서버, PostgreSQL DB, Supabase/S3 파일 저장소, OpenAI API, 도메인과 HTTPS까지 연결하는 순서를 한 번에 정리해두었습니다.
-
----
-
-## v0.1.77 구조 변경 요약
-
-| 구간 | 이전 | v0.1.77 |
+| 작업 | 포탈에서 확인하는 내용 | 제공 기준 |
 |---|---|---|
-| 관리자 로우 데이터 확인 | Dataset 선택 후 큰 원본 행 표와 페이지 이동 표시 | Dataset별 카드에서 등록자·날짜·행/열·원본 용량·백업 상태 확인 |
-| 원본 파일 받기 | 관리자 화면에서 직접 다운로드 불가 | 추가 관리자 확인 후 로컬 또는 private B2 원본을 다운로드 |
-| 민감 저장 정보 | 내부 경로를 API에서 다룰 수 있음 | 카드 API에는 B2 객체 키와 로컬 경로를 노출하지 않음 |
-| 원본·정규화 데이터 | private B2 저장 | 변경 없음 |
-| 계정·권한·Fig 인덱스 | Neon PostgreSQL 저장 | 변경 없음 |
-| 관리자 장기 백업 | Windows archive agent | 변경 없음 |
+| 실험 관리 | 연구자별 프로젝트, 실험 배치, 참여 연구자, 날짜별 목록 | 최신 로컬 개발본 |
+| 공정 기록 | 믹싱 작동·홀딩, 니딩 정·역방향, Pulverization, 체질, 롤밀, 롤프레싱 | 최신 로컬 개발본 |
+| 사진·원본 연결 | 공정 사진, SEM 측정·시료 상태, 파일 버전과 연결 근거 | 최신 로컬 개발본 |
+| 한눈에 비교 | CYC·SEM 갤러리, 개별 확대와 전체 비교, 토크 기록 조회 | 최신 로컬 개발본 |
+| 전기화학 분석 | CYC 성능·전압 프로파일·dQ/dV, CV, EIS Nyquist·Bode·DRT | 저장소 코드 |
+| 전극 계산·Fig | 질량·두께·조성 기반 계산, 그래프 편집·저장, CYC 비교 PPT 내보내기 | 저장소 코드 |
+| 연구 도우미 | 허용된 실험·사진의 로컬 조회, 별도 동의 후 일반 AI 질문 | 최신 로컬 개발본·연결 설정 필요 |
 
-즉, **저장 위치나 기존 데이터를 옮기지 않고**, 관리자에게 필요한 Dataset 정보만 간단히 표시합니다. 원본 다운로드는 기존 관리자 로그인에 더해 짧게 유지되는 추가 확인 권한이 있어야 하며, private B2 객체 키나 서버 경로는 브라우저에 전달하지 않습니다.
+“최신 로컬 개발본”은 이 프로젝트에서 구현·확인한 범위를 뜻합니다. 공개 서비스의 제공 상태나 모든 환경에서의 동작을 보장하는 표시는 아닙니다.
 
----
+## 주요 기능
 
-## 버전 이력
+### 1. 연구자 → 프로젝트 → 실험 배치
 
-전체 변경 내역은 [CHANGELOG.md](./CHANGELOG.md)에서 관리합니다. 포털 관리자 화면의 `버전 이력`에서도 아래 최신 이력을 확인할 수 있습니다.
+연구자와 프로젝트를 바꾸며 실험 목록을 좁혀 봅니다. 최신 개발본에서는 새 배치 이름을 입력한 날짜·소재·조성비·배치량·선택 공정으로 자동 생성합니다. 프로젝트 생성·삭제와 선택 실험의 프로젝트 이동을 제공하며, 이동은 실험 ID나 연결 파일을 새로 만드는 작업이 아닙니다.
 
-| 버전 | 날짜 | 핵심 변경 |
-|---|---|---|
-| v0.3.13 | 2026-10-12 | 잡음 포함 L-curve 모서리 방향 정정, 격자 독립 피크 폭·측정 대역 기준 검출, KK 수치 진단과 물리 검증 구분. |
-| v0.3.12 | 2026-10-06 | DRT 수치 경계·오차·외삽 피크 구분. 자동 λ 방향 판단은 v0.3.13에서 재정정. |
-| v0.3.11 | 2026-10-06 | CYC 전극 정보 복원, 원본 설정·파일명 후보·연결 계산 출처 구분, 질량과 로딩 단위 오표기 방지. |
-| v0.3.10 | 2026-10-06 | WRD 원본 설정 용량·연결 전극 기준으로 방전 C-rate 계산, 저장 데이터 재작성 없이 기준 복원. |
-| v0.3.9 | 2026-10-06 | CYC 충전 곡선·전체 구간 복원, 미확정 C-rate 대신 측정 전류 표시, 축·범례 겹침 방지. |
-| v0.3.8 | 2026-09-21 | 중복 파일 응답 형식 수정, 교체 확인창 복원, 객체 오류 메시지 개선. |
-| v0.3.7 | 2026-09-16 | CYC 성능·전압 축 범위 반영, 대상 그래프 전환, 범위 밖 곡선 잘림 및 한쪽 범위 보존. |
-| v0.3.6 | 2026-09-16 | 여러 Fig 문구 추가, 선택 문구 수정 분리, 연속 저장 순서 보장. |
-| v0.3.5 | 2026-09-16 | 사용자별 동일 파일명 교체 확인, 새 파일 저장 후 기존 기록·파일 영구 삭제. |
-| v0.3.4 | 2026-09-16 | 통합창 이전·다음 CYC 기록 이동, 현재 위치와 경계 버튼 표시. |
-| v0.3.3 | 2026-09-16 | 통합 CYC 기록의 그래프 미리보기 높이 제한, 원본과 개별 Fig 크기 유지. |
-| v0.3.2 | 2026-09-16 | 용량 보존형 5 mV dQ/dV 계산, 충전 곡선 누락 수정, 축·범례 간격 개선. |
-| v0.3.1 | 2026-09-16 | CYC 단일 C-rate 상단 라벨 복구, 명시적 실험 조건 표시와 미입력 안내. |
-| v0.3.0 | 2026-09-15 | 소유자별 데이터 격리, 파일 분류·다운로드, 전처리 레시피 버전, 로컬 검색 도우미(AI 미연결). |
-| v0.2.9 | 2026-09-15 | 그래프 우선 EIS 배치, 원시 표 접힘, prominence·폭·거리 기반 보수적 DRT 피크 검출. |
-| v0.2.8 | 2026-09-14 | DRT 해석 후보 band, 사용자 피크 할당·저장·export. 자동 저항 할당 없음. |
-| v0.2.7 | 2026-09-14 | WRD 내부 질량을 읽어 mAh/g 복원, 충전·방전 구분, 원본 Ah 보존. |
-| v0.2.6 | 2026-09-14 | EIS 미리보기를 CYC처럼 높이 약 480px로 제한·중앙 정렬, 저장용 해상도 유지. |
-| v0.2.5 | 2026-09-14 | EIS 55:45 그래프·작은 DRT 카드, 주파수 범위 중복 제거, 실제 τ축과 자동 계산. |
-| v0.2.4 | 2026-09-14 | EIS 반복 측정 구간별 보기·DRT 계산, 원본 행 보존, 구형 서버 계산 차단. |
-| v0.2.3 | 2026-09-14 | CYC 전압·전류·dQ/dV·통합 성능의 Y축 눈금 정리. 실제 WRD 8개 읽기 전용 검증. |
-| v0.2.2 | 2026-09-14 | CYC Y축 눈금 간격 정리, 숫자와 축 제목 겹침 해소. 측정값·단위 유지. |
-| v0.2.1 | 2026-09-14 | 저장 CYC 그래프 복구, 빈 용량 칸 처리와 작은 Ah 축 범위 수정. 원본 파일 유지. |
-| v0.2.0 | 2026-09-10 | EIS 전용 DRT·실제 Im(Z) Nyquist, 재구성 검증, 구간 저항 적분, CSV/메타데이터 저장. |
-| v0.1.80 | 2026-09-10 | Recover cleanly from upload failures and offload blocking inspection work. |
-| v0.1.79 | 2026-09-10 | Explicit Korean refresh label and spelling tests for six refresh buttons. |
-| v0.1.78 | 2026-09-10 | Restore persisted EIS Nyquist/Bode plots and thumbnails without rewriting measured data. |
-| v0.1.77 | 2026-09-10 | Replace the large administrator raw-row table with Dataset cards and protected local/private-B2 source downloads. |
-| v0.1.76 | 2026-09-10 | Repair Korean UI text and search-card layout; add lightweight authorized CYC comparison data and exact compact-card point counts. |
-| v0.1.75 | 2026-09-09 | Validate official B2 endpoints and regions, report the active provider, and retain Neon/B2/Windows storage separation. |
-| v0.1.74 | 2026-08-26 | Separate Neon metadata, private B2 artifacts, and SHA-256-verified Windows raw archives; remove the public administrator identifier. |
-| v0.1.73 | 2026-08-20 | Repair Search labels and verify source-file experiment-date grouping across saved Figs. |
-| v0.1.72 | 2026-08-20 | Prefer valid experiment dates in source filenames when grouping saved Figs and showing card dates. |
-| v0.1.71 | 2026-08-18 | Infer C-rate from 1C current or electrode mass/loading metadata and show the calculation basis during upload review. |
-| v0.1.70 | 2026-08-18 | Add direct member-to-saved-files access in administrator member management. |
-| v0.1.69 | 2026-08-12 | Group saved Figs by date and separate CYC, EIS, CV, and other figures |
-| v0.1.68 | 2026-08-12 | Add saved manual X/Y graph ranges with one-click automatic range restore |
-| v0.1.67 | 2026-08-11 | Mark the EIS high-frequency start and refine Nyquist/Bode layout bounds |
-| v0.1.66 | 2026-08-11 | Clarify the EIS high-frequency start and prevent clipped Nyquist/Bode labels |
-| v0.1.65 | 2026-08-11 | Browse administrator raw-data records filtered to a selected member account |
-| v0.1.64 | 2026-08-11 | Recover meaningful interrupted WRD traces and continue multi-file batches after invalid files |
-| v0.1.63 | 2026-08-05 | Refine CYC raw-data record views and shared C-rate Figure controls, plus a balanced combined EIS layout |
-| v0.1.62 | 2026-07-23 | Recover neutral WBCS WRD specific-capacity columns and legacy empty capacity rows for saved CYC Figs |
-| v0.1.61 | 2026-07-23 | Page editable tables at 250 rows while preserving every raw point for CYC and dQ/dV analysis |
-| v0.1.60 | 2026-07-23 | Preserve complete WRD traces; rebuild legacy 5,000-row datasets and retain the selected CYC Fig type during refresh |
-| v0.1.59 | 2026-07-23 | Normalize saved raw CYC rows for performance, voltage/current, and dQ/dV rendering; show precise dQ/dV data-availability reasons |
-| v0.1.58 | 2026-07-23 | Make normal CYC Fig output single-panel; legacy combined records render as performance Figs |
-| v0.1.57 | 2026-07-23 | Preserve point-level WBCS WRD discharge traces for dQ/dV and refresh older saved WRD datasets from raw artifacts |
-| v0.1.56 | 2026-07-23 | Block dQ/dV for cycle-summary CYC data and require genuine within-cycle voltage-capacity traces |
-| v0.1.55 | 2026-07-22 | Add raw-trace-only CYC dQ/dV Fig generation and separate charge/discharge voltage-profile traces when available |
-| v0.1.54 | 2026-07-22 | Require PostgreSQL for hosted account persistence, verify registrations through a fresh connection, and show actionable sign-up errors |
-| v0.1.53 | 2026-07-22 | Run a separate local verification instance with an explicit port and port-specific logs without stopping an existing portal |
-| v0.1.52 | 2026-07-22 | Add administrator-only temporary password reset; existing passwords remain hashed and are never displayed or returned |
-| v0.1.51 | 2026-07-22 | Refresh older SDE EIS parser output from the preserved raw artifact so Nyquist and Bode axes use measured impedance |
-| v0.1.50 | 2026-07-22 | Add a role-linked organization chart that automatically groups the selected organization's actual members |
-| v0.1.49 | 2026-07-22 | Add an administrator-only registered-member directory with signup dates, organization memberships, and account management |
-| v0.1.48 | 2026-07-22 | Export CYC comparison Figs to a PowerPoint slide with the current chart, legend, and selected colors |
-| v0.1.47 | 2026-07-22 | Add CYC Fig grid, point-connection, and marker-size controls while preserving missing-cycle gaps |
-| v0.1.46 | 2026-07-22 | Add a project-local launcher for safe local v2 startup and health checks on port 4174 |
-| v0.1.45 | 2026-07-21 | Apply saved Fig series colors consistently to EIS Nyquist/Bode traces |
-| v0.1.44 | 2026-07-21 | Use linked Dataset type and source filename for Fig names; normalize legacy EIS/CYC record labels safely |
-| v0.1.43 | 2026-07-21 | Repair legacy SDE EIS rows where Z' was incorrectly saved as frequency; automatically reparse preserved raw artifacts |
-| v0.1.42 | 2026-07-21 | Render EIS Nyquist data as a connected, equal-axis publication-style plot and separate Nyquist/Bode layouts |
-| v0.1.41 | 2026-07-21 | Repair visible Korean UI text and guard frontend source against code-page corruption |
-| v0.1.40 | 2026-07-21 | Keep Render online for safe storage diagnostics while refusing uploads without durable storage |
-| v0.1.39 | 2026-07-21 | Add Render storage diagnostics, safe Dataset-save failures, and partial-artifact cleanup |
-| v0.1.38 | 2026-07-21 | Restore readable saved Fig comparison labels, reuse duplicate raw-source uploads, and exclude local SQLite WAL files from Git |
-| v0.1.37 | 2026-07-20 | Restore clear Korean upload guidance, selected-file labels, batch action text, and CYC/CV/EIS Fig choices |
-| v0.1.36 | 2026-07-20 | Prevent a WBCS CYC cell/sample number from being displayed as a C-rate in Fig guides |
-| v0.1.35 | 2026-07-20 | Restore clear Korean labels for saved Fig cards, Fig categories, and the administrator account badge |
-| v0.1.34 | 2026-07-20 | Restore clear Korean empty-state guidance in the Fig workspace and editable data table |
-| v0.1.33 | 2026-07-20 | Support ZIVE SmartManager `.SDE` EIS files through the validated binary EIS parser |
-| v0.1.32 | 2026-07-20 | Reuse the selected hierarchy Cell when multi-file analysis starts with a blank Cell ID form input |
-| v0.1.31 | 2026-07-20 | Release the multi-file picker after batch completion and block duplicate runs |
-| v0.1.30 | 2026-07-20 | Correct WRD filename-mass parsing and CYC Fig axis/guide readability |
-| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
-| v0.1.29 | 2026-07-20 | 데스크톱 데이터 등록 패널을 넓혀 여러 파일명, 저장 상태, 버튼 문구가 잘리지 않도록 개선 |
-| v0.1.27 | 2026-07-20 | 긴 WRD 원본 파일명과 실험 계층에서도 Windows 저장 경로 길이 오류 없이 Dataset 원본/분석 파일 저장 |
-| v0.1.26 | 2026-07-20 | 상단 메뉴 줄바꿈 방지 및 완료된 업로드 저장 재시도 안정화 |
-| v0.1.25 | 2026-07-16 | SQLite 동시 저장 대기와 WAL 모드로 대용량 Dataset 저장 안정화 |
-| v0.1.24 | 2026-07-16 | CYC 전압/전류 거동 Fig와 원본 프로파일의 평균 전류 표기를 추가 |
-| v0.1.23 | 2026-07-16 | CYC Fig 선택값에 따라 성능, 전압 프로파일, 통합 화면을 각각 렌더링 |
-| v0.1.22 | 2026-07-16 | 만료된 로그인 토큰을 감지하면 로그인 화면으로 안전하게 복귀 |
-| v0.1.21 | 2026-07-16 | 여러 파일을 순차 분석·저장하고 파일별 Fig 기록 생성 |
-| v0.1.20 | 2026-07-16 | CYC 파일의 명시적 C-rate 열을 읽어 Fig cycle 구간을 자동 구분 |
-| v0.1.19 | 2026-07-16 | 포털의 Fig 용어를 통일 |
-| v0.1.18 | 2026-07-16 | WBCS WRD의 불완전 조각을 제외하고 CYC Fig의 유효 cycle만 표시 |
-| v0.1.17 | 2026-07-16 | 파일 종류 목록에서 CYC·CV·EIS를 바로 선택 가능 |
-| v0.1.16 | 2026-07-16 | Analysis Lab의 일반 메뉴 진입점은 숨기고, 기존 분석 기능과 이력은 보존 |
-| v0.1.15 | 2026-07-15 | 로그인 Enter 제출과 파일 판별 선택 UI를 명확화 |
-| v0.1.14 | 2026-07-15 | WBCS WRD 기본 업로드 한도를 100 MB로 확장하고 한도 초과 오류를 명확화 |
-| v0.1.13 | 2026-07-15 | README와 관리자 전용 화면에 버전 이력 추가 |
-| v0.1.12 | 2026-07-15 | AI 요약 UI 제거, 기존 데이터 호환성 유지 |
-| v0.1.11 | 2026-07-15 | CYC 절대 용량 분석과 분석 이력 Dataset 삭제 보완 |
-| v0.1.10 | 2026-07-15 | 운영 보안, 파일 저장, 업로드·삭제 수명주기 강화 |
-| v0.1.9 | 2026-07-15 | 시맨틱 버전과 프로젝트 전용 스킬·변경 기록 규칙 도입 |
+참여 연구자와 저장 계정의 소유권은 별개입니다. 전체 조회 설정이 있더라도 다른 연구자의 수정·삭제 권한까지 생기지는 않습니다.
 
----
+### 2. 메모 속 조건을 공정 항목으로
 
-## 프로젝트 목표
+최신 개발본은 믹싱의 작동·홀딩 시간과 사이클, 니딩의 정방향·역방향 시간과 사이클을 따로 기록합니다. 롤밀은 **rpm 한 칸**, 온도와 두 간격을 사용합니다. Pulverization, 체질, 롤프레싱 조건도 구분합니다.
 
-배터리 실험 데이터는 파일 형식이 다양하고, 후처리 과정에서 반복 작업이 많이 생깁니다. 이 포털은 실험 데이터를 한곳에 모아 다음 작업을 빠르게 처리하기 위해 만들었습니다.
+확인하지 못한 조건은 빈칸으로 남깁니다. 파일명이나 총시간만 보고 반복 횟수를 만들거나, 다른 실험의 조건을 기본값처럼 복사하지 않습니다. 원문 메모·이전 기록은 근거로 보존합니다.
 
-- CYC, CV, EIS 데이터를 업로드하고 확인
-- 엑셀처럼 표 데이터를 직접 수정
-- 전극 무게, 두께, 조성비 기반으로 1C 및 C-rate 전류 계산
-- 계산된 전극 조건을 저장하고 CYC 데이터에 바로 적용
-- 페이지 하단에서 누구나 수정 요청과 의견을 남길 수 있음
-- 로컬 저장에서 운영 DB와 클라우드 저장소로 확장
+### 3. 원본과 결과를 연결해서 보기
 
-## v0.15 연구 데이터 구조
+CYC 셀 데이터와 SEM은 작은 카드로 비교하고 필요한 항목만 확대합니다. SEM 사진은 측정 대상 시료 상태와 파일 버전으로 연결하며, 같은 날짜나 조건이라는 이유로 동일 제조 배치라고 단정하지 않습니다. 토크 기록은 실제 관측값과 원본을 함께 확인합니다.
 
-이번 버전부터 포털은 단순 파일 목록이 아니라 다음 계층으로 데이터를 연결합니다.
+### 4. CYC·CV·EIS와 Fig
 
-```text
-Organization (선택)
-  Project → Campaign / experiment batch → Cell → Dataset group → CYC / EIS / CV
-```
+저장소 코드에서도 파일 업로드·검토, CYC 성능 및 충전·방전 곡선, 원시 전압–용량 데이터가 있는 경우의 dQ/dV, CV와 EIS 그래프를 제공합니다. EIS DRT는 재구성 오차와 수치 진단을 표시하지만 피크의 물리·화학적 의미를 자동 확정하지 않습니다.
 
-- 파일은 parser별로 읽은 뒤 BDF 표준 컬럼과 품질 검토 결과로 정규화합니다.
-- Dataset마다 `raw`, `parsed`, `analysis`, `figure`, `report` 아티팩트가 별도로 저장됩니다.
-- 조직 `researcher`는 공유 프로젝트에 업로드·수정·분석할 수 있고 `viewer`는 조회만 할 수 있습니다.
-- `harvester/`는 장비 PC 폴더를 감시해 안정화된 파일을 안전한 API 토큰으로 자동 업로드합니다.
+질량·C-rate·로딩은 확인된 기준과 단위로 계산합니다. 기준이 없으면 측정 전류 또는 미확인 상태를 보여주며 임의의 1C·활물질 질량을 만들지 않습니다.
 
-구현 상세와 운영 전 확인 사항은 [docs/ARCHITECTURE_V0.15.md](./docs/ARCHITECTURE_V0.15.md)에 정리했습니다.
+### 5. 포탈 안의 도우미
 
----
+최신 개발본에서는 “연구자 A의 9월 실험 보여줘”와 같은 요청을 기존 권한 안에서 **로컬 조회**합니다. 사진·SEM도 허용된 파일만 불러옵니다. 이는 연구자료 전체를 외부 AI에 보내 검색하는 방식이 아닙니다.
 
-## 핵심 기능
+외부 AI 질문은 별도 연결 설정과 매 전송 동의가 필요합니다. 같은 담당자로 페이지를 이동하면 대화와 다음 질문 초안을 유지하지만, 새로고침·담당자 변경 후까지 영구 보관하는 채팅 저장소는 아닙니다.
 
-| 구분 | 기능 | 설명 |
-|---|---|---|
-| v0.1.29 | 2026-07-20 | 여러 파일을 선택하면 기본 분석 버튼으로 순차 Dataset·Fig 생성 흐름을 바로 시작 |
-| 데이터 등록 | CYC, CV, EIS 업로드 | 실험 파일을 올리고 데이터 종류별로 정리합니다. |
-| 데이터 편집 | 표 직접 수정 | 업로드된 CYC 표를 엑셀처럼 수정하고 행을 추가/삭제할 수 있습니다. |
-| 전극 계산 | 1C, C-rate, loading 계산 | 전극 질량, 두께, 조성비, 이론용량을 바탕으로 전류값을 계산합니다. |
-| 계산 저장소 | 전극 C-rate 저장 | 자주 쓰는 전극 계산 조건을 저장하고 다시 불러옵니다. |
-| CYC 적용 | 저장 계산값 적용 | 저장된 전극 조건을 선택한 CYC 데이터에 바로 넣습니다. |
-| 수정 요청 | 누구나 의견 남기기 | 페이지 하단에서 오류, 추가 기능, 계산식 수정 요청을 저장할 수 있습니다. |
-| 백엔드 API | 저장, 조회, 수정, 삭제 | FastAPI 서버가 프론트 화면과 DB 사이를 연결합니다. |
-| 운영 확장 | PostgreSQL, S3/Supabase | 나중에 진짜 사이트처럼 운영할 수 있도록 확장 방향을 준비했습니다. |
-| 데이터 표준 | BDF + 품질 검토 | Parser별 입력을 표준 컬럼과 단위로 정규화하고, 이상 행은 삭제하지 않고 분석 포함 여부로 관리합니다. |
-| 분석 이력 | Analysis Lab (UI 숨김) | retention, dQ/dV, DVA, rate, pulse, EIS 결과와 파라미터를 재현 가능한 이력으로 저장합니다. 일반 메뉴에서는 잠시 숨겼습니다. |
-| 공동 연구 | 조직/역할 | 조직 프로젝트에서 owner/admin/researcher/viewer 역할로 공유 범위를 정합니다. |
-| 장비 연동 | Harvester | 장비 PC의 안정화된 파일을 중복 없이 업로드하는 opt-in 수집기입니다. |
-
----
-
-## 화면 구성
+## 실험 기록은 어떻게 연결되나요?
 
 ```mermaid
 flowchart LR
-    A["데이터 등록"] --> B["CYC / CV / EIS 분석"]
-    B --> C["엑셀형 표 편집"]
-    C --> D["전극 계산"]
-    D --> E["전극 C-rate 저장소"]
-    E --> F["선택 CYC에 적용"]
-    F --> H["Fig / 보고서 정리"]
+    R[연구자 / 참여 관계] --> P[프로젝트]
+    P --> E[실험 배치]
+    E --> C[공정 기록 / 조건 / 이력]
+    C --> S[시료와 상태]
+    S --> M[SEM 등 측정]
+    E --> D[CYC / CV / EIS 연결]
+    D --> F[분석 / Fig]
+    A[원본 파일 / 사진 / 버전] -. 명시적 연결 .-> C
+    A -. 명시적 연결 .-> M
+    A -. 명시적 연결 .-> D
 ```
 
----
+최신 로컬 실험 관리의 개념도입니다. 모든 단계가 자동 생성되는 것은 아니며, **확인된 연결만 저장**합니다. 기존 Cell·Dataset·Fig 구조는 별도로 유지하고 명시적으로 연결합니다.
 
-## 폴더 구조
+## 빠른 시작
 
-```text
-battery-data-portal/
-├─ public/
-│  ├─ index.html      # 사용자가 보는 메인 화면입니다.
-│  ├─ app.js          # 업로드, 계산, 저장, 분석 화면 동작을 담당합니다.
-│  └─ style.css       # 화면 색상, 여백, 카드, 표 디자인을 담당합니다.
-├─ backend/
-│  ├─ parsers/        # CSV, Excel, WRD, SEO 파일별 Parser입니다.
-│  ├─ schemas/        # BDF 표준 컬럼과 품질 규칙입니다.
-│  ├─ analysis/       # retention, dQ/dV, DVA, EIS 등의 분석 모듈입니다.
-│  └─ storage_layout.py # raw/parsed/analysis/figure/report 객체 경로입니다.
-├─ harvester/         # 장비 PC 자동 업로드 수집기와 설정 예시입니다.
-├─ docs/
-│  ├─ ARCHITECTURE_V0.15.md # 데이터 계층, 권한, 운영 구조입니다.
-│  └─ HARVESTER.md          # 장비 PC 설치 방법입니다.
-│
-├─ scripts/
-│  ├─ export_ppt.py   # PPT 내보내기 실험용 스크립트입니다.
-│  ├─ inspect_file.py # 파일 구조를 확인하는 보조 스크립트입니다.
-│  └─ inspect_manual.py
-│
-├─ python_backend.py      # FastAPI 백엔드 서버입니다.
-├─ start_local_server.py  # Windows에서 로컬 서버를 쉽게 실행하기 위한 파일입니다.
-├─ requirements.txt       # Python 실행에 필요한 패키지 목록입니다.
-├─ package.json           # Node 기반 실행/검사용 설정입니다.
-├─ render.yaml            # Render 배포 설정 예시입니다.
-├─ railway.json           # Railway 배포 설정 예시입니다.
-├─ fly.toml               # Fly.io 배포 설정 예시입니다.
-└─ VERSION                # 현재 포털 버전입니다.
-```
+### GitHub 코드를 처음 실행할 때
 
-쉽게 말하면 **`public`은 화면**, **`python_backend.py`는 서버**, **DB는 저장 공간**입니다.
-
----
-
-## 실행 방법
-
-### 1. Python 패키지 설치
+Windows PowerShell, Git, Python 3.12가 필요합니다. 아래는 **새 개발 폴더·새 로컬 데이터**용이며 사용 중인 연구 DB 위에서 실행하는 절차가 아닙니다. Node.js는 포탈 실행에는 필요 없고 JavaScript 검사에 사용합니다.
 
 ```powershell
-pip install -r requirements.txt
+git clone https://github.com/JONGHO01/battery-data-portal.git
+cd battery-data-portal
+py -3.12 -m venv .venv
+& .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-### 2. FastAPI 서버 실행
+계정 로그인형 저장소 코드를 loopback 주소로 실행합니다. 실제 비밀값을 출력하거나 파일에 적지 않고, 현재 PowerShell 세션에서만 개발용 서명값을 만듭니다.
 
 ```powershell
-python python_backend.py
+$env:APP_ENV = 'local'
+$env:DATABASE_URL = ''
+$env:STORAGE_BACKEND = 'local'
+$env:REQUIRE_DURABLE_STORAGE = 'false'
+$env:ALLOW_LEGACY_USER_HEADER = 'false'
+$env:BOOTSTRAP_ADMIN_ID = ' '
+$env:JWT_SECRET = (New-Guid).Guid + (New-Guid).Guid
+& .\.venv\Scripts\python.exe -m uvicorn python_backend:app --host 127.0.0.1 --port 4174
 ```
 
-### 3. 브라우저에서 접속
+브라우저에서 [http://localhost:4174/](http://localhost:4174/)를 열고 새 계정을 등록합니다. 이 절차는 기존 연구자료·관리자 계정·연구자 선택 모드를 복원하지 않습니다. 종료는 실행 창에서 `Ctrl+C`입니다. 포트가 사용 중이면 기존 프로세스를 종료하지 말고 먼저 확인하세요.
+
+### 이미 구성한 연구실 포탈을 사용할 때
+
+기존 DB·파일 저장소·실행 옵션을 유지하는 전용 런처를 사용합니다. **새 clone에 기존 `.env`나 DB를 덮어 복사하지 마세요.** 최신 실험 관리 스키마 준비와 연구자 선택 모드는 별도 작업입니다. 상세한 차이는 [실행 안내](docs/RUNNING.md)를 참고하세요.
+
+## 어떻게 구동되나요?
 
 ```text
-http://localhost:4173
+브라우저: HTML / CSS / JavaScript
+                 │ 같은 서버의 HTTP API
+                 ▼
+             Python FastAPI
+                 ├─ 로컬: SQLite + 로컬 파일 저장소
+                 └─ 호스팅: PostgreSQL + 비공개 객체 저장소
 ```
 
----
+HTML 파일만 여는 정적 사이트나 GitHub Pages 서비스가 아닙니다. Python 서버가 인증·권한 확인, 파일 파싱, 저장·조회와 분석 요청을 처리하고 화면 파일도 제공합니다. `npm start` 역시 Python 서버를 호출하는 보조 명령이지 별도의 Node 백엔드가 아닙니다.
 
-## API 흐름
+Neon·Backblaze B2·Render는 호스팅 구성에 사용할 수 있습니다. **GitHub push, 호스팅 배포, 실제 서비스 상태는 각각 다릅니다.** 업로드했다고 서비스 연결까지 확인된 것은 아닙니다.
 
-화면에서 버튼을 누르면 JavaScript가 FastAPI 백엔드로 요청을 보냅니다. 백엔드는 데이터를 DB에 저장하거나 다시 불러와 화면에 전달합니다.
+## 데이터 처리 원칙과 제한
 
-```text
-사용자 브라우저 (public/)
-        |
-        v
-Render / FastAPI (python_backend.py)
-        |---- Neon PostgreSQL: 계정, 권한, Dataset/Fig 메타데이터
-        |---- private Backblaze B2: 원본 파일, Fig 재생성용 정규화 데이터
-        `---- Windows archive agent: SHA-256 검증 원본 백업
-```
+- 연구 원본·DB·계정·실제 사진은 이 저장소의 배포 자료가 아닙니다.
+- 원본, 파싱 결과, 분석, Fig와 출처를 구분합니다. 정규화·편집 결과를 원본 측정값처럼 설명하지 않습니다.
+- 로컬 **이름 선택은 비밀번호 인증이 아닙니다.** 공유 PC용 모드를 인터넷에 노출하지 않습니다.
+- 호스팅에는 영속 DB·비공개 저장소·서비스 비밀값 설정이 필요합니다. 운영 DB를 로컬 초기화나 시험에 사용하지 않습니다.
+- 전체 자료 자동 공유, 자동 실험 추정, 외부 AI 학습용 전송을 기본 기능으로 제공하지 않습니다.
 
-| Method | Endpoint | 용도 |
-|---|---|---|
-| GET | `/api/health` | 서버 상태 확인 |
-| GET | `/api/datasets` | 저장된 데이터 목록 조회 |
-| GET | `/api/datasets/{id}/comparison-series` | 권한 확인 후 CYC 비교용 사이클·용량 점만 조회 |
-| POST | `/api/datasets` | 새 데이터 저장 |
-| PATCH | `/api/datasets/{id}` | 기존 데이터 수정 |
-| DELETE | `/api/datasets/{id}` | 데이터 삭제 |
-| POST | `/api/ai-summary` | 선택 데이터 핵심값 계산 후 AI 해석 생성 |
-| POST | `/api/feedback` | 수정 요청과 의견 저장 |
+## 문서와 개발
 
----
-
-## 저장소 운영 방향
-
-현재 로컬 개발에서는 SQLite를 기본으로 사용합니다.
-
-```text
-data/portal.sqlite3
-```
-
-다른 컴퓨터에서도 로그인만 하면 같은 데이터를 볼 수 있게 하려면 PostgreSQL과 클라우드 저장소를 연결합니다.
-
-운영 구조는 **Neon에는 계정·Dataset/Fig 메타데이터만**, **Backblaze B2에는 원본과 Fig용 정규화 데이터**, **관리자 Windows 작업공간에는 검증된 원본 백업**을 두는 방식입니다. 저장된 Fig를 열 때 포털은 B2의 정규화 데이터를 다시 불러오므로 다른 컴퓨터에서도 과거 Fig를 확인할 수 있습니다. 설정 순서는 [B2 + Neon + 로컬 작업공간 안내](./docs/B2_LOCAL_ARCHIVE.md)를 따릅니다.
-
-```text
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
-JWT_SECRET=long_random_secret
-ALLOW_LEGACY_USER_HEADER=false
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.5
-OPENAI_REASONING_EFFORT=low
-```
-
-로컬에서는 프로젝트 폴더의 `.env` 파일에 `OPENAI_API_KEY=...` 값을 넣으면 됩니다. `.env`는 `.gitignore`에 들어가 있으므로 GitHub에는 올라가지 않습니다.
-직접 입력이 불편하면 PowerShell에서 아래 명령으로 키를 안전하게 입력할 수 있습니다.
-
-```powershell
-.\scripts\set_openai_key_local.ps1
-```
-
-| 저장 계층 | 사용 기술 | 담당 데이터 |
-|---|---|---|
-| 로컬 개발 | SQLite + `data/uploads` | 내 컴퓨터에서만 사용하는 계정, 메타데이터, 파일 |
-| 운영 메타데이터 | Neon PostgreSQL | 계정, 권한, 조직, Dataset/Fig 인덱스, `rowCount`, B2 객체 키 |
-| 운영 파일 | private Backblaze B2 | 원본 파일과 과거 Fig를 다시 여는 데 필요한 정규화 데이터 |
-| 장기 원본 백업 | Windows archive agent | 크기와 SHA-256을 검증한 관리자 작업공간 원본 복사본 |
-
----
-
-## GitHub에 올리지 않는 파일
-
-실험 원본 파일, DB, 로그는 개인정보나 연구 데이터가 들어갈 수 있으므로 GitHub에 올리지 않습니다.
-
-- `data/*.sqlite3`
-- `data/uploads/`
-- `*.log`
-- `__pycache__/`
-- `.env`
-
----
-
-## 개발 로드맵
-
-| 버전 | 목표 |
+| 문서 | 내용 |
 |---|---|
-| v0.01 | 로컬 포털, CYC 편집, 전극 계산, 저장소, AI 요약 페이지 |
-| v0.02 | OpenAI API 기반 AI 요약, 수정 요청 저장, 사용자별 저장 데이터 분리 |
-| v0.03 | 로컬 JWT 만료/변경 시 파일 분석이 막히지 않도록 인증 호환성 보강 |
-| v0.04 | 관리자 계정 qq035786 고정 및 배포 환경변수 기반 비밀번호 반영 |
-| v0.05 | 전극 C-rate 계산기 8칸 확장 및 저장소 연동 |
-| v0.06 | PostgreSQL 운영 DB와 Supabase/S3 파일 저장소 연결 안정화 |
-| v0.07 | PPT/보고서 자동 내보내기 고도화 |
-| v0.10 | 연구실 내부 공유용 웹 배포 |
+| [현재 포탈 안내](docs/PORTAL_GUIDE.md) | 최신 실험 관리·공정·사진·도우미의 사용 흐름과 경계 |
+| [실행·저장 구조](docs/RUNNING.md) | 새 개발 환경과 기존 연구실 환경의 차이, 상태 확인, 문제 해결 |
+| [B2 + PostgreSQL 저장](docs/B2_LOCAL_ARCHIVE.md) | 호스팅용 메타데이터·파일·장기 백업의 분리 |
+| [EIS DRT](docs/EIS_DRT.md) | 수치 계산·피크·진단의 의미와 제한 |
+| [데이터 관리](docs/DATA_WORKSPACE.md) | 기존 Dataset 분류·전처리·로컬 파일 검색 |
+| [변경 이력](CHANGELOG.md) | 버전별 변경 기록 |
 
----
+폴더별 역할과 검사 명령은 [실행·개발 안내](docs/RUNNING.md#개발과-검증)에 있습니다. 기존 [v0.15 설계](docs/ARCHITECTURE_V0.15.md)는 초기 Dataset 계층에 대한 역사 문서이며 최신 실험 관리 전체를 설명하지는 않습니다.
 
-## 현재 개발 메모
+## 버전 이력
 
-- 전극 C-rate 저장소는 먼저 브라우저 `localStorage` 기반으로 동작합니다.
-- 선택한 CYC 데이터에 전극 계산값을 넣으면 데이터 객체에 계산 정보가 함께 저장됩니다.
-- AI 요약 메뉴와 전용 화면은 v0.1.12에서 제거했습니다. 기존 데이터는 보존되며, 남아 있는 백엔드 호환 API는 포털 화면에서 호출하지 않습니다.
+| 기준 | 버전 | 핵심 내용 |
+|---|---|---|
+| 최신 로컬 개발본 | v0.3.20 Unreleased | 롤밀 단일 rpm 입력; 실험 관리·공정 조건·사진 비교·도우미 흐름 포함 |
+| 로컬 개발 이력 | v0.3.14–v0.3.19 Unreleased | 프로젝트 이동, 압축 WRD·SEM 비교, 대화·초안 유지, 자연어 날짜 조회 |
+| 저장소 실행 코드 | v0.3.13 · 2026-10-12 | DRT L-curve·피크 기준 정정, 독립 KK 수치 진단 |
+| 이전 저장소 이력 | v0.3.9–v0.3.12 | CYC 프로파일·C-rate·전극 정보와 DRT 보완 |
 
----
+문서만 정리한 이번 변경은 앱 버전을 올리지 않습니다. 최신 개발 소스의 GitHub 반영은 별도 회귀 검증이 남아 있으며, 완료 전까지 `main`을 v0.3.20으로 표시하지 않습니다.
 
-## 한 줄 요약
+### 소개 구성 참고
 
-**Battery Data Portal은 배터리 실험 데이터를 올리고, 계산하고, 정리하고, 나중에 보고서와 논문용 결과로 연결하기 위한 연구 워크플로우 포털입니다.**
+[jkf87의 저장소 목록](https://github.com/jkf87?tab=repositories) 중 [KIPRIS Performance Verifier](https://github.com/jkf87/kipris-performance-verifier), [인사 통계 관리 도구](https://github.com/jkf87/personnel-stats-app), [voice-memo-doc](https://github.com/jkf87/voice-memo-doc)의 기능·실행·데이터 처리·검증 분리 방식을 참고했습니다. 설명과 구성도는 이 포탈의 실제 구조를 기준으로 새로 작성했습니다.
