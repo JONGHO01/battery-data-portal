@@ -37,6 +37,10 @@ This repository is the Battery Data Portal project.
 
 ## GitHub Synchronization
 
+- Reconfirmed by the user (2026-10-22): publish each verified, task-scoped change immediately during the same task. Complete the relevant tests, synchronize version/release notes when applicable, commit and push before reporting GitHub completion. Do not accumulate ready changes for a later upload or ask again for routine upload permission.
+- If publication is blocked, report the specific failing check, conflict, missing dependency or authentication restriction and explicitly label the result local-only. Do not silently defer, bypass failed checks or claim an upload succeeded. Isolate independently verified changes from unrelated dirty work only when their required dependencies are also present.
+- Keep private operational handoffs (`docs/SESSION_MEMORY.md`, local data-registration rules), researcher-specific notes, import receipts, backups and screenshots out of public upload changes. Preserve local-only context separately; publish only the reviewed source/test/public-document allow-list.
+
 - Standing user authorization (2026-09-10): after completing and verifying requested portal changes, commit and promptly push the task-scoped source, tests, and documentation to `https://github.com/JONGHO01/battery-data-portal.git` on `main`, without asking again for each normal upload. This supersedes older per-upload approval notes in session memory.
 - Fetch and check the destination before pushing. Use ordinary fast-forward pushes only; stop and report conflicts, failed checks, authentication failures, or protected-branch restrictions. Never force-push or include unrelated work.
 - Exclude credentials, environment secrets, databases, raw experiment files, runtime artifacts, logs, and caches. Use an explicit staging allow-list.
