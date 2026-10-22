@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add independently tested equipment catalog components: shared JSON, pure Python lookup, read-only browser photo/specification dialog and manufacturer product-family photographs with attribution. Keep the mixer model and unconfirmed numerical ratings unknown. These components do not yet integrate the pending local experiment workspace on main. Local v0.3.26 also contains designated process-equipment and grade-matched raw-material SEM shortcuts; that application integration remains local-only because its broader workspace dependencies and existing reviewer UI regressions are not yet verified for publication. Main runtime remains v0.3.13; no deployment claim.
+
 - Document same-task publication of every verified change: relevant tests, synchronized release metadata when needed, explicit public staging allow-list, commit, fast-forward push and remote verification. Report concrete blockers and local-only delivery instead of silently deferring. Exclude private operational handoffs and research artifacts. Documentation only; no pending application-code upload, runtime version bump or deployment claim.
 
 - Rebuild the Korean README around the current research workflow, with a capability/status matrix, process-to-sample/file relationships, loopback-first Windows startup, storage/runtime explanation and privacy boundaries. Add public portal and running guides. Explicitly distinguish repository source v0.3.13 from local v0.3.20 Unreleased; this documentation-only update does not publish pending application code, bump runtime versions, migrate data or establish deployment success.

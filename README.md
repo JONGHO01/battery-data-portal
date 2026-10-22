@@ -3,13 +3,13 @@
 배터리 실험의 **프로젝트·배치·공정 조건·사진·측정 데이터·Fig**를 연결하는 연구 기록 포탈입니다.
 
 ![Repository source](https://img.shields.io/badge/repository_source-0.3.13-164b99)
-![Local development](https://img.shields.io/badge/local_development-0.3.20_Unreleased-68758a)
+![Local development](https://img.shields.io/badge/local_development-0.3.26_Unreleased-68758a)
 ![Backend](https://img.shields.io/badge/backend-FastAPI-009688)
 ![Frontend](https://img.shields.io/badge/frontend-HTML_CSS_JavaScript-4169a1)
 
 파일을 분석하는 도구에서 출발해, 지금은 **“어떤 소재를 어떤 조건으로 가공했고, 어느 시료에서 어떤 결과가 나왔는가”**를 확인하는 실험 관리 도구로 확장하고 있습니다. CYC·CV·EIS 분석과 전극 계산도 같은 포탈에서 사용합니다.
 
-> **코드와 소개의 기준** · 2026-10-22 문서 정리 기준, GitHub `main`의 실행 코드는 **v0.3.13**이고 최신 로컬 개발본은 **v0.3.20 Unreleased**입니다. 아래의 실험 관리·SEM 비교·Codex 도우미는 최신 로컬 개발본 기준이며, 현재 `main`을 내려받는 것만으로 제공되지 않습니다. 이번 반영은 문서 정리이며 미반영 소스의 배포나 릴리스가 아닙니다.
+> **코드와 소개의 기준** · 2026-10-22 기준, GitHub `main`의 실행 코드는 **v0.3.13**이고 최신 로컬 개발본은 **v0.3.26 Unreleased**입니다. 아래의 실험 관리·SEM 비교·Codex 도우미는 최신 로컬 개발본 기준이며, 현재 `main`을 내려받는 것만으로 제공되지 않습니다. [장비 카탈로그 모듈](docs/EQUIPMENT_CATALOG.md)은 독립 테스트와 함께 포함되어 있지만, 로컬 실험 관리 화면과의 통합 코드는 아직 미반영 상태입니다. 모듈 업로드는 전체 포탈 릴리스나 배포 완료를 뜻하지 않습니다.
 
 [주요 기능](#주요-기능) · [빠른 시작](#빠른-시작) · [현재 포탈 안내](docs/PORTAL_GUIDE.md) · [실행·저장 구조](docs/RUNNING.md) · [변경 이력](CHANGELOG.md)
 
@@ -147,12 +147,12 @@ Neon·Backblaze B2·Render는 호스팅 구성에 사용할 수 있습니다. **
 
 | 기준 | 버전 | 핵심 내용 |
 |---|---|---|
-| 최신 로컬 개발본 | v0.3.20 Unreleased | 롤밀 단일 rpm 입력; 실험 관리·공정 조건·사진 비교·도우미 흐름 포함 |
+| 최신 로컬 개발본 | v0.3.26 Unreleased | 지정 장비 상세창·활물질 원료 SEM 바로가기 포함; 화면 통합 소스는 아직 미반영 |
 | 로컬 개발 이력 | v0.3.14–v0.3.19 Unreleased | 프로젝트 이동, 압축 WRD·SEM 비교, 대화·초안 유지, 자연어 날짜 조회 |
 | 저장소 실행 코드 | v0.3.13 · 2026-10-12 | DRT L-curve·피크 기준 정정, 독립 KK 수치 진단 |
 | 이전 저장소 이력 | v0.3.9–v0.3.12 | CYC 프로파일·C-rate·전극 정보와 DRT 보완 |
 
-문서만 정리한 이번 변경은 앱 버전을 올리지 않습니다. 최신 개발 소스의 GitHub 반영은 별도 회귀 검증이 남아 있으며, 완료 전까지 `main`을 v0.3.20으로 표시하지 않습니다.
+이번 독립 장비 모듈·문서 추가는 기존 앱의 실행 버전을 올리지 않습니다. 최신 개발 소스 전체의 GitHub 반영에는 별도 회귀 검증이 남아 있으며, 완료 전까지 `main` 실행 코드를 v0.3.26으로 표시하지 않습니다.
 
 ### 소개 구성 참고
 

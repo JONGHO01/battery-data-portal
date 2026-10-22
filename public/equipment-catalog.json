@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "equipment": {
+    "MIXING": {
+      "id": "kmtech-pls-model-pending",
+      "displayName": "Powder Mixer (PLS) · 모델명 미확정",
+      "model": null,
+      "productName": "Powder Mixer (PLS)",
+      "manufacturer": "케이엠텍 (KM Tech)",
+      "photo": "/equipment/kmtech-pls.jpg",
+      "sourceUrl": "https://kmtech.kr/bsr/board.php?bo_table=battery&wr_id=13",
+      "specifications": [["방식", "회전형 Mixing Zone / Knife Impeller"], ["용도", "분말 혼합·분산"], ["용량·정격 rpm·전원", "모델명 확인 후 입력"]],
+      "specificationNote": "제조사 제품군 소개입니다. 정확한 모델별 사양은 미확정이며, 사진은 제조사 제품군 대표사진입니다. 실제 실험 rpm·시간은 각 공정 기록을 따릅니다."
+    },
+    "KNEADING": {
+      "id": "kmtech-nep-05k",
+      "displayName": "NEP-0.5K",
+      "model": "NEP-0.5K",
+      "productName": "Kneader-p (NEP)",
+      "manufacturer": "케이엠텍 (KM Tech)",
+      "photo": "/equipment/kmtech-nep.jpg",
+      "sourceUrl": "https://kmtech.kr/bsr/board.php?bo_table=battery&wr_id=10",
+      "specifications": [["방식", "가압형 Kneader"], ["용도", "Kneading / Shearing / Mixing"], ["용량·정격 rpm·전원", "해당 모델 제원 확인 후 입력"]],
+      "specificationNote": "모델명은 사용자 확인값입니다. 제조사 공개 표의 NEP-500p 등과 동일 모델이라고 추정하지 않았습니다. 모델별 수치 사양은 미확정이며, 사진은 제품군 대표사진입니다."
+    }
+  }
+}
